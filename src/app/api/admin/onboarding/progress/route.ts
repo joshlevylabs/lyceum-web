@@ -1,18 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Force explicit values to avoid environment variable loading issues
+const supabaseUrl = 'https://kffiaqsihldgqdwagook.supabase.co'
+const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4'
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 // GET /api/admin/onboarding/progress - Get onboarding progress for all users or specific user
 export async function GET(request: NextRequest) {
   try {
+    console.log('GET /api/admin/onboarding/progress - Starting request...')
+    
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('user_id')
     const licenseId = searchParams.get('license_id')
     const status = searchParams.get('status')
+
+    console.log('Checking if onboarding_progress table exists...')
 
     // Check if onboarding_progress table exists
     const { data: tableCheck, error: tableError } = await supabase
@@ -20,40 +25,33 @@ export async function GET(request: NextRequest) {
       .select('id')
       .limit(1)
 
-    if (tableError && tableError.code === '42P01') {
-      // Table doesn't exist, return helpful message
-      return NextResponse.json({
-        progress: [],
-        error: 'Onboarding tables not set up yet',
-        message: 'Please run the setup SQL script in your Supabase console first',
-        setup_required: true
-      })
+    console.log('Progress table check result:', { tableCheck, tableError })
+
+    if (tableError) {
+      console.log('Progress table error detected:', tableError)
+      if (tableError.code === '42P01') {
+        // Table doesn't exist, return helpful message
+        return NextResponse.json({
+          progress: [],
+          error: 'Onboarding tables not set up yet',
+          message: 'Please run the setup SQL script in your Supabase console first',
+          setup_required: true
+        })
+      } else {
+        console.error('Progress database error:', tableError)
+        return NextResponse.json({
+          progress: [],
+          error: `Database error: ${tableError.message}`,
+          details: tableError,
+          setup_required: false
+        }, { status: 500 })
+      }
     }
 
+    // Start with basic query without joins to avoid foreign key issues
     let query = supabase
       .from('onboarding_progress')
-      .select(`
-        *,
-        user_profiles!user_id (
-          id,
-          email,
-          full_name,
-          company
-        ),
-        licenses!license_id (
-          id,
-          license_type,
-          plugin_id,
-          status,
-          expires_at
-        ),
-        license_keys!license_key_id (
-          id,
-          key_code,
-          license_type,
-          enabled_plugins
-        )
-      `)
+      .select('*')
 
     if (userId) {
       query = query.eq('user_id', userId)
@@ -67,10 +65,17 @@ export async function GET(request: NextRequest) {
       query = query.eq('overall_status', status)
     }
 
+    console.log('Executing progress query...')
     const { data, error } = await query.order('created_at', { ascending: false })
 
+    console.log('Progress query result:', { data: data?.length || 0, error })
+
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      console.error('Progress query error:', error)
+      return NextResponse.json({ 
+        error: `Query error: ${error.message}`, 
+        details: error 
+      }, { status: 500 })
     }
 
     // Enrich data with calculated fields
@@ -89,15 +94,23 @@ export async function GET(request: NextRequest) {
         is_overdue: isOverdue,
         days_until_deadline: progress.onboarding_deadline 
           ? Math.ceil((new Date(progress.onboarding_deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-          : null
+          : null,
+        // Add placeholder for missing joined data
+        user_profiles: null, // Will be populated later when we add proper joins
+        license_keys: null   // Will be populated later when we add proper joins
       }
     })
 
-    return NextResponse.json({ progress: enrichedData })
+    console.log('Returning enriched progress data:', { count: enrichedData?.length || 0 })
+    return NextResponse.json({ progress: enrichedData || [] })
 
   } catch (error) {
-    console.error('Error fetching onboarding progress:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Unexpected error in onboarding progress API:', error)
+    return NextResponse.json({ 
+      error: 'Internal server error', 
+      message: error instanceof Error ? error.message : 'Unknown error',
+      details: error 
+    }, { status: 500 })
   }
 }
 

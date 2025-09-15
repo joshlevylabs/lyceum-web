@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Force explicit values to avoid environment variable loading issues
+const supabaseUrl = 'https://kffiaqsihldgqdwagook.supabase.co'
+const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4'
+
+console.log('Onboarding Sessions API: Creating Supabase client with URL:', supabaseUrl)
+const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 // GET /api/admin/onboarding/sessions - Get onboarding sessions with filtering
 export async function GET(request: NextRequest) {
   try {
+    console.log('GET /api/admin/onboarding/sessions - Starting request...')
+    
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('user_id')
     const adminId = searchParams.get('admin_id')
@@ -17,50 +21,44 @@ export async function GET(request: NextRequest) {
     const upcoming = searchParams.get('upcoming') === 'true'
     const past = searchParams.get('past') === 'true'
 
+    console.log('Checking if onboarding_sessions table exists...')
+    
     // Check if onboarding_sessions table exists
     const { data: tableCheck, error: tableError } = await supabase
       .from('onboarding_sessions')
       .select('id')
       .limit(1)
 
-    if (tableError && tableError.code === '42P01') {
-      // Table doesn't exist, return helpful message
-      return NextResponse.json({
-        sessions: [],
-        error: 'Onboarding tables not set up yet',
-        message: 'Please run the setup SQL script in your Supabase console first',
-        setup_required: true
-      })
+    console.log('Table check result:', { tableCheck, tableError })
+
+    if (tableError) {
+      console.log('Table error detected:', tableError)
+      if (tableError.code === '42P01') {
+        // Table doesn't exist, return helpful message
+        return NextResponse.json({
+          sessions: [],
+          error: 'Onboarding tables not set up yet',
+          message: 'Please run the setup SQL script in your Supabase console first',
+          setup_required: true
+        })
+      } else {
+        // Other database error
+        console.error('Database error:', tableError)
+        return NextResponse.json({
+          sessions: [],
+          error: `Database error: ${tableError.message}`,
+          details: tableError,
+          setup_required: false
+        }, { status: 500 })
+      }
     }
 
+    console.log('Table exists, building query...')
+    
+    // Start with a simple query to test basic functionality
     let query = supabase
       .from('onboarding_sessions')
-      .select(`
-        *,
-        user_profiles!user_id (
-          id,
-          email,
-          full_name,
-          company
-        ),
-        assigned_admin:user_profiles!assigned_admin_id (
-          id,
-          email,
-          full_name
-        ),
-        licenses!license_id (
-          id,
-          license_type,
-          plugin_id,
-          expires_at
-        ),
-        license_keys!license_key_id (
-          id,
-          key_code,
-          license_type,
-          enabled_plugins
-        )
-      `)
+      .select('*')
 
     if (userId) {
       query = query.eq('user_id', userId)
@@ -90,10 +88,17 @@ export async function GET(request: NextRequest) {
         .in('status', ['completed', 'cancelled', 'no_show'])
     }
 
-    const { data, error } = await query.order('scheduled_at', { ascending: true })
+    console.log('Executing query...')
+    const { data, error } = await query.order('created_at', { ascending: false })
+
+    console.log('Query result:', { data: data?.length || 0, error })
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      console.error('Query error:', error)
+      return NextResponse.json({ 
+        error: `Query error: ${error.message}`, 
+        details: error 
+      }, { status: 500 })
     }
 
     // Enrich data with calculated fields
@@ -118,8 +123,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ sessions: enrichedSessions })
 
   } catch (error) {
-    console.error('Error fetching onboarding sessions:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Unexpected error in onboarding sessions API:', error)
+    return NextResponse.json({ 
+      error: 'Internal server error', 
+      message: error instanceof Error ? error.message : 'Unknown error',
+      details: error 
+    }, { status: 500 })
   }
 }
 

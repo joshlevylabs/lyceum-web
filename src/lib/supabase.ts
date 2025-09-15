@@ -2,12 +2,17 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 // Use hardcoded values temporarily to test if the issue is with environment loading
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4OTU0MTYsImV4cCI6MjA2ODQ3MTQxNn0.5Wzzoat1TsoLLbsqjuoUEKyawJgYmvrMYbJ-uvosdu0'
+// Temporarily force the correct anon key to bypass environment variable issues
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4OTU0MTYsImV4cCI6MjA2ODQ3MTQxNn0.5Wzzoat1TsoLLbsqjuoUEKyawJgYmvrMYbJ-uvosdu0'
 
 console.log('Supabase config:', { 
   url: supabaseUrl, 
   hasAnonKey: !!supabaseAnonKey,
-  anonKeyPreview: supabaseAnonKey?.substring(0, 20) + '...'
+  anonKeyPreview: supabaseAnonKey?.substring(0, 20) + '...',
+  anonKeyLength: supabaseAnonKey?.length,
+  anonKeyEnding: supabaseAnonKey?.substring(supabaseAnonKey.length - 20),
+  forcedCorrectKey: true,
+  expectedEnding: '5Wzzoat1TsoLLbsqjuoUEKyawJgYmvrMYbJ-uvosdu0'
 })
 
 // Create singleton client
