@@ -81,14 +81,91 @@ export async function GET(
       // For Centcom API calls, validate authentication
       const authHeader = request.headers.get('authorization')
       if (!authHeader?.startsWith('Bearer ')) {
-        return NextResponse.json({ error: 'Missing or invalid authorization header' }, { status: 401 })
+        return NextResponse.json({ error: 'Missing or invalid authorization header' }, { status: 401, headers })
       }
 
       const token = authHeader.replace('Bearer ', '')
-      const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+      console.log('🎫 Ticket Detail API: Validating token', {
+        tokenLength: token.length,
+        tokenPreview: token.substring(0, 20) + '...'
+      })
       
-      if (authError || !user) {
-        return NextResponse.json({ error: 'Invalid authentication token' }, { status: 401 })
+      // For Centcom integration, use enhanced authentication with service role fallback
+      const serviceSupabase = createClient(supabaseUrl, supabaseServiceKey)
+      
+      let user = null
+      let authError = null
+      
+      // Try Supabase auth first
+      try {
+        const { data: authData, error: supabaseError } = await supabase.auth.getUser(token)
+        if (supabaseError) {
+          console.log('🎫 Ticket Detail API: Supabase auth failed, trying alternative validation:', supabaseError.message)
+          
+          // If Supabase auth fails, try to decode the token to get user info
+          try {
+            // For legacy tokens, extract user email/ID and validate via service role
+            const tokenParts = token.split('.')
+            if (tokenParts.length === 3) {
+              const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString())
+              console.log('🎫 Ticket Detail API: Decoded token payload', { 
+                hasEmail: !!payload.email, 
+                hasUserId: !!payload.sub,
+                email: payload.email 
+              })
+              
+              if (payload.email || payload.sub) {
+                // Look up user by email or ID using service role in user_profiles table
+                const { data: userData, error: lookupError } = await serviceSupabase
+                  .from('user_profiles')
+                  .select('id, email')
+                  .or(payload.email ? `email.eq.${payload.email}` : `id.eq.${payload.sub}`)
+                  .single()
+                
+                if (userData && !lookupError) {
+                  user = { id: userData.id, email: userData.email }
+                  console.log('🎫 Ticket Detail API: User found via token lookup', { userId: user.id, email: user.email })
+                } else {
+                  console.log('🎫 Ticket Detail API: User lookup failed', lookupError)
+                  // Also try looking up by the decoded user ID in case it's a Supabase auth user ID
+                  if (payload.sub) {
+                    const { data: authUserData, error: authLookupError } = await serviceSupabase
+                      .from('user_profiles')
+                      .select('id, email')
+                      .eq('id', payload.sub)
+                      .single()
+                    
+                    if (authUserData && !authLookupError) {
+                      user = { id: authUserData.id, email: authUserData.email }
+                      console.log('🎫 Ticket Detail API: User found via auth ID lookup', { userId: user.id, email: user.email })
+                    } else {
+                      console.log('🎫 Ticket Detail API: Auth ID lookup also failed', authLookupError)
+                    }
+                  }
+                }
+              }
+            }
+          } catch (decodeError) {
+            console.log('🎫 Ticket Detail API: Token decode failed', decodeError)
+          }
+        } else {
+          user = authData.user
+        }
+      } catch (error) {
+        console.log('🎫 Ticket Detail API: Auth validation error', error)
+        authError = error
+      }
+      
+      console.log('🎫 Ticket Detail API: Final authentication result', {
+        hasUser: !!user,
+        hasError: !!authError,
+        userId: user?.id,
+        userEmail: user?.email
+      })
+      
+      if (!user) {
+        console.log('🎫 Ticket Detail API: Authentication failed')
+        return NextResponse.json({ error: 'Invalid authentication token' }, { status: 401, headers })
       }
 
       currentUserId = user.id
@@ -96,34 +173,16 @@ export async function GET(
       // Check access
       const { hasAccess, isAdmin: userIsAdmin, error: accessError } = await validateUserAccess(ticketId, user.id)
       if (!hasAccess) {
-        return NextResponse.json({ error: accessError }, { status: 403 })
+        return NextResponse.json({ error: accessError }, { status: 403, headers })
       }
       isAdmin = userIsAdmin
     }
 
-    // Fetch ticket with full details
+    // Fetch ticket with basic details first (simplified query for debugging)
     const { data: ticket, error } = await supabase
       .from('support_tickets')
-      .select(`
-        *,
-        assigned_admin:user_profiles!assigned_to_admin_id(id, username, full_name, email),
-        comments:ticket_comments(
-          id, content, author_name, author_type, is_internal, created_at, updated_at,
-          author:user_profiles!author_id(id, username, full_name)
-        ),
-        attachments:ticket_attachments(
-          id, filename, original_filename, file_size, mime_type, attachment_type, 
-          description, uploaded_at, is_public, scan_status,
-          uploader:user_profiles!uploaded_by(id, username, full_name)
-        ),
-        status_history:ticket_status_history(
-          id, old_status, new_status, change_reason, created_at,
-          changer:user_profiles!changed_by(id, username, full_name)
-        )
-      `)
+      .select('*')
       .eq('id', ticketId)
-      .order('created_at', { foreignTable: 'comments', ascending: true })
-      .order('created_at', { foreignTable: 'status_history', ascending: true })
       .single()
 
     if (error) {

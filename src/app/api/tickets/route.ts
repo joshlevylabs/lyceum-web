@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
             // For legacy tokens, extract user email/ID and validate via service role
             const tokenParts = token.split('.')
             if (tokenParts.length === 3) {
-              const payload = JSON.parse(atob(tokenParts[1]))
+              const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString())
               console.log('🎫 Ticket API: Decoded token payload', { 
                 hasEmail: !!payload.email, 
                 hasUserId: !!payload.sub,

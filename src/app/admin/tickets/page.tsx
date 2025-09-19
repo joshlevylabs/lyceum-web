@@ -10,7 +10,6 @@ import {
   PaperClipIcon,
   CalendarIcon,
   UserIcon,
-  ExclamationTriangleIcon,
   CheckCircleIcon,
   ClockIcon,
   TagIcon,
@@ -19,6 +18,18 @@ import {
   ChevronRightIcon,
   TicketIcon
 } from '@heroicons/react/24/outline'
+import { useRouter } from 'next/navigation'
+
+// Custom Bug Icon Component
+const BugIcon = ({ className }: { className?: string }) => (
+  <svg 
+    className={className} 
+    fill="currentColor" 
+    viewBox="0 0 24 24"
+  >
+    <path d="M12 2c-1.1 0-2 .9-2 2 0 .74.4 1.38 1 1.73V7h2V5.73c.6-.35 1-.99 1-1.73 0-1.1-.9-2-2-2zm-4 7.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5V11h2v-.5c0-1.93-1.57-3.5-3.5-3.5h-5C7.57 7 6 8.57 6 10.5V11h2v-.5zM5 12v1.5c0 .83.67 1.5 1.5 1.5h1v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V15h2v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V15h1c.83 0 1.5-.67 1.5-1.5V12h2v1.5c0 1.93-1.57 3.5-3.5 3.5h-1v1.5c0 1.93-1.57 3.5-3.5 3.5s-3.5-1.57-3.5-3.5V17h-1C4.57 17 3 15.43 3 13.5V12h2z"/>
+  </svg>
+)
 
 interface Ticket {
   id: string
@@ -31,19 +42,56 @@ interface Ticket {
   severity?: 'critical' | 'major' | 'minor' | 'cosmetic'
   username: string
   email: string
+  user_id: string
+  
+  // Application Context
   application_section: string
   plugin_name?: string
   centcom_version?: string
+  
+  // Bug Report Fields
+  steps_to_reproduce?: string
+  expected_behavior?: string
+  actual_behavior?: string
+  reproduction_rate?: 'always' | 'sometimes' | 'rarely' | 'once'
+  
+  // Environment Information
+  environment_info?: {
+    os?: string
+    browser?: string
+    screen_resolution?: string
+    memory?: string
+    network?: string
+    additional_notes?: string
+  }
+  
+  // Metadata
+  tags: string[]
   created_at: string
   updated_at: string
+  resolved_at?: string
+  closed_at?: string
+  
+  // Assignment & Workflow
+  assigned_to_admin_id?: string
+  assigned_at?: string
   assigned_admin?: {
     id: string
     username: string
     full_name: string
   }
+  resolution?: string
+  internal_notes?: string
+  
+  // Additional Fields
+  estimated_effort_hours?: number
+  actual_effort_hours?: number
+  user_satisfaction_rating?: number
+  user_satisfaction_feedback?: string
+  
+  // Computed Fields
   comments_count?: [{ count: number }]
   attachments_count?: [{ count: number }]
-  tags: string[]
 }
 
 interface Filters {
@@ -51,6 +99,8 @@ interface Filters {
   status: string
   ticket_type: string
   priority: string
+  severity: string
+  application_section: string
   assigned_to: string
 }
 
@@ -79,6 +129,20 @@ const priorityLabels = {
   low: 'Low'
 }
 
+const severityLabels = {
+  critical: 'Critical',
+  major: 'Major',
+  minor: 'Minor',
+  cosmetic: 'Cosmetic'
+}
+
+const reproductionRateLabels = {
+  always: 'Always',
+  sometimes: 'Sometimes',
+  rarely: 'Rarely',
+  once: 'Once'
+}
+
 const getStatusColor = (status: string) => {
   switch (status) {
     case 'open': return 'bg-red-100 text-red-800'
@@ -102,9 +166,29 @@ const getPriorityColor = (priority: string) => {
   }
 }
 
+const getSeverityColor = (severity?: string) => {
+  switch (severity) {
+    case 'critical': return 'bg-red-100 text-red-800'
+    case 'major': return 'bg-orange-100 text-orange-800'
+    case 'minor': return 'bg-yellow-100 text-yellow-800'
+    case 'cosmetic': return 'bg-green-100 text-green-800'
+    default: return 'bg-gray-100 text-gray-800'
+  }
+}
+
+const getReproductionRateColor = (rate?: string) => {
+  switch (rate) {
+    case 'always': return 'bg-red-100 text-red-800'
+    case 'sometimes': return 'bg-orange-100 text-orange-800'
+    case 'rarely': return 'bg-yellow-100 text-yellow-800'
+    case 'once': return 'bg-green-100 text-green-800'
+    default: return 'bg-gray-100 text-gray-800'
+  }
+}
+
 const getTypeIcon = (type: string) => {
   switch (type) {
-    case 'bug': return <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
+    case 'bug': return <BugIcon className="h-4 w-4 text-red-500" />
     case 'feature_request': return <CheckCircleIcon className="h-4 w-4 text-blue-500" />
     case 'improvement': return <AdjustmentsHorizontalIcon className="h-4 w-4 text-purple-500" />
     case 'support': return <ChatBubbleLeftRightIcon className="h-4 w-4 text-green-500" />
@@ -114,6 +198,7 @@ const getTypeIcon = (type: string) => {
 
 export default function AdminTicketsPage() {
   const { user } = useAuth()
+  const router = useRouter()
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -125,6 +210,8 @@ export default function AdminTicketsPage() {
     status: '',
     ticket_type: '',
     priority: '',
+    severity: '',
+    application_section: '',
     assigned_to: ''
   })
 
@@ -190,7 +277,7 @@ export default function AdminTicketsPage() {
 
   useEffect(() => {
     loadTickets()
-  }, [user, filters.status, filters.ticket_type, filters.priority, filters.assigned_to])
+  }, [user, filters.status, filters.ticket_type, filters.priority, filters.severity, filters.application_section, filters.assigned_to])
 
   const handleFilterChange = (key: keyof Filters, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }))
@@ -260,6 +347,11 @@ export default function AdminTicketsPage() {
       console.error('Error updating ticket status:', err)
       alert('Failed to update ticket status')
     }
+  }
+
+  const openTicketView = (ticket: Ticket) => {
+    // Navigate to the ticket detail page
+    router.push(`/admin/tickets/${ticket.id}`)
   }
 
   if (loading && tickets.length === 0) {
@@ -347,7 +439,7 @@ export default function AdminTicketsPage() {
                 type="text"
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
-                placeholder="Search tickets by key, title, description, or username..."
+                placeholder="Search tickets by key, title, description, username, application, or tags..."
                 className="pl-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -362,7 +454,7 @@ export default function AdminTicketsPage() {
 
         {showFilters && (
           <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                 <select
@@ -403,6 +495,35 @@ export default function AdminTicketsPage() {
                 </select>
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Severity</label>
+                <select
+                  value={filters.severity}
+                  onChange={(e) => handleFilterChange('severity', e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Severities</option>
+                  {Object.entries(severityLabels).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Application</label>
+                <select
+                  value={filters.application_section}
+                  onChange={(e) => handleFilterChange('application_section', e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Applications</option>
+                  <option value="main_application">Main Application</option>
+                  <option value="data_export">Data Export</option>
+                  <option value="reports">Reports</option>
+                  <option value="settings">Settings</option>
+                  <option value="plugins">Plugins</option>
+                  <option value="integrations">Integrations</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
                 <select
                   value={filters.assigned_to}
@@ -425,10 +546,16 @@ export default function AdminTicketsPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ticket
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                  View
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                  Key
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Title
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
                   Type
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -436,6 +563,15 @@ export default function AdminTicketsPage() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Priority
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Severity
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Tags
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Application
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Submitter
@@ -446,44 +582,111 @@ export default function AdminTicketsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Activity
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredTickets.map((ticket) => (
                 <tr key={ticket.id} className="hover:bg-gray-50">
+                  {/* View Button Column */}
+                  <td className="px-4 py-4 whitespace-nowrap text-center">
+                    <button
+                      onClick={() => openTicketView(ticket)}
+                      className="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50"
+                      title="View ticket details"
+                    >
+                      <EyeIcon className="h-5 w-5" />
+                    </button>
+                  </td>
+                  
+                  {/* Key Column */}
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="flex items-center">
-                        <span className="text-sm font-medium text-blue-600">{ticket.ticket_key}</span>
-                        <div className={`ml-2 w-2 h-2 rounded-full ${getPriorityColor(ticket.priority)}`}></div>
-                      </div>
-                      <div className="text-sm text-gray-900 font-medium mt-1 max-w-xs truncate">
+                    <div className="flex items-center">
+                      <span className="text-sm font-medium text-blue-600">{ticket.ticket_key}</span>
+                      <div className={`ml-2 w-2 h-2 rounded-full ${getPriorityColor(ticket.priority)}`}></div>
+                    </div>
+                  </td>
+                  
+                  {/* Title Column */}
+                  <td className="px-6 py-4">
+                    <div className="max-w-xs">
+                      <div className="text-sm text-gray-900 font-medium truncate">
                         {ticket.title}
                       </div>
-                      <div className="text-sm text-gray-500 max-w-xs truncate">
+                      <div className="text-sm text-gray-500 truncate">
                         {ticket.description}
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
+                  
+                  {/* Type Icon Column */}
+                  <td className="px-4 py-4 whitespace-nowrap text-center">
+                    <div title={ticketTypeLabels[ticket.ticket_type]}>
                       {getTypeIcon(ticket.ticket_type)}
-                      <span className="ml-2 text-sm text-gray-900">
-                        {ticketTypeLabels[ticket.ticket_type]}
-                      </span>
                     </div>
                   </td>
+                  
+                  {/* Status Column */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(ticket.status)}`}>
                       {statusLabels[ticket.status]}
                     </span>
                   </td>
+                  
+                  {/* Priority Column */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {priorityLabels[ticket.priority]}
                   </td>
+                  
+                  {/* Severity Column */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {ticket.severity ? (
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getSeverityColor(ticket.severity)}`}>
+                        {severityLabels[ticket.severity]}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">-</span>
+                    )}
+                  </td>
+
+                  {/* Tags Column */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex flex-wrap gap-1">
+                      {ticket.tags && ticket.tags.length > 0 ? (
+                        ticket.tags.slice(0, 3).map((tag, index) => (
+                          <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <TagIcon className="h-3 w-3 mr-1" />
+                            {tag}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-xs text-gray-400">-</span>
+                      )}
+                      {ticket.tags && ticket.tags.length > 3 && (
+                        <span className="text-xs text-gray-500">+{ticket.tags.length - 3}</span>
+                      )}
+                    </div>
+                  </td>
+                  
+                  {/* Application Column */}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {ticket.application_section || 'Main Application'}
+                      </div>
+                      {ticket.plugin_name && (
+                        <div className="text-xs text-gray-500">
+                          📦 {ticket.plugin_name}
+                        </div>
+                      )}
+                      {ticket.centcom_version && (
+                        <div className="text-xs text-gray-500">
+                          v{ticket.centcom_version}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  
+                  {/* Submitter Column */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <UserIcon className="h-4 w-4 text-gray-400 mr-2" />
@@ -493,12 +696,16 @@ export default function AdminTicketsPage() {
                       </div>
                     </div>
                   </td>
+                  
+                  {/* Created Column */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center text-sm text-gray-900">
                       <CalendarIcon className="h-4 w-4 text-gray-400 mr-2" />
                       {new Date(ticket.created_at).toLocaleDateString()}
                     </div>
                   </td>
+                  
+                  {/* Activity Column */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-3">
                       <div className="flex items-center text-sm text-gray-500">
@@ -511,25 +718,7 @@ export default function AdminTicketsPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center space-x-2">
-                      <select
-                        value={ticket.status}
-                        onChange={(e) => updateTicketStatus(ticket.id, e.target.value)}
-                        className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        {Object.entries(statusLabels).map(([value, label]) => (
-                          <option key={value} value={value}>{label}</option>
-                        ))}
-                      </select>
-                      <button
-                        onClick={() => setSelectedTicket(ticket)}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        <EyeIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
+                  
                 </tr>
               ))}
             </tbody>
@@ -564,63 +753,6 @@ export default function AdminTicketsPage() {
         </div>
       )}
 
-      {/* Ticket Detail Modal - You would implement this as a separate component */}
-      {selectedTicket && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-xl font-bold">{selectedTicket.ticket_key}: {selectedTicket.title}</h2>
-              <button
-                onClick={() => setSelectedTicket(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="text-sm font-medium text-gray-500">Status:</span>
-                  <span className={`ml-2 inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(selectedTicket.status)}`}>
-                    {statusLabels[selectedTicket.status]}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-500">Priority:</span>
-                  <span className="ml-2 text-sm">{priorityLabels[selectedTicket.priority]}</span>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-500">Type:</span>
-                  <span className="ml-2 text-sm">{ticketTypeLabels[selectedTicket.ticket_type]}</span>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-500">Submitter:</span>
-                  <span className="ml-2 text-sm">{selectedTicket.username} ({selectedTicket.email})</span>
-                </div>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-500">Description:</span>
-                <div className="mt-1 text-sm text-gray-900 bg-gray-50 p-3 rounded">
-                  {selectedTicket.description}
-                </div>
-              </div>
-              {selectedTicket.tags.length > 0 && (
-                <div>
-                  <span className="text-sm font-medium text-gray-500">Tags:</span>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {selectedTicket.tags.map((tag, index) => (
-                      <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        <TagIcon className="h-3 w-3 mr-1" />
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Setup Instructions Modal */}
       {setupInstructions && (
