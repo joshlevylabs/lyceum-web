@@ -182,3 +182,7 @@ Redirecting to login with success message...    // ← Should be immediate now!
 
 **Test the complete flow now - the submit button should stop spinning immediately after "Password updated successfully via API!" and redirect quickly to the login page! 🎉**
 
+
+
+
+

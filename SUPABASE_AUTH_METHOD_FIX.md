@@ -146,3 +146,7 @@ The `getSessionFromUrl is not a function` error is now completely resolved!
 
 **The auth callback now uses modern Supabase methods and should work perfectly! 🚀**
 
+
+
+
+

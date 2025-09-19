@@ -63,3 +63,7 @@ SET database_clusters_count = (
 -- To get actual user IDs, run this query in Supabase SQL Editor:
 -- SELECT id, email FROM auth.users LIMIT 10;
 
+
+
+
+

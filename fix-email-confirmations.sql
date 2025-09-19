@@ -20,3 +20,7 @@ UPDATE auth.users
 SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb) || '{"email_confirmed": true}'::jsonb
 WHERE email_confirmed_at IS NOT NULL;
 
+
+
+
+

@@ -157,19 +157,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Clean up timestamp and UUID fields - convert empty strings to null
+    const cleanScheduledAt = scheduled_at && scheduled_at.trim() !== '' ? scheduled_at : null
+    const cleanAssignedAdminId = assigned_admin_id && assigned_admin_id.trim() !== '' ? assigned_admin_id : null
+    const cleanLicenseId = license_id && license_id.trim() !== '' ? license_id : null
+    const cleanLicenseKeyId = license_key_id && license_key_id.trim() !== '' ? license_key_id : null
+
     const sessionData = {
       user_id,
-      license_id: license_id || null,
-      license_key_id: license_key_id || null,
+      license_id: cleanLicenseId,
+      license_key_id: cleanLicenseKeyId,
       plugin_id,
       session_type,
       session_number,
       title,
       description: description || `Onboarding session ${session_number} for ${plugin_id}`,
       duration_minutes,
-      scheduled_at: scheduled_at || null,
-      assigned_admin_id: assigned_admin_id || null,
-      status: scheduled_at ? 'scheduled' : 'pending',
+      scheduled_at: cleanScheduledAt,
+      assigned_admin_id: cleanAssignedAdminId,
+      status: cleanScheduledAt ? 'scheduled' : 'pending',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
@@ -177,20 +183,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from('onboarding_sessions')
       .insert([sessionData])
-      .select(`
-        *,
-        user_profiles!user_id (
-          id,
-          email,
-          full_name,
-          company
-        ),
-        assigned_admin:user_profiles!assigned_admin_id (
-          id,
-          email,
-          full_name
-        )
-      `)
+      .select('*')
       .single()
 
     if (error) {
@@ -223,35 +216,37 @@ export async function PUT(request: NextRequest) {
       )
     }
 
+    // Clean up timestamp and UUID fields - convert empty strings to null
+    const cleanedUpdateData = { ...updateData }
+    Object.keys(cleanedUpdateData).forEach(key => {
+      if (typeof cleanedUpdateData[key] === 'string') {
+        // Handle timestamp fields
+        if (key.includes('_at') || key === 'scheduled_at') {
+          cleanedUpdateData[key] = cleanedUpdateData[key].trim() !== '' ? cleanedUpdateData[key] : null
+        }
+        // Handle UUID fields
+        if (key.includes('_id') || key === 'assigned_admin_id') {
+          cleanedUpdateData[key] = cleanedUpdateData[key].trim() !== '' ? cleanedUpdateData[key] : null
+        }
+      }
+    })
+
     // Add updated timestamp
-    updateData.updated_at = new Date().toISOString()
+    cleanedUpdateData.updated_at = new Date().toISOString()
 
     // Handle status changes
-    if (updateData.status === 'completed' && !updateData.completed_at) {
-      updateData.completed_at = new Date().toISOString()
+    if (cleanedUpdateData.status === 'completed' && !cleanedUpdateData.completed_at) {
+      cleanedUpdateData.completed_at = new Date().toISOString()
     }
-    if (updateData.status === 'in_progress' && !updateData.started_at) {
-      updateData.started_at = new Date().toISOString()
+    if (cleanedUpdateData.status === 'in_progress' && !cleanedUpdateData.started_at) {
+      cleanedUpdateData.started_at = new Date().toISOString()
     }
 
     const { data, error } = await supabase
       .from('onboarding_sessions')
-      .update(updateData)
+      .update(cleanedUpdateData)
       .eq('id', session_id)
-      .select(`
-        *,
-        user_profiles!user_id (
-          id,
-          email,
-          full_name,
-          company
-        ),
-        assigned_admin:user_profiles!assigned_admin_id (
-          id,
-          email,
-          full_name
-        )
-      `)
+      .select('*')
       .single()
 
     if (error) {

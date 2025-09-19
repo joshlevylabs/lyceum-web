@@ -362,3 +362,7 @@ SELECT 'License compatibility rules setup complete!' as status,
        COUNT(*) as total_rules_added  
 FROM public.license_version_compatibility;
 
+
+
+
+

@@ -178,3 +178,7 @@ async function checkVersionCompatibility(supabase: any, licenseType: string, plu
   }
 }
 
+
+
+
+

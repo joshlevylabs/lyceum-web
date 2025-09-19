@@ -288,3 +288,7 @@ taskkill /f /im node.exe
 
 **Test the protected application now - you should need to login to access the dashboard, and your name should appear in the sidebar user section! 🚀**
 
+
+
+
+

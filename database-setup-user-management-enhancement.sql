@@ -179,3 +179,7 @@ GRANT SELECT ON public.user_resource_usage TO authenticated;
 GRANT SELECT ON public.user_database_clusters TO authenticated;
 GRANT SELECT ON public.user_license_assignments TO authenticated;
 
+
+
+
+

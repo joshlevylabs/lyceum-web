@@ -43,47 +43,88 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch authentication logs for session history (including CentCom logins)
-    const { data: authLogs, error: authError } = await supabase
-      .from('auth_logs')
-      .select(`
-        id,
-        event_type,
-        app_id,
-        client_info,
-        ip_address,
-        success,
-        error_message,
-        session_type,
-        application_type,
-        created_at
-      `)
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(100)
+    let authLogs = []
+    try {
+      const { data: authData, error: authError } = await supabase
+        .from('auth_logs')
+        .select(`
+          id,
+          event_type,
+          app_id,
+          client_info,
+          ip_address,
+          success,
+          error_message,
+          created_at
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(100)
 
-    if (authError) {
-      console.error('Error fetching auth logs:', authError)
+      if (authError) {
+        console.error('Error fetching auth logs:', authError.message)
+        // If table doesn't exist, try to get data from Supabase auth system directly
+      } else {
+        authLogs = authData || []
+      }
+    } catch (err) {
+      console.error('Auth logs table might not exist:', err)
     }
 
     // Fetch user activity logs for additional session information
-    const { data: activityLogs, error: activityError } = await supabase
-      .from('user_activity_logs')
-      .select(`
-        id,
-        activity_type,
-        description,
-        ip_address,
-        user_agent,
-        metadata,
-        created_at
-      `)
-      .eq('user_id', userId)
-      .in('activity_type', ['login', 'logout', 'session_start', 'session_end', 'password_change', 'profile_update'])
-      .order('created_at', { ascending: false })
-      .limit(100)
+    let activityLogs = []
+    try {
+      const { data: activityData, error: activityError } = await supabase
+        .from('user_activity_logs')
+        .select(`
+          id,
+          activity_type,
+          description,
+          ip_address,
+          user_agent,
+          metadata,
+          created_at
+        `)
+        .eq('user_id', userId)
+        .in('activity_type', ['login', 'logout', 'session_start', 'session_end', 'password_change', 'profile_update'])
+        .order('created_at', { ascending: false })
+        .limit(100)
 
-    if (activityError) {
-      console.error('Error fetching activity logs:', activityError)
+      if (activityError) {
+        console.error('Error fetching activity logs:', activityError.message)
+      } else {
+        activityLogs = activityData || []
+      }
+    } catch (err) {
+      console.error('Activity logs table might not exist:', err)
+    }
+
+    // Try to get auth sessions from Supabase auth.sessions if available
+    let authSessions = []
+    try {
+      const { data: authUser, error: authUserError } = await supabase.auth.admin.getUserById(userId)
+      if (authUser?.user && !authUserError) {
+        // Get last sign in time from auth.users
+        const lastSignIn = authUser.user.last_sign_in_at
+        
+        if (lastSignIn) {
+          // Create mock session data based on auth information
+          authSessions.push({
+            id: `auth_session_${userId}`,
+            type: 'web_login',
+            event: 'login',
+            app_id: 'lyceum-web',
+            application_type: 'Web Lyceum', 
+            ip_address: 'Unknown',
+            user_agent: 'Web Browser',
+            success: true,
+            created_at: lastSignIn,
+            session_type: 'web'
+          })
+        }
+      }
+    } catch (err) {
+      console.error('Error getting auth user data:', err)
     }
 
     // Get current active sessions count (estimate based on recent activity)
@@ -112,36 +153,39 @@ export async function GET(request: NextRequest) {
       new Date(session.last_accessed) <= new Date(twentyFourHoursAgo)
     )
 
+    // Combine auth logs and auth sessions data
+    const allAuthData = [...authLogs, ...authSessions]
+
     // Separate CentCom and web Lyceum sessions
-    const centcomSessions = (authLogs || []).filter(log => 
-      (log.event_type === 'login' || log.event_type === 'authentication') &&
-      (log.app_id === 'centcom' || log.application_type === 'centcom' || log.session_type === 'centcom')
+    const centcomSessions = allAuthData.filter(log => 
+      (log.event_type === 'login' || log.event_type === 'authentication' || log.type === 'centcom_login') &&
+      (log.app_id === 'centcom' || log.application_type === 'centcom' || log.session_type === 'centcom' || log.type === 'centcom_login')
     ).map(log => ({
       id: log.id,
       type: 'centcom_login',
-      event: log.event_type,
+      event: log.event_type || log.event || 'login',
       app_id: log.app_id || 'centcom',
       application_type: 'CentCom Native',
-      ip_address: log.ip_address,
-      user_agent: log.client_info?.user_agent || 'CentCom Desktop',
-      success: log.success,
+      ip_address: log.ip_address || 'Unknown',
+      user_agent: log.client_info?.user_agent || log.user_agent || 'CentCom Desktop',
+      success: log.success !== false,
       created_at: log.created_at,
       client_info: log.client_info,
       session_type: log.session_type || 'native'
     }))
 
-    const webSessions = (authLogs || []).filter(log => 
-      (log.event_type === 'login' || log.event_type === 'authentication') &&
-      (log.app_id !== 'centcom' && log.application_type !== 'centcom' && log.session_type !== 'centcom')
+    const webSessions = allAuthData.filter(log => 
+      (log.event_type === 'login' || log.event_type === 'authentication' || log.type === 'web_login') &&
+      (log.app_id !== 'centcom' && log.application_type !== 'centcom' && log.session_type !== 'centcom' && log.type !== 'centcom_login')
     ).map(log => ({
       id: log.id,
       type: 'web_login',
-      event: log.event_type,
+      event: log.event_type || log.event || 'login',
       app_id: log.app_id || 'lyceum-web',
       application_type: 'Web Lyceum',
-      ip_address: log.ip_address,
-      user_agent: log.client_info?.user_agent || 'Web Browser',
-      success: log.success,
+      ip_address: log.ip_address || 'Unknown',
+      user_agent: log.client_info?.user_agent || log.user_agent || 'Web Browser',
+      success: log.success !== false,
       created_at: log.created_at,
       client_info: log.client_info,
       session_type: log.session_type || 'web'

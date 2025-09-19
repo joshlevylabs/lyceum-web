@@ -267,7 +267,7 @@ export default function EmailDebugPage() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {diagnostics.diagnostics?.users_detail?.map((user: any) => (
-                    <tr key={user.id}>
+                    <tr key={`email-user-${user.id}`}>
                       <td className="px-3 py-2 text-sm text-gray-900">{user.email}</td>
                       <td className="px-3 py-2 text-sm">
                         {user.confirmed_at ? (

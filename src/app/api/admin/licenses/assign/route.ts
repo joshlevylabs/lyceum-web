@@ -19,49 +19,40 @@ export async function POST(req: NextRequest) {
     }
     if (!targetEmail) return NextResponse.json({ success: false, error: 'target email not found' }, { status: 400 })
 
-    // Try to update in both tables for compatibility
-    let data = null
-    let error = null
+    // Get user ID if email was provided
+    let targetUserId = user_id
+    if (!targetUserId && targetEmail) {
+      const { data: userData, error: userError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('email', targetEmail)
+        .single()
+      
+      if (userData) {
+        targetUserId = userData.id
+      } else {
+        console.warn('User not found for email:', targetEmail)
+        return NextResponse.json({ success: false, error: 'User not found' }, { status: 400 })
+      }
+    }
 
-    // First try the 'licenses' table (Centcom format)
-    const { data: centcomData, error: centcomError } = await supabase
-      .from('licenses')
+    // Update license_keys table only
+    const { data, error } = await supabase
+      .from('license_keys')
       .update({ 
-        user_id: user_id || targetEmail,
+        assigned_to: targetUserId,
         assigned_at: new Date().toISOString(),
         status: 'active'
       })
-      .eq('key_id', targetKeyId)
+      .eq('id', targetKeyId)
       .select('*')
       .single()
-
-    if (centcomData) {
-      data = centcomData
-    } else {
-      // Fallback to 'license_keys' table (legacy format)
-      const { data: legacyData, error: legacyError } = await supabase
-        .from('license_keys')
-        .update({ 
-          assigned_to: user_id || targetEmail,
-          assigned_at: new Date().toISOString(),
-          status: 'active'
-        })
-        .eq('id', targetKeyId)
-        .select('*')
-        .single()
-
-      if (legacyData) {
-        data = legacyData
-      } else {
-        error = legacyError || centcomError
-      }
-    }
 
     if (error) return NextResponse.json({ success: false, error: error.message }, { status: 400 })
 
     console.log('License assignment successful:', {
       license_id: targetKeyId,
-      user_id: user_id || targetEmail,
+      user_id: targetUserId,
       assigned_data: data
     })
 

@@ -116,3 +116,7 @@ CREATE POLICY "Service role can manage licenses" ON public.license_keys FOR ALL 
   }
 }
 
+
+
+
+

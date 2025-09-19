@@ -115,3 +115,4 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 GRANT EXECUTE ON FUNCTION calculate_trial_status(UUID, UUID) TO authenticated;
 
 COMMENT ON FUNCTION calculate_trial_status IS 'Calculate trial license status based on onboarding progress and deadlines';
+

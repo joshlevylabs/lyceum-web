@@ -599,12 +599,16 @@ function AssignLicenseModal({ licenseId, onClose, onAssign }: AssignLicenseModal
       setLoading(true)
       const res = await fetch('/api/admin/users/list')
       const json = await res.json()
-      if (json.success) {
+      if (res.ok && !json.error) {
         // Filter out users who already have active licenses for this type
         setUsers(json.users || [])
+      } else {
+        console.error('Failed to load users:', json.error || 'Unknown error')
+        setUsers([])
       }
     } catch (error) {
       console.error('Failed to load users:', error)
+      setUsers([])
     } finally {
       setLoading(false)
     }
@@ -810,7 +814,7 @@ function AssignLicenseModal({ licenseId, onClose, onAssign }: AssignLicenseModal
                 <div className="divide-y divide-gray-200">
                   {filteredUsers.map((user) => (
                     <div
-                      key={user.id}
+                      key={`license-user-${user.id}`}
                       className={`flex items-center p-3 hover:bg-gray-50 cursor-pointer ${
                         selectedUsers.has(user.id) ? 'bg-blue-50 border-l-4 border-blue-500' : ''
                       }`}

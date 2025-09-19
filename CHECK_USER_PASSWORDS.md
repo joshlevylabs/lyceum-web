@@ -160,3 +160,7 @@ Both tables work together - Supabase Auth handles authentication, your database 
 
 *Try the debug API or Supabase dashboard to see all your authenticated users with passwords.*
 
+
+
+
+

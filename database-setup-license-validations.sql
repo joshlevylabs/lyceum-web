@@ -118,3 +118,7 @@ COMMENT ON COLUMN public.license_validations.access_granted IS 'Whether access w
 COMMENT ON COLUMN public.license_validations.client_type IS 'Type of client making the request (centcom, web, api)';
 COMMENT ON VIEW public.license_validation_analytics IS 'Analytics view for license validation success rates and usage patterns';
 
+
+
+
+

@@ -147,3 +147,7 @@ AND ub.billing_period_end >= NOW() - INTERVAL '7 days';
 -- To get actual user IDs for replacement:
 -- SELECT id, email FROM auth.users ORDER BY created_at DESC LIMIT 5;
 
+
+
+
+

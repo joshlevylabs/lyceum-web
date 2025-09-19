@@ -8,24 +8,49 @@ interface LyceumSession {
     id: string
     email: string
     username: string
-    full_name: string
-    role: string
+    roles: string[]
+    license_type: string
+    security_clearance: string
+    organization?: string
+  }
+  session: {
+    access_token: string
+    expires_at: string
+    permissions: string[]
   }
   licenses: Array<{
     id: string
-    plugin_id: string
+    license_category: string
     license_type: string
     status: string
-    features: string[]
+    main_app_permissions: Record<string, boolean>
+    feature_configurations: Record<string, any>
+    usage_limits: Record<string, number>
     expires_at?: string
   }>
-  permissions: {
-    can_access_centcom: boolean
-    plugins: string[]
-    role_permissions: string[]
+  plugins: Array<{
+    id: string
+    plugin_id: string
+    plugin_name: string
+    features: string[]
+    plugin_tier: string
+  }>
+  resources: {
+    storage_used_mb: number
+    storage_limit_mb: number
+    bandwidth_used_mb: number
+    bandwidth_limit_mb: number
+    api_calls_count: number
+    api_calls_limit: number
+    compute_hours_used: number
+    compute_hours_limit: number
   }
-  session_token: string
-  expires_at: string
+  clusters: Array<{
+    id: string
+    cluster_name: string
+    cluster_type: string
+    status: string
+  }>
 }
 
 interface VersionValidation {
@@ -60,8 +85,9 @@ export class LyceumClient {
 
     // Add request interceptor for session tokens
     this.client.interceptors.request.use((config) => {
-      if (this.currentSession?.session_token) {
-        config.headers['X-Session-Token'] = this.currentSession.session_token
+      if (this.currentSession?.session?.access_token) {
+        config.headers['Authorization'] = `Bearer ${this.currentSession.session.access_token}`
+        config.headers['X-Session-Token'] = this.currentSession.session.access_token
         config.headers['X-User-ID'] = this.currentSession.user.id
       }
       return config
@@ -76,18 +102,35 @@ export class LyceumClient {
    */
   async login(email: string, password: string): Promise<LyceumSession> {
     try {
-      const response = await this.client.post('/auth/login', { email, password })
+      const response = await this.client.post('/auth/login', { 
+        email, 
+        password,
+        app_id: 'centcom',
+        client_info: {
+          app_name: 'CentCom',
+          version: '2.1.0',
+          platform: 'windows',
+          build_number: process.env.BUILD_NUMBER || '2024.12.001',
+          os_version: process.env.OS_VERSION || 'Windows 10',
+          machine_id: this.generateMachineId(),
+          user_agent: `Centcom/${process.env.CENTCOM_VERSION || '2.1.0'}`
+        }
+      })
       
       if (!response.data.success) {
         throw new Error(response.data.error || 'Authentication failed')
       }
 
-      this.currentSession = response.data.session
+      this.currentSession = response.data
       this.saveSession()
 
       // Validate Centcom access
-      if (!this.currentSession.permissions.can_access_centcom) {
-        throw new Error('User does not have Centcom access')
+      const hasAnalyticsAccess = this.currentSession.licenses.some(license => 
+        license.main_app_permissions?.analytics_studio === true
+      );
+      
+      if (!hasAnalyticsAccess) {
+        throw new Error('User does not have Analytics Studio access')
       }
 
       return this.currentSession
@@ -95,6 +138,93 @@ export class LyceumClient {
       console.error('Login failed:', error.message)
       throw error
     }
+  }
+
+  /**
+   * Upload Analytics Studio session to Lyceum
+   */
+  async uploadSession(sessionData: {
+    name: string
+    description?: string
+    session_type: string
+    data_bindings: any
+    analytics_state: any
+    collaboration?: any
+    config?: any
+  }): Promise<{ success: boolean; session?: any; error?: string }> {
+    if (!this.currentSession) {
+      throw new Error('Not authenticated')
+    }
+
+    try {
+      const response = await this.client.post('/analytics-sessions', sessionData, {
+        headers: {
+          'X-App-Source': 'centcom'
+        }
+      })
+
+      if (response.data.success) {
+        // Track the upload
+        await this.trackResourceUsage('storage', response.data.sync_info.uploaded_size_mb, 'add')
+        
+        return { 
+          success: true, 
+          session: response.data.session 
+        }
+      } else {
+        return { 
+          success: false, 
+          error: response.data.error || 'Upload failed' 
+        }
+      }
+    } catch (error: any) {
+      return { 
+        success: false, 
+        error: error.message || 'Network error during upload' 
+      }
+    }
+  }
+
+  /**
+   * Get user's session history from Lyceum
+   */
+  async getSessionHistory(): Promise<{ success: boolean; sessions?: any[]; error?: string }> {
+    if (!this.currentSession) {
+      throw new Error('Not authenticated')
+    }
+
+    try {
+      const response = await this.client.get('/user-profiles/sessions?filterType=centcom-sessions')
+      
+      if (response.data.success) {
+        return {
+          success: true,
+          sessions: response.data.sessions
+        }
+      } else {
+        return {
+          success: false,
+          error: response.data.error || 'Failed to fetch sessions'
+        }
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Network error'
+      }
+    }
+  }
+
+  private generateMachineId(): string {
+    // Generate unique machine identifier
+    const systemInfo = [
+      process.platform,
+      process.arch,
+      process.version,
+      new Date().getTimezoneOffset()
+    ].join('-');
+    
+    return Buffer.from(systemInfo).toString('base64').replace(/[^a-zA-Z0-9]/g, '').substring(0, 16);
   }
 
   /**
@@ -159,7 +289,7 @@ export class LyceumClient {
 
     try {
       const response = await this.client.post('/auth/validate', {
-        session_token: this.currentSession.session_token,
+        session_token: this.currentSession.session.access_token,
         user_id: this.currentSession.user.id
       })
 
@@ -464,4 +594,8 @@ async function main() {
 
 // Export for use in Centcom
 export { LyceumClient, CentcomApp }
+
+
+
+
 

@@ -16,9 +16,9 @@ import {
   BellIcon,
   PowerIcon,
   PuzzlePieceIcon,
-  BugAntIcon,
   ArrowLeftIcon,
-  UserIcon
+  UserIcon,
+  TicketIcon
 } from '@heroicons/react/24/outline'
 
 const navigation = [
@@ -28,11 +28,9 @@ const navigation = [
   { name: 'Plugins', href: '/admin/plugins', icon: PuzzlePieceIcon },
   { name: 'Database Clusters', href: '/admin/clusters', icon: CircleStackIcon },
   { name: 'Analytics', href: '/admin/analytics', icon: ChartBarIcon },
+  { name: 'Tickets', href: '/admin/tickets', icon: TicketIcon },
   { name: 'Onboarding', href: '/admin/onboarding', icon: DocumentTextIcon },
   { name: 'System Health', href: '/admin/health', icon: ShieldCheckIcon },
-  { name: 'Test Licensing', href: '/admin/test-licensing', icon: ShieldCheckIcon },
-  { name: 'Debug Licenses', href: '/admin/debug-licenses', icon: BugAntIcon },
-  { name: 'Debug Email', href: '/admin/debug-email', icon: BellIcon },
   { name: 'Settings', href: '/admin/settings', icon: CogIcon },
 ]
 

@@ -263,3 +263,7 @@ COMMENT ON TABLE public.application_versions IS 'Tracks available versions of Ce
 COMMENT ON TABLE public.license_version_compatibility IS 'Defines compatibility rules between license types and application versions';
 COMMENT ON FUNCTION public.check_version_compatibility IS 'Checks if a license type is compatible with a specific plugin version';
 
+
+
+
+

@@ -3,19 +3,19 @@ import { createClient } from '@supabase/supabase-js'
 
 // Force explicit values to avoid environment variable loading issues
 const supabaseUrl = 'https://kffiaqsihldgqdwagook.supabase.co'
-const supabaseServiceKey = ''
+const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4'
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 // GET /api/admin/live-connection/lyceum/[userId] - Get live connection URL for Lyceum portal
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params
     const { searchParams } = new URL(request.url)
     const sessionId = searchParams.get('session_id')
-    const userId = params.userId
 
     if (!userId) {
       return NextResponse.json(
@@ -164,3 +164,4 @@ export async function DELETE(
     )
   }
 }
+

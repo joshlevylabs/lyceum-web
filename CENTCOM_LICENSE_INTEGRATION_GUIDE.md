@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides the CentCom development team with comprehensive guidance on integrating with the new enhanced license system. The system now supports granular feature control, version-based compatibility, and separate licensing for main applications and plugins.
+This document provides the CentCom development team with comprehensive guidance on integrating with the enhanced license system. The system supports granular feature control, version-based compatibility, separate licensing for main applications and plugins, and bidirectional session synchronization with Lyceum.
 
 ## 🔐 Authentication & License Retrieval Flow
 
@@ -14,30 +14,48 @@ sequenceDiagram
     participant L as Lyceum API
     participant S as Supabase
     
-    C->>L: POST /auth/centcom-login
-    Note right of C: { email, password, app_version }
+    C->>L: POST /api/centcom/auth/login
+    Note right of C: { email, password, app_id, client_info }
     L->>S: Authenticate user
     S-->>L: User profile + auth token
-    L->>S: Query user licenses
-    S-->>L: License data
+    L->>S: Query user licenses & resources
+    S-->>L: Complete license data
     L-->>C: Authentication response with licenses
+    Note left of L: Includes session token, permissions, and resources
 ```
 
-### 2. License Data Retrieval
+### 2. Session Synchronization Flow
 
-After successful authentication, CentCom will receive a comprehensive license object containing all necessary permissions and configurations.
+```mermaid
+sequenceDiagram
+    participant C as CentCom App
+    participant L as Lyceum API
+    participant S as Supabase
+    
+    C->>L: POST /api/analytics-sessions
+    Note right of C: Upload Analytics Studio session
+    L->>S: Store session data
+    S-->>L: Session stored
+    L-->>C: Session ID + sync confirmation
+    
+    C->>L: GET /api/user-profiles/sessions
+    Note right of C: Retrieve session history
+    L->>S: Query session data
+    S-->>L: Session list
+    L-->>C: Complete session history
+```
 
 ## 🛠️ API Integration
 
 ### Authentication Endpoint
 
-**POST** `/api/auth/centcom-login`
+**POST** `/api/centcom/auth/login`
 
 **Request Headers:**
 ```http
 Content-Type: application/json
-User-Agent: CentCom/1.0.3 (Windows NT 10.0; Win64; x64)
-X-Client-Version: 1.0.3
+User-Agent: CentCom/2.1.0 (Windows NT 10.0; Win64; x64)
+X-Client-Version: 2.1.0
 ```
 
 **Request Body:**
@@ -45,13 +63,15 @@ X-Client-Version: 1.0.3
 {
   "email": "user@company.com",
   "password": "userPassword",
-  "app_version": "1.0.3",
+  "app_id": "centcom",
   "client_info": {
     "app_name": "CentCom",
+    "version": "2.1.0",
     "platform": "windows",
     "build_number": "2024.12.001",
     "os_version": "Windows 10",
-    "machine_id": "unique-machine-identifier"
+    "machine_id": "unique-machine-identifier",
+    "user_agent": "CentCom/2.1.0 (Windows NT 10.0; Win64; x64)"
   }
 }
 ```
@@ -63,14 +83,17 @@ X-Client-Version: 1.0.3
   "user": {
     "id": "user-uuid",
     "email": "user@company.com",
-    "profile": {
-      "first_name": "John",
-      "last_name": "Doe",
-      "company": "Audio Corp",
-      "role": "engineer"
-    }
+    "username": "user_name",
+    "roles": ["user", "engineer"],
+    "license_type": "professional",
+    "security_clearance": "internal",
+    "organization": "Audio Corp"
   },
-  "session_token": "jwt-session-token",
+  "session": {
+    "access_token": "jwt-session-token",
+    "expires_at": "2025-01-02T00:00:00Z",
+    "permissions": ["project_create", "data_analysis", "export_data"]
+  },
   "licenses": [
     {
       "id": "license-uuid",
@@ -78,7 +101,7 @@ X-Client-Version: 1.0.3
       "license_category": "main_application",
       "license_type": "professional",
       "status": "active",
-      "main_app_version": "1.0.3",
+      "main_app_version": "2.1.0",
       "main_app_permissions": {
         "test_data": true,
         "data_visualization": true,
@@ -139,7 +162,183 @@ X-Client-Version: 1.0.3
         "custom_protocols": 5
       }
     }
+  ],
+  "resources": {
+    "storage_used_mb": 1024,
+    "storage_limit_mb": 10240,
+    "bandwidth_used_mb": 512,
+    "bandwidth_limit_mb": 51200,
+    "api_calls_count": 1500,
+    "api_calls_limit": 10000,
+    "compute_hours_used": 25,
+    "compute_hours_limit": 100
+  },
+  "clusters": [
+    {
+      "id": "cluster_id",
+      "cluster_name": "Production DB",
+      "cluster_type": "postgresql",
+      "status": "active",
+      "region": "us-east-1",
+      "storage_size_mb": 10240
+    }
   ]
+}
+```
+
+### Analytics Studio Session Integration
+
+**POST** `/api/analytics-sessions`
+
+Upload Analytics Studio sessions from CentCom to Lyceum for cloud synchronization.
+
+**Request Headers:**
+```http
+Content-Type: application/json
+Authorization: Bearer jwt-session-token
+X-Client-Version: 2.1.0
+X-App-Source: centcom
+```
+
+**Request Body:**
+```json
+{
+  "name": "Frequency Response Analysis",
+  "description": "Production unit testing analysis",
+  "session_type": "exploratory",
+  "data_bindings": {
+    "primary_dataset": "production_batch_001",
+    "reference_data": "golden_reference_v2",
+    "measurement_setup": {
+      "frequency_range": [20, 20000],
+      "sample_rate": 48000,
+      "measurement_duration": 60
+    }
+  },
+  "analytics_state": {
+    "current_view": "frequency_domain",
+    "filters_applied": ["high_pass_20hz", "notch_60hz"],
+    "analysis_algorithms": ["fft_analysis", "thd_calculation"],
+    "visualization_settings": {
+      "plot_type": "magnitude_phase",
+      "axis_scaling": "log_frequency",
+      "color_scheme": "viridis"
+    }
+  },
+  "collaboration": {
+    "shared_with": [],
+    "permissions": "private",
+    "comments": [],
+    "annotations": []
+  },
+  "config": {
+    "auto_save_interval": 300,
+    "backup_enabled": true,
+    "export_preferences": {
+      "default_format": "pdf",
+      "include_raw_data": true,
+      "compression_level": "medium"
+    }
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "session": {
+    "id": "session-uuid",
+    "name": "Frequency Response Analysis",
+    "status": "active",
+    "created_at": "2025-01-01T12:00:00Z",
+    "last_modified": "2025-01-01T12:00:00Z",
+    "sync_status": "synchronized",
+    "lyceum_url": "https://thelyceum.io/analytics-studio/session/session-uuid"
+  },
+  "sync_info": {
+    "uploaded_size_mb": 2.5,
+    "compression_ratio": 0.3,
+    "backup_created": true,
+    "sync_timestamp": "2025-01-01T12:00:00Z"
+  }
+}
+```
+
+### Session History Retrieval
+
+**GET** `/api/user-profiles/sessions?filterType=centcom-sessions`
+
+Retrieve user's CentCom session history for synchronization.
+
+**Request Headers:**
+```http
+Authorization: Bearer jwt-session-token
+X-Client-Version: 2.1.0
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "sessions": [
+    {
+      "id": "session-uuid",
+      "name": "Frequency Response Analysis",
+      "type": "centcom_session",
+      "session_type": "exploratory",
+      "application_source": "centcom",
+      "created_at": "2025-01-01T12:00:00Z",
+      "last_modified": "2025-01-01T12:05:00Z",
+      "status": "synchronized",
+      "size_mb": 2.5,
+      "collaboration_count": 0,
+      "download_url": "/api/analytics-sessions/session-uuid/download"
+    }
+  ],
+  "total_count": 15,
+  "centcom_sessions_count": 8,
+  "web_sessions_count": 7,
+  "total_storage_mb": 45.2
+}
+```
+
+### Session Validation & Token Refresh
+
+**POST** `/api/centcom/auth/validate`
+
+Validate current session and refresh authentication token.
+
+**Request Body:**
+```json
+{
+  "session_token": "jwt-session-token",
+  "user_id": "user-uuid"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "valid": true,
+  "user": {
+    "id": "user-uuid",
+    "email": "user@company.com",
+    "username": "user_name",
+    "roles": ["user", "engineer"],
+    "is_active": true
+  },
+  "session": {
+    "expires_at": "2025-01-02T00:00:00Z",
+    "refresh_token": "new-jwt-session-token",
+    "time_remaining_minutes": 1440
+  },
+  "permissions": {
+    "can_access_centcom": true,
+    "plugins": ["general", "klippel_qc"],
+    "role_permissions": ["project_create", "data_analysis", "export_data"]
+  }
 }
 ```
 
@@ -275,11 +474,43 @@ const maxFlagged = getFeatureLimit(license, 'data_visualization', 'max_flagged_m
 if (maxFlagged > 0 && currentFlaggedCount >= maxFlagged) {
   // Prevent creating more flagged measurements
   showLimitReachedDialog('flagged_measurements', currentFlaggedCount, maxFlagged);
+  
+  // Track usage attempt for analytics
+  await trackResourceUsage('flagged_measurements', 1, 'attempted_exceeded');
   return false;
 }
 
 // Check export permissions
 const canExportRawData = hasFeatureAccess(license, 'data_visualization', 'export_raw_data');
+
+// Example: Save visualization session to Lyceum
+async function saveVisualizationSession(sessionData) {
+  if (!canSaveLimitsToProjects) {
+    showUpgradePrompt('Session saving requires Standard license or higher');
+    return;
+  }
+  
+  try {
+    // Upload session to Lyceum
+    const result = await lyceumClient.uploadSession({
+      name: sessionData.name,
+      description: 'Data visualization session',
+      session_type: 'exploratory',
+      data_bindings: sessionData.dataBindings,
+      analytics_state: sessionData.visualizationState,
+      collaboration: { permissions: 'private' },
+      config: sessionData.config
+    });
+    
+    if (result.success) {
+      // Track successful session upload
+      await trackResourceUsage('storage', sessionData.sizeMB, 'add');
+      showNotification(`Session saved to Lyceum: ${result.sessionId}`);
+    }
+  } catch (error) {
+    console.error('Failed to save session:', error);
+  }
+}
 ```
 
 #### Test Data Permissions
@@ -578,35 +809,115 @@ class LicenseManager {
 
 ## 📈 Usage Tracking & Reporting
 
-### Track License Usage
+### Track License Usage & Resource Consumption
 
-CentCom should periodically report usage statistics:
+CentCom should track resource usage for analytics and billing:
 
 ```javascript
-async function reportUsageStats(licenseId, stats) {
+async function trackResourceUsage(resourceType, amount, operation = 'add') {
   try {
-    await fetch('/api/licenses/usage-stats', {
+    const response = await fetch('/api/centcom/user/resources', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${sessionToken}`
+        'Authorization': `Bearer ${sessionToken}`,
+        'X-Session-Token': sessionToken,
+        'X-User-ID': currentUserId
       },
       body: JSON.stringify({
-        license_id: licenseId,
-        timestamp: new Date().toISOString(),
-        stats: {
-          concurrent_tests: stats.activeConcurrentTests,
-          flagged_measurements: stats.totalFlaggedMeasurements,
-          projects_active: stats.activeProjectCount,
-          storage_used_gb: stats.storageUsedGB,
-          daily_api_calls: stats.dailyApiCalls,
-          features_used: stats.featuresUsedToday
-        }
+        user_id: currentUserId,
+        resource_type: resourceType, // 'storage', 'bandwidth', 'api_calls', 'compute_hours'
+        amount_used: amount,
+        operation: operation // 'add', 'subtract', 'set'
       })
     });
+    
+    const result = await response.json();
+    if (result.success) {
+      console.log(`Resource usage updated: ${resourceType} ${operation} ${amount}`);
+      
+      // Check if approaching limits
+      const usage = result.updated_usage;
+      if (usage.percentage && usage.percentage > 80) {
+        showUsageWarning(resourceType, usage.percentage);
+      }
+    }
   } catch (error) {
-    console.warn('Failed to report usage stats:', error);
+    console.warn('Failed to track resource usage:', error);
   }
+}
+
+// Example usage tracking for different operations
+async function onAnalyticsSessionCreated(sessionData) {
+  // Track storage usage
+  await trackResourceUsage('storage', sessionData.sizeMB, 'add');
+  
+  // Track compute hours (estimated)
+  const computeHours = sessionData.processingTimeMinutes / 60;
+  await trackResourceUsage('compute_hours', computeHours, 'add');
+}
+
+async function onDataExport(exportSizeMB) {
+  // Track bandwidth usage
+  await trackResourceUsage('bandwidth', exportSizeMB, 'add');
+  
+  // Track API call
+  await trackResourceUsage('api_calls', 1, 'add');
+}
+
+async function onSessionUpload(sessionData) {
+  // Track session upload to Lyceum
+  try {
+    const uploadResult = await fetch('/api/analytics-sessions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${sessionToken}`,
+        'X-App-Source': 'centcom'
+      },
+      body: JSON.stringify(sessionData)
+    });
+    
+    if (uploadResult.ok) {
+      const result = await uploadResult.json();
+      
+      // Track successful upload
+      await trackResourceUsage('storage', result.sync_info.uploaded_size_mb, 'add');
+      
+      // Log session creation event
+      console.log(`Session uploaded: ${result.session.id}`);
+      console.log(`Lyceum URL: ${result.session.lyceum_url}`);
+      
+      return result.session;
+    }
+  } catch (error) {
+    console.error('Session upload failed:', error);
+    throw error;
+  }
+}
+
+// Periodic usage stats reporting (every 15 minutes)
+function startUsageReporting() {
+  setInterval(async () => {
+    try {
+      const response = await fetch(`/api/centcom/user/resources?user_id=${currentUserId}`, {
+        headers: {
+          'Authorization': `Bearer ${sessionToken}`
+        }
+      });
+      
+      const resourceData = await response.json();
+      if (resourceData.success) {
+        // Update local usage indicators
+        updateUsageIndicators(resourceData.resources);
+        
+        // Log current usage for debugging
+        console.log('Current resource usage:', resourceData.resources);
+      }
+    } catch (error) {
+      console.warn('Failed to fetch resource usage:', error);
+    }
+  }, 15 * 60 * 1000); // 15 minutes
 }
 ```
 
@@ -640,20 +951,29 @@ async function reportUsageStats(licenseId, stats) {
 
 | Endpoint | Method | Purpose | Auth Required |
 |----------|---------|---------|---------------|
-| `/api/auth/centcom-login` | POST | Authenticate and get licenses | No |
-| `/api/user-profiles/licenses` | GET | Refresh license data | Yes |
-| `/api/licenses/validate` | POST | Validate specific license | Yes |
-| `/api/licenses/usage-stats` | POST | Report usage statistics | Yes |
-| `/api/auth/refresh-session` | POST | Refresh authentication token | Yes |
-| `/api/auth/centcom-logout` | POST | Log out and invalidate session | Yes |
+| `/api/centcom/auth/login` | POST | Authenticate and get licenses | No |
+| `/api/centcom/auth/validate` | POST | Validate session token | Yes |
+| `/api/centcom/licenses/validate-plugin` | POST | Validate plugin access | Yes |
+| `/api/centcom/versions/available` | GET | Get available plugin versions | Yes |
+| `/api/centcom/user/resources` | GET/POST | Get/update resource usage | Yes |
+| `/api/centcom/plugins/list` | GET | List available plugins | Yes |
+| `/api/analytics-sessions` | POST | Upload Analytics Studio session | Yes |
+| `/api/user-profiles/sessions` | GET | Get session history | Yes |
+| `/api/centcom/health` | GET | Check system health | No |
 
 ### Authentication Headers
 
 For authenticated requests, include:
 ```http
 Authorization: Bearer <session_token>
-X-App-Version: 1.0.3
-X-License-Key: <primary_license_key>
+X-Client-Version: 2.1.0
+X-Session-Token: <session_token>
+X-User-ID: <user_uuid>
+```
+
+For session uploads, also include:
+```http
+X-App-Source: centcom
 ```
 
 ## 🆘 Support & Troubleshooting
@@ -679,6 +999,263 @@ X-License-Key: <primary_license_key>
    - Ensure plugin license is assigned
    - Check plugin ID matches exactly
    - Verify plugin version compatibility
+
+### Complete Integration Example
+
+Here's a complete example showing CentCom integration with session synchronization:
+
+```javascript
+class CentComLyceumIntegration {
+  constructor() {
+    this.sessionToken = null;
+    this.userProfile = null;
+    this.licenseData = null;
+  }
+
+  // Complete authentication and initialization flow
+  async initialize(email, password) {
+    try {
+      // Step 1: Authenticate with Lyceum
+      const authResponse = await fetch('/api/centcom/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+          app_id: 'centcom',
+          client_info: {
+            app_name: 'CentCom',
+            version: '2.1.0',
+            platform: 'windows',
+            build_number: process.env.BUILD_NUMBER,
+            os_version: process.env.OS_VERSION,
+            machine_id: this.getMachineId(),
+            user_agent: navigator.userAgent
+          }
+        })
+      });
+
+      const authData = await authResponse.json();
+      if (!authData.success) {
+        throw new Error(`Authentication failed: ${authData.error}`);
+      }
+
+      // Store session data
+      this.sessionToken = authData.session.access_token;
+      this.userProfile = authData.user;
+      this.licenseData = authData.licenses;
+      
+      // Step 2: Validate license for CentCom access
+      const hasAccess = this.validateCentComAccess();
+      if (!hasAccess) {
+        throw new Error('CentCom access not permitted with current license');
+      }
+
+      // Step 3: Start resource tracking
+      this.startResourceTracking();
+      
+      // Step 4: Sync existing sessions from Lyceum
+      await this.syncExistingSessions();
+
+      console.log('CentCom-Lyceum integration initialized successfully');
+      return true;
+
+    } catch (error) {
+      console.error('Integration initialization failed:', error);
+      throw error;
+    }
+  }
+
+  validateCentComAccess() {
+    return this.licenseData.some(license => 
+      license.main_app_permissions?.analytics_studio === true
+    );
+  }
+
+  // Upload Analytics Studio session to Lyceum
+  async uploadSession(sessionData) {
+    try {
+      const response = await fetch('/api/analytics-sessions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.sessionToken}`,
+          'X-App-Source': 'centcom',
+          'X-Client-Version': '2.1.0'
+        },
+        body: JSON.stringify({
+          name: sessionData.name,
+          description: sessionData.description || 'CentCom Analytics Session',
+          session_type: sessionData.type || 'exploratory',
+          data_bindings: sessionData.dataBindings,
+          analytics_state: sessionData.state,
+          collaboration: {
+            shared_with: sessionData.collaborators || [],
+            permissions: sessionData.permissions || 'private',
+            comments: [],
+            annotations: sessionData.annotations || []
+          },
+          config: {
+            auto_save_interval: sessionData.autoSaveInterval || 300,
+            backup_enabled: true,
+            export_preferences: sessionData.exportPrefs || {
+              default_format: 'pdf',
+              include_raw_data: true
+            }
+          }
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        // Track the upload
+        await this.trackResourceUsage('storage', result.sync_info.uploaded_size_mb, 'add');
+        
+        console.log(`Session uploaded: ${result.session.lyceum_url}`);
+        return result.session;
+      } else {
+        throw new Error(`Upload failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Session upload failed:', error);
+      throw error;
+    }
+  }
+
+  // Sync sessions from Lyceum to CentCom
+  async syncExistingSessions() {
+    try {
+      const response = await fetch('/api/user-profiles/sessions?filterType=centcom-sessions', {
+        headers: {
+          'Authorization': `Bearer ${this.sessionToken}`,
+          'X-Client-Version': '2.1.0'
+        }
+      });
+
+      const sessionData = await response.json();
+      if (sessionData.success) {
+        console.log(`Found ${sessionData.centcom_sessions_count} CentCom sessions in Lyceum`);
+        
+        // Process and import sessions to CentCom
+        for (const session of sessionData.sessions) {
+          await this.importSessionToCentCom(session);
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to sync existing sessions:', error);
+    }
+  }
+
+  async importSessionToCentCom(lyceumSession) {
+    try {
+      // Download session data from Lyceum
+      const response = await fetch(lyceumSession.download_url, {
+        headers: {
+          'Authorization': `Bearer ${this.sessionToken}`
+        }
+      });
+
+      if (response.ok) {
+        const sessionData = await response.json();
+        
+        // Import into local CentCom session storage
+        await this.localSessionManager.importSession({
+          id: lyceumSession.id,
+          name: lyceumSession.name,
+          type: lyceumSession.session_type,
+          data_bindings: sessionData.data_bindings,
+          analytics_state: sessionData.analytics_state,
+          config: sessionData.config,
+          lyceum_sync: true,
+          last_sync: new Date().toISOString()
+        });
+
+        console.log(`Imported session: ${lyceumSession.name}`);
+      }
+    } catch (error) {
+      console.warn(`Failed to import session ${lyceumSession.name}:`, error);
+    }
+  }
+
+  // Track resource usage with Lyceum
+  async trackResourceUsage(resourceType, amount, operation = 'add') {
+    try {
+      await fetch('/api/centcom/user/resources', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.sessionToken}`,
+          'X-Session-Token': this.sessionToken,
+          'X-User-ID': this.userProfile.id
+        },
+        body: JSON.stringify({
+          user_id: this.userProfile.id,
+          resource_type: resourceType,
+          amount_used: amount,
+          operation: operation
+        })
+      });
+    } catch (error) {
+      console.warn('Resource tracking failed:', error);
+    }
+  }
+
+  startResourceTracking() {
+    // Track resource usage every 10 minutes
+    setInterval(() => {
+      this.reportCurrentUsage();
+    }, 10 * 60 * 1000);
+  }
+
+  async reportCurrentUsage() {
+    // Get current local usage statistics
+    const usage = await this.localUsageManager.getCurrentUsage();
+    
+    // Report to Lyceum
+    await this.trackResourceUsage('compute_hours', usage.computeHours, 'set');
+    await this.trackResourceUsage('storage', usage.storageMB, 'set');
+  }
+
+  getMachineId() {
+    // Generate or retrieve unique machine identifier
+    let machineId = localStorage.getItem('centcom_machine_id');
+    if (!machineId) {
+      machineId = this.generateMachineId();
+      localStorage.setItem('centcom_machine_id', machineId);
+    }
+    return machineId;
+  }
+
+  generateMachineId() {
+    // Generate unique identifier based on system characteristics
+    const systemInfo = [
+      navigator.userAgent,
+      navigator.platform,
+      screen.width,
+      screen.height,
+      new Date().getTimezoneOffset()
+    ].join('-');
+    
+    return btoa(systemInfo).replace(/[^a-zA-Z0-9]/g, '').substring(0, 16);
+  }
+}
+
+// Usage example
+const integration = new CentComLyceumIntegration();
+
+// Initialize on app startup
+await integration.initialize('user@company.com', 'password');
+
+// Upload a session when user saves in Analytics Studio
+await integration.uploadSession({
+  name: 'Production Test Analysis',
+  description: 'Weekly QC analysis',
+  type: 'monitoring',
+  dataBindings: currentSession.dataBindings,
+  state: currentSession.analyticsState,
+  autoSaveInterval: 300
+});
+```
 
 ### License Refresh Flow
 
@@ -763,6 +1340,7 @@ For technical support, contact the Lyceum team with:
 
 ---
 
-**Version:** 2.2  
-**Last Updated:** December 2024  
-**Next Review:** Q1 2025
+**Version:** 3.0  
+**Last Updated:** January 2025  
+**Changes:** Enhanced session synchronization, updated API endpoints, added resource tracking  
+**Next Review:** Q2 2025

@@ -53,6 +53,30 @@ interface Session {
   created_at: string
   last_accessed?: string
   status?: string
+  application_type?: string
+  client_info?: any
+  session_type?: string
+}
+
+interface CentComSession {
+  id: string
+  centcom_session_id: string
+  external_session_id?: string  // CentCom's actual session ID
+  created_at: string
+  last_activity: string
+  session_status: string
+  source_ip: string
+  user_agent: string
+  platform?: string
+  device_type?: string
+  app_version?: string
+  license_type?: string
+  country?: string
+  city?: string
+  mfa_verified?: boolean
+  risk_score?: number
+  connection_status?: string
+  duration_minutes?: number
 }
 
 interface EnhancedProfile {
@@ -114,6 +138,11 @@ export default function UserProfilePage() {
       all: Session[]
     }
   }>({ active: [], inactive: [], history: [] })
+  const [centcomSessions, setCentcomSessions] = useState<{
+    latest: CentComSession | null
+    all: CentComSession[]
+    total_count: number
+  }>({ latest: null, all: [], total_count: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   
@@ -208,6 +237,24 @@ export default function UserProfilePage() {
         })
       } else {
         console.warn('Failed to fetch sessions:', sessionsResponse.status)
+      }
+
+      // Fetch CentCom sessions data
+      console.log('Fetching CentCom sessions...')
+      const centcomResponse = await fetch(`/api/admin/users/${userId}/centcom-sessions`)
+      console.log('CentCom sessions response status:', centcomResponse.status)
+      
+      if (centcomResponse.ok) {
+        const centcomData = await centcomResponse.json()
+        console.log('CentCom sessions data received:', centcomData.total_count || 0, 'sessions')
+        setCentcomSessions({
+          latest: centcomData.latest_session || null,
+          all: centcomData.sessions || [],
+          total_count: centcomData.total_count || 0
+        })
+      } else {
+        console.warn('Failed to fetch CentCom sessions:', centcomResponse.status)
+        // Not critical - user might not have CentCom sessions
       }
 
       console.log('All user data fetched successfully')
@@ -679,7 +726,7 @@ export default function UserProfilePage() {
                     <div className="space-y-4">
                       {/* Show categorized licenses */}
                       {licenses.licenses?.map((license, index) => (
-                        <div key={license.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                        <div key={`license-${license.id}`} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center space-x-3">
                               <ShieldCheckIcon className="h-6 w-6 text-blue-600" />
@@ -813,7 +860,151 @@ export default function UserProfilePage() {
 
           {activeTab === 'sessions' && (
             <div className="space-y-6">
-              {/* Last Login Summary */}
+              {/* Last CentCom Login Section */}
+              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6 flex items-center">
+                    <ComputerDesktopIcon className="h-6 w-6 mr-2 text-blue-600" />
+                    🖥️ Last CentCom Login
+                  </h3>
+
+                  {centcomSessions.latest ? (
+                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-blue-50 dark:bg-blue-900/10">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Status:</span>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              centcomSessions.latest.connection_status === 'online' 
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
+                                : centcomSessions.latest.connection_status === 'idle'
+                                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200'
+                                : centcomSessions.latest.connection_status === 'recent'
+                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
+                                : 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-200'
+                            }`}>
+                              {centcomSessions.latest.connection_status === 'online' && '🟢 Active'}
+                              {centcomSessions.latest.connection_status === 'idle' && '🟡 Idle'}
+                              {centcomSessions.latest.connection_status === 'recent' && '🔵 Recent'}
+                              {centcomSessions.latest.connection_status === 'offline' && '⚫ Offline'}
+                              {!centcomSessions.latest.connection_status && '❓ Unknown'}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Session ID:</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                              {centcomSessions.latest.external_session_id 
+                                ? centcomSessions.latest.external_session_id.substring(0, 16) + '...'
+                                : centcomSessions.latest.centcom_session_id.substring(0, 12) + '...'}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Started:</span>
+                            <span className="text-sm text-gray-900 dark:text-white">
+                              {new Date(centcomSessions.latest.created_at).toLocaleDateString()} at {new Date(centcomSessions.latest.created_at).toLocaleTimeString()}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Last Activity:</span>
+                            <span className="text-sm text-gray-900 dark:text-white">
+                              {new Date(centcomSessions.latest.last_activity).toLocaleDateString()} at {new Date(centcomSessions.latest.last_activity).toLocaleTimeString()}
+                              <span className="ml-1 text-xs text-gray-500">
+                                ({Math.round((new Date().getTime() - new Date(centcomSessions.latest.last_activity).getTime()) / (1000 * 60))} min ago)
+                              </span>
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Duration:</span>
+                            <span className="text-sm text-gray-900 dark:text-white">
+                              {centcomSessions.latest.duration_minutes ? `${Math.floor(centcomSessions.latest.duration_minutes / 60)}h ${centcomSessions.latest.duration_minutes % 60}m` : '-'}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Location:</span>
+                            <span className="text-sm text-gray-900 dark:text-white">
+                              {centcomSessions.latest.city && centcomSessions.latest.country 
+                                ? `${centcomSessions.latest.city}, ${centcomSessions.latest.country}`
+                                : 'Unknown'} 
+                              {centcomSessions.latest.source_ip && (
+                                <span className="ml-1 text-xs text-gray-500">({centcomSessions.latest.source_ip})</span>
+                              )}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Device:</span>
+                            <span className="text-sm text-gray-900 dark:text-white">
+                              {centcomSessions.latest.platform || 'Unknown'} {centcomSessions.latest.device_type ? `(${centcomSessions.latest.device_type})` : ''}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">App Version:</span>
+                            <span className="text-sm text-gray-900 dark:text-white">
+                              v{centcomSessions.latest.app_version || 'Unknown'}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">License Type:</span>
+                            <span className="text-sm">
+                              {centcomSessions.latest.license_type && (
+                                <span className={`px-2 py-0.5 text-xs rounded ${
+                                  centcomSessions.latest.license_type === 'enterprise' 
+                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
+                                    : centcomSessions.latest.license_type === 'professional'
+                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
+                                    : 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-200'
+                                }`}>
+                                  {centcomSessions.latest.license_type === 'enterprise' ? '🏢 Enterprise' :
+                                   centcomSessions.latest.license_type === 'professional' ? '💼 Professional' :
+                                   centcomSessions.latest.license_type}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">MFA Verified:</span>
+                            <span className="text-sm">
+                              {centcomSessions.latest.mfa_verified ? '✅ Yes' : '❌ No'}
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Risk Score:</span>
+                            <span className={`text-sm font-medium ${
+                              (centcomSessions.latest.risk_score || 0) <= 20 ? 'text-green-600' :
+                              (centcomSessions.latest.risk_score || 0) <= 50 ? 'text-yellow-600' :
+                              'text-red-600'
+                            }`}>
+                              {centcomSessions.latest.risk_score || 0}% 
+                              ({(centcomSessions.latest.risk_score || 0) <= 20 ? '🟢 Low' :
+                                (centcomSessions.latest.risk_score || 0) <= 50 ? '🟡 Medium' :
+                                '🔴 High'})
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 border border-gray-200 dark:border-gray-700 rounded-lg">
+                      <ComputerDesktopIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500 dark:text-gray-400 font-medium">Never</p>
+                      <p className="text-sm text-gray-400">No CentCom sessions recorded</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Login Summary */}
               <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
                 <div className="px-4 py-5 sm:p-6">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Login Summary</h3>
@@ -823,14 +1014,12 @@ export default function UserProfilePage() {
                       <div className="flex items-center space-x-3">
                         <ComputerDesktopIcon className="h-8 w-8 text-blue-600" />
                         <div>
-                          <h4 className="text-sm font-medium text-gray-900 dark:text-white">Last CentCom Login</h4>
+                          <h4 className="text-sm font-medium text-gray-900 dark:text-white">CentCom Sessions</h4>
                           <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
-                            {sessions.login_sessions?.centcom?.length > 0
-                              ? new Date(sessions.login_sessions.centcom[0].created_at).toLocaleString()
-                              : 'Never'}
+                            {centcomSessions.total_count} Total
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Total CentCom logins: {sessions.login_sessions?.centcom?.length || 0}
+                            Last: {centcomSessions.latest ? new Date(centcomSessions.latest.created_at).toLocaleDateString() : 'Never'}
                           </p>
                         </div>
                       </div>
@@ -840,14 +1029,14 @@ export default function UserProfilePage() {
                       <div className="flex items-center space-x-3">
                         <GlobeAltIcon className="h-8 w-8 text-green-600" />
                         <div>
-                          <h4 className="text-sm font-medium text-gray-900 dark:text-white">Last Web Login</h4>
+                          <h4 className="text-sm font-medium text-gray-900 dark:text-white">Web Sessions</h4>
                           <p className="text-lg font-semibold text-green-600 dark:text-green-400">
-                            {sessions.login_sessions?.web?.length > 0
-                              ? new Date(sessions.login_sessions.web[0].created_at).toLocaleString()
-                              : 'Never'}
+                            {sessions.login_sessions?.web?.length || 0} Total
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Total web logins: {sessions.login_sessions?.web?.length || 0}
+                            Last: {sessions.login_sessions?.web?.length > 0
+                              ? new Date(sessions.login_sessions.web[0].created_at).toLocaleDateString()
+                              : 'Never'}
                           </p>
                         </div>
                       </div>
@@ -864,7 +1053,7 @@ export default function UserProfilePage() {
                   {sessions.active.length > 0 ? (
                     <div className="space-y-4">
                       {sessions.active.map((session) => (
-                        <div key={session.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                        <div key={`active-session-${session.id}`} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center space-x-3">
                               <ComputerDesktopIcon className="h-5 w-5 text-green-600" />
@@ -1087,7 +1276,7 @@ export default function UserProfilePage() {
                         </thead>
                         <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                           {transactions.slice(0, 10).map((transaction, index) => (
-                            <tr key={transaction.id || index} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                            <tr key={`transaction-${transaction.id || index}`} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="text-sm font-medium text-gray-900 dark:text-white">
                                   {transaction.description || transaction.invoice_number || `Transaction #${index + 1}`}
@@ -1141,7 +1330,7 @@ export default function UserProfilePage() {
                   {invoices.length > 0 ? (
                     <div className="space-y-3">
                       {invoices.slice(0, 5).map((invoice, index) => (
-                        <div key={invoice.id || index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <div key={`invoice-${invoice.id || index}`} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
                               <div className="h-10 w-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">

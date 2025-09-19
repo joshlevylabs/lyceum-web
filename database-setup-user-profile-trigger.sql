@@ -49,3 +49,7 @@ ALTER FUNCTION public.create_user_profile() OWNER TO postgres;
 GRANT EXECUTE ON FUNCTION public.create_user_profile() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.create_user_profile() TO service_role;
 
+
+
+
+

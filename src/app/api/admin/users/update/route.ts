@@ -5,7 +5,12 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { user_id, email, full_name, username, company, is_active, role } = body
-    if (!user_id && !email) return NextResponse.json({ success: false, error: 'user_id or email required' }, { status: 400 })
+    
+    console.log('User update request:', { user_id, is_active, role, full_name, username, company })
+    
+    if (!user_id && !email) {
+      return NextResponse.json({ success: false, error: 'user_id or email required' }, { status: 400 })
+    }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co'
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4'
@@ -16,29 +21,76 @@ export async function POST(req: NextRequest) {
     // Resolve email if only user_id provided
     if (!resolvedEmail && user_id) {
       const { data, error } = await supabase.auth.admin.getUserById(user_id)
-      if (error) return NextResponse.json({ success: false, error: `admin.getUserById failed: ${error.message}` }, { status: 400 })
+      if (error) {
+        console.error('getUserById error:', error)
+        return NextResponse.json({ success: false, error: `admin.getUserById failed: ${error.message}` }, { status: 400 })
+      }
       resolvedEmail = data?.user?.email || null
-      if (!resolvedEmail) return NextResponse.json({ success: false, error: 'Email not found for user_id' }, { status: 400 })
+      if (!resolvedEmail) {
+        return NextResponse.json({ success: false, error: 'Email not found for user_id' }, { status: 400 })
+      }
     }
 
-    // Upsert profile row
-    const upsertData: any = { id: user_id, email: resolvedEmail }
-    if (full_name !== undefined) upsertData.full_name = full_name
-    if (username !== undefined) upsertData.username = username
-    if (company !== undefined) upsertData.company = company
-    if (is_active !== undefined) upsertData.is_active = is_active
-    if (role !== undefined) upsertData.role = role
+    // Handle user status updates - use profile-based deactivation instead of auth bans
+    // This allows admins to "deactivate" users without preventing their login entirely
 
-    const { data: profile, error: upsertError } = await supabase
-      .from('user_profiles')
-      .upsert([upsertData], { onConflict: 'id' })
-      .select('*')
-      .single()
+    // Update profile data (including is_active status)
+    const profileUpdateData: any = { id: user_id, email: resolvedEmail }
+    let hasProfileUpdates = false
+    
+    if (full_name !== undefined) {
+      profileUpdateData.full_name = full_name
+      hasProfileUpdates = true
+    }
+    if (username !== undefined) {
+      profileUpdateData.username = username
+      hasProfileUpdates = true
+    }
+    if (company !== undefined) {
+      profileUpdateData.company = company
+      hasProfileUpdates = true
+    }
+    if (role !== undefined) {
+      profileUpdateData.role = role
+      hasProfileUpdates = true
+    }
+    if (is_active !== undefined) {
+      profileUpdateData.is_active = is_active
+      hasProfileUpdates = true
+      console.log(`Setting user ${user_id} is_active to:`, is_active)
+    }
 
-    if (upsertError) return NextResponse.json({ success: false, error: upsertError.message, code: upsertError.code }, { status: 400 })
+    let profile = null
+    if (hasProfileUpdates) {
+      const { data: profileData, error: upsertError } = await supabase
+        .from('user_profiles')
+        .upsert([profileUpdateData], { onConflict: 'id' })
+        .select('*')
+        .single()
 
-    return NextResponse.json({ success: true, profile })
+      if (upsertError) {
+        console.error('Profile upsert error:', upsertError)
+        return NextResponse.json({ 
+          success: false, 
+          error: upsertError.message, 
+          code: upsertError.code 
+        }, { status: 400 })
+      }
+      profile = profileData
+    }
+
+    console.log('User update completed successfully')
+    return NextResponse.json({ 
+      success: true, 
+      profile,
+      message: 'User updated successfully'
+    })
+    
   } catch (e: any) {
-    return NextResponse.json({ success: false, error: e?.message || 'Internal error' }, { status: 500 })
+    console.error('Unexpected error in user update:', e)
+    return NextResponse.json({ 
+      success: false, 
+      error: e?.message || 'Internal error' 
+    }, { status: 500 })
   }
 }

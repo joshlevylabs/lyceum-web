@@ -9,6 +9,13 @@ interface CentcomAuthRequest {
   client_info?: {
     version: string
     instance_id: string
+    user_agent?: string
+    platform?: string
+    build?: string
+    device_name?: string
+    os_version?: string
+    license_type?: string  // Added for enhanced CentCom license tracking
+    app_name?: string      // Added for clean app identification
   }
 }
 
@@ -93,6 +100,9 @@ export async function POST(req: NextRequest) {
     // Step 4: Log authentication event
     await logAuthenticationEvent(supabase, authData.user.id, app_id, client_info)
 
+    // Step 4.5: Create CentCom session entry for real-time tracking
+    await createCentComSessionEntry(req, supabase, authData.user.id, userProfile, app_id, client_info)
+
     // Step 5: Return authentication response
     const response: CentcomAuthResponse = {
       success: true,
@@ -167,20 +177,28 @@ async function getUserProfile(supabase: any, userId: string) {
       }
     }
 
-    // Get user licenses
+    // Get user licenses - prioritize CentCom enterprise license
     const { data: licenses } = await supabase
       .from('licenses')
-      .select('license_type, status')
-      .or(`user_id.eq.${userId}`)
+      .select('license_type, status, key_code')
+      .eq('user_id', userId)
       .eq('status', 'active')
-      .limit(1)
+      .order('created_at', { ascending: false })
 
-    const activeLicense = licenses?.[0]
+    console.log('🎫 Found licenses for user:', licenses?.length || 0, licenses?.map(l => `${l.license_type} (${l.key_code})`))
+
+    // Prioritize CentCom licenses, then any enterprise license, then fallback
+    const centcomLicense = licenses?.find(l => l.key_code?.includes('CENTCOM'))
+    const enterpriseLicense = licenses?.find(l => l.license_type === 'enterprise')
+    const activeLicense = centcomLicense || enterpriseLicense || licenses?.[0]
+
+    const detectedLicenseType = activeLicense?.license_type || 'trial'
+    console.log('🎫 Selected license:', activeLicense?.key_code || 'none', 'type:', detectedLicenseType)
 
     return {
       username: profile.username,
       roles: profile.role ? [profile.role] : ['user'],
-      license_type: activeLicense?.license_type || 'trial',
+      license_type: detectedLicenseType,
       security_clearance: 'internal', // Default for now
       organization: profile.company
     }
@@ -238,19 +256,314 @@ async function logAuthenticationEvent(
   clientInfo?: any
 ) {
   try {
-    // Try to insert into auth_logs table if it exists
-    await supabase
+    console.log('📝 Logging CentCom authentication event for user:', userId)
+    
+    // Try to insert into auth_logs table
+    const { data, error } = await supabase
       .from('auth_logs')
       .insert({
         user_id: userId,
-        event_type: 'centcom_login',
+        event_type: 'login',
         app_id: appId || 'centcom',
-        client_info: clientInfo,
-        ip_address: '127.0.0.1', // You can get real IP from request
+        client_info: clientInfo || {},
+        ip_address: '127.0.0.1',
+        success: true,
+        session_type: 'centcom',
+        application_type: 'centcom',
         created_at: new Date().toISOString()
       })
+      .select()
+    
+    if (error) {
+      console.error('❌ Failed to log to auth_logs:', error.message)
+      if (error.code === '42P01') {
+        console.log('⚠️  auth_logs table does not exist. Run CREATE_AUTH_TABLES_FOR_SESSIONS.sql to create it.')
+      }
+    } else {
+      console.log('✅ CentCom login logged to auth_logs successfully')
+    }
+    
+    // Also try to log to user_activity_logs
+    try {
+      const { data: activityData, error: activityError } = await supabase
+        .from('user_activity_logs')
+        .insert({
+          user_id: userId,
+          activity_type: 'login',
+          description: `CentCom login from ${appId || 'centcom'}`,
+          ip_address: '127.0.0.1',
+          user_agent: clientInfo?.user_agent || 'CentCom Desktop Application',
+          metadata: {
+            app_id: appId || 'centcom',
+            client_info: clientInfo,
+            login_type: 'centcom'
+          },
+          created_at: new Date().toISOString()
+        })
+        .select()
+      
+      if (activityError) {
+        console.error('❌ Failed to log to user_activity_logs:', activityError.message)
+        if (activityError.code === '42P01') {
+          console.log('⚠️  user_activity_logs table does not exist. Run CREATE_AUTH_TABLES_FOR_SESSIONS.sql to create it.')
+        }
+      } else {
+        console.log('✅ CentCom login logged to user_activity_logs successfully')
+      }
+    } catch (activityErr) {
+      console.error('⚠️ Activity logging failed:', activityErr)
+    }
+    
   } catch (error) {
-    console.log('⚠️ Failed to log auth event (table may not exist):', error)
+    console.error('⚠️ Failed to log auth event (non-critical):', error)
     // Don't fail authentication if logging fails
   }
+}
+
+// Helper function: Create CentCom session entry for real-time tracking
+async function createCentComSessionEntry(
+  req: NextRequest,
+  supabase: any,
+  userId: string,
+  userProfile: any,
+  appId?: string,
+  clientInfo?: any
+) {
+  try {
+    console.log('📝 Creating CentCom session entry for user:', userId)
+    console.log('📊 Client info received:', JSON.stringify(clientInfo, null, 2))
+    
+    // Generate unique session ID
+    const sessionId = `centcom-${Date.now()}-${Math.random().toString(36).substring(7)}`
+    
+    // Extract real IP address from request
+    const realIp = getClientIP(req)
+    console.log('🌐 Client IP detected:', realIp)
+    
+    // Get user agent from request headers or client_info
+    const userAgent = req.headers.get('user-agent') || 
+                     clientInfo?.user_agent || 
+                     'CentCom Desktop Application'
+    
+    // Enhanced device and platform detection
+    const deviceInfo = parseDeviceInfo(userAgent, clientInfo)
+    console.log('📱 Device info parsed:', deviceInfo)
+    
+    // Get location data from IP
+    const locationInfo = await getLocationFromIP(realIp)
+    console.log('📍 Location info:', locationInfo)
+    
+    // Extract app version (prioritize client_info.version)
+    const appVersion = clientInfo?.version || 
+                      extractVersionFromUserAgent(userAgent) || 
+                      '1.0.0' // Default to 1.0.0 instead of 2.1.0
+    
+    // Extract license type (prioritize client_info.license_type from CentCom)
+    const licenseType = clientInfo?.license_type ||           // CentCom enhanced client_info (highest priority)
+                       userProfile?.license_type ||           // Lyceum user profile lookup
+                       'trial'                                // Fallback default
+    
+    console.log('🔢 App version extracted:', appVersion)
+    console.log('🎫 License type extracted:', licenseType, 'from', clientInfo?.license_type ? 'client_info' : userProfile?.license_type ? 'user_profile' : 'default')
+    
+    const sessionData = {
+      user_id: userId,
+      centcom_session_id: sessionId,
+      created_at: new Date().toISOString(),
+      last_activity: new Date().toISOString(),
+      session_status: 'active',
+      source_ip: realIp,
+      user_agent: userAgent,
+      mfa_verified: false, // Default, can be updated by session sync
+      risk_score: calculateRiskScore(realIp, deviceInfo),
+      country: locationInfo.country,
+      city: locationInfo.city,
+      timezone: locationInfo.timezone,
+      platform: deviceInfo.platform,
+      device_type: deviceInfo.device_type,
+      browser: deviceInfo.browser,
+      app_name: 'CentCom',
+      app_version: appVersion,
+      build_number: clientInfo?.build || 'unknown',
+      license_type: licenseType,
+      sync_timestamp: new Date().toISOString(),
+      sync_source: 'centcom_login_endpoint',
+      sync_version: '1.0'
+    }
+    
+    console.log('💾 Session data to insert:', JSON.stringify(sessionData, null, 2))
+    
+    const { data, error } = await supabase
+      .from('centcom_sessions')
+      .insert(sessionData)
+      .select()
+    
+    if (error) {
+      console.warn('⚠️ Failed to create CentCom session entry:', error.message)
+      // Don't fail login if session creation fails
+      if (error.code === 'PGRST116' || error.message.includes('does not exist')) {
+        console.log('💡 Run database-setup-centcom-sessions.sql to enable session tracking')
+      }
+    } else {
+      console.log('✅ CentCom session entry created successfully:', sessionId)
+    }
+    
+  } catch (error) {
+    console.error('⚠️ Failed to create CentCom session entry (non-critical):', error)
+    // Don't fail authentication if session creation fails
+  }
+}
+
+// Helper function: Extract real client IP address
+function getClientIP(req: NextRequest): string {
+  // Try various headers that might contain the real IP
+  const forwarded = req.headers.get('x-forwarded-for')
+  const realIp = req.headers.get('x-real-ip')
+  const cfConnectingIp = req.headers.get('cf-connecting-ip')
+  
+  if (forwarded) {
+    // x-forwarded-for can be a comma-separated list, take the first one
+    return forwarded.split(',')[0].trim()
+  }
+  
+  if (realIp) {
+    return realIp
+  }
+  
+  if (cfConnectingIp) {
+    return cfConnectingIp
+  }
+  
+  // Fall back to localhost for development
+  return '127.0.0.1'
+}
+
+// Helper function: Parse device and platform information
+function parseDeviceInfo(userAgent: string, clientInfo?: any) {
+  const ua = userAgent.toLowerCase()
+  
+  // Platform detection (prioritize client_info if available)
+  let platform = clientInfo?.platform || 'Unknown'
+  if (platform === 'Unknown') {
+    if (ua.includes('windows')) platform = 'Windows'
+    else if (ua.includes('mac') || ua.includes('darwin')) platform = 'macOS'
+    else if (ua.includes('linux')) platform = 'Linux'
+    else if (ua.includes('android')) platform = 'Android'
+    else if (ua.includes('ios') || ua.includes('iphone') || ua.includes('ipad')) platform = 'iOS'
+  }
+  
+  // Device type detection
+  let deviceType = 'desktop'
+  if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
+    deviceType = 'mobile'
+  } else if (ua.includes('tablet') || ua.includes('ipad')) {
+    deviceType = 'tablet'
+  }
+  
+  // Browser/App detection
+  let browser = 'Desktop Application'
+  if (ua.includes('centcom')) {
+    browser = 'CentCom Desktop'
+  } else if (ua.includes('tauri')) {
+    browser = 'Tauri WebView'
+  } else if (ua.includes('electron')) {
+    browser = 'Electron'
+  } else if (ua.includes('chrome')) {
+    browser = 'Chrome'
+  } else if (ua.includes('firefox')) {
+    browser = 'Firefox'
+  } else if (ua.includes('safari')) {
+    browser = 'Safari'
+  }
+  
+  return {
+    platform,
+    device_type: deviceType,
+    browser,
+    device_name: clientInfo?.device_name || `${platform} Device`
+  }
+}
+
+// Helper function: Extract version from user agent
+function extractVersionFromUserAgent(userAgent: string): string | null {
+  // Look for patterns like "CentCom/1.0.0" or "Version/1.0.0"
+  const versionMatch = userAgent.match(/(?:CentCom|Version)\/(\d+\.\d+\.\d+)/i)
+  return versionMatch ? versionMatch[1] : null
+}
+
+// Helper function: Get location information from IP address
+async function getLocationFromIP(ip: string) {
+  // Default values for localhost/private IPs (IPv4 and IPv6)
+  if (ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' || 
+      ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.') ||
+      ip.startsWith('fe80:') || ip.startsWith('fc00:') || ip.startsWith('fd00:')) {
+    return {
+      country: 'Local',
+      city: 'Development',
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    }
+  }
+  
+  try {
+    // Use ipapi.co for geolocation (free tier: 1000 requests/day)
+    const response = await fetch(`https://ipapi.co/${ip}/json/`, {
+      headers: {
+        'User-Agent': 'Lyceum-CentCom-Session-Tracker/1.0'
+      },
+      signal: AbortSignal.timeout(3000) // 3 second timeout
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      return {
+        country: data.country_name || 'Unknown',
+        city: data.city || 'Unknown',
+        timezone: data.timezone || 'UTC'
+      }
+    }
+  } catch (error) {
+    console.log('⚠️ IP geolocation failed:', error.message)
+  }
+  
+  // Fallback if geolocation fails
+  return {
+    country: 'Unknown',
+    city: 'Unknown', 
+    timezone: 'UTC'
+  }
+}
+
+// Helper function: Calculate risk score based on various factors
+function calculateRiskScore(ip: string, deviceInfo: any): number {
+  let score = 0
+  
+  // Base score
+  score += 5
+  
+  // Local/development IPs are low risk (IPv4 and IPv6)
+  if (ip === '127.0.0.1' || ip === '::1' || ip === 'localhost' || 
+      ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.') ||
+      ip.startsWith('fe80:') || ip.startsWith('fc00:') || ip.startsWith('fd00:')) {
+    score += 0 // Local IPs are safe
+  } else {
+    score += 10 // External IP adds some risk
+  }
+  
+  // Known platforms are lower risk (case-insensitive check)
+  const platform = deviceInfo.platform?.toLowerCase() || 'unknown'
+  if (['windows', 'macos', 'linux'].includes(platform)) {
+    score += 0
+  } else {
+    score += 15 // Unknown platform adds risk
+  }
+  
+  // Desktop applications are typically lower risk than web browsers
+  if (deviceInfo.device_type === 'desktop') {
+    score += 0
+  } else {
+    score += 10
+  }
+  
+  // Cap at reasonable range (0-100)
+  return Math.min(Math.max(score, 0), 100)
 }

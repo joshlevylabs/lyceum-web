@@ -48,6 +48,22 @@ interface User {
   is_active: boolean
   created_at: string
   last_sign_in?: string
+  last_login?: string
+  license_count?: number
+  licenses?: {
+    id: string
+    key_code: string
+    license_type: string
+    status: string
+    expires_at?: string
+  }[]
+  all_licenses?: {
+    id: string
+    key_code: string
+    license_type: string
+    status: string
+    expires_at?: string
+  }[]
   license?: {
     id: string
     key_code: string
@@ -86,15 +102,6 @@ interface User {
     region: string
     storage_size_mb: number
     last_accessed?: string
-  }>
-  all_licenses?: Array<{
-    id: string
-    key_code: string
-    license_type: string
-    plugin_id: string
-    status: string
-    expires_at?: string
-    assigned_at?: string
   }>
   subscription?: {
     id: string
@@ -179,7 +186,7 @@ export default function UserManagement() {
       setLoading(true)
       const res = await fetch('/api/admin/users/list', { cache: 'no-store' })
       const json = await res.json()
-      if (!res.ok || !json.success) throw new Error(json.error || 'Failed to load users')
+      if (!res.ok) throw new Error(json.error || 'Failed to load users')
 
       let data: User[] = json.users || []
 
@@ -280,7 +287,7 @@ export default function UserManagement() {
   const openLicenseModal = (user: User) => {
     setShowLicenseModal({
       userId: user.id,
-      licenses: user.all_licenses || []
+      licenses: user.licenses || []
     })
   }
 
@@ -406,7 +413,7 @@ export default function UserManagement() {
       case 'last_login':
         return (
           <td key="last_login" className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-            {user.last_sign_in ? formatDate(user.last_sign_in) : 'Never'}
+            {user.last_login || 'Never'}
           </td>
         )
       case 'payment':
@@ -457,7 +464,7 @@ export default function UserManagement() {
               title="View and manage licenses"
             >
               <KeyIcon className="h-4 w-4 mr-1" />
-              {user.all_licenses?.length || 0}
+              {user.license_count || 0}
             </button>
           </td>
         )
@@ -534,12 +541,16 @@ export default function UserManagement() {
         body: JSON.stringify({ user_id: userId, is_active: !currentStatus })
       })
       const json = await res.json()
-      if (!res.ok) {
+      
+      // Check both HTTP status and API success field
+      if (!res.ok || !json.success) {
         console.error('Update failed:', json)
         alert(`Failed to update user: ${json.error || 'Unknown error'}`)
         return
       }
-      loadUsers()
+      
+      console.log('User status updated successfully:', json.message)
+      loadUsers() // Refresh the user list
     } catch (e) {
       console.error('Update error:', e)
       alert('Failed to update user')
@@ -724,7 +735,7 @@ export default function UserManagement() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {users.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
+                  <tr key={`user-row-${user.id}`} className="hover:bg-gray-50">
                     {columnOrder.map((column) => renderCellContent(column, user))}
                   </tr>
                 ))}
