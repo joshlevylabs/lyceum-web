@@ -27,7 +27,29 @@ const BugIcon = ({ className }: { className?: string }) => (
     fill="currentColor" 
     viewBox="0 0 24 24"
   >
-    <path d="M12 2c-1.1 0-2 .9-2 2 0 .74.4 1.38 1 1.73V7h2V5.73c.6-.35 1-.99 1-1.73 0-1.1-.9-2-2-2zm-4 7.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5V11h2v-.5c0-1.93-1.57-3.5-3.5-3.5h-5C7.57 7 6 8.57 6 10.5V11h2v-.5zM5 12v1.5c0 .83.67 1.5 1.5 1.5h1v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V15h2v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V15h1c.83 0 1.5-.67 1.5-1.5V12h2v1.5c0 1.93-1.57 3.5-3.5 3.5h-1v1.5c0 1.93-1.57 3.5-3.5 3.5s-3.5-1.57-3.5-3.5V17h-1C4.57 17 3 15.43 3 13.5V12h2z"/>
+    {/* Bug body */}
+    <ellipse cx="12" cy="13" rx="4" ry="6" />
+    
+    {/* Bug head */}
+    <circle cx="12" cy="6" r="2.5" />
+    
+    {/* Antennae */}
+    <path d="M10.5 4.5C10.5 4.5 9 3 8 2.5" stroke="currentColor" strokeWidth="0.8" fill="none" strokeLinecap="round"/>
+    <path d="M13.5 4.5C13.5 4.5 15 3 16 2.5" stroke="currentColor" strokeWidth="0.8" fill="none" strokeLinecap="round"/>
+    
+    {/* Left legs */}
+    <path d="M8 10L5 8" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round"/>
+    <path d="M8 13L4 12" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round"/>
+    <path d="M8 16L5 18" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round"/>
+    
+    {/* Right legs */}
+    <path d="M16 10L19 8" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round"/>
+    <path d="M16 13L20 12" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round"/>
+    <path d="M16 16L19 18" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round"/>
+    
+    {/* Wing pattern */}
+    <ellipse cx="10" cy="11" rx="1.5" ry="3" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.6"/>
+    <ellipse cx="14" cy="11" rx="1.5" ry="3" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.6"/>
   </svg>
 )
 
@@ -324,7 +346,7 @@ export default function AdminTicketsPage() {
     if (!user) return
 
     try {
-      const response = await fetch(`/api/tickets/${ticketId}`, {
+      const response = await fetch(`/api/tickets/by-id/${ticketId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -350,8 +372,8 @@ export default function AdminTicketsPage() {
   }
 
   const openTicketView = (ticket: Ticket) => {
-    // Navigate to the ticket detail page
-    router.push(`/admin/tickets/${ticket.id}`)
+    // Navigate to the ticket detail page using ticket key
+    router.push(`/admin/tickets/${ticket.ticket_key}`)
   }
 
   if (loading && tickets.length === 0) {

@@ -268,12 +268,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create triggers
+-- Create triggers (drop first if they exist)
+DROP TRIGGER IF EXISTS ticket_creation_trigger ON public.support_tickets;
 CREATE TRIGGER ticket_creation_trigger
     BEFORE INSERT ON public.support_tickets
     FOR EACH ROW
     EXECUTE FUNCTION handle_ticket_creation();
 
+DROP TRIGGER IF EXISTS ticket_status_change_trigger ON public.support_tickets;
 CREATE TRIGGER ticket_status_change_trigger
     BEFORE UPDATE ON public.support_tickets
     FOR EACH ROW

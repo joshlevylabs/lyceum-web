@@ -11,8 +11,20 @@ import {
   UserIcon,
   CalendarIcon,
   CheckIcon,
-  XMarkIcon
+  XMarkIcon,
+  ClockIcon,
+  DocumentIcon,
+  PaperClipIcon,
+  PhotoIcon,
+  VideoCameraIcon,
+  EyeIcon,
+  TrashIcon,
+  ChatBubbleLeftIcon,
+  ArrowPathIcon,
+  ExclamationTriangleIcon,
+  BugAntIcon
 } from '@heroicons/react/24/outline'
+import FileUpload from '@/components/FileUpload'
 
 // Custom Bug Icon Component
 const BugIcon = ({ className }: { className?: string }) => (
@@ -21,7 +33,29 @@ const BugIcon = ({ className }: { className?: string }) => (
     fill="currentColor" 
     viewBox="0 0 24 24"
   >
-    <path d="M12 2c-1.1 0-2 .9-2 2 0 .74.4 1.38 1 1.73V7h2V5.73c.6-.35 1-.99 1-1.73 0-1.1-.9-2-2-2zm-4 7.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5V11h2v-.5c0-1.93-1.57-3.5-3.5-3.5h-5C7.57 7 6 8.57 6 10.5V11h2v-.5zM5 12v1.5c0 .83.67 1.5 1.5 1.5h1v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V15h2v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V15h1c.83 0 1.5-.67 1.5-1.5V12h2v1.5c0 1.93-1.57 3.5-3.5 3.5h-1v1.5c0 1.93-1.57 3.5-3.5 3.5s-3.5-1.57-3.5-3.5V17h-1C4.57 17 3 15.43 3 13.5V12h2z"/>
+    {/* Bug body */}
+    <ellipse cx="12" cy="13" rx="4" ry="6" />
+    
+    {/* Bug head */}
+    <circle cx="12" cy="6" r="2.5" />
+    
+    {/* Antennae */}
+    <path d="M10.5 4.5C10.5 4.5 9 3 8 2.5" stroke="currentColor" strokeWidth="0.8" fill="none" strokeLinecap="round"/>
+    <path d="M13.5 4.5C13.5 4.5 15 3 16 2.5" stroke="currentColor" strokeWidth="0.8" fill="none" strokeLinecap="round"/>
+    
+    {/* Left legs */}
+    <path d="M8 10L5 8" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round"/>
+    <path d="M8 13L4 12" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round"/>
+    <path d="M8 16L5 18" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round"/>
+    
+    {/* Right legs */}
+    <path d="M16 10L19 8" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round"/>
+    <path d="M16 13L20 12" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round"/>
+    <path d="M16 16L19 18" stroke="currentColor" strokeWidth="1" fill="none" strokeLinecap="round"/>
+    
+    {/* Wing pattern */}
+    <ellipse cx="10" cy="11" rx="1.5" ry="3" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.6"/>
+    <ellipse cx="14" cy="11" rx="1.5" ry="3" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.6"/>
   </svg>
 )
 
@@ -98,6 +132,19 @@ interface Comment {
   is_internal: boolean
   created_at: string
   updated_at: string
+}
+
+interface TimelineEvent {
+  id: string
+  commentId?: string // The actual comment UUID for edit/delete operations (when type is 'comment')
+  type: 'created' | 'comment' | 'status_change' | 'assignment' | 'resolution' | 'attachment' | 'update' | 'comment_edit' | 'comment_delete'
+  timestamp: string
+  author: string
+  authorType: 'user' | 'admin' | 'system'
+  title: string
+  description?: string
+  metadata?: Record<string, any>
+  attachments?: any[] // Attachments associated with this timeline event (e.g., comment attachments)
 }
 
 const ticketTypeLabels = {
@@ -182,6 +229,32 @@ const getReproductionRateColor = (rate?: string) => {
   }
 }
 
+// Function to get timeline event icon
+const getTimelineIcon = (eventType: TimelineEvent['type']) => {
+  switch (eventType) {
+    case 'created':
+      return <ClockIcon className="h-3 w-3 text-blue-500" />
+    case 'comment':
+      return <ChatBubbleLeftIcon className="h-3 w-3 text-green-500" />
+    case 'comment_edit':
+      return <PencilIcon className="h-3 w-3 text-orange-500" />
+    case 'comment_delete':
+      return <TrashIcon className="h-3 w-3 text-red-500" />
+    case 'status_change':
+      return <ArrowPathIcon className="h-3 w-3 text-purple-500" />
+    case 'assignment':
+      return <UserIcon className="h-3 w-3 text-indigo-500" />
+    case 'resolution':
+      return <CheckIcon className="h-3 w-3 text-green-600" />
+    case 'attachment':
+      return <PaperClipIcon className="h-3 w-3 text-gray-500" />
+    case 'update':
+      return <PencilIcon className="h-3 w-3 text-blue-400" />
+    default:
+      return <ClockIcon className="h-3 w-3 text-gray-400" />
+  }
+}
+
 const getTypeIcon = (type: string) => {
   switch (type) {
     case 'bug': return <BugIcon className="h-5 w-5 text-red-500" />
@@ -196,22 +269,36 @@ export default function TicketDetailPage() {
   const { user } = useAuth()
   const router = useRouter()
   const params = useParams()
-  const ticketId = params.ticketId as string
+  const ticketKey = params.ticketKey as string
 
   const [ticket, setTicket] = useState<Ticket | null>(null)
-  const [comments, setComments] = useState<Comment[]>([])
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [newComment, setNewComment] = useState('')
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
+  const [commentAttachments, setCommentAttachments] = useState<any[]>([])
+  const [fileUploadResetTrigger, setFileUploadResetTrigger] = useState(0)
+  const [attachments, setAttachments] = useState<any[]>([])
+  const [loadingAttachments, setLoadingAttachments] = useState(false)
 
   // Edit form states
   const [editForm, setEditForm] = useState<Partial<Ticket>>({})
+  
+  // Comment editing states
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
+  const [editingCommentText, setEditingCommentText] = useState('')
+  const [isUpdatingComment, setIsUpdatingComment] = useState(false)
+  const [isDeletingComment, setIsDeletingComment] = useState<string | null>(null)
+  
+  // Delete confirmation modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [commentToDelete, setCommentToDelete] = useState<{ id: string; hasAttachments: boolean } | null>(null)
 
   const loadTicket = async () => {
     try {
-      const response = await fetch(`/api/tickets/${ticketId}`)
+      const response = await fetch(`/api/tickets/by-key/${ticketKey}`)
       
       if (!response.ok) {
         throw new Error(`Failed to fetch ticket: ${response.statusText}`)
@@ -230,26 +317,45 @@ export default function TicketDetailPage() {
     }
   }
 
-  const loadComments = async () => {
+  const loadTimeline = async () => {
     try {
-      const response = await fetch(`/api/tickets/${ticketId}/comments`)
+      const response = await fetch(`/api/tickets/by-key/${ticketKey}/timeline`)
       
       if (response.ok) {
         const data = await response.json()
         if (data.success) {
-          setComments(data.comments || [])
+          setTimeline(data.timeline || [])
         }
       }
     } catch (err: any) {
-      console.error('Error loading comments:', err)
+      console.error('Error loading timeline:', err)
+    }
+  }
+
+  const loadAttachments = async () => {
+    if (!ticket?.id) return
+
+    setLoadingAttachments(true)
+    try {
+      const response = await fetch(`/api/tickets/by-id/${ticket.id}/attachments`)
+      if (response.ok) {
+        const data = await response.json()
+        setAttachments(data.attachments || [])
+      } else {
+        console.error('Failed to load attachments:', response.statusText)
+      }
+    } catch (error) {
+      console.error('Error loading attachments:', error)
+    } finally {
+      setLoadingAttachments(false)
     }
   }
 
   const handleSaveEdit = async () => {
-    if (!user) return
+    if (!user || !ticket) return
 
     try {
-      const response = await fetch(`/api/tickets/${ticketId}`, {
+      const response = await fetch(`/api/tickets/by-key/${ticketKey}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -262,6 +368,8 @@ export default function TicketDetailPage() {
         if (data.success) {
           setTicket(data.ticket)
           setIsEditing(false)
+          // Reload timeline to show status changes
+          loadTimeline()
         } else {
           alert('Failed to update ticket: ' + data.error)
         }
@@ -276,26 +384,31 @@ export default function TicketDetailPage() {
   }
 
   const handleAddComment = async () => {
-    if (!user || !newComment.trim()) return
+    if (!user || !newComment.trim() || !ticket) return
 
     setIsSubmittingComment(true)
     try {
-      const response = await fetch(`/api/tickets/${ticketId}/comments`, {
+      const response = await fetch(`/api/tickets/by-key/${ticketKey}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           content: newComment,
-          is_internal: false
+          is_internal: false,
+          attachment_ids: commentAttachments.map(att => att.id) // Include attached files
         })
       })
 
       if (response.ok) {
         const data = await response.json()
         if (data.success) {
-          setComments(prev => [...prev, data.comment])
           setNewComment('')
+          setCommentAttachments([]) // Clear comment attachments
+          setFileUploadResetTrigger(prev => prev + 1) // Reset FileUpload component
+          // Reload timeline and attachments to show new comment
+          loadTimeline()
+          loadAttachments()
         } else {
           alert('Failed to add comment: ' + data.error)
         }
@@ -311,13 +424,137 @@ export default function TicketDetailPage() {
     }
   }
 
+  const handleEditComment = (commentId: string, currentText: string) => {
+    setEditingCommentId(commentId)
+    setEditingCommentText(currentText)
+  }
+
+  const handleCancelEditComment = () => {
+    setEditingCommentId(null)
+    setEditingCommentText('')
+  }
+
+  const handleSaveEditComment = async () => {
+    if (!editingCommentId || !editingCommentText.trim()) return
+
+    setIsUpdatingComment(true)
+    try {
+      const response = await fetch(`/api/tickets/by-key/${ticketKey}/comments`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          commentId: editingCommentId,
+          content: editingCommentText,
+          edit_reason: 'Content updated'
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setEditingCommentId(null)
+          setEditingCommentText('')
+          // Reload timeline to show updated comment
+          loadTimeline()
+        } else {
+          alert('Failed to update comment: ' + data.error)
+        }
+      } else {
+        const data = await response.json()
+        alert('Failed to update comment: ' + data.error)
+      }
+    } catch (err: any) {
+      console.error('Error updating comment:', err)
+      alert('Failed to update comment')
+    } finally {
+      setIsUpdatingComment(false)
+    }
+  }
+
+  const handleDeleteComment = (commentId: string) => {
+    // Find the comment to check if it has attachments
+    const comment = timeline.find(event => event.type === 'comment' && (event.commentId || event.id) === commentId)
+    const hasAttachments = comment?.attachments && comment.attachments.length > 0
+    
+    setCommentToDelete({ id: commentId, hasAttachments: Boolean(hasAttachments) })
+    setShowDeleteModal(true)
+  }
+
+  const confirmDeleteComment = async () => {
+    if (!commentToDelete) return
+
+    setIsDeletingComment(commentToDelete.id)
+    setShowDeleteModal(false)
+    
+    try {
+      const response = await fetch(`/api/tickets/by-key/${ticketKey}/comments`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          commentId: commentToDelete.id
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          // Reload timeline and attachments to reflect deletion
+          loadTimeline()
+          loadAttachments()
+        } else {
+          alert('Failed to delete comment: ' + data.error)
+        }
+      } else {
+        const data = await response.json()
+        alert('Failed to delete comment: ' + data.error)
+      }
+    } catch (err: any) {
+      console.error('Error deleting comment:', err)
+      alert('Failed to delete comment')
+    } finally {
+      setIsDeletingComment(null)
+      setCommentToDelete(null)
+    }
+  }
+
+  const cancelDeleteComment = () => {
+    setShowDeleteModal(false)
+    setCommentToDelete(null)
+  }
+
+  const handleFileUploadComplete = (newAttachments: any[]) => {
+    // Refresh attachments and timeline
+    loadAttachments()
+    loadTimeline()
+  }
+
+  const handleCommentFileUploadComplete = (newAttachments: any[]) => {
+    // Add to comment attachments (for files attached to comments)
+    setCommentAttachments(prev => [...prev, ...newAttachments])
+  }
+
+  const handleFileUploadError = (error: string) => {
+    alert(`Upload error: ${error}`)
+  }
+
   useEffect(() => {
     if (user) {
-      Promise.all([loadTicket(), loadComments()]).finally(() => {
+      Promise.all([loadTicket(), loadTimeline()]).finally(() => {
         setLoading(false)
       })
     }
-  }, [user, ticketId])
+  }, [user, ticketKey])
+
+  // Load attachments after ticket is loaded
+  useEffect(() => {
+    if (ticket?.id) {
+      loadAttachments()
+    }
+  }, [ticket?.id])
 
   if (loading) {
     return (
@@ -598,56 +835,207 @@ export default function TicketDetailPage() {
             </div>
           )}
 
+          {/* Attachments Section */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">            
+            {ticket && (
+              <FileUpload
+                ticketId={ticket.id}
+                onUploadComplete={handleFileUploadComplete}
+                onUploadError={handleFileUploadError}
+                maxFiles={10}
+                showExisting={true}
+                existingAttachments={attachments}
+                collapsible={true}
+                defaultCollapsed={true}
+                title="Ticket Attachments"
+                className="w-full"
+              />
+            )}
+            
+            {loadingAttachments && (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                <span className="ml-2 text-sm text-gray-600">Loading attachments...</span>
+              </div>
+            )}
+          </div>
+
           {/* Comments Section */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">💬 Comments</h3>
             
             {/* Add Comment */}
             <div className="mb-6">
-              <textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                rows={3}
-                placeholder="Add a comment..."
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <div className="flex justify-end mt-2">
-                <button
-                  onClick={handleAddComment}
-                  disabled={!newComment.trim() || isSubmittingComment}
-                  className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-                >
-                  <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2" />
-                  {isSubmittingComment ? 'Adding...' : 'Add Comment'}
-                </button>
+              <div className="border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
+                <textarea
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  rows={3}
+                  placeholder="Add a comment..."
+                  className="w-full border-0 resize-none px-3 py-2 text-sm focus:outline-none focus:ring-0"
+                />
+                
+                {/* Compact File Upload for Comments */}
+                <div className="border-t border-gray-200 px-3 py-2 bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    {ticket && (
+                      <FileUpload
+                        ticketId={ticket.id}
+                        onUploadComplete={handleCommentFileUploadComplete}
+                        onUploadError={handleFileUploadError}
+                        maxFiles={5}
+                        compactMode={true}
+                        showExisting={false}
+                        resetTrigger={fileUploadResetTrigger}
+                        className="flex-1"
+                      />
+                    )}
+                    
+                    <button
+                      onClick={handleAddComment}
+                      disabled={!newComment.trim() || isSubmittingComment}
+                      className="ml-3 inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2" />
+                      {isSubmittingComment ? 'Adding...' : 'Add Comment'}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Comments List */}
             <div className="space-y-4">
-              {comments.length === 0 ? (
+              {timeline.filter(event => event.type === 'comment').length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <ChatBubbleLeftRightIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                   <p>No comments yet</p>
                 </div>
               ) : (
-                comments.map((comment) => (
+                timeline.filter(event => event.type === 'comment').map((comment) => (
                   <div key={comment.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center space-x-2">
                         <UserIcon className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-900">{comment.author_name}</span>
+                        <span className="text-sm font-medium text-gray-900">{comment.author}</span>
                         <span className="text-xs text-gray-500">
-                          {comment.author_type === 'admin' ? 'Admin' : 'User'}
+                          {comment.authorType === 'admin' ? 'Admin' : 'User'}
                         </span>
+                        {comment.metadata?.edited && (
+                          <span className="text-xs text-gray-400 italic">(edited)</span>
+                        )}
                       </div>
-                      <span className="text-xs text-gray-500">
-                        {new Date(comment.created_at).toLocaleString()}
-                      </span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-gray-500">
+                          {new Date(comment.timestamp).toLocaleString()}
+                        </span>
+                        
+                        {/* Edit/Delete buttons */}
+                        <div className="flex items-center space-x-1">
+                          {editingCommentId === (comment.commentId || comment.id) ? (
+                            <>
+                              <button
+                                onClick={handleCancelEditComment}
+                                disabled={isUpdatingComment}
+                                className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600"
+                                title="Cancel editing"
+                              >
+                                <XMarkIcon className="h-3 w-3" />
+                              </button>
+                              <button
+                                onClick={handleSaveEditComment}
+                                disabled={isUpdatingComment || !editingCommentText.trim()}
+                                className="p-1 hover:bg-green-100 rounded text-green-600 hover:text-green-700"
+                                title="Save changes"
+                              >
+                                <CheckIcon className="h-3 w-3" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleEditComment(comment.commentId || comment.id, comment.description)}
+                                className="p-1 hover:bg-blue-100 rounded text-blue-600 hover:text-blue-700"
+                                title="Edit comment"
+                              >
+                                <PencilIcon className="h-3 w-3" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteComment(comment.commentId || comment.id)}
+                                disabled={isDeletingComment === (comment.commentId || comment.id)}
+                                className="p-1 hover:bg-red-100 rounded text-red-600 hover:text-red-700"
+                                title="Delete comment"
+                              >
+                                {isDeletingComment === (comment.commentId || comment.id) ? (
+                                  <div className="w-3 h-3 border border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                  <TrashIcon className="h-3 w-3" />
+                                )}
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-900 whitespace-pre-wrap">
-                      {comment.content}
-                    </div>
+                    
+                    {/* Comment content - editable if in edit mode */}
+                    {editingCommentId === (comment.commentId || comment.id) ? (
+                      <div className="mb-3">
+                        <textarea
+                          value={editingCommentText}
+                          onChange={(e) => setEditingCommentText(e.target.value)}
+                          rows={3}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Edit your comment..."
+                        />
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-900 whitespace-pre-wrap mb-3">
+                        {comment.description}
+                      </div>
+                    )}
+                    
+                    {/* Comment Attachments */}
+                    {comment.attachments && comment.attachments.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <h4 className="text-xs font-medium text-gray-700 mb-2 flex items-center">
+                          <PaperClipIcon className="h-3 w-3 mr-1" />
+                          Attachments ({comment.attachments.length})
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {comment.attachments.map((attachment: any) => (
+                            <div key={attachment.id} className="flex items-center space-x-2 p-2 bg-gray-50 rounded-md">
+                              <div className="flex-shrink-0">
+                                {attachment.mime_type?.startsWith('image/') ? (
+                                  <PhotoIcon className="h-4 w-4 text-blue-500" />
+                                ) : attachment.mime_type?.startsWith('video/') ? (
+                                  <VideoCameraIcon className="h-4 w-4 text-green-500" />
+                                ) : (
+                                  <DocumentIcon className="h-4 w-4 text-gray-500" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-medium text-gray-900 truncate">
+                                  {attachment.original_filename}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {attachment.file_size ? `${Math.round(attachment.file_size / 1024)} KB` : 'Unknown size'}
+                                </p>
+                              </div>
+                              <div className="flex-shrink-0">
+                                <button
+                                  onClick={() => window.open(attachment.public_url, '_blank')}
+                                  className="p-1 hover:bg-blue-100 rounded text-blue-600 hover:text-blue-700 transition-colors"
+                                  title="View file"
+                                >
+                                  <EyeIcon className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))
               )}
@@ -739,22 +1127,46 @@ export default function TicketDetailPage() {
             </div>
           )}
 
-          {/* Workflow Info */}
+          {/* Timeline */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">⚙️ Workflow</h3>
-            <div className="space-y-3 text-xs">
-              <div>
-                <span className="font-medium text-gray-600">Created:</span>
-                <div className="text-gray-900">{new Date(ticket.created_at).toLocaleString()}</div>
-              </div>
-              <div>
-                <span className="font-medium text-gray-600">Last Updated:</span>
-                <div className="text-gray-900">{new Date(ticket.updated_at).toLocaleString()}</div>
-              </div>
-              {ticket.assigned_admin && (
-                <div>
-                  <span className="font-medium text-gray-600">Assigned To:</span>
-                  <div className="text-gray-900">{ticket.assigned_admin.username}</div>
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">📅 Timeline</h3>
+            
+            {/* Timeline Events */}
+            <div className="space-y-3">
+              {timeline.length === 0 ? (
+                <div className="text-center py-4 text-gray-500">
+                  <ClockIcon className="h-6 w-6 mx-auto mb-1 text-gray-400" />
+                  <p className="text-xs">No activity yet</p>
+                </div>
+              ) : (
+                <div className="flow-root">
+                  <ul className="-mb-2">
+                    {timeline.map((event, index) => (
+                      <li key={event.id}>
+                        <div className="relative pb-3">
+                          {index !== timeline.length - 1 && (
+                            <span className="absolute top-3 left-2 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true" />
+                          )}
+                          <div className="relative flex space-x-2">
+                            <div className="h-4 w-4 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              {getTimelineIcon(event.type)}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-medium text-gray-900">{event.title}</div>
+                              <div className="text-xs text-gray-500">
+                                by {event.author} • {new Date(event.timestamp).toLocaleDateString()}
+                              </div>
+                              {event.type === 'comment' && event.description && (
+                                <div className="text-xs text-gray-600 mt-1 truncate">
+                                  "{event.description.substring(0, 50)}{event.description.length > 50 ? '...' : ''}"
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>
@@ -783,6 +1195,39 @@ export default function TicketDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Delete Comment Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Delete Comment
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Are you sure you want to delete this comment? This action cannot be undone.
+              {commentToDelete?.hasAttachments && (
+                <span className="block mt-2 text-orange-600 font-medium">
+                  ⚠️ This will also delete any attachments associated with this comment.
+                </span>
+              )}
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={cancelDeleteComment}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteComment}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+              >
+                Delete Comment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

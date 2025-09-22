@@ -6,9 +6,12 @@ The Centcom-Lyceum ticket management system allows Centcom users to submit bug r
 
 ### Key Features
 - ✅ Submit tickets with rich metadata (bug reports, feature requests, improvements, support)
-- ✅ Attach screenshots, videos, and log files (up to 10MB each)
+- ✅ Attach screenshots, videos, documents, and log files (up to 500MB each)
+- ✅ Drag & drop file upload with real-time progress tracking
+- ✅ View and download files uploaded by Lyceum support team
 - ✅ Track ticket status and receive updates in real-time
 - ✅ Two-way communication with support team via comments
+- ✅ Attach files to comments for better communication
 - ✅ Automatic ticket categorization and unique IDs (e.g., BUG-1, FR-1)
 - ✅ Integration with existing Centcom authentication
 - ✅ Complete React component library for easy integration
@@ -235,16 +238,23 @@ Get full details of a specific ticket, including comments and attachments.
 
 ### 4. Add Comment to Ticket
 
-**POST** `/api/tickets/{ticketId}/comments`
+**POST** `/api/tickets/by-key/{ticketKey}/comments`
 
-Add a comment to an existing ticket for communication with the support team.
+Add a comment to an existing ticket for communication with the support team. You can optionally attach files to your comment.
 
 #### Request Body
 ```json
 {
-  "content": "I tried the suggested solution but I'm still experiencing the same issue. Here are the additional logs from my latest attempt."
+  "content": "I tried the suggested solution but I'm still experiencing the same issue. Here are the additional logs from my latest attempt.",
+  "attachment_ids": ["attachment-uuid-1", "attachment-uuid-2"],
+  "is_internal": false
 }
 ```
+
+**Note**: To attach files to a comment:
+1. First upload files using the `/api/tickets/attachments/upload` endpoint
+2. Use the returned attachment IDs in the `attachment_ids` array when creating the comment
+3. Files will be automatically associated with the comment and appear inline
 
 #### Response
 ```json
@@ -283,11 +293,65 @@ Retrieve all comments for a specific ticket.
 }
 ```
 
-### 6. Upload File Attachment
+### 6. Edit Comment
+
+**PATCH** `/api/tickets/by-key/{ticketKey}/comments`
+
+Edit an existing comment that you previously submitted. Only the comment author can edit their own comments.
+
+#### Request Body
+```json
+{
+  "commentId": "comment-uuid-to-edit",
+  "content": "Updated comment content here. I've found additional information about this issue.",
+  "edit_reason": "Added more details"
+}
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "comment": {
+    "id": "comment-uuid-to-edit",
+    "content": "Updated comment content here. I've found additional information about this issue.",
+    "author_name": "User Name",
+    "author_type": "user",
+    "created_at": "2024-01-16T09:15:00Z",
+    "updated_at": "2024-01-16T14:30:00Z",
+    "edited_by": "user-uuid",
+    "edit_reason": "Added more details"
+  },
+  "message": "Comment updated successfully"
+}
+```
+
+### 7. Delete Comment
+
+**DELETE** `/api/tickets/by-key/{ticketKey}/comments`
+
+Delete a comment that you previously submitted. Only the comment author can delete their own comments. **Warning**: This will also delete any file attachments associated with the comment.
+
+#### Request Body
+```json
+{
+  "commentId": "comment-uuid-to-delete"
+}
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "message": "Comment and associated attachments deleted successfully"
+}
+```
+
+### 8. Upload File Attachment to Ticket
 
 **POST** `/api/tickets/{ticketId}/attachments`
 
-Upload a file attachment to a ticket (screenshots, logs, videos, etc.).
+Upload a file attachment directly to a ticket (screenshots, logs, videos, etc.). These files will appear in the main ticket attachments section.
 
 #### Headers
 ```
@@ -326,14 +390,70 @@ is_public: "true" | "false" (default: false)
 ```
 
 #### File Upload Limits
-- Maximum file size: 10MB
-- Allowed file types:
-  - Images: JPEG, PNG, GIF, WebP
-  - Videos: MP4, WebM
-  - Documents: PDF, TXT, CSV, JSON, ZIP
-- Files are automatically scanned for security threats
+- **Maximum file size: 500MB per file**
+- **Allowed file types:**
+  - **Images**: JPEG, PNG, GIF, WebP, SVG
+  - **Videos**: MP4, WebM, AVI, MOV, OGG
+  - **Documents**: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, CSV, JSON, XML
+  - **Archives**: ZIP, RAR, 7Z
+- **Features:**
+  - Files are automatically scanned for security threats
+  - Drag & drop upload support with visual feedback
+  - Real-time upload progress indicators
+  - Image preview thumbnails
+  - Automatic file type detection and validation
+  - Secure cloud storage with public access URLs
 
-### 7. Get Ticket Attachments
+### 9. Upload File Attachment for Comments
+
+**POST** `/api/tickets/attachments/upload`
+
+Upload a file attachment that can be associated with comments. Use this endpoint when you want to attach files to comments rather than directly to the ticket.
+
+#### Headers
+```
+Content-Type: multipart/form-data
+Authorization: Bearer <user_access_token>
+X-Client-App: CentCom
+X-Client-Version: <your_centcom_version>
+```
+
+#### Request Body (Form Data)
+```
+file: <File object>
+ticketId: "ticket-uuid"
+commentId: "comment-uuid" (optional - if provided, file is immediately associated with comment)
+attachment_type: "screenshot" | "video" | "log_file" | "document" | "other"
+description: "Optional description of the attachment"
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "attachment": {
+    "id": "attachment-uuid",
+    "filename": "1640123456_abc123.png",
+    "original_filename": "screenshot.png",
+    "file_size": 156780,
+    "mime_type": "image/png",
+    "attachment_type": "screenshot",
+    "description": "Additional error logs",
+    "uploaded_at": "2024-01-15T10:35:00Z",
+    "public_url": "https://storage.example.com/ticket-attachments/file.png",
+    "scan_status": "clean"
+  },
+  "message": "File uploaded successfully"
+}
+```
+
+#### Workflow for Comment Attachments
+1. Upload files using this endpoint without `commentId`
+2. Collect the attachment IDs from the responses
+3. Create your comment with the `attachment_ids` array
+4. Files will be automatically moved from ticket-level to comment-level association
+
+### 10. Get Ticket Attachments
 
 **GET** `/api/tickets/{ticketId}/attachments`
 
@@ -395,6 +515,516 @@ Error responses have this format:
   "error": "Detailed error message",
   "details": "Additional technical details (optional)"
 }
+```
+
+## Enhanced File Upload Integration
+
+### File Upload Component (React)
+
+Here's a complete React component that integrates the enhanced file upload functionality:
+
+```typescript
+import React, { useState, useCallback, useRef } from 'react';
+
+interface FileUploadProps {
+  ticketId?: string;
+  onFileUploaded?: (attachment: any) => void;
+  onError?: (error: string) => void;
+  maxFiles?: number;
+  compactMode?: boolean;
+}
+
+const CentcomFileUpload: React.FC<FileUploadProps> = ({
+  ticketId,
+  onFileUploaded,
+  onError,
+  maxFiles = 10,
+  compactMode = false
+}) => {
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [uploadingFiles, setUploadingFiles] = useState<any[]>([]);
+  const [attachments, setAttachments] = useState<any[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const uploadFile = async (file: File) => {
+    const uploadId = Math.random().toString(36).substring(2);
+    
+    // Add to uploading files
+    setUploadingFiles(prev => [...prev, {
+      id: uploadId,
+      file,
+      progress: 0,
+      status: 'uploading'
+    }]);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (ticketId) {
+        formData.append('ticketId', ticketId);
+      }
+
+      const response = await fetch('/api/tickets/attachments/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${userToken}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Upload failed');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Update uploading status
+        setUploadingFiles(prev => 
+          prev.map(f => 
+            f.id === uploadId 
+              ? { ...f, status: 'success', progress: 100 }
+              : f
+          )
+        );
+
+        // Add to completed attachments
+        setAttachments(prev => [...prev, result.attachment]);
+        onFileUploaded?.(result.attachment);
+
+        // Remove from uploading after delay
+        setTimeout(() => {
+          setUploadingFiles(prev => prev.filter(f => f.id !== uploadId));
+        }, 2000);
+      }
+
+    } catch (error: any) {
+      // Update error status
+      setUploadingFiles(prev => 
+        prev.map(f => 
+          f.id === uploadId 
+            ? { ...f, status: 'error', error: error.message }
+            : f
+        )
+      );
+
+      onError?.(error.message);
+    }
+  };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    files.forEach(uploadFile);
+  }, []);
+
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      files.forEach(uploadFile);
+      e.target.value = ''; // Reset input
+    }
+  }, []);
+
+  // Compact mode for comments
+  if (compactMode) {
+    return (
+      <div className="relative">
+        {/* Drag overlay */}
+        <div
+          onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+          onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }}
+          onDrop={handleDrop}
+          className={`
+            absolute inset-0 border-2 border-dashed rounded-lg transition-all z-20
+            ${isDragOver ? 'border-blue-500 bg-blue-50 opacity-95 flex items-center justify-center' : 'border-transparent pointer-events-none'}
+          `}
+        >
+          {isDragOver && (
+            <div className="text-center">
+              <svg className="mx-auto h-8 w-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              <p className="text-sm font-medium text-blue-600 mt-2">Drop files to attach</p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+            title="Attach files"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+            </svg>
+          </button>
+          
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*,video/*,.pdf,.doc,.docx,.txt,.zip,.rar,.7z"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          
+          {attachments.length > 0 && (
+            <span className="text-xs text-gray-500">
+              {attachments.length} file{attachments.length !== 1 ? 's' : ''} attached
+            </span>
+          )}
+        </div>
+
+        {/* Upload progress in compact mode */}
+        {uploadingFiles.length > 0 && (
+          <div className="mt-2 space-y-1">
+            {uploadingFiles.map((uploadingFile) => (
+              <div key={uploadingFile.id} className="flex items-center space-x-2 text-xs">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <span className="text-gray-600 truncate max-w-32">{uploadingFile.file.name}</span>
+                {uploadingFile.status === 'error' && <span className="text-red-500">✗</span>}
+                {uploadingFile.status === 'success' && <span className="text-green-500">✓</span>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Full upload interface
+  return (
+    <div className="space-y-4">
+      {/* Upload Area */}
+      <div
+        onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+        onDragLeave={(e) => { e.preventDefault(); setIsDragOver(false); }}
+        onDrop={handleDrop}
+        onClick={() => fileInputRef.current?.click()}
+        className={`
+          border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer
+          ${isDragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+        `}
+      >
+        <svg className={`mx-auto h-12 w-12 ${isDragOver ? 'text-blue-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        </svg>
+        
+        <div className="mt-4">
+          <p className="text-sm font-medium text-gray-900">
+            {isDragOver ? 'Drop files here' : 'Upload files'}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            Click to browse or drag and drop files here
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            Images, videos, documents up to 500MB • {attachments.length + uploadingFiles.length}/{maxFiles} files
+          </p>
+        </div>
+        
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/*,video/*,.pdf,.doc,.docx,.txt,.zip,.rar,.7z"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+      </div>
+
+      {/* Uploading Files */}
+      {uploadingFiles.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-gray-900">Uploading...</h4>
+          {uploadingFiles.map((uploadingFile) => (
+            <div key={uploadingFile.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+              <div className="flex-shrink-0">
+                {uploadingFile.status === 'uploading' && (
+                  <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                )}
+                {uploadingFile.status === 'success' && (
+                  <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                )}
+                {uploadingFile.status === 'error' && (
+                  <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {uploadingFile.file.name}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {(uploadingFile.file.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+                {uploadingFile.status === 'error' && (
+                  <p className="text-xs text-red-600">{uploadingFile.error}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Completed Attachments */}
+      {attachments.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-gray-900">Attached Files</h4>
+          {attachments.map((attachment) => (
+            <div key={attachment.id} className="flex items-center space-x-3 p-3 bg-white border border-gray-200 rounded-lg">
+              {/* File icon based on type */}
+              <div className="flex-shrink-0">
+                {attachment.file_category === 'image' ? (
+                  <img src={attachment.public_url} alt={attachment.original_filename} className="w-10 h-10 object-cover rounded" />
+                ) : (
+                  <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
+                    <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {attachment.original_filename}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {attachment.size_formatted} • {new Date(attachment.uploaded_at).toLocaleDateString()}
+                </p>
+              </div>
+              
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={() => window.open(attachment.public_url, '_blank')}
+                  className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600"
+                  title="View file"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default CentcomFileUpload;
+```
+
+### Usage Examples
+
+#### 1. Ticket Creation with File Upload
+
+```typescript
+const TicketCreationForm = () => {
+  const [attachments, setAttachments] = useState([]);
+
+  const handleFileUploaded = (attachment) => {
+    setAttachments(prev => [...prev, attachment]);
+  };
+
+  const handleSubmit = async (ticketData) => {
+    // Include attachment IDs in ticket submission
+    const ticketPayload = {
+      ...ticketData,
+      attachment_ids: attachments.map(a => a.id)
+    };
+
+    // Submit ticket
+    const response = await fetch('/api/tickets', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${userToken}`
+      },
+      body: JSON.stringify(ticketPayload)
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {/* Other form fields */}
+      
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Attach Files
+        </label>
+        <CentcomFileUpload
+          onFileUploaded={handleFileUploaded}
+          onError={(error) => console.error('Upload error:', error)}
+          maxFiles={10}
+        />
+      </div>
+      
+      <button type="submit">Create Ticket</button>
+    </form>
+  );
+};
+```
+
+#### 2. Comment with File Attachment
+
+```typescript
+const CommentForm = ({ ticketId }) => {
+  const [comment, setComment] = useState('');
+  const [attachments, setAttachments] = useState([]);
+
+  const handleAddComment = async () => {
+    const commentPayload = {
+      content: comment,
+      attachment_ids: attachments.map(a => a.id)
+    };
+
+    await fetch(`/api/tickets/${ticketId}/comments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${userToken}`
+      },
+      body: JSON.stringify(commentPayload)
+    });
+
+    setComment('');
+    setAttachments([]);
+  };
+
+  return (
+    <div className="border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-blue-500">
+      <textarea
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        rows={3}
+        placeholder="Add a comment..."
+        className="w-full border-0 resize-none px-3 py-2 focus:outline-none"
+      />
+      
+      <div className="border-t border-gray-200 px-3 py-2 bg-gray-50">
+        <div className="flex items-center justify-between">
+          <CentcomFileUpload
+            ticketId={ticketId}
+            onFileUploaded={(attachment) => setAttachments(prev => [...prev, attachment])}
+            compactMode={true}
+            maxFiles={5}
+          />
+          
+          <button
+            onClick={handleAddComment}
+            disabled={!comment.trim()}
+            className="ml-3 px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+          >
+            Add Comment
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+```
+
+#### 3. View Ticket Files (Including Lyceum Uploads)
+
+```typescript
+const TicketAttachments = ({ ticketId }) => {
+  const [attachments, setAttachments] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadAttachments = async () => {
+      try {
+        const response = await fetch(`/api/tickets/${ticketId}/attachments`, {
+          headers: {
+            'Authorization': `Bearer ${userToken}`
+          }
+        });
+        
+        const data = await response.json();
+        setAttachments(data.attachments || []);
+      } catch (error) {
+        console.error('Failed to load attachments:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAttachments();
+  }, [ticketId]);
+
+  if (loading) {
+    return <div>Loading attachments...</div>;
+  }
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold">All Attachments ({attachments.length})</h3>
+      
+      {attachments.length === 0 ? (
+        <p className="text-gray-500">No files attached to this ticket.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {attachments.map((attachment) => (
+            <div key={attachment.id} className="border border-gray-200 rounded-lg p-4">
+              {/* File preview */}
+              {attachment.file_category === 'image' ? (
+                <img
+                  src={attachment.public_url}
+                  alt={attachment.original_filename}
+                  className="w-full h-32 object-cover rounded mb-3"
+                />
+              ) : (
+                <div className="w-full h-32 bg-gray-100 rounded mb-3 flex items-center justify-center">
+                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+              )}
+              
+              {/* File info */}
+              <h4 className="font-medium text-sm truncate mb-1">
+                {attachment.original_filename}
+              </h4>
+              <p className="text-xs text-gray-500 mb-2">
+                {attachment.size_formatted} • {new Date(attachment.uploaded_at).toLocaleDateString()}
+              </p>
+              
+              {/* Upload source */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs px-2 py-1 rounded bg-gray-100">
+                  {attachment.uploaded_by ? 'User Upload' : 'Lyceum Team'}
+                </span>
+                
+                <button
+                  onClick={() => window.open(attachment.public_url, '_blank')}
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                >
+                  Download
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 ```
 
 ## Implementation Examples
@@ -737,11 +1367,16 @@ When building a ticket submission form in your Centcom UI, consider including:
 2. **Priority Selection**: Dropdown with clear descriptions of each priority level
 3. **Application Section**: Dropdown of Centcom modules/sections
 4. **Rich Text Description**: Support for formatted text, code blocks, etc.
-5. **File Upload**: Allow screenshots, videos, log files (up to 10MB each)
-   - Support drag-and-drop functionality
-   - Preview images before upload
-   - Show upload progress
-   - Validate file types and sizes client-side
+5. **Enhanced File Upload System**: Comprehensive file management (up to 500MB each)
+   - **Drag & Drop Interface**: Modern file upload with visual feedback
+   - **Multiple File Types**: Images, videos, documents, archives supported
+   - **Real-time Progress**: Live upload progress with cancel functionality
+   - **Image Previews**: Thumbnail previews for uploaded images
+   - **File Management**: View, download, and delete uploaded files
+   - **Comment Attachments**: Add files directly to comments
+   - **Bi-directional Sharing**: View files uploaded by Lyceum support team
+   - **Secure Storage**: Files stored in encrypted cloud storage
+   - **Client-side Validation**: Immediate feedback on file type and size
 6. **Environment Info**: Auto-populate system information where possible
 7. **Tags**: Auto-suggest common tags based on ticket type and section
 8. **Real-time Validation**: Validate form fields as user types
@@ -860,6 +1495,387 @@ const TicketSubmissionForm = () => {
     </form>
   );
 };
+```
+
+### Comment Management Component Example
+
+Here's a complete React component that demonstrates comment display, editing, and deletion with file attachments:
+
+```typescript
+import React, { useState, useEffect } from 'react';
+
+interface Comment {
+  id: string;
+  content: string;
+  author_name: string;
+  author_type: 'user' | 'admin';
+  created_at: string;
+  updated_at?: string;
+  edited_by?: string;
+  edit_reason?: string;
+  attachments?: Attachment[];
+}
+
+interface Attachment {
+  id: string;
+  original_filename: string;
+  file_size: number;
+  mime_type: string;
+  public_url: string;
+  uploaded_at: string;
+}
+
+const TicketComments = ({ ticketKey, userToken }: { ticketKey: string; userToken: string }) => {
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
+  const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
+  const [uploadedAttachments, setUploadedAttachments] = useState<Attachment[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Load comments
+  useEffect(() => {
+    loadComments();
+  }, [ticketKey]);
+
+  const loadComments = async () => {
+    try {
+      const response = await fetch(`/api/tickets/by-key/${ticketKey}/timeline`, {
+        headers: {
+          'Authorization': `Bearer ${userToken}`,
+          'X-Client-App': 'CentCom'
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        // Filter only comment events
+        const commentEvents = data.timeline.filter((event: any) => event.type === 'comment');
+        setComments(commentEvents);
+      }
+    } catch (error) {
+      console.error('Failed to load comments:', error);
+    }
+  };
+
+  // Upload files for comment attachments
+  const uploadFiles = async (files: File[]): Promise<string[]> => {
+    const attachmentIds: string[] = [];
+    
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('ticketId', ticketKey);
+      formData.append('attachment_type', getAttachmentType(file.type));
+
+      try {
+        const response = await fetch('/api/tickets/attachments/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${userToken}`,
+            'X-Client-App': 'CentCom'
+          },
+          body: formData
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          attachmentIds.push(data.attachment.id);
+          setUploadedAttachments(prev => [...prev, data.attachment]);
+        }
+      } catch (error) {
+        console.error('Failed to upload file:', error);
+      }
+    }
+    
+    return attachmentIds;
+  };
+
+  // Add new comment
+  const addComment = async () => {
+    if (!newComment.trim()) return;
+
+    setLoading(true);
+    try {
+      // Upload files first if any
+      const attachmentIds = attachmentFiles.length > 0 
+        ? await uploadFiles(attachmentFiles) 
+        : [];
+
+      const response = await fetch(`/api/tickets/by-key/${ticketKey}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`,
+          'X-Client-App': 'CentCom'
+        },
+        body: JSON.stringify({
+          content: newComment,
+          attachment_ids: attachmentIds,
+          is_internal: false
+        })
+      });
+
+      if (response.ok) {
+        setNewComment('');
+        setAttachmentFiles([]);
+        setUploadedAttachments([]);
+        loadComments(); // Reload to show new comment
+      } else {
+        const error = await response.json();
+        alert(`Failed to add comment: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Failed to add comment:', error);
+      alert('Failed to add comment');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Edit comment
+  const startEdit = (comment: Comment) => {
+    setEditingCommentId(comment.id);
+    setEditingText(comment.content);
+  };
+
+  const cancelEdit = () => {
+    setEditingCommentId(null);
+    setEditingText('');
+  };
+
+  const saveEdit = async () => {
+    if (!editingText.trim()) return;
+
+    try {
+      const response = await fetch(`/api/tickets/by-key/${ticketKey}/comments`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`,
+          'X-Client-App': 'CentCom'
+        },
+        body: JSON.stringify({
+          commentId: editingCommentId,
+          content: editingText,
+          edit_reason: 'Content updated'
+        })
+      });
+
+      if (response.ok) {
+        setEditingCommentId(null);
+        setEditingText('');
+        loadComments(); // Reload to show updated comment
+      } else {
+        const error = await response.json();
+        alert(`Failed to update comment: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Failed to update comment:', error);
+      alert('Failed to update comment');
+    }
+  };
+
+  // Delete comment
+  const deleteComment = async (commentId: string) => {
+    if (!confirm('Are you sure you want to delete this comment? This will also delete any attached files.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/tickets/by-key/${ticketKey}/comments`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${userToken}`,
+          'X-Client-App': 'CentCom'
+        },
+        body: JSON.stringify({
+          commentId: commentId
+        })
+      });
+
+      if (response.ok) {
+        loadComments(); // Reload to remove deleted comment
+      } else {
+        const error = await response.json();
+        alert(`Failed to delete comment: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Failed to delete comment:', error);
+      alert('Failed to delete comment');
+    }
+  };
+
+  const getAttachmentType = (mimeType: string): string => {
+    if (mimeType.startsWith('image/')) return 'screenshot';
+    if (mimeType.startsWith('video/')) return 'video';
+    if (mimeType.includes('log') || mimeType === 'text/plain') return 'log_file';
+    return 'document';
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    if (bytes === 0) return '0 Bytes';
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold">Comments</h3>
+      
+      {/* Add new comment */}
+      <div className="border rounded-lg p-4">
+        <textarea
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          placeholder="Add a comment..."
+          rows={3}
+          className="w-full border rounded p-2"
+        />
+        
+        {/* File upload for comment attachments */}
+        <div className="mt-2">
+          <input
+            type="file"
+            multiple
+            onChange={(e) => setAttachmentFiles(Array.from(e.target.files || []))}
+            className="mb-2"
+          />
+          {attachmentFiles.length > 0 && (
+            <div className="text-sm text-gray-600">
+              {attachmentFiles.length} file(s) selected: {attachmentFiles.map(f => f.name).join(', ')}
+            </div>
+          )}
+        </div>
+        
+        <button
+          onClick={addComment}
+          disabled={!newComment.trim() || loading}
+          className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+        >
+          {loading ? 'Adding...' : 'Add Comment'}
+        </button>
+      </div>
+
+      {/* Comments list */}
+      <div className="space-y-3">
+        {comments.map((comment) => (
+          <div key={comment.id} className="border rounded-lg p-4">
+            <div className="flex justify-between items-start mb-2">
+              <div className="flex items-center space-x-2">
+                <span className="font-medium">{comment.author_name}</span>
+                <span className="text-xs text-gray-500">
+                  {comment.author_type === 'admin' ? 'Admin' : 'User'}
+                </span>
+                {comment.updated_at && comment.updated_at !== comment.created_at && (
+                  <span className="text-xs text-gray-400 italic">(edited)</span>
+                )}
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs text-gray-500">
+                  {new Date(comment.created_at).toLocaleString()}
+                </span>
+                
+                {/* Edit/Delete buttons - only show for user's own comments */}
+                {comment.author_type === 'user' && (
+                  <div className="flex space-x-1">
+                    {editingCommentId === comment.id ? (
+                      <>
+                        <button
+                          onClick={cancelEdit}
+                          className="text-xs px-2 py-1 text-gray-600 hover:bg-gray-100 rounded"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={saveEdit}
+                          disabled={!editingText.trim()}
+                          className="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+                        >
+                          Save
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => startEdit(comment)}
+                          className="text-xs px-2 py-1 text-blue-600 hover:bg-blue-100 rounded"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => deleteComment(comment.id)}
+                          className="text-xs px-2 py-1 text-red-600 hover:bg-red-100 rounded"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Comment content - editable if in edit mode */}
+            {editingCommentId === comment.id ? (
+              <textarea
+                value={editingText}
+                onChange={(e) => setEditingText(e.target.value)}
+                rows={3}
+                className="w-full border rounded p-2"
+              />
+            ) : (
+              <div className="text-gray-900 whitespace-pre-wrap mb-3">
+                {comment.content}
+              </div>
+            )}
+            
+            {/* Comment attachments */}
+            {comment.attachments && comment.attachments.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <h4 className="text-xs font-medium text-gray-700 mb-2">
+                  Attachments ({comment.attachments.length})
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {comment.attachments.map((attachment) => (
+                    <div key={attachment.id} className="flex items-center space-x-2 p-2 bg-gray-50 rounded">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-gray-900 truncate">
+                          {attachment.original_filename}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {formatFileSize(attachment.file_size)}
+                        </p>
+                      </div>
+                      <a
+                        href={attachment.public_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-700 text-xs font-medium"
+                      >
+                        View
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+        
+        {comments.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            No comments yet. Be the first to comment!
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default TicketComments;
 ```
 
 ## Best Practices
@@ -983,6 +1999,259 @@ For questions about the ticket system integration:
 - Two-way commenting system
 - Admin panel integration
 - Full CRUD API endpoints
+
+## Comment Edit and Delete Operations
+
+### Important Note about Comment IDs
+
+When working with comment operations (edit/delete), there's an important distinction between **display IDs** and **actual comment IDs**:
+
+- **Timeline API** returns comments with prefixed IDs like `"comment-12345-uuid"` for React key uniqueness
+- **Edit/Delete APIs** require the actual comment UUID like `"12345-uuid"`
+
+The timeline API now includes a `commentId` field with the actual UUID:
+
+```typescript
+interface TimelineEvent {
+  id: string          // Display ID: "comment-12345-uuid"
+  commentId?: string  // Actual ID: "12345-uuid" (use this for edit/delete)
+  type: string
+  // ... other fields
+}
+```
+
+### Edit Comment API
+
+**Endpoint**: `PATCH /api/tickets/by-key/{ticketKey}/comments`
+
+**Headers**:
+```
+Content-Type: application/json
+Authorization: Bearer {centcom_api_token}
+X-Centcom-User-ID: {user_id}
+```
+
+**Request Body**:
+```json
+{
+  "commentId": "actual-comment-uuid-here",  // Use commentId from timeline, not id
+  "content": "Updated comment content",
+  "edit_reason": "Fixed typo"  // Optional
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "comment": {
+    "id": "comment-uuid",
+    "content": "Updated comment content",
+    "updated_at": "2024-01-01T12:00:00Z",
+    "edited_by": "user-uuid"
+  },
+  "message": "Comment updated successfully"
+}
+```
+
+### Delete Comment API
+
+**Endpoint**: `DELETE /api/tickets/by-key/{ticketKey}/comments`
+
+**Headers**:
+```
+Content-Type: application/json
+Authorization: Bearer {centcom_api_token}
+X-Centcom-User-ID: {user_id}
+```
+
+**Request Body**:
+```json
+{
+  "commentId": "actual-comment-uuid-here"  // Use commentId from timeline, not id
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "message": "Comment and associated attachments deleted successfully"
+}
+```
+
+### Frontend Integration for Comment Management
+
+Here's a React component example showing how to handle comment editing and deletion:
+
+```typescript
+interface CommentActionsProps {
+  comment: TimelineEvent
+  ticketKey: string
+  onCommentUpdated: () => void
+  onCommentDeleted: () => void
+}
+
+const CommentActions: React.FC<CommentActionsProps> = ({
+  comment,
+  ticketKey,
+  onCommentUpdated,
+  onCommentDeleted
+}) => {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editContent, setEditContent] = useState(comment.description || '')
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+
+  const handleEdit = async () => {
+    setIsUpdating(true)
+    try {
+      const response = await fetch(`/api/tickets/by-key/${ticketKey}/comments`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getCentcomApiToken()}`,
+          'X-Centcom-User-ID': getUserId()
+        },
+        body: JSON.stringify({
+          commentId: comment.commentId || comment.id, // Use commentId preferentially
+          content: editContent,
+          edit_reason: 'Content updated'
+        })
+      })
+
+      if (response.ok) {
+        setIsEditing(false)
+        onCommentUpdated()
+      } else {
+        const error = await response.json()
+        console.error('Failed to edit comment:', error)
+      }
+    } catch (error) {
+      console.error('Edit comment error:', error)
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    try {
+      const response = await fetch(`/api/tickets/by-key/${ticketKey}/comments`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getCentcomApiToken()}`,
+          'X-Centcom-User-ID': getUserId()
+        },
+        body: JSON.stringify({
+          commentId: comment.commentId || comment.id // Use commentId preferentially
+        })
+      })
+
+      if (response.ok) {
+        setShowDeleteModal(false)
+        onCommentDeleted()
+      } else {
+        const error = await response.json()
+        console.error('Failed to delete comment:', error)
+      }
+    } catch (error) {
+      console.error('Delete comment error:', error)
+    }
+  }
+
+  return (
+    <div className="comment-actions">
+      {isEditing ? (
+        <div>
+          <textarea 
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            className="w-full p-2 border rounded"
+          />
+          <div className="flex gap-2 mt-2">
+            <button 
+              onClick={handleEdit}
+              disabled={isUpdating}
+              className="px-3 py-1 bg-blue-500 text-white rounded"
+            >
+              {isUpdating ? 'Saving...' : 'Save'}
+            </button>
+            <button 
+              onClick={() => setIsEditing(false)}
+              className="px-3 py-1 bg-gray-500 text-white rounded"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <button 
+            onClick={() => setIsEditing(true)}
+            className="px-2 py-1 text-blue-600 hover:bg-blue-100 rounded"
+          >
+            Edit
+          </button>
+          <button 
+            onClick={() => setShowDeleteModal(true)}
+            className="px-2 py-1 text-red-600 hover:bg-red-100 rounded"
+          >
+            Delete
+          </button>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Delete Comment</h3>
+            <p className="mb-4">
+              Are you sure you want to delete this comment? This action cannot be undone.
+              {comment.attachments?.length > 0 && (
+                <span className="block mt-2 text-orange-600">
+                  ⚠️ This will also delete {comment.attachments.length} attached file(s).
+                </span>
+              )}
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 text-white bg-red-600 rounded"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+### Timeline Events Integration
+
+The system now automatically creates timeline events when comments are edited or deleted. These appear in the ticket timeline with appropriate icons:
+
+- **Comment Edit**: 🖊️ Orange pencil icon - "Comment edited"
+- **Comment Delete**: 🗑️ Red trash icon - "Comment deleted"
+
+These events help track all activities on a ticket for audit and history purposes.
+
+### Permission Considerations
+
+- Users can only edit/delete their own comments
+- The system validates ownership based on the `author_id` field
+- Admins can edit/delete any comment
+- All edit/delete actions are logged in the ticket timeline
 
 ### Planned Features
 - Email notifications for status changes
