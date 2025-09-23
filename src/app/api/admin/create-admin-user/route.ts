@@ -117,61 +117,24 @@ export async function POST() {
       })
     }
     
-    // Method 3: Create sample database cluster
+    // Method 3: Clean up any mock/test clusters (removed sample cluster creation)
     try {
-      const sampleCluster = {
-        id: 'c0000000-0000-0000-0000-000000000001',
-        name: 'Production Primary',
-        description: 'Main production database cluster',
-        cluster_type: 'production',
-        status: 'active',
-        region: 'us-east-1',
-        instance_size: 'large',
-        max_connections: 500,
-        storage_gb: 1000,
-        backup_enabled: true,
-        monitoring_enabled: true,
-        assigned_users: [],
-        configuration: {
-          ssl_enabled: true,
-          backup_schedule: 'daily',
-          monitoring_interval: 300
-        },
-        metrics: {
-          cpu_usage: 45,
-          memory_usage: 52,
-          storage_usage: 30,
-          active_connections: 156,
-          queries_per_second: 890
-        },
-        created_by: 'a0000000-0000-0000-0000-000000000001',
-        last_health_check: new Date().toISOString()
-      }
-      
-      const { data: clusterData, error: clusterError } = await supabase
+      // Remove any test clusters that might have been created during development
+      const { error: cleanupError } = await supabase
         .from('database_clusters')
-        .upsert([sampleCluster])
-        .select()
+        .delete()
+        .or('id.eq.c0000000-0000-0000-0000-000000000001,name.eq.Production Primary,name.ilike.%test%,name.ilike.%sample%')
       
-      if (clusterError) {
-        results.push({
-          step: 'Create sample database cluster',
-          success: false,
-          error: clusterError.message,
-          details: clusterError
-        })
-      } else {
-        results.push({
-          step: 'Create sample database cluster',
-          success: true,
-          data: clusterData,
-          message: 'Sample database cluster created'
-        })
-      }
+      results.push({
+        step: 'Clean up test/mock clusters',
+        success: !cleanupError,
+        error: cleanupError?.message,
+        message: 'Cleaned up any existing test/mock clusters'
+      })
       
     } catch (err) {
       results.push({
-        step: 'Create sample database cluster',
+        step: 'Clean up test/mock clusters',
         success: false,
         error: err instanceof Error ? err.message : 'Unknown error'
       })

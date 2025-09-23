@@ -18,6 +18,7 @@ import {
   PauseIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline'
+import ClusterCreationWizard from '@/components/ClusterCreationWizard'
 
 interface DatabaseCluster {
   id: string
@@ -48,6 +49,7 @@ export default function ClusterManagement() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'all' | 'development' | 'analytics' | 'production'>('all')
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'maintenance' | 'error' | 'provisioning'>('all')
+  const [showWizard, setShowWizard] = useState(false)
 
   useEffect(() => {
     loadClusters()
@@ -56,6 +58,14 @@ export default function ClusterManagement() {
   const loadClusters = async () => {
     try {
       setLoading(true)
+      
+      // Get the access token from localStorage (same way as our API tests)
+      const authData = JSON.parse(localStorage.getItem('sb-kffiaqsihldgqdwagook-auth-token') || '{}')
+      const accessToken = authData.access_token
+      
+      if (!accessToken) {
+        throw new Error('No access token found. Please refresh the page and try again.')
+      }
       
       // Build query parameters
       const params = new URLSearchParams()
@@ -68,7 +78,11 @@ export default function ClusterManagement() {
       params.append('limit', '50')
       
       // Fetch clusters from API
-      const response = await fetch(`/api/clusters?${params.toString()}`)
+      const response = await fetch(`/api/clusters?${params.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      })
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -100,6 +114,18 @@ export default function ClusterManagement() {
       // Show error state
       setClusters([])
     }
+  }
+
+  const handleWizardComplete = (cluster: any) => {
+    setShowWizard(false)
+    // Refresh clusters list to show the new cluster
+    loadClusters()
+    // Optional: Show success notification
+    console.log('Cluster created successfully:', cluster.name)
+  }
+
+  const handleWizardCancel = () => {
+    setShowWizard(false)
   }
 
   const getStatusIcon = (status: string) => {
@@ -172,6 +198,16 @@ export default function ClusterManagement() {
   }
 
 
+  // Show wizard if it's active
+  if (showWizard) {
+    return (
+      <ClusterCreationWizard 
+        onComplete={handleWizardComplete}
+        onCancel={handleWizardCancel}
+      />
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -193,13 +229,13 @@ export default function ClusterManagement() {
             <ArrowPathIcon className="-ml-1 mr-2 h-5 w-5" />
             Refresh
           </button>
-          <Link
-            href="/admin/clusters/create"
+          <button
+            onClick={() => setShowWizard(true)}
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
           >
             <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
             Create Cluster
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -412,13 +448,13 @@ export default function ClusterManagement() {
           </p>
           {!searchTerm && (
             <div className="mt-6">
-              <Link
-                href="/admin/clusters/create"
+              <button
+                onClick={() => setShowWizard(true)}
                 className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
               >
                 <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
                 Create Database Cluster
-              </Link>
+              </button>
             </div>
           )}
         </div>
