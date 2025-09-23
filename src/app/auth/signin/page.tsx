@@ -28,10 +28,12 @@ export default function SignIn() {
   // After successful SIGNED_IN (AuthContext updates user), navigate
   useEffect(() => {
     if (user && !authLoading) {
-      console.log('User detected after signin, redirecting to /dashboard')
-      router.push('/dashboard')
+      const redirectedFrom = searchParams.get('redirectedFrom')
+      const destination = redirectedFrom || '/dashboard'
+      console.log('User detected after signin, redirecting to', destination)
+      router.push(destination)
     }
-  }, [user, authLoading, router])
+  }, [user, authLoading, router, searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

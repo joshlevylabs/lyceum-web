@@ -23,32 +23,31 @@ interface DatabaseCluster {
   id: string
   name: string
   description?: string
-  cluster_type: string
-  status: string
+  cluster_type: 'production' | 'development' | 'analytics'
+  status: 'provisioning' | 'active' | 'maintenance' | 'error' | 'terminated'
   region: string
-  instance_size: string
-  max_connections: number
-  storage_gb: number
-  backup_enabled: boolean
-  monitoring_enabled: boolean
-  assigned_users: string[]
+  node_count: number
+  cpu_per_node: number
+  memory_per_node: string
+  storage_per_node: string
+  hot_tier_size?: string
+  warm_tier_size?: string
+  cold_tier_size?: string
+  archive_enabled: boolean
   created_at: string
-  last_health_check?: string
-  metrics: {
-    cpu_usage?: number
-    memory_usage?: number
-    storage_usage?: number
-    active_connections?: number
-    queries_per_second?: number
-  }
+  updated_at: string
+  health_status: 'healthy' | 'warning' | 'critical' | 'unknown'
+  estimated_monthly_cost?: number
+  actual_monthly_cost?: number
+  user_role: 'admin' | 'editor' | 'analyst' | 'viewer'
 }
 
 export default function ClusterManagement() {
   const [clusters, setClusters] = useState<DatabaseCluster[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [filterType, setFilterType] = useState<'all' | 'development' | 'staging' | 'production'>('all')
-  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'maintenance' | 'error'>('all')
+  const [filterType, setFilterType] = useState<'all' | 'development' | 'analytics' | 'production'>('all')
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'maintenance' | 'error' | 'provisioning'>('all')
 
   useEffect(() => {
     loadClusters()
@@ -58,129 +57,48 @@ export default function ClusterManagement() {
     try {
       setLoading(true)
       
-      // TODO: Replace with actual API call
-      // Simulate cluster data
-      setTimeout(() => {
-        const mockClusters: DatabaseCluster[] = [
-          {
-            id: '1',
-            name: 'Production Primary',
-            description: 'Main production database cluster',
-            cluster_type: 'production',
-            status: 'active',
-            region: 'us-east-1',
-            instance_size: 'large',
-            max_connections: 500,
-            storage_gb: 1000,
-            backup_enabled: true,
-            monitoring_enabled: true,
-            assigned_users: ['user1', 'user2', 'user3'],
-            created_at: '2024-01-01T00:00:00Z',
-            last_health_check: '2024-09-09T18:25:00Z',
-            metrics: {
-              cpu_usage: 65,
-              memory_usage: 72,
-              storage_usage: 45,
-              active_connections: 234,
-              queries_per_second: 1250
-            }
-          },
-          {
-            id: '2',
-            name: 'Staging Environment',
-            description: 'Pre-production testing cluster',
-            cluster_type: 'staging',
-            status: 'active',
-            region: 'us-west-2',
-            instance_size: 'medium',
-            max_connections: 200,
-            storage_gb: 500,
-            backup_enabled: true,
-            monitoring_enabled: true,
-            assigned_users: ['user4', 'user5'],
-            created_at: '2024-01-15T00:00:00Z',
-            last_health_check: '2024-09-09T18:20:00Z',
-            metrics: {
-              cpu_usage: 25,
-              memory_usage: 40,
-              storage_usage: 30,
-              active_connections: 45,
-              queries_per_second: 180
-            }
-          },
-          {
-            id: '3',
-            name: 'Development Cluster',
-            description: 'Development and testing environment',
-            cluster_type: 'development',
-            status: 'active',
-            region: 'us-east-1',
-            instance_size: 'small',
-            max_connections: 100,
-            storage_gb: 200,
-            backup_enabled: false,
-            monitoring_enabled: true,
-            assigned_users: ['user6'],
-            created_at: '2024-02-01T00:00:00Z',
-            last_health_check: '2024-09-09T18:15:00Z',
-            metrics: {
-              cpu_usage: 15,
-              memory_usage: 28,
-              storage_usage: 20,
-              active_connections: 12,
-              queries_per_second: 45
-            }
-          },
-          {
-            id: '4',
-            name: 'Analytics Cluster',
-            description: 'Dedicated analytics and reporting cluster',
-            cluster_type: 'production',
-            status: 'maintenance',
-            region: 'eu-west-1',
-            instance_size: 'xlarge',
-            max_connections: 300,
-            storage_gb: 2000,
-            backup_enabled: true,
-            monitoring_enabled: true,
-            assigned_users: ['user7', 'user8'],
-            created_at: '2024-03-01T00:00:00Z',
-            last_health_check: '2024-09-09T17:30:00Z',
-            metrics: {
-              cpu_usage: 0,
-              memory_usage: 0,
-              storage_usage: 60,
-              active_connections: 0,
-              queries_per_second: 0
-            }
-          }
-        ]
-        
-        let filtered = mockClusters
-        
-        if (filterType !== 'all') {
-          filtered = filtered.filter(cluster => cluster.cluster_type === filterType)
-        }
-        
-        if (filterStatus !== 'all') {
-          filtered = filtered.filter(cluster => cluster.status === filterStatus)
-        }
-        
-        if (searchTerm) {
-          filtered = filtered.filter(cluster =>
-            cluster.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            cluster.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            cluster.region.toLowerCase().includes(searchTerm.toLowerCase())
-          )
-        }
-        
-        setClusters(filtered)
-        setLoading(false)
-      }, 500)
+      // Build query parameters
+      const params = new URLSearchParams()
+      if (filterType !== 'all') {
+        params.append('cluster_type', filterType)
+      }
+      if (filterStatus !== 'all') {
+        params.append('status', filterStatus)
+      }
+      params.append('limit', '50')
+      
+      // Fetch clusters from API
+      const response = await fetch(`/api/clusters?${params.toString()}`)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to load clusters')
+      }
+      
+      let filtered = data.clusters || []
+      
+      // Apply client-side search filter
+      if (searchTerm) {
+        filtered = filtered.filter((cluster: DatabaseCluster) =>
+          cluster.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          cluster.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          cluster.region.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      }
+      
+      setClusters(filtered)
+      setLoading(false)
       
     } catch (error) {
       console.error('Failed to load clusters:', error)
       setLoading(false)
+      // Show error state
+      setClusters([])
     }
   }
 
@@ -189,7 +107,8 @@ export default function ClusterManagement() {
       case 'active': return <CheckCircleIcon className="w-5 h-5 text-green-500" />
       case 'maintenance': return <ClockIcon className="w-5 h-5 text-yellow-500" />
       case 'error': return <XCircleIcon className="w-5 h-5 text-red-500" />
-      case 'initializing': return <ArrowPathIcon className="w-5 h-5 text-blue-500 animate-spin" />
+      case 'provisioning': return <ArrowPathIcon className="w-5 h-5 text-blue-500 animate-spin" />
+      case 'terminated': return <XCircleIcon className="w-5 h-5 text-gray-500" />
       default: return <ExclamationTriangleIcon className="w-5 h-5 text-gray-500" />
     }
   }
@@ -199,8 +118,29 @@ export default function ClusterManagement() {
       case 'active': return 'bg-green-100 text-green-800'
       case 'maintenance': return 'bg-yellow-100 text-yellow-800'
       case 'error': return 'bg-red-100 text-red-800'
-      case 'initializing': return 'bg-blue-100 text-blue-800'
+      case 'provisioning': return 'bg-blue-100 text-blue-800'
+      case 'terminated': return 'bg-gray-100 text-gray-800'
       default: return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'admin': return 'text-red-600'
+      case 'editor': return 'text-blue-600'
+      case 'analyst': return 'text-purple-600'
+      case 'viewer': return 'text-gray-600'
+      default: return 'text-gray-600'
+    }
+  }
+
+  const getHealthColor = (health: string) => {
+    switch (health) {
+      case 'healthy': return 'text-green-600'
+      case 'warning': return 'text-yellow-600'
+      case 'critical': return 'text-red-600'
+      case 'unknown': return 'text-gray-600'
+      default: return 'text-gray-600'
     }
   }
 
@@ -213,15 +153,6 @@ export default function ClusterManagement() {
     }
   }
 
-  const getInstanceSizeColor = (size: string) => {
-    switch (size) {
-      case 'small': return 'bg-gray-100 text-gray-800'
-      case 'medium': return 'bg-blue-100 text-blue-800'
-      case 'large': return 'bg-purple-100 text-purple-800'
-      case 'xlarge': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
-  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -240,17 +171,6 @@ export default function ClusterManagement() {
     })
   }
 
-  const getMetricColor = (value: number, type: 'usage' | 'performance') => {
-    if (type === 'usage') {
-      if (value >= 80) return 'text-red-600'
-      if (value >= 60) return 'text-yellow-600'
-      return 'text-green-600'
-    } else {
-      if (value >= 1000) return 'text-green-600'
-      if (value >= 500) return 'text-yellow-600'
-      return 'text-red-600'
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -258,10 +178,10 @@ export default function ClusterManagement() {
       <div className="md:flex md:items-center md:justify-between">
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            Database Cluster Management
+            Manufacturing Analytics Clusters
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Monitor and manage database clusters across environments
+            High-performance ClickHouse clusters for manufacturing data analytics
           </p>
         </div>
         
@@ -293,7 +213,7 @@ export default function ClusterManagement() {
           >
             <option value="all">All Types</option>
             <option value="production">Production</option>
-            <option value="staging">Staging</option>
+            <option value="analytics">Analytics</option>
             <option value="development">Development</option>
           </select>
           
@@ -304,6 +224,7 @@ export default function ClusterManagement() {
           >
             <option value="all">All Statuses</option>
             <option value="active">Active</option>
+            <option value="provisioning">Provisioning</option>
             <option value="maintenance">Maintenance</option>
             <option value="error">Error</option>
           </select>
@@ -349,44 +270,54 @@ export default function ClusterManagement() {
                 </div>
 
                 {/* Status and Type */}
-                <div className="flex space-x-2 mb-4">
+                <div className="flex flex-wrap gap-2 mb-4">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(cluster.status)}`}>
                     {cluster.status}
                   </span>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(cluster.cluster_type)}`}>
                     {cluster.cluster_type}
                   </span>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getInstanceSizeColor(cluster.instance_size)}`}>
-                    {cluster.instance_size}
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {cluster.node_count} node{cluster.node_count !== 1 ? 's' : ''}
                   </span>
                 </div>
 
-                {/* Metrics */}
-                {cluster.metrics && cluster.status === 'active' && (
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="text-center">
-                      <div className={`text-lg font-semibold ${getMetricColor(cluster.metrics.cpu_usage || 0, 'usage')}`}>
-                        {cluster.metrics.cpu_usage || 0}%
-                      </div>
-                      <div className="text-xs text-gray-500">CPU</div>
+                {/* Manufacturing Cluster Info */}
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-blue-600">
+                      {cluster.node_count}
                     </div>
-                    <div className="text-center">
-                      <div className={`text-lg font-semibold ${getMetricColor(cluster.metrics.memory_usage || 0, 'usage')}`}>
-                        {cluster.metrics.memory_usage || 0}%
-                      </div>
-                      <div className="text-xs text-gray-500">Memory</div>
+                    <div className="text-xs text-gray-500">Nodes</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-purple-600">
+                      {cluster.cpu_per_node}
                     </div>
-                    <div className="text-center">
-                      <div className={`text-lg font-semibold ${getMetricColor(cluster.metrics.storage_usage || 0, 'usage')}`}>
-                        {cluster.metrics.storage_usage || 0}%
-                      </div>
-                      <div className="text-xs text-gray-500">Storage</div>
+                    <div className="text-xs text-gray-500">CPU/Node</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-green-600">
+                      {cluster.memory_per_node}
                     </div>
-                    <div className="text-center">
-                      <div className={`text-lg font-semibold ${getMetricColor(cluster.metrics.queries_per_second || 0, 'performance')}`}>
-                        {cluster.metrics.queries_per_second || 0}
-                      </div>
-                      <div className="text-xs text-gray-500">QPS</div>
+                    <div className="text-xs text-gray-500">RAM/Node</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-orange-600">
+                      {cluster.estimated_monthly_cost ? `$${cluster.estimated_monthly_cost}` : 'N/A'}
+                    </div>
+                    <div className="text-xs text-gray-500">Est. Cost</div>
+                  </div>
+                </div>
+
+                {/* Storage Tiers */}
+                {cluster.status === 'active' && (
+                  <div className="bg-gray-50 rounded p-3 mb-4">
+                    <div className="text-sm font-medium text-gray-700 mb-2">Data Tiers</div>
+                    <div className="flex justify-between text-xs">
+                      <span>Hot: {cluster.hot_tier_size}</span>
+                      <span>Warm: {cluster.warm_tier_size}</span>
+                      <span>Cold: {cluster.cold_tier_size}</span>
                     </div>
                   </div>
                 )}
@@ -398,44 +329,43 @@ export default function ClusterManagement() {
                     <span className="font-medium">{cluster.region}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Storage:</span>
-                    <span className="font-medium">{cluster.storage_gb}GB</span>
+                    <span>Storage/Node:</span>
+                    <span className="font-medium">{cluster.storage_per_node}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Max Connections:</span>
-                    <span className="font-medium">{cluster.max_connections}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Assigned Users:</span>
-                    <span className="font-medium">{cluster.assigned_users.length}</span>
+                    <span>Your Role:</span>
+                    <span className={`font-medium ${getRoleColor(cluster.user_role)}`}>
+                      {cluster.user_role}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Created:</span>
                     <span className="font-medium">{formatDate(cluster.created_at)}</span>
                   </div>
-                  {cluster.last_health_check && (
-                    <div className="flex justify-between">
-                      <span>Last Check:</span>
-                      <span className="font-medium">{formatDateTime(cluster.last_health_check)}</span>
-                    </div>
-                  )}
+                  <div className="flex justify-between">
+                    <span>Health:</span>
+                    <span className={`font-medium ${getHealthColor(cluster.health_status)}`}>
+                      {cluster.health_status}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Features */}
+                {/* Manufacturing Features */}
                 <div className="flex space-x-4 text-xs text-gray-500 mb-4">
                   <div className="flex items-center">
-                    {cluster.backup_enabled ? 
-                      <CheckCircleIcon className="h-4 w-4 text-green-500 mr-1" /> :
-                      <XCircleIcon className="h-4 w-4 text-red-500 mr-1" />
-                    }
-                    Backups
+                    <CheckCircleIcon className="h-4 w-4 text-green-500 mr-1" />
+                    Auto-Tiering
                   </div>
                   <div className="flex items-center">
-                    {cluster.monitoring_enabled ? 
+                    {cluster.archive_enabled ? 
                       <CheckCircleIcon className="h-4 w-4 text-green-500 mr-1" /> :
                       <XCircleIcon className="h-4 w-4 text-red-500 mr-1" />
                     }
-                    Monitoring
+                    Archive
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCircleIcon className="h-4 w-4 text-green-500 mr-1" />
+                    Analytics
                   </div>
                 </div>
 
