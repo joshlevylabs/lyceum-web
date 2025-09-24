@@ -109,6 +109,7 @@ export async function requireAuth(request: NextRequest) {
   
   if (!user) {
     return {
+      success: false,
       user: null,
       error,
       response: new Response(
@@ -121,19 +122,20 @@ export async function requireAuth(request: NextRequest) {
     }
   }
 
-  return { user, error: null, response: null }
+  return { success: true, user, error: null, response: null }
 }
 
 /**
  * Middleware helper for API routes that require admin privileges
  */
 export async function requireAdmin(request: NextRequest) {
-  const { user, error, response } = await requireAuth(request)
+  const { success, user, error, response } = await requireAuth(request)
   
-  if (response) return { user: null, error, response }
+  if (!success) return { success: false, user: null, error, response }
   
   if (!isAdmin(user!)) {
     return {
+      success: false,
       user: null,
       error: 'Admin privileges required',
       response: new Response(
@@ -146,5 +148,5 @@ export async function requireAdmin(request: NextRequest) {
     }
   }
 
-  return { user, error: null, response: null }
+  return { success: true, user, error: null, response: null }
 }

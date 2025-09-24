@@ -97,6 +97,7 @@ export async function GET(
         id: cluster.id,
         name: cluster.name,
         description: cluster.description,
+        cluster_key: cluster.cluster_key, // Add the missing cluster_key field
         cluster_type: cluster.cluster_type,
         region: cluster.region,
         status: cluster.status,

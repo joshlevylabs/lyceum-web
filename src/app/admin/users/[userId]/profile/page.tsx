@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import PaymentMethodSetup from '@/components/billing/PaymentMethodSetup'
 import {
   UserIcon,
   ShieldCheckIcon,
@@ -119,7 +120,7 @@ export default function UserProfilePage() {
   const { user: currentUser, loading: authLoading } = useAuth()
   
   const userId = params.userId as string
-  const [activeTab, setActiveTab] = useState<'profile' | 'licenses' | 'sessions' | 'payment' | 'account'>('profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'licenses' | 'clusters' | 'sessions' | 'payment' | 'account'>('profile')
   
   // Data state
   const [enhancedProfile, setEnhancedProfile] = useState<EnhancedProfile | null>(null)
@@ -426,6 +427,17 @@ export default function UserProfilePage() {
               >
                 <ShieldCheckIcon className="h-4 w-4 inline mr-1" />
                 Licenses
+              </button>
+              <button
+                onClick={() => setActiveTab('clusters')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'clusters'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                <ComputerDesktopIcon className="w-4 h-4 inline mr-1" />
+                Clusters
               </button>
               <button
                 onClick={() => setActiveTab('sessions')}
@@ -858,6 +870,132 @@ export default function UserProfilePage() {
             </div>
           )}
 
+          {activeTab === 'clusters' && (
+            <div className="space-y-6">
+              {/* Assigned Clusters Section */}
+              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6 flex items-center">
+                    <ComputerDesktopIcon className="h-6 w-6 mr-2 text-blue-600" />
+                    Assigned Database Clusters
+                  </h3>
+                  
+                  {enhancedProfile?.database_clusters && enhancedProfile.database_clusters.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-800">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Cluster
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Type
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Status
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Access Level
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Monthly Cost
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Assigned Date
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                          {enhancedProfile.database_clusters.map((cluster: any) => (
+                            <tr key={cluster.id}>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center">
+                                  <ComputerDesktopIcon className="h-5 w-5 text-gray-400 mr-3" />
+                                  <div>
+                                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                      {cluster.cluster_key || cluster.name}
+                                    </div>
+                                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                                      {cluster.region}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                  cluster.cluster_type === 'production' ? 'bg-red-100 text-red-800' :
+                                  cluster.cluster_type === 'development' ? 'bg-blue-100 text-blue-800' :
+                                  'bg-purple-100 text-purple-800'
+                                }`}>
+                                  {cluster.cluster_type}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                  cluster.status === 'active' ? 'bg-green-100 text-green-800' :
+                                  cluster.status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
+                                  cluster.status === 'terminated' ? 'bg-gray-100 text-gray-800' :
+                                  'bg-red-100 text-red-800'
+                                }`}>
+                                  {cluster.status}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                {cluster.access_level || 'viewer'}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                ${cluster.estimated_monthly_cost || 0}/month
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                {cluster.assigned_at ? new Date(cluster.assigned_at).toLocaleDateString() : 'N/A'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <ComputerDesktopIcon className="mx-auto h-12 w-12 text-gray-400" />
+                      <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No clusters assigned</h3>
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        This user has not been assigned to any database clusters yet.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Cluster Statistics */}
+              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Cluster Statistics</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {enhancedProfile?.statistics?.total_clusters || 0}
+                      </div>
+                      <div className="text-sm text-blue-600 dark:text-blue-400">Total Clusters</div>
+                    </div>
+                    <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {enhancedProfile?.statistics?.active_clusters || 0}
+                      </div>
+                      <div className="text-sm text-green-600 dark:text-green-400">Active Clusters</div>
+                    </div>
+                    <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                      <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                        ${((enhancedProfile?.database_clusters || []).reduce((sum: number, cluster: any) => 
+                          sum + (cluster.estimated_monthly_cost || 0), 0)).toFixed(2)}
+                      </div>
+                      <div className="text-sm text-purple-600 dark:text-purple-400">Monthly Cost</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'sessions' && (
             <div className="space-y-6">
               {/* Last CentCom Login Section */}
@@ -1172,6 +1310,16 @@ export default function UserProfilePage() {
           )}
 
           {activeTab === 'payment' && (
+            <PaymentMethodSetup 
+              userId={userId}
+              onPaymentMethodAdded={() => {
+                // Optionally refresh data after payment method added
+                loadUserData()
+              }}
+            />
+          )}
+
+          {activeTab === 'payment_old' && (
             <div className="space-y-6">
               {/* Payment Information */}
               <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
@@ -1369,6 +1517,156 @@ export default function UserProfilePage() {
                     <div className="text-center py-8">
                       <span className="text-4xl mb-4 block">📄</span>
                       <p className="text-gray-500 dark:text-gray-400">No invoices available</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Database Cluster Billing */}
+              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6 flex items-center">
+                    <ComputerDesktopIcon className="h-6 w-6 mr-2 text-blue-600" />
+                    Database Cluster Billing
+                  </h3>
+                  
+                  {enhancedProfile?.database_clusters && enhancedProfile.database_clusters.length > 0 ? (
+                    <div className="space-y-6">
+                      {/* Cluster Cost Overview */}
+                      <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="text-center">
+                            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                              {enhancedProfile.database_clusters.filter((c: any) => c.status === 'active').length}
+                            </div>
+                            <div className="text-sm text-blue-600 dark:text-blue-400">Active Clusters</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                              ${((enhancedProfile.database_clusters || []).reduce((sum: number, cluster: any) => 
+                                sum + (cluster.estimated_monthly_cost || 0), 0)).toFixed(2)}
+                            </div>
+                            <div className="text-sm text-purple-600 dark:text-purple-400">Monthly Total</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+                              ${(((enhancedProfile.database_clusters || []).reduce((sum: number, cluster: any) => 
+                                sum + (cluster.estimated_monthly_cost || 0), 0)) * 12).toFixed(2)}
+                            </div>
+                            <div className="text-sm text-green-600 dark:text-green-400">Annual Total</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Cluster Billing Table */}
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                          <thead className="bg-gray-50 dark:bg-gray-800">
+                            <tr>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Cluster
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Type
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Billing Status
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Monthly Cost
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Next Billing
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            {enhancedProfile.database_clusters.map((cluster: any) => (
+                              <tr key={cluster.id}>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="flex items-center">
+                                    <ComputerDesktopIcon className="h-5 w-5 text-gray-400 mr-3" />
+                                    <div>
+                                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                        {cluster.cluster_key || cluster.name}
+                                      </div>
+                                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                                        {cluster.region}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                    cluster.cluster_type === 'production' ? 'bg-red-100 text-red-800' :
+                                    cluster.cluster_type === 'development' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-purple-100 text-purple-800'
+                                  }`}>
+                                    {cluster.cluster_type}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                    cluster.billing_status === 'active' ? 'bg-green-100 text-green-800' :
+                                    cluster.billing_status === 'trial' ? 'bg-yellow-100 text-yellow-800' :
+                                    cluster.billing_status === 'free' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-red-100 text-red-800'
+                                  }`}>
+                                    {cluster.billing_status || 'Active'}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                  ${cluster.estimated_monthly_cost || 0}/month
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                  {cluster.next_billing_date ? new Date(cluster.next_billing_date).toLocaleDateString() : 'N/A'}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                  <div className="flex space-x-2">
+                                    <button className="text-blue-600 hover:text-blue-800 font-medium">
+                                      Manage
+                                    </button>
+                                    <button className="text-red-600 hover:text-red-800 font-medium">
+                                      Suspend
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Billing Actions */}
+                      <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-lg font-medium text-gray-900 dark:text-white">Billing Management</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Control cluster billing and subscription settings
+                            </p>
+                          </div>
+                          <div className="flex space-x-3">
+                            <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                              Upgrade Plans
+                            </button>
+                            <button className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">
+                              Download Invoice
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <ComputerDesktopIcon className="mx-auto h-12 w-12 text-gray-400" />
+                      <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No cluster billing</h3>
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        This user does not have any billable clusters assigned.
+                      </p>
                     </div>
                   )}
                 </div>

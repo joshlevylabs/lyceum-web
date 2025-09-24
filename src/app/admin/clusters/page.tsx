@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   CircleStackIcon,
   PlusIcon,
@@ -16,7 +17,10 @@ import {
   Cog6ToothIcon,
   PlayIcon,
   PauseIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  EyeIcon,
+  UserGroupIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline'
 import ClusterCreationWizard from '@/components/ClusterCreationWizard'
 
@@ -24,6 +28,7 @@ interface DatabaseCluster {
   id: string
   name: string
   description?: string
+  cluster_key?: string
   cluster_type: 'production' | 'development' | 'analytics'
   status: 'provisioning' | 'active' | 'maintenance' | 'error' | 'terminated'
   region: string
@@ -44,16 +49,19 @@ interface DatabaseCluster {
 }
 
 export default function ClusterManagement() {
+  const router = useRouter()
   const [clusters, setClusters] = useState<DatabaseCluster[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'all' | 'development' | 'analytics' | 'production'>('all')
-  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'maintenance' | 'error' | 'provisioning'>('all')
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'maintenance' | 'error' | 'provisioning' | 'terminated'>('active') // Default to 'active'
+  const [filterHealth, setFilterHealth] = useState<'all' | 'healthy' | 'warning' | 'critical' | 'unknown'>('all')
+  const [filterRegion, setFilterRegion] = useState<string>('all')
   const [showWizard, setShowWizard] = useState(false)
 
   useEffect(() => {
     loadClusters()
-  }, [filterType, filterStatus])
+  }, [filterType, filterStatus, filterHealth, filterRegion])
 
   const loadClusters = async () => {
     try {
@@ -128,6 +136,12 @@ export default function ClusterManagement() {
     setShowWizard(false)
   }
 
+  const handleViewCluster = (cluster: DatabaseCluster) => {
+    // Use cluster_key if available, fallback to ID
+    const clusterIdentifier = cluster.cluster_key || cluster.id
+    router.push(`/admin/clusters/${clusterIdentifier}`)
+  }
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'active': return <CheckCircleIcon className="w-5 h-5 text-green-500" />
@@ -150,13 +164,12 @@ export default function ClusterManagement() {
     }
   }
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'admin': return 'text-red-600'
-      case 'editor': return 'text-blue-600'
-      case 'analyst': return 'text-purple-600'
-      case 'viewer': return 'text-gray-600'
-      default: return 'text-gray-600'
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'production': return 'bg-red-100 text-red-800'
+      case 'development': return 'bg-blue-100 text-blue-800'
+      case 'analytics': return 'bg-purple-100 text-purple-800'
+      default: return 'bg-gray-100 text-gray-800'
     }
   }
 
@@ -170,15 +183,15 @@ export default function ClusterManagement() {
     }
   }
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'production': return 'bg-red-100 text-red-800'
-      case 'staging': return 'bg-yellow-100 text-yellow-800'
-      case 'development': return 'bg-green-100 text-green-800'
-      default: return 'bg-gray-100 text-gray-800'
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'admin': return 'text-red-600'
+      case 'editor': return 'text-blue-600'
+      case 'analyst': return 'text-purple-600'
+      case 'viewer': return 'text-gray-600'
+      default: return 'text-gray-600'
     }
   }
-
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -188,20 +201,40 @@ export default function ClusterManagement() {
     })
   }
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+  // Filter clusters based on all criteria
+  const filteredClusters = clusters.filter(cluster => {
+    const matchesSearch = !searchTerm || 
+      cluster.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cluster.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cluster.region.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cluster.cluster_key?.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    const matchesType = filterType === 'all' || cluster.cluster_type === filterType
+    const matchesStatus = filterStatus === 'all' || cluster.status === filterStatus
+    const matchesHealth = filterHealth === 'all' || cluster.health_status === filterHealth
+    const matchesRegion = filterRegion === 'all' || cluster.region === filterRegion
+    
+    return matchesSearch && matchesType && matchesStatus && matchesHealth && matchesRegion
+  })
+
+  // Get unique regions for filter dropdown
+  const uniqueRegions = Array.from(new Set(clusters.map(cluster => cluster.region).filter(Boolean)))
+
+  // Check if any filters are active (other than defaults)
+  const hasActiveFilters = filterType !== 'all' || filterStatus !== 'active' || filterHealth !== 'all' || filterRegion !== 'all' || searchTerm !== ''
+
+  // Clear all filters to defaults
+  const clearFilters = () => {
+    setSearchTerm('')
+    setFilterType('all')
+    setFilterStatus('active') // Default back to active
+    setFilterHealth('all')
+    setFilterRegion('all')
   }
 
-
-  // Show wizard if it's active
   if (showWizard) {
     return (
-      <ClusterCreationWizard 
+      <ClusterCreationWizard
         onComplete={handleWizardComplete}
         onCancel={handleWizardCancel}
       />
@@ -209,257 +242,413 @@ export default function ClusterManagement() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="md:flex md:items-center md:justify-between">
-        <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-            Manufacturing Analytics Clusters
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            High-performance ClickHouse clusters for manufacturing data analytics
-          </p>
-        </div>
-        
-        <div className="mt-4 flex md:mt-0 md:ml-4 space-x-3">
-          <button
-            onClick={loadClusters}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <ArrowPathIcon className="-ml-1 mr-2 h-5 w-5" />
-            Refresh
-          </button>
-          <button
-            onClick={() => setShowWizard(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-          >
-            <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
-            Create Cluster
-          </button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-        <div className="flex space-x-4">
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value as any)}
-            className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-          >
-            <option value="all">All Types</option>
-            <option value="production">Production</option>
-            <option value="analytics">Analytics</option>
-            <option value="development">Development</option>
-          </select>
-          
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as any)}
-            className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-          >
-            <option value="all">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="provisioning">Provisioning</option>
-            <option value="maintenance">Maintenance</option>
-            <option value="error">Error</option>
-          </select>
-        </div>
-        
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Search clusters..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-          />
-        </div>
-      </div>
-
-      {/* Clusters Grid */}
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-600">Loading clusters...</span>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-          {clusters.map((cluster) => (
-            <div key={cluster.id} className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow">
-              <div className="p-5">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <CircleStackIcon className="h-8 w-8 text-blue-500" />
-                    </div>
-                    <div className="ml-3">
-                      <h3 className="text-lg font-medium text-gray-900">{cluster.name}</h3>
-                      <p className="text-sm text-gray-500">{cluster.description}</p>
-                    </div>
-                  </div>
-                  {getStatusIcon(cluster.status)}
-                </div>
-
-                {/* Status and Type */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(cluster.status)}`}>
-                    {cluster.status}
-                  </span>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(cluster.cluster_type)}`}>
-                    {cluster.cluster_type}
-                  </span>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {cluster.node_count} node{cluster.node_count !== 1 ? 's' : ''}
-                  </span>
-                </div>
-
-                {/* Manufacturing Cluster Info */}
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="text-center">
-                    <div className="text-lg font-semibold text-blue-600">
-                      {cluster.node_count}
-                    </div>
-                    <div className="text-xs text-gray-500">Nodes</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-semibold text-purple-600">
-                      {cluster.cpu_per_node}
-                    </div>
-                    <div className="text-xs text-gray-500">CPU/Node</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-semibold text-green-600">
-                      {cluster.memory_per_node}
-                    </div>
-                    <div className="text-xs text-gray-500">RAM/Node</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-semibold text-orange-600">
-                      {cluster.estimated_monthly_cost ? `$${cluster.estimated_monthly_cost}` : 'N/A'}
-                    </div>
-                    <div className="text-xs text-gray-500">Est. Cost</div>
-                  </div>
-                </div>
-
-                {/* Storage Tiers */}
-                {cluster.status === 'active' && (
-                  <div className="bg-gray-50 rounded p-3 mb-4">
-                    <div className="text-sm font-medium text-gray-700 mb-2">Data Tiers</div>
-                    <div className="flex justify-between text-xs">
-                      <span>Hot: {cluster.hot_tier_size}</span>
-                      <span>Warm: {cluster.warm_tier_size}</span>
-                      <span>Cold: {cluster.cold_tier_size}</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Details */}
-                <div className="space-y-2 text-sm text-gray-600 mb-4">
-                  <div className="flex justify-between">
-                    <span>Region:</span>
-                    <span className="font-medium">{cluster.region}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Storage/Node:</span>
-                    <span className="font-medium">{cluster.storage_per_node}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Your Role:</span>
-                    <span className={`font-medium ${getRoleColor(cluster.user_role)}`}>
-                      {cluster.user_role}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Created:</span>
-                    <span className="font-medium">{formatDate(cluster.created_at)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Health:</span>
-                    <span className={`font-medium ${getHealthColor(cluster.health_status)}`}>
-                      {cluster.health_status}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Manufacturing Features */}
-                <div className="flex space-x-4 text-xs text-gray-500 mb-4">
-                  <div className="flex items-center">
-                    <CheckCircleIcon className="h-4 w-4 text-green-500 mr-1" />
-                    Auto-Tiering
-                  </div>
-                  <div className="flex items-center">
-                    {cluster.archive_enabled ? 
-                      <CheckCircleIcon className="h-4 w-4 text-green-500 mr-1" /> :
-                      <XCircleIcon className="h-4 w-4 text-red-500 mr-1" />
-                    }
-                    Archive
-                  </div>
-                  <div className="flex items-center">
-                    <CheckCircleIcon className="h-4 w-4 text-green-500 mr-1" />
-                    Analytics
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex justify-between">
-                  <div className="flex space-x-1">
-                    <button className="p-1 text-blue-600 hover:text-blue-900" title="View details">
-                      <ChartBarIcon className="h-4 w-4" />
-                    </button>
-                    <button className="p-1 text-blue-600 hover:text-blue-900" title="Configure">
-                      <Cog6ToothIcon className="h-4 w-4" />
-                    </button>
-                    {cluster.status === 'active' && (
-                      <button className="p-1 text-yellow-600 hover:text-yellow-900" title="Enter maintenance">
-                        <PauseIcon className="h-4 w-4" />
-                      </button>
-                    )}
-                    {cluster.status === 'maintenance' && (
-                      <button className="p-1 text-green-600 hover:text-green-900" title="Resume">
-                        <PlayIcon className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                  
-                  <Link
-                    href={`/admin/clusters/${cluster.id}`}
-                    className="text-sm font-medium text-blue-600 hover:text-blue-500"
-                  >
-                    Manage →
-                  </Link>
-                </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Page Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+                <CircleStackIcon className="mr-3 h-8 w-8 text-blue-600" />
+                Database Clusters
+              </h1>
+              <p className="mt-2 text-gray-600">
+                Manage your high-performance ClickHouse database clusters for manufacturing data analytics
+              </p>
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={loadClusters}
+                disabled={loading}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                <ArrowPathIcon className="-ml-1 mr-2 h-5 w-5" />
+                Refresh
+              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowWizard(true)}
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+                  Create Cluster
+                </button>
+                <button
+                  onClick={() => window.location.href = '/admin/cluster-management'}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  <Cog6ToothIcon className="-ml-1 mr-2 h-5 w-5" />
+                  Advanced Management
+                </button>
               </div>
             </div>
-          ))}
+          </div>
         </div>
-      )}
-      
-      {!loading && clusters.length === 0 && (
-        <div className="text-center py-12">
-          <CircleStackIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">No clusters found</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            {searchTerm ? 'No clusters match your search criteria.' : 'Get started by creating your first database cluster.'}
-          </p>
-          {!searchTerm && (
-            <div className="mt-6">
-              <button
-                onClick={() => setShowWizard(true)}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
-                Create Database Cluster
-              </button>
+
+        {/* Filters */}
+        <div className="bg-white rounded-lg shadow mb-6 p-4">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+            {/* Search */}
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="Search clusters..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Type Filter */}
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value as any)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All Types</option>
+              <option value="production">Production</option>
+              <option value="development">Development</option>
+              <option value="analytics">Analytics</option>
+            </select>
+
+            {/* Status Filter */}
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as any)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="maintenance">Maintenance</option>
+              <option value="error">Error</option>
+              <option value="provisioning">Provisioning</option>
+              <option value="terminated">Terminated</option>
+            </select>
+
+            {/* Health Filter */}
+            <select
+              value={filterHealth}
+              onChange={(e) => setFilterHealth(e.target.value as any)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All Health</option>
+              <option value="healthy">Healthy</option>
+              <option value="warning">Warning</option>
+              <option value="critical">Critical</option>
+              <option value="unknown">Unknown</option>
+            </select>
+
+            {/* Region Filter */}
+            <select
+              value={filterRegion}
+              onChange={(e) => setFilterRegion(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All Regions</option>
+              {uniqueRegions.map(region => (
+                <option key={region} value={region}>{region}</option>
+              ))}
+            </select>
+
+            {/* Results Count and Clear Filters */}
+            <div className="flex flex-col items-center justify-center space-y-2">
+              <div className="flex items-center text-sm text-gray-600">
+                <span className="font-medium">{filteredClusters.length}</span>
+                <span className="ml-1">
+                  {filteredClusters.length === 1 ? 'cluster' : 'clusters'} found
+                </span>
+              </div>
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="text-xs text-blue-600 hover:text-blue-800 underline"
+                >
+                  Clear Filters
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {/* Active Filters Indicator */}
+          {hasActiveFilters && (
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <div className="flex flex-wrap gap-2">
+                <span className="text-xs text-gray-500">Active filters:</span>
+                {searchTerm && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                    Search: "{searchTerm}"
+                  </span>
+                )}
+                {filterType !== 'all' && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
+                    Type: {filterType}
+                  </span>
+                )}
+                {filterStatus !== 'active' && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                    Status: {filterStatus}
+                  </span>
+                )}
+                {filterHealth !== 'all' && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                    Health: {filterHealth}
+                  </span>
+                )}
+                {filterRegion !== 'all' && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
+                    Region: {filterRegion}
+                  </span>
+                )}
+              </div>
             </div>
           )}
         </div>
-      )}
+
+        {/* JIRA-like Table */}
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    View
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Cluster
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Key
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Health
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Region
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Resources
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Cost
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Role
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Created
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {loading ? (
+                  <tr>
+                    <td colSpan={12} className="px-6 py-12 text-center">
+                      <div className="flex items-center justify-center">
+                        <ArrowPathIcon className="h-8 w-8 text-blue-600 animate-spin mr-3" />
+                        <span className="text-gray-600">Loading clusters...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredClusters.length === 0 ? (
+                  <tr>
+                    <td colSpan={12} className="px-6 py-12 text-center">
+                      <div className="text-center">
+                        <CircleStackIcon className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">No clusters found</h3>
+                        <p className="text-gray-600 mb-4">
+                          {searchTerm || filterType !== 'all' || filterStatus !== 'all' 
+                            ? 'Try adjusting your filters or search terms.'
+                            : 'Get started by creating your first database cluster.'
+                          }
+                        </p>
+                        {!searchTerm && filterType === 'all' && filterStatus === 'all' && (
+                          <button
+                            onClick={() => setShowWizard(true)}
+                            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                          >
+                            <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+                            Create Database Cluster
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredClusters.map((cluster) => (
+                    <tr key={cluster.id} className="hover:bg-gray-50">
+                      {/* View */}
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <button
+                          onClick={() => handleViewCluster(cluster)}
+                          className="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="View & Manage Cluster"
+                        >
+                          <EyeIcon className="h-5 w-5" />
+                        </button>
+                      </td>
+
+                      {/* Cluster Name & Description */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <CircleStackIcon className="h-8 w-8 text-blue-500 mr-3" />
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{cluster.name}</div>
+                            <div className="text-sm text-gray-500">{cluster.description}</div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Cluster Key */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-mono font-medium text-blue-600">
+                          {cluster.cluster_key || `CLSTR-${filteredClusters.indexOf(cluster) + 1}`}
+                        </div>
+                      </td>
+
+                      {/* Type */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(cluster.cluster_type)}`}>
+                          {cluster.cluster_type}
+                        </span>
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          {getStatusIcon(cluster.status)}
+                          <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(cluster.status)}`}>
+                            {cluster.status}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Health */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`text-sm font-medium ${getHealthColor(cluster.health_status)}`}>
+                          {cluster.health_status}
+                        </span>
+                      </td>
+
+                      {/* Region */}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {cluster.region}
+                      </td>
+
+                      {/* Resources */}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div>
+                          <div className="flex items-center text-xs text-gray-600">
+                            <ServerIcon className="h-3 w-3 mr-1" />
+                            {cluster.node_count} nodes
+                          </div>
+                          <div className="flex items-center text-xs text-gray-600 mt-1">
+                            <CpuChipIcon className="h-3 w-3 mr-1" />
+                            {cluster.cpu_per_node} CPU, {cluster.memory_per_node}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Cost */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          <div className="font-medium">
+                            ${cluster.estimated_monthly_cost || 'N/A'}/mo
+                          </div>
+                          {cluster.actual_monthly_cost && (
+                            <div className="text-xs text-gray-500">
+                              Actual: ${cluster.actual_monthly_cost}/mo
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Role */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`text-sm font-medium ${getRoleColor(cluster.user_role)}`}>
+                          {cluster.user_role}
+                        </span>
+                      </td>
+
+                      {/* Created */}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {formatDate(cluster.created_at)}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center space-x-2">
+                          <button className="text-gray-600 hover:text-gray-900 p-1 hover:bg-gray-50 rounded transition-colors" title="Performance">
+                            <ChartBarIcon className="h-4 w-4" />
+                          </button>
+                          <button className="text-gray-600 hover:text-gray-900 p-1 hover:bg-gray-50 rounded transition-colors" title="Users">
+                            <UserGroupIcon className="h-4 w-4" />
+                          </button>
+                          {cluster.status === 'active' && (
+                            <button className="text-yellow-600 hover:text-yellow-900 p-1 hover:bg-yellow-50 rounded transition-colors" title="Enter maintenance">
+                              <PauseIcon className="h-4 w-4" />
+                            </button>
+                          )}
+                          {cluster.status === 'maintenance' && (
+                            <button className="text-green-600 hover:text-green-900 p-1 hover:bg-green-50 rounded transition-colors" title="Resume">
+                              <PlayIcon className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Footer Summary */}
+        <div className="mt-6 bg-white rounded-lg shadow p-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold text-blue-600">{filteredClusters.length}</div>
+              <div className="text-sm text-gray-600">Total Clusters</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-green-600">
+                {filteredClusters.filter(c => c.status === 'active').length}
+              </div>
+              <div className="text-sm text-gray-600">Active</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-yellow-600">
+                {filteredClusters.filter(c => c.status === 'maintenance').length}
+              </div>
+              <div className="text-sm text-gray-600">Maintenance</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-red-600">
+                {filteredClusters.filter(c => c.status === 'error').length}
+              </div>
+              <div className="text-sm text-gray-600">Error</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-purple-600">
+                ${filteredClusters.reduce((sum, c) => sum + (c.estimated_monthly_cost || 0), 0).toLocaleString()}
+              </div>
+              <div className="text-sm text-gray-600">Est. Monthly Cost</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   )
 }
-

@@ -1,17 +1,17 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import { ClientAuthProvider } from '@/components/ClientAuthProvider'
 
-const geist = Geist({
-  subsets: ['latin'],
-  variable: '--font-geist-sans',
-})
+// Temporarily disabled Google fonts due to Next.js 15 + Turbopack compatibility issue
+// const geist = Geist({
+//   subsets: ['latin'],
+//   variable: '--font-geist-sans',
+// })
 
-const geistMono = Geist_Mono({
-  subsets: ['latin'],
-  variable: '--font-geist-mono',
-})
+// const geistMono = Geist_Mono({
+//   subsets: ['latin'],
+//   variable: '--font-geist-mono',
+// })
 
 export const metadata: Metadata = {
   title: 'Lyceum - Industrial Analytics Platform',
@@ -27,7 +27,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${geist.variable} ${geistMono.variable} antialiased bg-gray-900 text-white`}>
+      <body className="antialiased bg-gray-900 text-white font-sans">
         <ClientAuthProvider>
           {children}
         </ClientAuthProvider>

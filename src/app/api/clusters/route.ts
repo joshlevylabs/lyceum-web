@@ -31,6 +31,7 @@ interface DatabaseCluster {
   id: string
   name: string
   description?: string
+  cluster_key?: string
   cluster_type: string
   region: string
   status: string
@@ -258,8 +259,9 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(url.searchParams.get('limit') || '50')
     const offset = parseInt(url.searchParams.get('offset') || '0')
 
-    // Get clusters using direct operations
-    const { data: clusters, error } = await dbOperations.getClusters(user.id, {
+    // Get clusters using backwards-compatible method
+    const { getClustersWithOptionalKey } = await import('@/lib/cluster-utils')
+    const { data: clusters, error } = await getClustersWithOptionalKey(user.id, {
       cluster_type: cluster_type || undefined,
       status: status || undefined,
       limit,

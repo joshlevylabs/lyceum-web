@@ -69,23 +69,32 @@ export async function GET(request: NextRequest) {
       console.error('Error fetching CentCom login:', centcomError)
     }
 
-    // Fetch user database clusters
+    // Fetch user assigned database clusters
     const { data: clusters, error: clustersError } = await supabase
-      .from('user_database_clusters')
+      .from('cluster_user_assignments')
       .select(`
         id,
-        cluster_name,
-        cluster_type,
-        status,
-        region,
-        storage_size_mb,
-        cpu_cores,
-        ram_mb,
-        last_accessed,
-        created_at
+        access_level,
+        assigned_at,
+        expires_at,
+        is_active,
+        database_clusters (
+          id,
+          name,
+          cluster_type,
+          status,
+          region,
+          storage_per_node,
+          cpu_per_node,
+          memory_per_node,
+          created_at,
+          cluster_key,
+          estimated_monthly_cost
+        )
       `)
       .eq('user_id', userId)
-      .order('created_at', { ascending: false })
+      .eq('is_active', true)
+      .order('assigned_at', { ascending: false })
 
     if (clustersError) {
       console.error('Error fetching clusters:', clustersError)
@@ -176,14 +185,36 @@ export async function GET(request: NextRequest) {
         last_usage_update: null
       },
       
-      // Database clusters
-      database_clusters: clusters || [],
+      // Database clusters - transform assignment data to cluster data
+      database_clusters: (clusters || []).map(assignment => ({
+        id: assignment.database_clusters?.id,
+        cluster_key: assignment.database_clusters?.cluster_key,
+        cluster_name: assignment.database_clusters?.name,
+        cluster_type: assignment.database_clusters?.cluster_type,
+        status: assignment.database_clusters?.status,
+        region: assignment.database_clusters?.region,
+        storage_per_node: assignment.database_clusters?.storage_per_node,
+        cpu_per_node: assignment.database_clusters?.cpu_per_node,
+        memory_per_node: assignment.database_clusters?.memory_per_node,
+        estimated_monthly_cost: assignment.database_clusters?.estimated_monthly_cost,
+        created_at: assignment.database_clusters?.created_at,
+        // Assignment-specific info
+        assignment_id: assignment.id,
+        access_level: assignment.access_level,
+        assigned_at: assignment.assigned_at,
+        expires_at: assignment.expires_at,
+        is_active: assignment.is_active
+      })).filter(cluster => cluster.id), // Filter out any null clusters
       
       // Account statistics
       statistics: {
         total_clusters: (clusters || []).length,
-        active_clusters: (clusters || []).filter(c => c.status === 'active').length,
-        total_storage_mb: (clusters || []).reduce((sum, c) => sum + (c.storage_size_mb || 0), 0),
+        active_clusters: (clusters || []).filter(assignment => assignment.database_clusters?.status === 'active').length,
+        total_storage_mb: (clusters || []).reduce((sum, assignment) => {
+          const storageStr = assignment.database_clusters?.storage_per_node || '0GB';
+          const storageNum = parseInt(storageStr.replace(/[^0-9]/g, '')) || 0;
+          return sum + storageNum * 1024; // Convert GB to MB
+        }, 0),
         account_age_days: daysSinceCreation,
         last_activity_days_ago: daysSinceLastSignIn
       }
