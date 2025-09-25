@@ -921,7 +921,7 @@ export default function ClusterManagementPage() {
                       <div>
                         <h4 className="font-medium text-green-800">Cluster Admin Assigned</h4>
                         <p className="text-sm text-green-700">{clusterAdmin.email}</p>
-                        <p className="text-xs text-orange-600">⚠️ Payment information not yet configured - <button onClick={() => window.open('/admin/billing', '_blank')} className="underline">Set up billing</button></p>
+                        <p className="text-xs text-orange-600">⚠️ Payment information not yet configured - <button onClick={() => router.push(`/admin/users/${clusterAdmin.id}/billing`)} className="underline text-blue-600 hover:text-blue-800">Set up billing</button></p>
                       </div>
                       <Button
                         variant="outline"

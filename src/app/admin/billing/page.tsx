@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { SUBSCRIPTION_PLANS } from '@/lib/stripe'
+import { SUBSCRIPTION_PLANS } from '@/lib/stripe-constants'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 
@@ -26,11 +26,20 @@ export default function BillingPage() {
   const [processingCheckout, setProcessingCheckout] = useState<string | null>(null)
 
   useEffect(() => {
+    console.log('Billing page - Auth state:', { 
+      authLoading, 
+      hasUser: !!user, 
+      userId: user?.id,
+      userEmail: user?.email 
+    })
+    
     if (!authLoading) {
       if (!user) {
+        console.log('No user found, redirecting to login...')
         router.push('/auth/login')
         return
       }
+      console.log('User found, loading billing data...')
       loadUserBilling()
     }
   }, [user, authLoading, router])
