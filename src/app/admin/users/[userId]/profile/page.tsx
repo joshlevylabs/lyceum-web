@@ -1,9 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import PaymentMethodSetup from '@/components/billing/PaymentMethodSetup'
+import FlexibleBillingExample from '@/components/FlexibleBillingExample'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4OTU0MTYsImV4cCI6MjA2ODQ3MTQxNn0.5Wzzoat1TsoLLbsqjuoUEKyawJgYmvrMYbJ-uvosdu0'
+)
 import {
   UserIcon,
   ShieldCheckIcon,
@@ -120,7 +127,32 @@ export default function UserProfilePage() {
   const { user: currentUser, loading: authLoading } = useAuth()
   
   const userId = params.userId as string
+  const [resolvedUserId, setResolvedUserId] = useState<string | null>(null)
+  const [isResolvingKey, setIsResolvingKey] = useState(false)
+  const resolveAttempted = useRef<string | null>(null)
+  const isResolving = useRef(false) // Additional flag to prevent multiple calls
+  
+  // Check URL params for default tab
   const [activeTab, setActiveTab] = useState<'profile' | 'licenses' | 'clusters' | 'sessions' | 'payment' | 'account'>('profile')
+  
+  useEffect(() => {
+    // Check for tab parameter in URL
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const tabParam = urlParams.get('tab')
+      if (tabParam && ['profile', 'licenses', 'clusters', 'sessions', 'payment', 'account'].includes(tabParam)) {
+        setActiveTab(tabParam as any)
+      }
+    }
+  }, [])
+
+  // Reset resolution flags when userId changes
+  useEffect(() => {
+    resolveAttempted.current = null
+    isResolving.current = false
+    setResolvedUserId(null)
+    setIsResolvingKey(false)
+  }, [userId])
   
   // Data state
   const [enhancedProfile, setEnhancedProfile] = useState<EnhancedProfile | null>(null)
@@ -158,12 +190,14 @@ export default function UserProfilePage() {
   })
   const [isSaving, setIsSaving] = useState(false)
 
-  // Check admin permissions - more comprehensive check
-  const isAdmin = currentUser && (
-    (currentUser.user_metadata?.role === 'admin' || currentUser.user_metadata?.role === 'superadmin') ||
-    // Also check userProfile if available (from AuthContext)
-    (currentUser as any).userProfile?.role === 'admin' || (currentUser as any).userProfile?.role === 'superadmin'
-  )
+  // Check admin permissions - memoized to prevent infinite loops
+  const isAdmin = useMemo(() => {
+    return currentUser && (
+      (currentUser.user_metadata?.role === 'admin' || currentUser.user_metadata?.role === 'superadmin') ||
+      // Also check userProfile if available (from AuthContext)
+      (currentUser as any).userProfile?.role === 'admin' || (currentUser as any).userProfile?.role === 'superadmin'
+    )
+  }, [currentUser])
 
   useEffect(() => {
     if (!authLoading && (!currentUser || !isAdmin)) {
@@ -172,24 +206,107 @@ export default function UserProfilePage() {
     }
   }, [currentUser, isAdmin, authLoading, router])
 
+  const resolveUserIdentifier = useCallback(async () => {
+    console.log('🔍 Starting resolveUserIdentifier with userId:', userId)
+    setIsResolvingKey(true)
+    setError(null)
+
+    try {
+      // Check if it's a UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      
+      if (uuidRegex.test(userId)) {
+        console.log('✅ Detected UUID format, using directly:', userId)
+        // It's a UUID, use directly
+        setResolvedUserId(userId)
+      } else if (userId.startsWith('USER-')) {
+        console.log('🔑 Detected user key format, resolving:', userId)
+        // It's a user key, resolve it
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        
+        if (sessionError || !session?.access_token) {
+          console.error('❌ Authentication error:', sessionError)
+          throw new Error('Authentication required')
+        }
+
+        console.log('🔐 Got session, making API call to resolve key...')
+        const response = await fetch(`/api/admin/users/resolve-key/${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        console.log('📡 API response status:', response.status)
+        
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.error('❌ API error response:', errorData)
+          throw new Error(errorData.error || 'Failed to resolve user key')
+        }
+
+        const data = await response.json()
+        console.log('✅ API response data:', data)
+        setResolvedUserId(data.user_id)
+        console.log('✅ Set resolved user ID:', data.user_id)
+      } else {
+        console.error('❌ Invalid user identifier format:', userId)
+        throw new Error('Invalid user identifier format')
+      }
+    } catch (error: any) {
+      console.error('❌ Error resolving user identifier:', error)
+      setError(error.message)
+    } finally {
+      console.log('🏁 Finished resolveUserIdentifier, setting flags to false')
+      setIsResolvingKey(false)
+      isResolving.current = false
+    }
+  }, [userId])
+
+  // Resolve user identifier (could be UUID or user key like USER-4)
+  useEffect(() => {
+    console.log('🎯 useEffect called with:', { 
+      userId, 
+      hasCurrentUser: !!currentUser, 
+      isAdmin, 
+      authLoading, 
+      attemptedUserId: resolveAttempted.current, 
+      isResolvingKey,
+      isResolving: isResolving.current 
+    })
+    
+    if (userId && currentUser && isAdmin && !authLoading && 
+        resolveAttempted.current !== userId && !isResolvingKey && !isResolving.current) {
+      console.log('✅ All conditions met, calling resolveUserIdentifier')
+      
+      // Set both flags immediately to prevent multiple calls
+      resolveAttempted.current = userId
+      isResolving.current = true
+      
+      resolveUserIdentifier()
+    } else {
+      console.log('❌ Conditions not met for resolveUserIdentifier')
+    }
+  }, [userId, currentUser, isAdmin, authLoading, isResolvingKey])
+
   // Fetch user data
   useEffect(() => {
-    if (userId && currentUser && isAdmin && !authLoading) {
-      console.log('Fetching user data for userId:', userId)
+    if (resolvedUserId && currentUser && isAdmin && !authLoading) {
+      console.log('Fetching user data for userId:', resolvedUserId)
       fetchUserData()
     }
-  }, [userId, currentUser, isAdmin, authLoading])
+  }, [resolvedUserId, currentUser, isAdmin, authLoading])
 
   const fetchUserData = async () => {
     setLoading(true)
     setError(null)
     
     try {
-      console.log('Starting to fetch user data for userId:', userId)
+      console.log('Starting to fetch user data for userId:', resolvedUserId)
 
       // Fetch enhanced profile
       console.log('Fetching enhanced profile...')
-      const enhancedResponse = await fetch(`/api/user-profiles/enhanced?user_id=${userId}`)
+      const enhancedResponse = await fetch(`/api/user-profiles/enhanced?user_id=${resolvedUserId}`)
       console.log('Enhanced profile response status:', enhancedResponse.status)
       
       if (enhancedResponse.ok) {
@@ -204,7 +321,7 @@ export default function UserProfilePage() {
 
       // Fetch licenses and subscription data
       console.log('Fetching licenses...')
-      const licensesResponse = await fetch(`/api/user-profiles/licenses?user_id=${userId}`)
+      const licensesResponse = await fetch(`/api/user-profiles/licenses?user_id=${resolvedUserId}`)
       console.log('Licenses response status:', licensesResponse.status)
       
       if (licensesResponse.ok) {
@@ -224,7 +341,7 @@ export default function UserProfilePage() {
 
       // Fetch sessions data
       console.log('Fetching sessions...')
-      const sessionsResponse = await fetch(`/api/user-profiles/sessions?user_id=${userId}`)
+      const sessionsResponse = await fetch(`/api/user-profiles/sessions?user_id=${resolvedUserId}`)
       console.log('Sessions response status:', sessionsResponse.status)
       
       if (sessionsResponse.ok) {
@@ -242,7 +359,7 @@ export default function UserProfilePage() {
 
       // Fetch CentCom sessions data
       console.log('Fetching CentCom sessions...')
-      const centcomResponse = await fetch(`/api/admin/users/${userId}/centcom-sessions`)
+      const centcomResponse = await fetch(`/api/admin/users/${resolvedUserId}/centcom-sessions`)
       console.log('CentCom sessions response status:', centcomResponse.status)
       
       if (centcomResponse.ok) {
@@ -338,18 +455,20 @@ export default function UserProfilePage() {
     }
   }
 
-  if (authLoading || loading) {
+  if (authLoading || isResolvingKey || loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-600 dark:text-gray-400">
-              {authLoading ? 'Checking authentication...' : 'Loading user data...'}
+              {authLoading ? 'Checking authentication...' : 
+               isResolvingKey ? 'Resolving user identifier...' : 
+               'Loading user data...'}
             </p>
             {/* Debug info */}
             <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-              <p>User ID: {userId}</p>
+              <p>User ID: {resolvedUserId}</p>
               <p>Current User: {currentUser?.email || 'None'}</p>
               <p>Auth Loading: {authLoading.toString()}</p>
               <p>Is Admin: {isAdmin?.toString()}</p>
@@ -394,7 +513,7 @@ export default function UserProfilePage() {
               </button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  User Profile: {enhancedProfile?.full_name || enhancedProfile?.username || 'Unknown User'}
+                  User Profile: {enhancedProfile?.full_name || enhancedProfile?.username || 'Unknown User'} ({userId})
                 </h1>
                 <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                   Viewing detailed profile information and account data
@@ -1310,13 +1429,30 @@ export default function UserProfilePage() {
           )}
 
           {activeTab === 'payment' && (
-            <PaymentMethodSetup 
-              userId={userId}
-              onPaymentMethodAdded={() => {
-                // Optionally refresh data after payment method added
-                loadUserData()
-              }}
-            />
+            <div className="space-y-6">
+              {/* Flexible Billing System */}
+              <FlexibleBillingExample />
+              
+              {/* Existing Payment Method Setup */}
+              {resolvedUserId ? (
+                <PaymentMethodSetup 
+                  userId={resolvedUserId}
+                  onPaymentMethodAdded={() => {
+                    // Optionally refresh data after payment method added
+                    fetchUserData()
+                  }}
+                />
+              ) : (
+                <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                  <div className="px-4 py-5 sm:p-6">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                      <p className="mt-2 text-gray-600">Loading payment information...</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
           {activeTab === 'payment_old' && (

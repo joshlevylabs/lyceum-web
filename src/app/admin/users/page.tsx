@@ -338,7 +338,7 @@ export default function UserManagement() {
         return (
           <td key="view" className="px-6 py-4 whitespace-nowrap text-center">
             <Link
-              href={`/admin/users/${user.id}/profile`}
+              href={`/admin/users/${user.user_key || user.id}/profile`}
               className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 transition-colors"
               title="View full user profile"
             >

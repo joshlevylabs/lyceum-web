@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { createClient } from '@/lib/supabase'
 
 interface PaymentMethod {
   id: string
@@ -34,24 +35,65 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
 
   const loadPaymentMethods = async () => {
     try {
-      const authData = JSON.parse(localStorage.getItem('sb-kffiaqsihldgqdwagook-auth-token') || '{}')
-      const accessToken = authData.access_token
+      console.log('💳 PaymentMethodSetup - Loading payment methods for userId:', userId)
+      
+      if (!userId) {
+        console.log('💳 PaymentMethodSetup - No userId provided, skipping load')
+        setLoading(false)
+        return
+      }
 
-      if (!accessToken) return
-
-      const response = await fetch(`/api/user-billing/payment-methods?userId=${userId}`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
+      const supabase = createClient()
+      console.log('💳 PaymentMethodSetup - Getting Supabase session...')
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      console.log('💳 PaymentMethodSetup - Session result:', { 
+        sessionExists: !!session,
+        hasAccessToken: !!session?.access_token,
+        sessionError: sessionError?.message,
+        userEmail: session?.user?.email
       })
+      
+      if (sessionError || !session?.access_token) {
+        console.error('💳 PaymentMethodSetup - Authentication error:', sessionError)
+        setLoading(false)
+        return
+      }
 
+      console.log('💳 PaymentMethodSetup - Making API call with userId:', userId)
+      
+      let response;
+      try {
+        response = await fetch(`/api/user-billing/payment-methods?userId=${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        })
+        console.log('💳 PaymentMethodSetup - API response status:', response.status)
+      } catch (fetchError) {
+        console.error('💳 PaymentMethodSetup - Fetch error:', fetchError)
+        setLoading(false)
+        return
+      }
+      
       if (response.ok) {
-        const data = await response.json()
-        setPaymentMethods(data.paymentMethods || [])
-        setSubscriptionStatus(data.subscriptionStatus || '')
+        try {
+          const data = await response.json()
+          console.log('💳 PaymentMethodSetup - API response data:', data)
+          console.log('💳 PaymentMethodSetup - Payment methods count:', data.paymentMethods?.length || 0)
+          setPaymentMethods(data.paymentMethods || [])
+          setSubscriptionStatus(data.subscriptionStatus || '')
+        } catch (jsonError) {
+          console.error('💳 PaymentMethodSetup - JSON parse error:', jsonError)
+        }
       } else {
-        console.error('Failed to load payment methods')
+        try {
+          const errorData = await response.json()
+          console.error('💳 PaymentMethodSetup - API error response:', response.status, errorData)
+        } catch (jsonError) {
+          console.error('💳 PaymentMethodSetup - Failed to parse error response:', response.status, jsonError)
+        }
       }
     } catch (error) {
       console.error('Error loading payment methods:', error)
@@ -64,15 +106,18 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
     try {
       setAddingMethod(true)
 
-      const authData = JSON.parse(localStorage.getItem('sb-kffiaqsihldgqdwagook-auth-token') || '{}')
-      const accessToken = authData.access_token
-
-      if (!accessToken) return
+      const supabase = createClient()
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError || !session?.access_token) {
+        console.error('Authentication error:', sessionError)
+        return
+      }
 
       const response = await fetch('/api/stripe/setup-intent', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ userId }),
@@ -99,15 +144,18 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
     if (!confirm('Are you sure you want to remove this payment method?')) return
 
     try {
-      const authData = JSON.parse(localStorage.getItem('sb-kffiaqsihldgqdwagook-auth-token') || '{}')
-      const accessToken = authData.access_token
-
-      if (!accessToken) return
+      const supabase = createClient()
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError || !session?.access_token) {
+        console.error('Authentication error:', sessionError)
+        return
+      }
 
       const response = await fetch('/api/stripe/delete-payment-method', {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ paymentMethodId }),

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-utils';
 import { stripe, getCustomerByEmail, createCustomer } from '@/lib/stripe';
+import * as dbOperations from '@/lib/supabase-direct';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,12 +27,31 @@ export async function POST(request: NextRequest) {
       payment_method_types: ['card'],
     });
 
+    // Get user key for consistent URL format
+    let userKey = user.id; // Fallback to UUID
+    try {
+      const { data: allUsers } = await dbOperations.supabaseAdmin
+        .from('user_profiles')
+        .select('id, created_at')
+        .order('created_at', { ascending: true });
+      
+      if (allUsers) {
+        const userIndex = allUsers.findIndex(u => u.id === user.id);
+        if (userIndex !== -1) {
+          userKey = `USER-${userIndex + 1}`;
+        }
+      }
+    } catch (error) {
+      console.error('Error resolving user key:', error);
+      // Keep using UUID as fallback
+    }
+
     // Create Stripe Checkout session for setup mode
     const session = await stripe.checkout.sessions.create({
       mode: 'setup',
       customer: customer.id,
       success_url: `${request.headers.get('origin')}/admin/billing/setup-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${request.headers.get('origin')}/admin/users/${user.id}/profile?tab=payment`,
+      cancel_url: `${request.headers.get('origin')}/admin/users/${userKey}/profile?tab=payment`,
       payment_method_types: ['card'],
     });
 

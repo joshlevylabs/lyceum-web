@@ -74,12 +74,24 @@ export async function createBillingPortalSession(customerId: string, returnUrl: 
 
 // Helper function to get customer by email
 export async function getCustomerByEmail(email: string) {
+  console.log('💳 getCustomerByEmail - Searching for customer with email:', email)
   const customers = await stripe.customers.list({
     email: email,
     limit: 1,
   });
 
-  return customers.data[0] || null;
+  console.log('💳 getCustomerByEmail - Stripe customers search result:', {
+    customersFound: customers.data.length,
+    customers: customers.data.map(c => ({
+      id: c.id,
+      email: c.email,
+      name: c.name
+    }))
+  })
+
+  const customer = customers.data[0] || null;
+  console.log('💳 getCustomerByEmail - Returning customer:', customer ? { id: customer.id, email: customer.email } : null)
+  return customer;
 }
 
 // Helper function to create customer

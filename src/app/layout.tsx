@@ -18,6 +18,11 @@ export const metadata: Metadata = {
   description: 'Advanced analytics and measurement platform for industrial applications',
   keywords: ['analytics', 'measurement', 'industrial', 'data visualization', 'testing'],
   authors: [{ name: 'Lyceum Team' }],
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({

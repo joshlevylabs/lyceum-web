@@ -4,6 +4,12 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Trash2, Users, Settings, BarChart3, DollarSign, AlertCircle, Plus, UserMinus, Mail } from 'lucide-react'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4OTU0MTYsImV4cCI6MjA2ODQ3MTQxNn0.5Wzzoat1TsoLLbsqjuoUEKyawJgYmvrMYbJ-uvosdu0'
+)
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -52,6 +58,7 @@ interface User {
   username?: string;
   company?: string;
   role: string;
+  user_key?: string;
 }
 
 export default function ClusterManagementPage() {
@@ -110,7 +117,7 @@ export default function ClusterManagementPage() {
   }, [clusterKey])
 
   // Function to detect existing cluster admin from assignments
-  const detectClusterAdmin = () => {
+  const detectClusterAdmin = async () => {
     if (assignments && assignments.length > 0) {
       const adminUser = assignments.find(assignment => 
         assignment.access_level === 'admin' && (assignment as any).is_active !== false
@@ -118,10 +125,45 @@ export default function ClusterManagementPage() {
       
       if (adminUser) {
         console.log('Detected existing cluster admin:', adminUser);
+        
+        // Try to get user_key for the admin user
+        let userKey = null;
+        try {
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+          
+          if (!sessionError && session?.access_token) {
+            const response = await fetch('/api/admin/users/list', {
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (response.ok) {
+              const usersData = await response.json();
+              const users = usersData.users || [];
+              
+              // Generate user keys (same logic as frontend)
+              const usersWithKeys = users.map((user: any, index: number) => ({
+                ...user,
+                user_key: `USER-${index + 1}`
+              }));
+              
+              const matchingUser = usersWithKeys.find((user: any) => user.id === adminUser.user_id);
+              if (matchingUser) {
+                userKey = matchingUser.user_key;
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error getting user key:', error);
+        }
+        
         setClusterAdmin({
           id: adminUser.user_id,
           email: adminUser.users?.email || (adminUser as any).user_email || 'Unknown',
-          role: 'admin'
+          role: 'admin',
+          user_key: userKey
         });
       } else {
         setClusterAdmin(null);
@@ -921,7 +963,7 @@ export default function ClusterManagementPage() {
                       <div>
                         <h4 className="font-medium text-green-800">Cluster Admin Assigned</h4>
                         <p className="text-sm text-green-700">{clusterAdmin.email}</p>
-                        <p className="text-xs text-orange-600">⚠️ Payment information not yet configured - <button onClick={() => router.push(`/admin/users/${clusterAdmin.id}/billing`)} className="underline text-blue-600 hover:text-blue-800">Set up billing</button></p>
+                        <p className="text-xs text-orange-600">⚠️ Payment information not yet configured - <button onClick={() => router.push(`/admin/users/${clusterAdmin.user_key || clusterAdmin.id}/profile?tab=payment`)} className="underline text-blue-600 hover:text-blue-800">Set up billing</button></p>
                       </div>
                       <Button
                         variant="outline"
