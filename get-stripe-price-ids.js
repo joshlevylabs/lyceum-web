@@ -1,7 +1,7 @@
 // Run this script to get your Stripe Price IDs
 // node get-stripe-price-ids.js
 
-const stripe = require('stripe')('replacewstripesecretkey');
+const stripe = require('stripe')(process.env.STRIPE_API_KEY);
 
 async function getPriceIds() {
   try {
