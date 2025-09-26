@@ -235,3 +235,5 @@ BEGIN
   RAISE NOTICE 'Functions: cleanup_old_centcom_sessions(), get_user_latest_centcom_session()';
   RAISE NOTICE 'Next step: Implement the API endpoint /api/admin/users/{user_id}/centcom-sessions';
 END $$;
+
+

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase-server'
+import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -12,7 +12,7 @@ export async function GET(
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const { licenseId } = await params
 
-    // Fetch from license_keys table only (the licenses table doesn't exist)
+    // Fetch from license_keys table
     const { data: license, error: licenseError } = await supabase
       .from('license_keys')
       .select('*')
@@ -42,6 +42,33 @@ export async function GET(
       }
     }
 
+    // Get responsible user details (safely handle missing column)
+    let responsibleUser = null
+    try {
+      if (license.hasOwnProperty('responsible_user_id') && license.responsible_user_id) {
+        if (license.responsible_user_id !== license.assigned_to) {
+          const { data: user } = await supabase
+            .from('user_profiles')
+            .select('id, email, full_name')
+            .eq('id', license.responsible_user_id)
+            .single()
+          
+          if (user) {
+            responsibleUser = user
+          }
+        } else {
+          // Same as assigned user
+          responsibleUser = assignedUser
+        }
+      } else {
+        // For backward compatibility - assume assigned user is responsible
+        responsibleUser = assignedUser
+      }
+    } catch (error) {
+      console.warn('Error getting responsible user, using assigned user as fallback:', error);
+      responsibleUser = assignedUser
+    }
+
     // Extract enhanced data from JSONB fields
     const licenseConfig = license.license_config || {}
     const pluginPerms = license.plugin_permissions || {}
@@ -50,6 +77,7 @@ export async function GET(
     const licenseWithStats = {
       ...license,
       assigned_to: assignedUser,
+      responsible_user: responsibleUser,
       
       // Enhanced fields from license_config
       license_category: licenseConfig.license_category || 'main_application',
@@ -100,7 +128,7 @@ export async function PUT(
     const { licenseId } = await params
     const updateData = await request.json()
 
-    // Get current license to preserve existing config
+    // Get current license to preserve existing config  
     const { data: currentLicense, error: fetchError } = await supabase
       .from('license_keys')
       .select('*')
@@ -188,6 +216,33 @@ export async function PUT(
       }
     }
 
+    // Get responsible user details (safely handle missing column)
+    let responsibleUser = null
+    try {
+      if (updatedLicense.hasOwnProperty('responsible_user_id') && updatedLicense.responsible_user_id) {
+        if (updatedLicense.responsible_user_id !== updatedLicense.assigned_to) {
+          const { data: user } = await supabase
+            .from('user_profiles')
+            .select('id, email, full_name')
+            .eq('id', updatedLicense.responsible_user_id)
+            .single()
+          
+          if (user) {
+            responsibleUser = user
+          }
+        } else {
+          // Same as assigned user
+          responsibleUser = assignedUser
+        }
+      } else {
+        // For backward compatibility - assume assigned user is responsible
+        responsibleUser = assignedUser
+      }
+    } catch (error) {
+      console.warn('Error getting responsible user, using assigned user as fallback:', error);
+      responsibleUser = assignedUser
+    }
+
     // Extract enhanced data from JSONB fields for response
     const licenseConfig = updatedLicense.license_config || {}
     const pluginPerms = updatedLicense.plugin_permissions || {}
@@ -196,6 +251,7 @@ export async function PUT(
     const licenseWithStats = {
       ...updatedLicense,
       assigned_to: assignedUser,
+      responsible_user: responsibleUser,
       
       // Enhanced fields from license_config
       license_category: licenseConfig.license_category || 'main_application',

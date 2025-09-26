@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import PaymentMethodSetup from '@/components/billing/PaymentMethodSetup'
-import FlexibleBillingExample from '@/components/FlexibleBillingExample'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -1430,10 +1429,7 @@ export default function UserProfilePage() {
 
           {activeTab === 'payment' && (
             <div className="space-y-6">
-              {/* Flexible Billing System */}
-              <FlexibleBillingExample />
-              
-              {/* Existing Payment Method Setup */}
+              {/* Payment Method Setup */}
               {resolvedUserId ? (
                 <PaymentMethodSetup 
                   userId={resolvedUserId}

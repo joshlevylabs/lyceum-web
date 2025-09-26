@@ -151,3 +151,5 @@ AND ub.billing_period_end >= NOW() - INTERVAL '7 days';
 
 
 
+
+

@@ -242,3 +242,5 @@ ORDER BY latest_activity DESC;
 
 RAISE NOTICE 'CentCom session test data has been inserted successfully!';
 RAISE NOTICE 'You can now test the admin panel Sessions tab to see the "Last CentCom Login" section.';
+
+

@@ -164,3 +164,5 @@ Both tables work together - Supabase Auth handles authentication, your database 
 
 
 
+
+

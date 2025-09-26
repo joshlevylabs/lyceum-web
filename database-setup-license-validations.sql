@@ -122,3 +122,5 @@ COMMENT ON VIEW public.license_validation_analytics IS 'Analytics view for licen
 
 
 
+
+

@@ -161,3 +161,5 @@ async function testSessionUpdate() {
   console.log('Now check the admin panel at: http://localhost:3594/admin/users/' + TEST_USER_ID + '/profile');
   console.log('Navigate to the Sessions tab to see the "Last CentCom Login" section.');
 })();
+
+

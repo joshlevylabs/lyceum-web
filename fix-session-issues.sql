@@ -52,3 +52,5 @@ FROM centcom_sessions
 WHERE user_id = '2c3d4747-8d67-45af-90f5-b5e9058ec246'
 ORDER BY created_at DESC 
 LIMIT 3;
+
+

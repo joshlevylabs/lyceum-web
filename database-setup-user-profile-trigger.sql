@@ -53,3 +53,5 @@ GRANT EXECUTE ON FUNCTION public.create_user_profile() TO service_role;
 
 
 
+
+

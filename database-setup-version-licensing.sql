@@ -267,3 +267,5 @@ COMMENT ON FUNCTION public.check_version_compatibility IS 'Checks if a license t
 
 
 
+
+
