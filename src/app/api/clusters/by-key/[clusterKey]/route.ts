@@ -13,147 +13,91 @@ export async function GET(
 
     const { clusterKey } = await params
 
-    // Find cluster by cluster_key instead of ID
-    const { data: clusters, error: clusterError } = await dbOperations.supabaseAdmin
-      .from('database_clusters')
+    console.log('Fetching cluster by key:', { clusterKey, userId: user.id })
+
+    // Find cluster by cluster_key in unified_clusters table
+    const { data: clusterByKey, error: clusterError } = await dbOperations.supabaseAdmin
+      .from('unified_clusters')
       .select(`
         *,
-        cluster_team_access!inner(
-          user_id,
-          role,
-          permissions
+        cluster_user_assignments!inner(
+          access_level,
+          assigned_at,
+          is_active,
+          user_id
         )
       `)
       .eq('cluster_key', clusterKey)
-      .eq('cluster_team_access.user_id', user.id);
+      .eq('cluster_user_assignments.user_id', user.id)
+      .eq('cluster_user_assignments.is_active', true)
+      .single()
 
-    if (clusterError) {
-      console.error('Database error fetching cluster by key:', clusterError);
-      return NextResponse.json({ error: 'Failed to fetch cluster' }, { status: 500 });
-    }
+    console.log('Cluster by key query result:', { cluster: !!clusterByKey, error: clusterError?.message })
 
-    if (!clusters || clusters.length === 0) {
+    let cluster = clusterByKey
+
+    if (clusterError || !clusterByKey) {
       // Try fallback lookup by ID in case clusterKey is actually an ID
       const { data: clusterById, error: idError } = await dbOperations.supabaseAdmin
-        .from('database_clusters')
+        .from('unified_clusters')
         .select(`
           *,
-          cluster_team_access!inner(
-            user_id,
-            role,
-            permissions
+          cluster_user_assignments!inner(
+            access_level,
+            assigned_at,
+            is_active,
+            user_id
           )
         `)
         .eq('id', clusterKey)
-        .eq('cluster_team_access.user_id', user.id);
+        .eq('cluster_user_assignments.user_id', user.id)
+        .eq('cluster_user_assignments.is_active', true)
+        .single()
 
-      if (idError || !clusterById || clusterById.length === 0) {
-        return NextResponse.json({ error: 'Cluster not found or access denied' }, { status: 404 });
+      console.log('Cluster by ID fallback result:', { cluster: !!clusterById, error: idError?.message })
+
+      if (idError || !clusterById) {
+        console.log('Cluster not found or access denied:', { clusterError: clusterError?.message, idError: idError?.message })
+        return NextResponse.json({ error: 'Failed to fetch cluster' }, { status: 500 })
       }
 
-      const cluster = clusterById[0];
-      const userAccess = cluster.cluster_team_access[0];
-
-      // Return cluster details with user's role and permissions
-      return NextResponse.json({
-        success: true,
-        cluster: {
-          id: cluster.id,
-          name: cluster.name,
-          description: cluster.description,
-          cluster_key: cluster.cluster_key,
-          cluster_type: cluster.cluster_type,
-          region: cluster.region,
-          status: cluster.status,
-          clickhouse_cluster_id: cluster.clickhouse_cluster_id,
-          
-          // Configuration
-          node_count: cluster.node_count,
-          cpu_per_node: cluster.cpu_per_node,
-          memory_per_node: cluster.memory_per_node,
-          storage_per_node: cluster.storage_per_node,
-          hot_tier_size: cluster.hot_tier_size,
-          warm_tier_size: cluster.warm_tier_size,
-          cold_tier_size: cluster.cold_tier_size,
-          archive_enabled: cluster.archive_enabled,
-          
-          // Retention policy
-          hot_retention_days: cluster.hot_retention_days,
-          warm_retention_days: cluster.warm_retention_days,
-          cold_retention_days: cluster.cold_retention_days,
-          
-          // Metadata
-          created_at: cluster.created_at,
-          updated_at: cluster.updated_at,
-          created_by: cluster.created_by,
-          health_status: cluster.health_status,
-          last_health_check: cluster.last_health_check,
-          
-          // Cost information
-          estimated_monthly_cost: cluster.estimated_monthly_cost,
-          actual_monthly_cost: cluster.actual_monthly_cost,
-          
-          // User access info
-          user_role: userAccess?.role || 'viewer',
-          user_permissions: userAccess?.permissions || []
-        },
-        userRole: userAccess?.role || 'viewer',
-        userPermissions: userAccess?.permissions || []
-      });
+      // Use the cluster found by ID
+      cluster = clusterById
     }
 
-    const cluster = clusters[0];
-    const userAccess = cluster.cluster_team_access[0];
+    // Get all assigned users for this cluster
+    const { data: assignedUsers } = await dbOperations.supabaseAdmin
+      .from('cluster_user_assignments')
+      .select(`
+        user_id,
+        access_level,
+        assigned_at,
+        is_active,
+        access_notes
+      `)
+      .eq('cluster_id', cluster.id)
+      .eq('is_active', true)
 
-    // Return cluster details with user's role and permissions
-    return NextResponse.json({
+    // Get cluster settings (if any)
+    const { data: settings } = await dbOperations.supabaseAdmin
+      .from('cluster_settings')
+      .select('*')
+      .eq('cluster_id', cluster.id)
+
+    const response = {
       success: true,
       cluster: {
-        id: cluster.id,
-        name: cluster.name,
-        description: cluster.description,
-        cluster_key: cluster.cluster_key,
-        cluster_type: cluster.cluster_type,
-        region: cluster.region,
-        status: cluster.status,
-        clickhouse_cluster_id: cluster.clickhouse_cluster_id,
-        
-        // Configuration
-        node_count: cluster.node_count,
-        cpu_per_node: cluster.cpu_per_node,
-        memory_per_node: cluster.memory_per_node,
-        storage_per_node: cluster.storage_per_node,
-        hot_tier_size: cluster.hot_tier_size,
-        warm_tier_size: cluster.warm_tier_size,
-        cold_tier_size: cluster.cold_tier_size,
-        archive_enabled: cluster.archive_enabled,
-        
-        // Retention policy
-        hot_retention_days: cluster.hot_retention_days,
-        warm_retention_days: cluster.warm_retention_days,
-        cold_retention_days: cluster.cold_retention_days,
-        
-        // Metadata
-        created_at: cluster.created_at,
-        updated_at: cluster.updated_at,
-        created_by: cluster.created_by,
-        health_status: cluster.health_status,
-        last_health_check: cluster.last_health_check,
-        
-        // Cost information
-        estimated_monthly_cost: cluster.estimated_monthly_cost,
-        actual_monthly_cost: cluster.actual_monthly_cost,
-        
-        // User access info
-        user_role: userAccess?.role || 'viewer',
-        user_permissions: userAccess?.permissions || []
-      },
-      userRole: userAccess?.role || 'viewer',
-      userPermissions: userAccess?.permissions || []
-    });
+        ...cluster,
+        user_role: cluster.cluster_user_assignments[0]?.access_level || 'user',
+        assigned_users: assignedUsers || [],
+        settings: settings || []
+      }
+    }
+
+    return NextResponse.json(response)
 
   } catch (error) {
-    console.error('Error in cluster by key endpoint:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Error in cluster by key endpoint:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

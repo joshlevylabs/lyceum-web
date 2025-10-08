@@ -77,20 +77,22 @@ export class UsageTrackingService {
     console.log('📊 Getting current usage for user:', userId);
     
     try {
-      // Get licenses where user is responsible for payment
+      // Get licenses where user is responsible for payment (exclude gratis licenses)
       // This includes both direct responsibility and fallback to assignment-based responsibility
       const { data: responsibleLicenses, error: licenseError } = await dbOperations.supabaseAdmin
         .from('licenses')
         .select('license_type, status, id')
         .eq('responsible_user_id', userId)
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .neq('license_type', 'gratis');
 
-      // Also check license_keys table for responsible licenses
+      // Also check license_keys table for responsible licenses (exclude gratis)
       const { data: responsibleLicenseKeys, error: licenseKeysError } = await dbOperations.supabaseAdmin
         .from('license_keys')
         .select('license_type, status, id')
         .eq('responsible_user_id', userId)
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .neq('license_type', 'gratis');
 
       if (licenseError) {
         console.error('❌ License query error:', licenseError);
@@ -100,10 +102,10 @@ export class UsageTrackingService {
         console.error('❌ License keys query error:', licenseKeysError);
       }
 
-      // Get database clusters
+      // Get database clusters with resource information
       const { data: clusters, error: clusterError } = await dbOperations.supabaseAdmin
         .from('user_database_clusters')
-        .select('cluster_type, status, storage_size_mb, cpu_cores, ram_mb')
+        .select('cluster_type, status, storage_size_mb, cpu_cores, ram_mb, node_count, cpu_per_node, memory_per_node, storage_per_node, pricing_model')
         .eq('user_id', userId)
         .eq('status', 'active');
 

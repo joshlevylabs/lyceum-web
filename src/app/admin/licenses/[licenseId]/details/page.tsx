@@ -17,6 +17,8 @@ import {
   PencilIcon,
   CurrencyDollarIcon
 } from '@heroicons/react/24/outline'
+import UserAssignmentManager from '@/components/admin/UserAssignmentManager'
+import LicenseStatusManager from '@/components/admin/LicenseStatusManager'
 
 interface LicenseDetails {
   id: string
@@ -90,6 +92,11 @@ interface LicenseDetails {
   features: string[]
   expires_at?: string
   assigned_to?: {
+    id: string
+    email: string
+    full_name: string
+  }
+  responsible_user?: {
     id: string
     email: string
     full_name: string
@@ -387,6 +394,10 @@ export default function LicenseDetailsPage() {
     switch (status) {
       case 'active':
         return <CheckCircleIcon className="h-5 w-5 text-green-500" />
+      case 'inactive':
+        return <XCircleIcon className="h-5 w-5 text-gray-500" />
+      case 'trial':
+        return <ClockIcon className="h-5 w-5 text-blue-500" />
       case 'expired':
         return <XCircleIcon className="h-5 w-5 text-red-500" />
       case 'revoked':
@@ -400,6 +411,10 @@ export default function LicenseDetailsPage() {
     switch (status) {
       case 'active':
         return 'bg-green-100 text-green-800'
+      case 'inactive':
+        return 'bg-gray-100 text-gray-800'
+      case 'trial':
+        return 'bg-blue-100 text-blue-800'
       case 'expired':
         return 'bg-red-100 text-red-800'
       case 'revoked':
@@ -667,6 +682,7 @@ export default function LicenseDetailsPage() {
                       <option value="standard">Standard</option>
                       <option value="professional">Professional</option>
                       <option value="enterprise">Enterprise</option>
+                      <option value="gratis">Gratis (Free)</option>
                     </select>
                   ) : (
                     <div className="mt-1 text-sm text-gray-900 dark:text-white capitalize">
@@ -685,6 +701,8 @@ export default function LicenseDetailsPage() {
                       className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                     >
                       <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="trial">Trial</option>
                       <option value="expired">Expired</option>
                       <option value="revoked">Revoked</option>
                     </select>
@@ -1086,38 +1104,28 @@ export default function LicenseDetailsPage() {
             </div>
           </div>
 
-          {/* Assignment Information */}
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Assignment Information</h3>
-              
-              <div className="space-y-4">
-                {license.assigned_to ? (
-                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
-                    <div className="flex items-center space-x-3">
-                      <UserIcon className="h-8 w-8 text-green-600" />
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                          Assigned to: {license.assigned_to.full_name}
-                        </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {license.assigned_to.email}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Assigned on: {license.assigned_at ? new Date(license.assigned_at).toLocaleDateString() : 'Unknown'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-6">
-                    <UserIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-sm text-gray-500 dark:text-gray-400">License not assigned to any user</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          {/* License Status Management */}
+          <LicenseStatusManager
+            licenseId={licenseId}
+            currentStatus={license.status}
+            onStatusChange={() => {
+              fetchLicenseDetails() // Refresh license data when status changes
+            }}
+          />
+
+          {/* User Assignment & Payment Responsibility Management */}
+          <UserAssignmentManager
+            licenseId={licenseId}
+            assignedUsers={license.assigned_to ? [{ 
+              ...license.assigned_to, 
+              assigned_at: license.assigned_at 
+            }] : []}
+            responsibleUser={license.responsible_user}
+            licenseType={license.license_type}
+            onAssignmentChange={() => {
+              fetchLicenseDetails() // Refresh license data when assignments change
+            }}
+          />
         </div>
 
         {/* Timeline */}

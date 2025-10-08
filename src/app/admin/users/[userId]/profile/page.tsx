@@ -35,6 +35,13 @@ interface License {
   assigned_at?: string
   created_at: string
   source: string
+  responsible_user?: {
+    id: string
+    email: string
+    full_name: string
+  }
+  is_billable?: boolean
+  monthly_cost?: number
 }
 
 interface Subscription {
@@ -318,24 +325,38 @@ export default function UserProfilePage() {
         throw new Error(`Failed to fetch user profile (${enhancedResponse.status})`)
       }
 
-      // Fetch licenses and subscription data
-      console.log('Fetching licenses...')
-      const licensesResponse = await fetch(`/api/user-profiles/licenses?user_id=${resolvedUserId}`)
-      console.log('Licenses response status:', licensesResponse.status)
+      // Fetch detailed licenses with billing information
+      console.log('Fetching detailed licenses...')
+      const licensesResponse = await fetch(`/api/admin/users/${resolvedUserId}/detailed-licenses`)
+      console.log('Detailed licenses response status:', licensesResponse.status)
       
       if (licensesResponse.ok) {
         const licensesData = await licensesResponse.json()
-        console.log('Licenses data received:', licensesData.data?.licenses?.length || 0, 'licenses')
+        console.log('Detailed licenses data received:', licensesData.data?.licenses?.all_licenses?.length || 0, 'licenses')
         setLicenses({
-          licenses: licensesData.data.licenses || [],
-          license_categories: licensesData.data.license_categories || { main_applications: [], plugins: [], other: [] },
-          statistics: licensesData.data.statistics || {}
+          licenses: licensesData.data.licenses.all_licenses || [],
+          license_categories: {
+            main_applications: licensesData.data.licenses.all_licenses?.filter(l => l.license_category === 'main_application') || [],
+            plugins: licensesData.data.licenses.all_licenses?.filter(l => l.license_category === 'plugin') || [],
+            other: licensesData.data.licenses.all_licenses?.filter(l => l.license_category === 'other') || []
+          },
+          billing_summary: licensesData.data.billing_summary || {}
         })
-        setSubscription(licensesData.data.subscription)
-        setInvoices(licensesData.data.transactions || [])
-        setTransactions(licensesData.data.transactions || [])
       } else {
-        console.warn('Failed to fetch licenses:', licensesResponse.status)
+        console.warn('Failed to fetch detailed licenses:', licensesResponse.status)
+        // Fallback to old API
+        const fallbackResponse = await fetch(`/api/user-profiles/licenses?user_id=${resolvedUserId}`)
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json()
+          setLicenses({
+            licenses: fallbackData.data.licenses || [],
+            license_categories: fallbackData.data.license_categories || { main_applications: [], plugins: [], other: [] },
+            statistics: fallbackData.data.statistics || {}
+          })
+          setSubscription(fallbackData.data.subscription)
+          setInvoices(fallbackData.data.transactions || [])
+          setTransactions(fallbackData.data.transactions || [])
+        }
       }
 
       // Fetch sessions data
@@ -845,55 +866,149 @@ export default function UserProfilePage() {
 
           {activeTab === 'licenses' && (
             <div className="space-y-6">
+              {/* License Summary */}
+              {licenses.billing_summary && (
+                <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                  <div className="px-4 py-5 sm:p-6">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">License Overview</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
+                        <div className="text-2xl font-bold text-blue-600">
+                          {licenses.billing_summary.total_licenses || 0}
+                        </div>
+                        <div className="text-sm text-blue-600">Total Licenses</div>
+                        <div className="text-xs text-blue-500">
+                          All assigned
+                        </div>
+                      </div>
+                      <div className="bg-gray-50 dark:bg-gray-900/20 rounded-lg p-3">
+                        <div className="text-2xl font-bold text-gray-600">
+                          {(licenses.billing_summary.gratis_count || 0) + (licenses.billing_summary.trial_count || 0) + (licenses.billing_summary.inactive_count || 0)}
+                        </div>
+                        <div className="text-sm text-gray-600">Free/Inactive</div>
+                        <div className="text-xs text-gray-500">
+                          Non-billable
+                        </div>
+                      </div>
+                      <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3">
+                        <div className="text-2xl font-bold text-green-600">
+                          {licenses.billing_summary.user_responsible_count || 0}
+                        </div>
+                        <div className="text-sm text-green-600">User Pays For</div>
+                        <div className="text-xs text-green-500">
+                          Responsible licenses
+                        </div>
+                      </div>
+                      <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3">
+                        <div className="text-2xl font-bold text-purple-600">
+                          ${licenses.billing_summary.license_monthly_cost || 0}
+                        </div>
+                        <div className="text-sm text-purple-600">Monthly License Cost</div>
+                        <div className="text-xs text-purple-500">
+                          Licenses only
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Licenses Section */}
               <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
                 <div className="px-4 py-5 sm:p-6">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">Assigned Licenses</h3>
 
-                  {(licenses.license_categories?.main_applications?.length > 0 || 
-                    licenses.license_categories?.plugins?.length > 0 || 
-                    licenses.license_categories?.other?.length > 0) ? (
+                  {licenses.licenses && licenses.licenses.length > 0 ? (
                     <div className="space-y-4">
-                      {/* Show categorized licenses */}
-                      {licenses.licenses?.map((license, index) => (
+                      {licenses.licenses.map((license, index) => (
                         <div key={`license-${license.id}`} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center space-x-3">
-                              <ShieldCheckIcon className="h-6 w-6 text-blue-600" />
+                              <ShieldCheckIcon className={`h-6 w-6 ${
+                                license.license_type === 'gratis' ? 'text-cyan-600' :
+                                license.license_type === 'trial' ? 'text-yellow-600' :
+                                license.license_type === 'enterprise' ? 'text-purple-600' :
+                                license.license_type === 'professional' ? 'text-blue-600' :
+                                'text-green-600'
+                              }`} />
                               <div>
-                                <h4 className="text-lg font-medium text-gray-900 dark:text-white capitalize">
-                                  {license.license_type} License
-                                </h4>
+                                <div className="flex items-center space-x-2">
+                                  <h4 className="text-lg font-medium text-gray-900 dark:text-white capitalize">
+                                    {license.license_type} License
+                                  </h4>
+                                  {license.license_type === 'gratis' && (
+                                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-cyan-100 text-cyan-800">
+                                      FREE
+                                    </span>
+                                  )}
+                                  {license.is_billable && license.is_user_responsible && (
+                                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                      USER PAYS
+                                    </span>
+                                  )}
+                                </div>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
                                   {license.key_code || license.key_id || `License ${index + 1}`}
                                 </p>
                               </div>
                             </div>
-                            <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-                              license.status === 'active'
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
-                                : license.status === 'expired'
-                                ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
-                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200'
-                            }`}>
-                              {license.status}
-                            </span>
+                            <div className="flex items-center space-x-2">
+                              {license.monthly_cost > 0 && (
+                                <span className="text-sm font-semibold text-purple-600">
+                                  ${license.monthly_cost}/mo
+                                </span>
+                              )}
+                              <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                                license.status === 'active'
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
+                                  : license.status === 'expired'
+                                  ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
+                                  : license.status === 'inactive'
+                                  ? 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-200'
+                                  : license.status === 'trial'
+                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
+                                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200'
+                              }`}>
+                                {license.status}
+                              </span>
+                            </div>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-3">
                             <div>
                               <span className="font-medium text-gray-700 dark:text-gray-300">Max Users:</span>
-                              <span className="ml-1 text-gray-900 dark:text-white">{license.max_users || 'Unlimited'}</span>
+                              <span className="ml-1 text-gray-900 dark:text-white">
+                                {license.max_users === null || license.max_users === -1 ? 'Unlimited' : license.max_users}
+                              </span>
                             </div>
                             <div>
                               <span className="font-medium text-gray-700 dark:text-gray-300">Max Projects:</span>
-                              <span className="ml-1 text-gray-900 dark:text-white">{license.max_projects || 'Unlimited'}</span>
+                              <span className="ml-1 text-gray-900 dark:text-white">
+                                {license.max_projects === null || license.max_projects === -1 ? 'Unlimited' : license.max_projects}
+                              </span>
                             </div>
                             <div>
                               <span className="font-medium text-gray-700 dark:text-gray-300">Storage:</span>
-                              <span className="ml-1 text-gray-900 dark:text-white">{license.max_storage_gb || 'Unlimited'} GB</span>
+                              <span className="ml-1 text-gray-900 dark:text-white">
+                                {license.max_storage_gb === null || license.max_storage_gb === -1 ? 'Unlimited' : `${license.max_storage_gb} GB`}
+                              </span>
                             </div>
                           </div>
+
+                          {/* Payment Responsibility */}
+                          {license.responsible_user && (
+                            <div className="mb-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
+                              <div className="text-sm">
+                                <span className="font-medium text-gray-700 dark:text-gray-300">Payment Responsible:</span>
+                                <span className="ml-1 text-gray-900 dark:text-white">
+                                  {license.responsible_user.full_name || license.responsible_user.email}
+                                </span>
+                                {license.is_user_responsible && (
+                                  <span className="ml-2 text-red-600 font-semibold">(This User)</span>
+                                )}
+                              </div>
+                            </div>
+                          )}
 
                           {license.features && license.features.length > 0 && (
                             <div className="mt-3">
@@ -909,9 +1024,14 @@ export default function UserProfilePage() {
                           )}
 
                           <div className="mt-3 flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                            <span>
-                              Assigned: {license.assigned_at ? new Date(license.assigned_at).toLocaleDateString() : 'Unknown'}
-                            </span>
+                            <div className="flex space-x-4">
+                              <span>
+                                Assigned: {license.assigned_at ? new Date(license.assigned_at).toLocaleDateString() : 'Unknown'}
+                              </span>
+                              <span>
+                                Via: {license.assigned_via === 'user_license_assignments' ? 'Assignment' : 'Direct'}
+                              </span>
+                            </div>
                             {license.expires_at && (
                               <span>
                                 Expires: {new Date(license.expires_at).toLocaleDateString()}
@@ -1429,12 +1549,225 @@ export default function UserProfilePage() {
 
           {activeTab === 'payment' && (
             <div className="space-y-6">
+              {/* Payment Responsibility Summary */}
+              {licenses.billing_summary && (
+                <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                  <div className="px-4 py-5 sm:p-6">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
+                      <CurrencyDollarIcon className="h-6 w-6 mr-2 text-green-600" />
+                      Monthly Payment Responsibility
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-green-600">
+                          ${licenses.billing_summary.total_monthly_cost || licenses.billing_summary.monthly_cost_user_responsible || 0}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Total Monthly</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">
+                          ${licenses.billing_summary.license_monthly_cost || 0}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Licenses</div>
+                        <div className="text-xs text-gray-500">
+                          {licenses.billing_summary.user_responsible_count || 0} billable
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600">
+                          ${licenses.billing_summary.cluster_monthly_cost || 0}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Clusters</div>
+                        <div className="text-xs text-gray-500">
+                          {licenses.billing_summary.billable_clusters_count || 0} active
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-gray-600">
+                          {(licenses.billing_summary.gratis_count || 0) + (licenses.billing_summary.trial_count || 0) + (licenses.billing_summary.inactive_count || 0) + (licenses.billing_summary.inactive_clusters_count || 0)}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">Free/Inactive</div>
+                      </div>
+                    </div>
+
+                    {/* Complete Payment Breakdown - Grouped by Category */}
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-3">Complete Payment Breakdown</h4>
+                      
+                      {/* Group line items by category */}
+                      {licenses.billing_summary?.estimated_cost_breakdown?.line_items && (
+                        <div className="space-y-4 mb-4">
+                          {/* Platform Services */}
+                          {licenses.billing_summary.estimated_cost_breakdown.line_items
+                            .filter(item => item.category === 'Platform').length > 0 && (
+                            <div className="border border-blue-200 rounded-lg p-4 bg-blue-50 dark:bg-blue-900/20">
+                              <h5 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">🏢 Platform Services</h5>
+                              <div className="space-y-2">
+                                {licenses.billing_summary.estimated_cost_breakdown.line_items
+                                  .filter(item => item.category === 'Platform')
+                                  .map((item, index) => (
+                                  <div key={index} className="flex justify-between items-center">
+                                    <div>
+                                      <span className="font-medium text-gray-900 dark:text-white">{item.name}</span>
+                                      <p className="text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
+                                    </div>
+                                    <span className="font-semibold text-blue-600">
+                                      ${item.total_price_dollars.toFixed(2)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* License Costs */}
+                          {licenses.billing_summary.estimated_cost_breakdown.line_items
+                            .filter(item => item.category === 'Licenses').length > 0 && (
+                            <div className="border border-green-200 rounded-lg p-4 bg-green-50 dark:bg-green-900/20">
+                              <h5 className="font-semibold text-green-800 dark:text-green-200 mb-2">📄 License Costs</h5>
+                              <div className="space-y-2">
+                                {licenses.billing_summary.estimated_cost_breakdown.line_items
+                                  .filter(item => item.category === 'Licenses')
+                                  .map((item, index) => (
+                                  <div key={index} className="flex justify-between items-center">
+                                    <div>
+                                      <span className="font-medium text-gray-900 dark:text-white">{item.name}</span>
+                                      <p className="text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
+                                      {item.quantity > 1 && (
+                                        <p className="text-xs text-gray-500">
+                                          {item.quantity} × ${item.unit_price_dollars.toFixed(2)}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <span className="font-semibold text-green-600">
+                                      ${item.total_price_dollars.toFixed(2)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Database Clusters */}
+                          {licenses.billing_summary.estimated_cost_breakdown.line_items
+                            .filter(item => item.category === 'Clusters').length > 0 && (
+                            <div className="border border-purple-200 rounded-lg p-4 bg-purple-50 dark:bg-purple-900/20">
+                              <h5 className="font-semibold text-purple-800 dark:text-purple-200 mb-2">🖥️ Database Clusters</h5>
+                              <div className="space-y-2">
+                                {licenses.billing_summary.estimated_cost_breakdown.line_items
+                                  .filter(item => item.category === 'Clusters')
+                                  .map((item, index) => (
+                                  <div key={index} className="flex justify-between items-center">
+                                    <div>
+                                      <span className="font-medium text-gray-900 dark:text-white">{item.name}</span>
+                                      <p className="text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
+                                      {item.quantity > 1 && (
+                                        <p className="text-xs text-gray-500">
+                                          {item.quantity} × ${item.unit_price_dollars.toFixed(2)}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <span className="font-semibold text-purple-600">
+                                      ${item.total_price_dollars.toFixed(2)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Additional Services */}
+                          {licenses.billing_summary.estimated_cost_breakdown.line_items
+                            .filter(item => item.category === 'Additional Services').length > 0 && (
+                            <div className="border border-orange-200 rounded-lg p-4 bg-orange-50 dark:bg-orange-900/20">
+                              <h5 className="font-semibold text-orange-800 dark:text-orange-200 mb-2">⚡ Additional Services</h5>
+                              <div className="space-y-2">
+                                {licenses.billing_summary.estimated_cost_breakdown.line_items
+                                  .filter(item => item.category === 'Additional Services')
+                                  .map((item, index) => (
+                                  <div key={index} className="flex justify-between items-center">
+                                    <div>
+                                      <span className="font-medium text-gray-900 dark:text-white">{item.name}</span>
+                                      <p className="text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
+                                      {item.quantity > 1 && (
+                                        <p className="text-xs text-gray-500">
+                                          {item.quantity} × ${item.unit_price_dollars.toFixed(2)}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <span className="font-semibold text-orange-600">
+                                      ${item.total_price_dollars.toFixed(2)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Debug Info for Real Data */}
+                          {licenses.billing_summary?.real_licenses_count !== undefined && (
+                            <div className="text-xs text-gray-500 p-2 bg-gray-100 rounded">
+                              📊 Real Data: {licenses.billing_summary.real_licenses_count} responsible licenses, 
+                              {licenses.billing_summary.real_clusters_count} clusters, 
+                              {licenses.billing_summary.real_storage_used_mb}MB storage used
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Non-Billable Items */}
+                      {licenses.licenses && licenses.licenses.filter(l => !l.is_billable).length > 0 && (
+                        <div className="mb-4">
+                          <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">🆓 Non-Billable Items:</h5>
+                          <div className="space-y-2">
+                            {licenses.licenses.filter(l => !l.is_billable).map((license) => (
+                              <div key={license.id} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900/20 rounded-md">
+                                <div>
+                                  <span className="font-medium capitalize">{license.license_type} License</span>
+                                  <span className="ml-2 text-sm text-gray-600">({license.key_code})</span>
+                                  <span className="ml-2 text-xs text-gray-500">
+                                    {license.license_type === 'gratis' ? '(Free)' : 
+                                     license.license_type === 'trial' ? '(Trial)' :
+                                     license.status !== 'active' ? '(Inactive)' : ''}
+                                  </span>
+                                </div>
+                                <span className="text-gray-500">$0/month</span>
+                              </div>
+                            ))}
+                            
+                            {licenses.billing_summary?.inactive_clusters_count > 0 && (
+                              <div className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900/20 rounded-md">
+                                <div>
+                                  <span className="font-medium">Inactive Clusters</span>
+                                  <span className="ml-2 text-xs text-gray-500">({licenses.billing_summary.inactive_clusters_count} clusters)</span>
+                                </div>
+                                <span className="text-gray-500">$0/month</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Total Summary */}
+                      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <div className="flex justify-between items-center text-lg font-semibold">
+                          <span>Total Monthly Cost:</span>
+                          <span className="text-green-600">
+                            ${licenses.billing_summary.estimated_cost_breakdown?.total_dollars?.toFixed(2) || '0.00'}/month
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Payment Method Setup */}
               {resolvedUserId ? (
                 <PaymentMethodSetup 
                   userId={resolvedUserId}
                   onPaymentMethodAdded={() => {
-                    // Optionally refresh data after payment method added
                     fetchUserData()
                   }}
                 />

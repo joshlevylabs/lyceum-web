@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { 
-      cluster_id: clusterId, 
+      clusterId, 
       pricing_model, 
       monthly_price, 
       trial_length_days, 

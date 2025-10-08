@@ -1,0 +1,231 @@
+# Redis Cache Configuration for Lyceum Hot Curve Data
+# Provides sub-second access to frequently used curves
+
+apiVersion: redis.cnrm.cloud.google.com/v1beta1
+kind: RedisInstance
+metadata:
+  name: lyceum-curve-cache
+  namespace: default
+  labels:
+    environment: production
+    tier: cache
+    cost-optimization: enabled
+spec:
+  region: us-central1
+  tier: STANDARD_HA  # High availability for production
+  memorySizeGb: 5     # Start with 5GB, can scale up
+  redisVersion: REDIS_7_0
+  displayName: "Lyceum Curve Cache"
+  
+  # Network configuration
+  authorizedNetwork: projects/lyceum-clusters-optimized/global/networks/default
+  connectMode: DIRECT_PEERING
+  
+  # Redis configuration optimized for caching
+  redisConfigs:
+    # Eviction policy - remove least recently used keys when memory is full
+    maxmemory-policy: "allkeys-lru"
+    
+    # Disable persistence for better performance (cache data can be regenerated)
+    save: ""
+    
+    # Optimize for performance
+    tcp-keepalive: "60"
+    timeout: "0"
+    
+    # Memory optimization
+    hash-max-ziplist-entries: "512"
+    hash-max-ziplist-value: "64"
+    list-max-ziplist-size: "-2"
+    set-max-intset-entries: "512"
+    zset-max-ziplist-entries: "128"
+    zset-max-ziplist-value: "64"
+  
+  # Maintenance policy
+  maintenancePolicy:
+    weeklyMaintenanceWindow:
+      day: SUNDAY
+      startTime:
+        hours: 3  # 3 AM UTC
+        minutes: 0
+
+---
+# Redis Instance for Session Cache (separate instance for better isolation)
+apiVersion: redis.cnrm.cloud.google.com/v1beta1
+kind: RedisInstance
+metadata:
+  name: lyceum-session-cache
+  namespace: default
+  labels:
+    environment: production
+    tier: session-cache
+    cost-optimization: enabled
+spec:
+  region: us-central1
+  tier: STANDARD_HA
+  memorySizeGb: 2     # Smaller for session data
+  redisVersion: REDIS_7_0
+  displayName: "Lyceum Session Cache"
+  
+  authorizedNetwork: projects/lyceum-clusters-optimized/global/networks/default
+  connectMode: DIRECT_PEERING
+  
+  # Session-optimized configuration
+  redisConfigs:
+    maxmemory-policy: "allkeys-lru"
+    save: ""
+    tcp-keepalive: "60"
+    timeout: "300"  # 5 minute timeout for sessions
+  
+  maintenancePolicy:
+    weeklyMaintenanceWindow:
+      day: SUNDAY
+      startTime:
+        hours: 4  # 4 AM UTC (1 hour after curve cache maintenance)
+        minutes: 0
+
+---
+# ConfigMap for Redis connection details
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: default
+  labels:
+    app: lyceum-redis
+    environment: production
+data:
+  # Curve cache configuration
+  CURVE_REDIS_HOST: "10.0.0.3"  # This will be updated after Redis deployment
+  CURVE_REDIS_PORT: "6379"
+  CURVE_REDIS_DB: "0"
+  CURVE_CACHE_TTL: "604800"     # 7 days
+  CURVE_CACHE_MAX_SIZE: "1000"  # Maximum curves to cache
+  
+  # Session cache configuration  
+  SESSION_REDIS_HOST: "10.0.0.4"  # This will be updated after Redis deployment
+  SESSION_REDIS_PORT: "6379"
+  SESSION_REDIS_DB: "0"
+  SESSION_CACHE_TTL: "3600"       # 1 hour
+  
+  # Performance settings
+  REDIS_POOL_SIZE: "20"
+  REDIS_TIMEOUT: "5"
+  REDIS_RETRY_ATTEMPTS: "3"
+  
+  # Cache strategy settings
+  CACHE_STRATEGY: "lru"
+  CACHE_PREFETCH_ENABLED: "true"
+  CACHE_COMPRESSION_ENABLED: "true"
+
+---
+# Secret for Redis AUTH (if needed for additional security)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-auth
+  namespace: default
+  labels:
+    app: lyceum-redis
+    environment: production
+type: Opaque
+data:
+  # Base64 encoded auth token (replace with actual secure token)
+  auth-token: bHljZXVtLXJlZGlzLWF1dGgtdG9rZW4=
+
+---
+# Service for internal Redis access (if using private IP)
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-curve-cache
+  namespace: default
+  labels:
+    app: lyceum-redis
+    cache-type: curves
+spec:
+  type: ExternalName
+  externalName: redis-curve-cache.redis.gcp.internal
+  ports:
+  - port: 6379
+    targetPort: 6379
+    protocol: TCP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-session-cache
+  namespace: default
+  labels:
+    app: lyceum-redis
+    cache-type: sessions
+spec:
+  type: ExternalName
+  externalName: redis-session-cache.redis.gcp.internal
+  ports:
+  - port: 6379
+    targetPort: 6379
+    protocol: TCP
+
+---
+# PodDisruptionBudget for Redis client pods
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: redis-client-pdb
+  namespace: default
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      uses-redis: "true"
+
+---
+# NetworkPolicy for Redis access (security)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-access-policy
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      uses-redis: "true"
+  policyTypes:
+  - Egress
+  egress:
+  # Allow access to Redis instances
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 6379
+  # Allow DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+
+---
+# Monitoring ServiceMonitor for Redis (if using Prometheus)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: redis-monitoring
+  namespace: default
+  labels:
+    app: lyceum-redis
+spec:
+  selector:
+    matchLabels:
+      app: lyceum-redis
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+
+
+
+

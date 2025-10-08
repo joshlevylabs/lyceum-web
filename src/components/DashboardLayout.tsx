@@ -53,16 +53,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     (user.user_metadata?.role === 'admin' || user.user_metadata?.role === 'superadmin')
   )
 
-  // Debug logging
-  console.log('DashboardLayout - Auth state:', {
-    user: !!user,
-    userProfile: !!userProfile,
-    loading,
-    userEmail: user?.email,
-    profileName: userProfile?.full_name,
-    isAdmin
-  })
-
   // Enhanced logout handler with error handling
   const handleLogout = async () => {
     if (loggingOut) return // Prevent multiple logout attempts

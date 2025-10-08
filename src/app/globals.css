@@ -1,19 +1,92 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+@variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+/* Light theme (default) */
+.light {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+/* Dark theme */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+/* Custom theme */
+.custom {
+  /* Custom theme uses CSS variables set by ThemeContext */
+  background-color: var(--color-background);
+  color: var(--color-text);
+}
+
+.custom * {
+  /* Override Tailwind defaults with custom colors */
+  border-color: var(--color-border);
+}
+
+/* Custom theme overrides for common Tailwind utility classes */
+.custom .bg-white,
+.custom .bg-gray-50 {
+  background-color: var(--color-surface) !important;
+}
+
+.custom .bg-gray-800,
+.custom .bg-gray-900 {
+  background-color: var(--color-background) !important;
+}
+
+.custom .text-gray-900 {
+  color: var(--color-text) !important;
+}
+
+.custom .text-gray-500,
+.custom .text-gray-600,
+.custom .text-gray-400 {
+  color: var(--color-text-secondary) !important;
+}
+
+.custom .border-gray-200,
+.custom .border-gray-300,
+.custom .border-gray-700 {
+  border-color: var(--color-border) !important;
+}
+
+.custom .bg-blue-500,
+.custom .bg-blue-600 {
+  background-color: var(--color-primary) !important;
+}
+
+.custom .text-blue-600,
+.custom .text-blue-500 {
+  color: var(--color-primary) !important;
+}
+
+.custom .border-blue-500,
+.custom .border-blue-600 {
+  border-color: var(--color-primary) !important;
+}
+
+.custom .bg-indigo-500,
+.custom .bg-purple-500 {
+  background-color: var(--color-secondary) !important;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.light):not(.custom) {
     --background: #0a0a0a;
     --foreground: #ededed;
   }

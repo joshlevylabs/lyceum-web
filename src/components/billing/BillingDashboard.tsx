@@ -79,12 +79,17 @@ export default function BillingDashboard() {
         setInvoices(invoicesData.data.invoices || []);
       }
 
-      // Load current usage
-      const usageResponse = await fetch('/api/billing/usage?include_estimate=true');
+      // Load current usage (filtered to show only items user is responsible for)
+      const usageResponse = await fetch('/api/billing/usage-filtered');
       if (usageResponse.ok) {
         const usageData = await usageResponse.json();
-        setUsage(usageData.data.usage);
-        setEstimatedCost(usageData.data.estimated_monthly_cost);
+        setUsage(usageData.data);
+        // Also load estimated cost
+        const estimateResponse = await fetch('/api/billing/usage?include_estimate=true');
+        if (estimateResponse.ok) {
+          const estimateData = await estimateResponse.json();
+          setEstimatedCost(estimateData.data.estimated_monthly_cost);
+        }
       }
 
     } catch (err) {
@@ -427,5 +432,6 @@ export default function BillingDashboard() {
     </div>
   );
 }
+
 
 

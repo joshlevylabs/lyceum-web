@@ -8,28 +8,14 @@ export const PRICING_CONFIG = {
   // License pricing (per license per month)
   licenses: {
     basic: 5,       // $5/month per basic license
+    standard: 10,   // $10/month per standard license
     professional: 15, // $15/month per professional license
     enterprise: 25,   // $25/month per enterprise license
+    gratis: 0,      // $0/month per gratis license (free)
   },
 
-  // Cluster pricing (per cluster per month)
-  clusters: {
-    small: {
-      development: 20,  // $20/month
-      production: 40,   // $40/month
-      analytics: 30,    // $30/month
-    },
-    medium: {
-      development: 40,  // $40/month
-      production: 80,   // $80/month
-      analytics: 60,    // $60/month
-    },
-    large: {
-      development: 80,  // $80/month
-      production: 160,  // $160/month
-      analytics: 120,   // $120/month
-    }
-  },
+  // Note: Cluster pricing is now calculated dynamically based on actual resources
+  // This config is kept for backward compatibility but not used for new calculations
 
   // User pricing (per additional user per month)
   additionalUsers: 3, // $3/month per user beyond base allocation
@@ -81,8 +67,10 @@ export function calculateFlexiblePricing(params: FlexibleBillingParams): {
     totalPrice: PRICING_CONFIG.basePlatformFee * 100,
   });
 
-  // License fees
+  // License fees (skip gratis licenses as they're free)
   params.licenses.forEach(license => {
+    if (license.type === 'gratis') return; // Skip gratis licenses
+    
     const unitPrice = PRICING_CONFIG.licenses[license.type] * 100;
     lineItems.push({
       name: `${license.type.charAt(0).toUpperCase() + license.type.slice(1)} Licenses`,
@@ -93,12 +81,14 @@ export function calculateFlexiblePricing(params: FlexibleBillingParams): {
     });
   });
 
-  // Cluster fees
+  // Cluster fees (now using actual resource-based pricing)
   params.clusters.forEach(cluster => {
-    const unitPrice = PRICING_CONFIG.clusters[cluster.size][cluster.type] * 100;
+    // For billing integration, we need the actual monthly cost from the cluster
+    // This should be passed as cluster.monthly_cost from the resource calculation
+    const unitPrice = (cluster.monthly_cost || 0) * 100; // Convert to cents
     lineItems.push({
       name: `${cluster.size.charAt(0).toUpperCase() + cluster.size.slice(1)} ${cluster.type} Cluster${cluster.quantity > 1 ? 's' : ''}`,
-      description: `${cluster.quantity} ${cluster.size} ${cluster.type} cluster${cluster.quantity > 1 ? 's' : ''}`,
+      description: `${cluster.quantity} ${cluster.size} ${cluster.type} cluster${cluster.quantity > 1 ? 's' : ''} (${cluster.resources || 'custom config'})`,
       quantity: cluster.quantity,
       unitPrice,
       totalPrice: unitPrice * cluster.quantity,

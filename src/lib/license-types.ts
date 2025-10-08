@@ -312,6 +312,67 @@ export const LICENSE_TYPES: Record<string, LicenseTypeConfig> = {
     sla_hours: 4,
     concurrent_sessions: -1, // unlimited
     api_rate_limit: 2000
+  },
+
+  gratis: {
+    max_users: 5,
+    max_projects: 10,
+    max_storage_gb: 5,
+    
+    default_main_app_permissions: {
+      test_data: true,
+      data_visualization: true,
+      analytics_studio: false,
+      sequencer: false,
+      assets: true,
+      settings: false
+    },
+    
+    feature_configurations: {
+      data_visualization: {
+        save_limits_to_projects: true,
+        max_flagged_measurements: 50,
+        auto_flagger_enabled: false,
+        export_raw_data: true,
+        custom_visualization_templates: false
+      },
+      test_data: {
+        max_concurrent_tests: 2,
+        batch_processing: false,
+        data_retention_days: 30,
+        custom_test_protocols: false
+      },
+      analytics_studio: {
+        advanced_algorithms: false,
+        custom_reports: false,
+        api_access: false,
+        data_export_formats: ['pdf'],
+        real_time_analysis: false
+      },
+      sequencer: {
+        max_sequence_length: null,
+        parallel_execution: false,
+        custom_sequence_templates: false,
+        automated_scheduling: false
+      },
+      assets: {
+        asset_versioning: false,
+        asset_sharing: true,
+        metadata_editing: true,
+        bulk_operations: false
+      },
+      settings: {
+        system_configuration: false,
+        user_management: false,
+        integration_settings: false,
+        backup_restore: false
+      }
+    },
+    
+    priority_support: false,
+    sla_hours: null,
+    concurrent_sessions: 2,
+    api_rate_limit: 50
   }
 }
 
@@ -392,7 +453,8 @@ export function getLicenseTypeDescription(licenseType: string): string {
     trial: 'Perfect for evaluation with basic features and limited usage',
     standard: 'Ideal for small teams with essential CentCom features',
     professional: 'Full-featured license for growing teams and advanced workflows',
-    enterprise: 'Unlimited access with priority support and custom configurations'
+    enterprise: 'Unlimited access with priority support and custom configurations',
+    gratis: 'Free license with basic features - no payment required'
   }
   return descriptions[licenseType as keyof typeof descriptions] || 'Unknown license type'
 }

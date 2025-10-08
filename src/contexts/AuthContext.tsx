@@ -161,8 +161,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/auth/signin')
+    try {
+      console.log('AuthContext: Signing out...')
+      
+      // Clear state first
+      setUser(null)
+      setUserProfile(null)
+      
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut()
+      
+      if (error) {
+        console.error('AuthContext: Sign out error:', error)
+      }
+      
+      console.log('AuthContext: Sign out complete, redirecting...')
+      
+      // Use window.location for a hard redirect to ensure clean state
+      if (typeof window !== 'undefined') {
+        window.location.href = '/auth/signin'
+      }
+    } catch (error) {
+      console.error('AuthContext: Sign out failed:', error)
+      // Force redirect even on error
+      if (typeof window !== 'undefined') {
+        window.location.href = '/auth/signin'
+      }
+    }
   }
 
   const updateProfile = async (profileData: any) => {

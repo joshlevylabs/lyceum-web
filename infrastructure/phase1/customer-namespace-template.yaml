@@ -1,0 +1,202 @@
+# Customer Namespace Template for Micro Tier
+# This template creates isolated namespaces for each customer with resource quotas
+# Usage: Replace ${CUSTOMER_ID} with actual customer ID when deploying
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: customer-${CUSTOMER_ID}
+  labels:
+    tier: "micro"
+    customer: "${CUSTOMER_ID}"
+    billing: "micro-tier"
+    cost-optimization: "enabled"
+    created-by: "lyceum-cluster-manager"
+  annotations:
+    lyceum.io/customer-id: "${CUSTOMER_ID}"
+    lyceum.io/tier: "micro"
+    lyceum.io/monthly-limit: "100-curves"
+    lyceum.io/created-at: "${CREATION_TIMESTAMP}"
+
+---
+# Resource Quota for Micro Tier Customer
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: micro-quota
+  namespace: customer-${CUSTOMER_ID}
+  labels:
+    tier: "micro"
+    customer: "${CUSTOMER_ID}"
+spec:
+  hard:
+    # CPU and Memory limits (optimized for cost)
+    requests.cpu: "0.1"      # 100 millicores
+    limits.cpu: "0.5"        # 500 millicores max burst
+    requests.memory: "256Mi"  # 256MB RAM
+    limits.memory: "512Mi"    # 512MB max burst
+    
+    # Storage limits
+    requests.storage: "1Gi"   # 1GB storage
+    persistentvolumeclaims: "2"
+    
+    # Pod and service limits
+    pods: "5"
+    services: "2"
+    secrets: "10"
+    configmaps: "5"
+    
+    # Network limits
+    services.nodeports: "0"    # No NodePort services
+    services.loadbalancers: "0" # No LoadBalancer services
+
+---
+# Network Policy for Customer Isolation
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: customer-isolation
+  namespace: customer-${CUSTOMER_ID}
+  labels:
+    tier: "micro"
+    customer: "${CUSTOMER_ID}"
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  # Allow ingress from same namespace and system namespaces
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: customer-${CUSTOMER_ID}
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: gke-system
+  
+  # Allow egress to same namespace, system, and external
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: customer-${CUSTOMER_ID}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: gke-system
+  - to: []  # Allow external traffic
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 80
+    - protocol: UDP
+      port: 53
+
+---
+# Limit Range for fine-grained resource control
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: micro-limits
+  namespace: customer-${CUSTOMER_ID}
+  labels:
+    tier: "micro"
+    customer: "${CUSTOMER_ID}"
+spec:
+  limits:
+  # Container limits
+  - type: Container
+    default:
+      cpu: "100m"
+      memory: "128Mi"
+    defaultRequest:
+      cpu: "50m"
+      memory: "64Mi"
+    max:
+      cpu: "200m"
+      memory: "256Mi"
+    min:
+      cpu: "10m"
+      memory: "32Mi"
+  
+  # Pod limits
+  - type: Pod
+    max:
+      cpu: "300m"
+      memory: "512Mi"
+  
+  # PVC limits
+  - type: PersistentVolumeClaim
+    max:
+      storage: "1Gi"
+    min:
+      storage: "100Mi"
+
+---
+# Service Account for Customer Workloads
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: customer-workload
+  namespace: customer-${CUSTOMER_ID}
+  labels:
+    tier: "micro"
+    customer: "${CUSTOMER_ID}"
+  annotations:
+    iam.gke.io/gcp-service-account: customer-${CUSTOMER_ID}@lyceum-clusters-optimized.iam.gserviceaccount.com
+
+---
+# Role for Customer Workloads (minimal permissions)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: customer-workload-role
+  namespace: customer-${CUSTOMER_ID}
+  labels:
+    tier: "micro"
+    customer: "${CUSTOMER_ID}"
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+---
+# RoleBinding for Customer Service Account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: customer-workload-binding
+  namespace: customer-${CUSTOMER_ID}
+  labels:
+    tier: "micro"
+    customer: "${CUSTOMER_ID}"
+subjects:
+- kind: ServiceAccount
+  name: customer-workload
+  namespace: customer-${CUSTOMER_ID}
+roleRef:
+  kind: Role
+  name: customer-workload-role
+  apiGroup: rbac.authorization.k8s.io
+
+
+
+

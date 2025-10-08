@@ -1,0 +1,142 @@
+# Lyceum Micro Tier - Multi-Tenant Shared Infrastructure
+# Cost: ~$20/month for entire shared cluster
+# Serves: 100+ micro customers simultaneously  
+# Per-customer cost: ~$0.20/month infrastructure
+
+apiVersion: container.cnrm.cloud.google.com/v1beta1
+kind: ContainerCluster
+metadata:
+  name: lyceum-micro-shared
+  namespace: default
+  labels:
+    tier: "micro"
+    environment: "production"
+    cost-optimization: "enabled"
+spec:
+  location: us-central1-c  # Single zone for cost savings
+  enableAutopilot: true
+  releaseChannel:
+    channel: STABLE
+  
+  # Network configuration for security and cost optimization
+  networkConfig:
+    enableIntraNodeVisibility: true
+    defaultSnatStatus:
+      disabled: false
+  
+  # Private cluster for security
+  privateClusterConfig:
+    enablePrivateNodes: true
+    enablePrivateEndpoint: false
+    masterIpv4CidrBlock: "172.16.0.0/28"
+    masterGlobalAccessConfig:
+      enabled: true
+  
+  # Node configuration optimized for cost
+  nodeConfig:
+    preemptible: true  # 80% cost savings
+    machineType: e2-micro  # Cheapest option
+    diskType: pd-standard
+    diskSizeGb: 20
+    
+    # Optimize for multi-tenancy
+    metadata:
+      disable-legacy-endpoints: "true"
+    
+    oauthScopes:
+      - "https://www.googleapis.com/auth/cloud-platform"
+  
+  # Resource usage tracking for cost optimization
+  resourceUsageExportConfig:
+    enable: true
+    bigqueryDestination:
+      datasetId: cluster_usage_analytics
+    consumptionMeteringConfig:
+      enabled: true
+  
+  # Workload Identity for security
+  workloadIdentityConfig:
+    workloadPool: lyceum-clusters-optimized.svc.id.goog
+  
+  # Binary authorization for security
+  binaryAuthorization:
+    enabled: false  # Disabled for cost optimization
+  
+  # Network policy for multi-tenant isolation
+  networkPolicy:
+    enabled: true
+    provider: CALICO
+  
+  # Master authorized networks (can be configured for additional security)
+  masterAuthorizedNetworksConfig:
+    enabled: false
+  
+  # Addons configuration
+  addonsConfig:
+    httpLoadBalancing:
+      disabled: false
+    horizontalPodAutoscaling:
+      disabled: false
+    networkPolicyConfig:
+      disabled: false
+    dnsCacheConfig:
+      enabled: true
+    gcePersistentDiskCsiDriverConfig:
+      enabled: true
+
+---
+# Node pool configuration for additional control
+apiVersion: container.cnrm.cloud.google.com/v1beta1
+kind: ContainerNodePool
+metadata:
+  name: micro-tier-pool
+  namespace: default
+spec:
+  location: us-central1-c
+  cluster: lyceum-micro-shared
+  
+  # Auto-scaling configuration
+  autoscaling:
+    enabled: true
+    minNodeCount: 1
+    maxNodeCount: 10
+    locationPolicy: BALANCED
+  
+  # Node configuration
+  nodeConfig:
+    preemptible: true
+    machineType: e2-micro
+    diskSizeGb: 20
+    diskType: pd-standard
+    
+    # Security and optimization
+    serviceAccount: lyceum-cluster-manager@lyceum-clusters-optimized.iam.gserviceaccount.com
+    
+    metadata:
+      disable-legacy-endpoints: "true"
+    
+    # Taints for isolation (if needed)
+    taints: []
+    
+    # Labels for organization
+    labels:
+      tier: "micro"
+      workload-type: "shared"
+      cost-optimized: "true"
+    
+    oauthScopes:
+      - "https://www.googleapis.com/auth/cloud-platform"
+  
+  # Management settings
+  management:
+    autoRepair: true
+    autoUpgrade: true
+  
+  # Upgrade settings
+  upgradeSettings:
+    maxSurge: 1
+    maxUnavailable: 0
+
+
+
+

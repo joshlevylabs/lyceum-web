@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTheme } from '@/contexts/ThemeContext'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
+import PaymentMethodSetup from '@/components/billing/PaymentMethodSetup'
 import {
   UserIcon,
   KeyIcon,
@@ -15,7 +17,13 @@ import {
   DocumentTextIcon,
   CurrencyDollarIcon,
   ComputerDesktopIcon,
-  GlobeAltIcon
+  GlobeAltIcon,
+  CircleStackIcon,
+  CreditCardIcon,
+  PlusIcon,
+  UserGroupIcon,
+  UsersIcon,
+  Cog6ToothIcon
 } from '@heroicons/react/24/outline'
 
 interface ProfileFormData {
@@ -101,9 +109,10 @@ interface EnhancedProfile {
 
 export default function SettingsPage() {
   const { user, userProfile, updateProfile, signOut, loading } = useAuth()
+  const { theme, customColors, setTheme, setCustomColors, resetCustomColors } = useTheme()
   const router = useRouter()
   
-  const [activeTab, setActiveTab] = useState<'profile' | 'licenses' | 'sessions' | 'account'>('profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'appearance' | 'licenses' | 'sessions' | 'account' | 'clusters' | 'payment' | 'groups'>('profile')
   const [profileData, setProfileData] = useState<ProfileFormData>({
     full_name: '',
     username: '',
@@ -124,6 +133,20 @@ export default function SettingsPage() {
     history: Session[]
   }>({ active: [], inactive: [], history: [] })
   const [dataLoading, setDataLoading] = useState(false)
+  
+  // Clusters state
+  const [clusters, setClusters] = useState<any[]>([])
+  const [loadingClusters, setLoadingClusters] = useState(false)
+  
+  // Payment state
+  const [paymentInfo, setPaymentInfo] = useState<any>(null)
+  const [loadingPayment, setLoadingPayment] = useState(false)
+  const [usageData, setUsageData] = useState<any>(null)
+  const [loadingUsage, setLoadingUsage] = useState(false)
+  
+  // Groups state
+  const [userGroups, setUserGroups] = useState<any[]>([])
+  const [loadingGroups, setLoadingGroups] = useState(false)
 
   // Initialize form data
   useEffect(() => {
@@ -191,6 +214,108 @@ export default function SettingsPage() {
       console.error('Error fetching enhanced data:', error)
     } finally {
       setDataLoading(false)
+    }
+  }
+
+  const fetchClusters = async () => {
+    if (!user?.id) return
+    
+    setLoadingClusters(true)
+    try {
+      const response = await fetch('/api/clusters')
+      if (response.ok) {
+        const data = await response.json()
+        setClusters(data.clusters || [])
+      }
+    } catch (error) {
+      console.error('Error fetching clusters:', error)
+    } finally {
+      setLoadingClusters(false)
+    }
+  }
+
+  const fetchPaymentInfo = async () => {
+    if (!user?.id) return
+    
+    setLoadingPayment(true)
+    setLoadingUsage(true)
+    try {
+      // Get auth session for API calls
+      const { createClient } = await import('@/lib/supabase')
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session?.access_token) {
+        console.error('No session found for payment info fetch')
+        setLoadingPayment(false)
+        setLoadingUsage(false)
+        return
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      }
+
+      // Fetch payment info
+      const paymentResponse = await fetch(`/api/billing/payment-info?user_id=${user.id}`, { headers })
+      if (paymentResponse.ok) {
+        const data = await paymentResponse.json()
+        console.log('Payment info loaded:', data)
+        setPaymentInfo(data.data)
+      } else {
+        console.error('Payment info fetch failed:', paymentResponse.status, await paymentResponse.text())
+      }
+
+      // Fetch usage and estimated costs
+      const usageResponse = await fetch(`/api/billing/usage?user_id=${user.id}&include_estimate=true`, { headers })
+      if (usageResponse.ok) {
+        const usageDataResult = await usageResponse.json()
+        console.log('Usage data loaded:', usageDataResult)
+        setUsageData(usageDataResult.data)
+      } else {
+        console.error('Usage fetch failed:', usageResponse.status, await usageResponse.text())
+      }
+    } catch (error) {
+      console.error('Error fetching payment info:', error)
+    } finally {
+      setLoadingPayment(false)
+      setLoadingUsage(false)
+    }
+  }
+
+  const fetchUserGroups = async () => {
+    if (!user?.id) return
+    
+    setLoadingGroups(true)
+    try {
+      // Get auth token from Supabase session
+      const { supabase } = await import('@/lib/supabase')
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session?.access_token) {
+        console.warn('No access token found')
+        setLoadingGroups(false)
+        return
+      }
+
+      const response = await fetch('/api/groups', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setUserGroups(data.groups || [])
+      } else {
+        console.error('Error fetching groups:', response.status, response.statusText)
+      }
+    } catch (error) {
+      console.error('Error fetching groups:', error)
+    } finally {
+      setLoadingGroups(false)
     }
   }
 
@@ -294,10 +419,10 @@ export default function SettingsPage() {
 
         {/* Tabs */}
         <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="-mb-px flex space-x-8">
+          <nav className="-mb-px flex space-x-8 overflow-x-auto">
             <button
               onClick={() => setActiveTab('profile')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                 activeTab === 'profile'
                   ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
@@ -307,8 +432,47 @@ export default function SettingsPage() {
               Profile
             </button>
             <button
+              onClick={() => setActiveTab('appearance')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                activeTab === 'appearance'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              }`}
+            >
+              <Cog6ToothIcon className="h-4 w-4 inline mr-1" />
+              Appearance
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('clusters')
+                if (clusters.length === 0) fetchClusters()
+              }}
+              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                activeTab === 'clusters'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              }`}
+            >
+              <CircleStackIcon className="h-4 w-4 inline mr-1" />
+              Clusters
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('payment')
+                if (!paymentInfo) fetchPaymentInfo()
+              }}
+              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                activeTab === 'payment'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              }`}
+            >
+              <CreditCardIcon className="h-4 w-4 inline mr-1" />
+              Payment
+            </button>
+            <button
               onClick={() => setActiveTab('licenses')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                 activeTab === 'licenses'
                   ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
@@ -319,7 +483,7 @@ export default function SettingsPage() {
             </button>
             <button
               onClick={() => setActiveTab('sessions')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                 activeTab === 'sessions'
                   ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
@@ -329,8 +493,22 @@ export default function SettingsPage() {
               Sessions
             </button>
             <button
+              onClick={() => {
+                setActiveTab('groups')
+                if (userGroups.length === 0) fetchUserGroups()
+              }}
+              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                activeTab === 'groups'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+              }`}
+            >
+              <UserGroupIcon className="h-4 w-4 inline mr-1" />
+              Groups
+            </button>
+            <button
               onClick={() => setActiveTab('account')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                 activeTab === 'account'
                   ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
@@ -645,6 +823,273 @@ export default function SettingsPage() {
           </div>
         )}
 
+        {activeTab === 'appearance' && (
+          <div className="space-y-6">
+            {/* Theme Selection */}
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">Theme Settings</h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      Choose Theme
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Light Theme */}
+                      <button
+                        onClick={() => setTheme('light')}
+                        className={`relative rounded-lg border-2 p-4 hover:border-blue-500 transition-all ${
+                          theme === 'light'
+                            ? 'border-blue-600 ring-2 ring-blue-600'
+                            : 'border-gray-200 dark:border-gray-700'
+                        }`}
+                      >
+                        <div className="aspect-video rounded bg-gradient-to-br from-gray-50 to-gray-100 mb-3 flex items-center justify-center">
+                          <div className="text-4xl">☀️</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-medium text-gray-900 dark:text-white">Light</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Clean and bright
+                          </div>
+                        </div>
+                        {theme === 'light' && (
+                          <div className="absolute top-2 right-2">
+                            <CheckIcon className="h-5 w-5 text-blue-600" />
+                          </div>
+                        )}
+                      </button>
+
+                      {/* Dark Theme */}
+                      <button
+                        onClick={() => setTheme('dark')}
+                        className={`relative rounded-lg border-2 p-4 hover:border-blue-500 transition-all ${
+                          theme === 'dark'
+                            ? 'border-blue-600 ring-2 ring-blue-600'
+                            : 'border-gray-200 dark:border-gray-700'
+                        }`}
+                      >
+                        <div className="aspect-video rounded bg-gradient-to-br from-gray-800 to-gray-900 mb-3 flex items-center justify-center">
+                          <div className="text-4xl">🌙</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-medium text-gray-900 dark:text-white">Dark</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Easy on the eyes
+                          </div>
+                        </div>
+                        {theme === 'dark' && (
+                          <div className="absolute top-2 right-2">
+                            <CheckIcon className="h-5 w-5 text-blue-600" />
+                          </div>
+                        )}
+                      </button>
+
+                      {/* Custom Theme */}
+                      <button
+                        onClick={() => setTheme('custom')}
+                        className={`relative rounded-lg border-2 p-4 hover:border-blue-500 transition-all ${
+                          theme === 'custom'
+                            ? 'border-blue-600 ring-2 ring-blue-600'
+                            : 'border-gray-200 dark:border-gray-700'
+                        }`}
+                      >
+                        <div className="aspect-video rounded bg-gradient-to-br from-purple-400 via-pink-400 to-blue-400 mb-3 flex items-center justify-center">
+                          <div className="text-4xl">🎨</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-medium text-gray-900 dark:text-white">Custom</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Your own colors
+                          </div>
+                        </div>
+                        {theme === 'custom' && (
+                          <div className="absolute top-2 right-2">
+                            <CheckIcon className="h-5 w-5 text-blue-600" />
+                          </div>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Custom Theme Colors */}
+            {theme === 'custom' && (
+              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Custom Colors</h3>
+                    <button
+                      onClick={resetCustomColors}
+                      className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                    >
+                      Reset to Defaults
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Primary Color
+                      </label>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="color"
+                          value={customColors.primary}
+                          onChange={(e) => setCustomColors({ primary: e.target.value })}
+                          className="h-10 w-20 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          defaultValue={customColors.primary}
+                          onBlur={(e) => setCustomColors({ primary: e.target.value })}
+                          onKeyDown={(e) => e.key === 'Enter' && setCustomColors({ primary: e.currentTarget.value })}
+                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Secondary Color
+                      </label>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="color"
+                          value={customColors.secondary}
+                          onChange={(e) => setCustomColors({ secondary: e.target.value })}
+                          className="h-10 w-20 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          defaultValue={customColors.secondary}
+                          onBlur={(e) => setCustomColors({ secondary: e.target.value })}
+                          onKeyDown={(e) => e.key === 'Enter' && setCustomColors({ secondary: e.currentTarget.value })}
+                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Background Color
+                      </label>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="color"
+                          value={customColors.background}
+                          onChange={(e) => setCustomColors({ background: e.target.value })}
+                          className="h-10 w-20 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          defaultValue={customColors.background}
+                          onBlur={(e) => setCustomColors({ background: e.target.value })}
+                          onKeyDown={(e) => e.key === 'Enter' && setCustomColors({ background: e.currentTarget.value })}
+                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Surface Color
+                      </label>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="color"
+                          value={customColors.surface}
+                          onChange={(e) => setCustomColors({ surface: e.target.value })}
+                          className="h-10 w-20 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          defaultValue={customColors.surface}
+                          onBlur={(e) => setCustomColors({ surface: e.target.value })}
+                          onKeyDown={(e) => e.key === 'Enter' && setCustomColors({ surface: e.currentTarget.value })}
+                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Text Color
+                      </label>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="color"
+                          value={customColors.text}
+                          onChange={(e) => setCustomColors({ text: e.target.value })}
+                          className="h-10 w-20 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          defaultValue={customColors.text}
+                          onBlur={(e) => setCustomColors({ text: e.target.value })}
+                          onKeyDown={(e) => e.key === 'Enter' && setCustomColors({ text: e.currentTarget.value })}
+                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Secondary Text Color
+                      </label>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="color"
+                          value={customColors.textSecondary}
+                          onChange={(e) => setCustomColors({ textSecondary: e.target.value })}
+                          className="h-10 w-20 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          defaultValue={customColors.textSecondary}
+                          onBlur={(e) => setCustomColors({ textSecondary: e.target.value })}
+                          onKeyDown={(e) => e.key === 'Enter' && setCustomColors({ textSecondary: e.currentTarget.value })}
+                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Border Color
+                      </label>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="color"
+                          value={customColors.border}
+                          onChange={(e) => setCustomColors({ border: e.target.value })}
+                          className="h-10 w-20 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          defaultValue={customColors.border}
+                          onBlur={(e) => setCustomColors({ border: e.target.value })}
+                          onKeyDown={(e) => e.key === 'Enter' && setCustomColors({ border: e.currentTarget.value })}
+                          className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      <strong>Tip:</strong> Use the color pickers for instant preview. Text inputs update on blur or when you press Enter. Colors apply immediately to the entire application.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === 'licenses' && (
           <div className="space-y-6">
             {/* Licenses Section */}
@@ -935,6 +1380,541 @@ export default function SettingsPage() {
                     <p className="text-gray-500 dark:text-gray-400">No session history available</p>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'clusters' && (
+          <div className="space-y-6">
+            {/* Clusters Section */}
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Your Clusters</h3>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      Manage all your database clusters including online, optimized, and local CentCom clusters.
+                    </p>
+                  </div>
+                  {loadingClusters ? (
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        if (!paymentInfo?.has_payment_method && !paymentInfo?.stripe_customer_id) {
+                          alert('Please configure payment information first in the Payment tab.')
+                          setActiveTab('payment')
+                        } else {
+                          router.push('/admin/clusters?create=true')
+                        }
+                      }}
+                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    >
+                      <PlusIcon className="h-4 w-4 mr-2" />
+                      Create Cluster
+                    </button>
+                  )}
+                </div>
+
+                {clusters.length > 0 ? (
+                  <div className="space-y-4">
+                    {clusters.map((cluster) => (
+                      <div key={cluster.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-2">
+                              <CircleStackIcon className="h-5 w-5 text-blue-600" />
+                              <h4 className="text-lg font-medium text-gray-900 dark:text-white">
+                                {cluster.name}
+                              </h4>
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                cluster.architecture === 'traditional' 
+                                  ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200'
+                                  : cluster.architecture === 'optimized'
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
+                                  : 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
+                              }`}>
+                                {cluster.architecture}
+                              </span>
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                cluster.status === 'active'
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
+                                  : cluster.status === 'creating'
+                                  ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200'
+                                  : 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
+                              }`}>
+                                {cluster.status}
+                              </span>
+                            </div>
+                            
+                            {cluster.description && (
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                                {cluster.description}
+                              </p>
+                            )}
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                              <div>
+                                <span className="font-medium text-gray-700 dark:text-gray-300">Type:</span>
+                                <span className="ml-1 text-gray-900 dark:text-white capitalize">{cluster.cluster_type}</span>
+                              </div>
+                              <div>
+                                <span className="font-medium text-gray-700 dark:text-gray-300">Region:</span>
+                                <span className="ml-1 text-gray-900 dark:text-white">{cluster.region}</span>
+                              </div>
+                              {cluster.architecture === 'optimized' && cluster.tier && (
+                                <div>
+                                  <span className="font-medium text-gray-700 dark:text-gray-300">Tier:</span>
+                                  <span className="ml-1 text-gray-900 dark:text-white capitalize">{cluster.tier}</span>
+                                </div>
+                              )}
+                              {cluster.architecture === 'traditional' && cluster.node_count && (
+                                <div>
+                                  <span className="font-medium text-gray-700 dark:text-gray-300">Nodes:</span>
+                                  <span className="ml-1 text-gray-900 dark:text-white">{cluster.node_count}</span>
+                                </div>
+                              )}
+                              {cluster.architecture === 'centcom' && cluster.last_heartbeat_at && (
+                                <div>
+                                  <span className="font-medium text-gray-700 dark:text-gray-300">Last Seen:</span>
+                                  <span className="ml-1 text-gray-900 dark:text-white">
+                                    {new Date(cluster.last_heartbeat_at).toLocaleDateString()}
+                                  </span>
+                                </div>
+                              )}
+                              {cluster.estimated_monthly_cost > 0 && (
+                                <div>
+                                  <span className="font-medium text-gray-700 dark:text-gray-300">Est. Cost:</span>
+                                  <span className="ml-1 text-gray-900 dark:text-white">
+                                    ${cluster.estimated_monthly_cost.toFixed(2)}/mo
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => router.push(`/admin/clusters/${cluster.cluster_key}`)}
+                            className="ml-4 inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                          >
+                            Manage
+                          </button>
+                        </div>
+
+                        {cluster.architecture === 'optimized' && cluster.monthly_curves_limit && (
+                          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-gray-600 dark:text-gray-400">
+                                Monthly Curves Limit: <span className="font-medium text-gray-900 dark:text-white">
+                                  {cluster.monthly_curves_limit.toLocaleString()}
+                                </span>
+                              </span>
+                              {cluster.storage_limit && (
+                                <span className="text-gray-600 dark:text-gray-400">
+                                  Storage: <span className="font-medium text-gray-900 dark:text-white">
+                                    {cluster.storage_limit}
+                                  </span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <CircleStackIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400 mb-4">No clusters found</p>
+                    <button
+                      onClick={() => {
+                        if (!paymentInfo?.has_payment_method && !paymentInfo?.stripe_customer_id) {
+                          alert('Please configure payment information first in the Payment tab.')
+                          setActiveTab('payment')
+                        } else {
+                          router.push('/admin/clusters?create=true')
+                        }
+                      }}
+                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    >
+                      <PlusIcon className="h-4 w-4 mr-2" />
+                      Create Your First Cluster
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'payment' && user && (
+          <div className="space-y-6">
+            {/* Use the full PaymentMethodSetup component for complete payment management */}
+            <PaymentMethodSetup 
+              userId={user.id}
+              onPaymentMethodAdded={() => {
+                // Refresh payment info when method is added
+                fetchPaymentInfo()
+              }}
+            />
+          </div>
+        )}
+
+        {activeTab === 'payment_old' && (
+          <div className="space-y-6 hidden">
+            {/* Monthly Cost Breakdown */}
+            {usageData?.estimated_monthly_cost && (
+              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">Monthly Cost Breakdown</h3>
+                      <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                        What you're responsible to pay each month
+                      </p>
+                    </div>
+                    {loadingUsage && (
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    )}
+                  </div>
+
+                  {/* Total Cost Summary */}
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Estimated Monthly Total</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                          {usageData.estimated_monthly_cost.summary || 'Based on current usage'}
+                        </p>
+                      </div>
+                      <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                        ${usageData.estimated_monthly_cost.total_dollars?.toFixed(2) || '0.00'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Line Items */}
+                  {usageData.estimated_monthly_cost.line_items && usageData.estimated_monthly_cost.line_items.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-medium text-gray-900 dark:text-white">Cost Details</h4>
+                      {usageData.estimated_monthly_cost.line_items.map((item: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {item.name}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {item.description}
+                            </div>
+                            {item.quantity > 0 && (
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                Quantity: {item.quantity} × ${item.unit_price_dollars?.toFixed(2) || (item.unitPrice / 100).toFixed(2)}
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-sm font-semibold text-gray-900 dark:text-white ml-4">
+                            ${item.total_price_dollars?.toFixed(2) || (item.totalPrice / 100).toFixed(2)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Payment Information Section */}
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Payment Information</h3>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      Manage your payment methods and billing information.
+                    </p>
+                  </div>
+                  {loadingPayment && (
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  )}
+                </div>
+
+                {paymentInfo ? (
+                  <div className="space-y-6">
+                    {/* Stripe Customer Info */}
+                    <div>
+                      <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3">Billing Account</h4>
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Stripe Customer ID
+                            </label>
+                            <div className="mt-1 text-sm text-gray-900 dark:text-white font-mono">
+                              {paymentInfo.stripe_customer_id || 'Not configured'}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Payment Status
+                            </label>
+                            <div className="mt-1">
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                paymentInfo.has_payment_method
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
+                                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200'
+                              }`}>
+                                {paymentInfo.has_payment_method ? 'Configured' : 'Not Configured'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Payment Methods */}
+                    {paymentInfo.payment_methods && paymentInfo.payment_methods.length > 0 && (
+                      <div>
+                        <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3">Payment Methods</h4>
+                        <div className="space-y-3">
+                          {paymentInfo.payment_methods.map((method: any) => (
+                            <div key={method.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                  <CreditCardIcon className="h-5 w-5 text-gray-600" />
+                                  <div>
+                                    <div className="text-sm font-medium text-gray-900 dark:text-white capitalize">
+                                      {method.card?.brand} •••• {method.card?.last4}
+                                    </div>
+                                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                                      Expires {method.card?.exp_month}/{method.card?.exp_year}
+                                    </div>
+                                  </div>
+                                </div>
+                                {method.is_default && (
+                                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+                                    Default
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Add Payment Method Button */}
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => router.push('/billing/payment')}
+                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                      >
+                        <CreditCardIcon className="h-4 w-4 mr-2" />
+                        {paymentInfo.has_payment_method ? 'Manage Payment Methods' : 'Add Payment Method'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <CreditCardIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400 mb-4">
+                      No payment information configured
+                    </p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">
+                      Add a payment method to create paid clusters and manage subscriptions.
+                    </p>
+                    <button
+                      onClick={() => router.push('/billing/payment')}
+                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    >
+                      <CreditCardIcon className="h-4 w-4 mr-2" />
+                      Setup Payment Method
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Invoices Section */}
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Invoices</h3>
+                  <button
+                    onClick={() => router.push('/billing/payment')}
+                    className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                  >
+                    View All
+                  </button>
+                </div>
+                {paymentInfo?.recent_invoices && paymentInfo.recent_invoices.length > 0 ? (
+                  <div className="space-y-3">
+                    {paymentInfo.recent_invoices.slice(0, 5).map((invoice: any) => (
+                      <div key={invoice.id} className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            Invoice #{invoice.invoice_number}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(invoice.created_at).toLocaleDateString()}
+                            {invoice.due_date && (
+                              <span className="ml-2">
+                                Due: {new Date(invoice.due_date).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            ${(invoice.total_amount_cents / 100).toFixed(2)}
+                          </div>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            invoice.status === 'paid'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
+                              : invoice.status === 'sent'
+                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200'
+                              : invoice.status === 'overdue'
+                              ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                          }`}>
+                            {invoice.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <DocumentTextIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400">No invoices yet</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                      Invoices will appear here once you start using paid services.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'groups' && (
+          <div className="space-y-6">
+            {/* Groups Section */}
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Your Groups</h3>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      Manage your team groups and collaborate on resources.
+                    </p>
+                  </div>
+                  {loadingGroups ? (
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  ) : (
+                    <button
+                      onClick={() => router.push('/groups')}
+                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    >
+                      <PlusIcon className="h-4 w-4 mr-2" />
+                      Manage Groups
+                    </button>
+                  )}
+                </div>
+
+                {userGroups.length > 0 ? (
+                  <div className="space-y-4">
+                    {userGroups.map((group) => (
+                      <div
+                        key={group.id}
+                        onClick={() => router.push(`/groups/${group.key || group.id}`)}
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center space-x-3">
+                            <UserGroupIcon className="h-6 w-6 text-blue-600" />
+                            <div>
+                              <h4 className="text-md font-medium text-gray-900 dark:text-white">
+                                {group.name}
+                              </h4>
+                              {group.description && (
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                  {group.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                              {group.member_count} {group.member_count === 1 ? 'member' : 'members'}
+                            </span>
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              group.user_role === 'owner'
+                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200'
+                                : group.user_role === 'admin'
+                                ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
+                                : group.user_role === 'editor'
+                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
+                                : 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-200'
+                            }`}>
+                              {group.user_role}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <UserGroupIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400 mb-4">No groups yet</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">
+                      Create or join a group to collaborate with your team on shared resources.
+                    </p>
+                    <button
+                      onClick={() => router.push('/groups')}
+                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    >
+                      <PlusIcon className="h-4 w-4 mr-2" />
+                      Explore Groups
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Groups</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{userGroups.length}</p>
+                  </div>
+                  <UserGroupIcon className="h-8 w-8 text-blue-600" />
+                </div>
+              </div>
+              <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Owned Groups</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {userGroups.filter(g => g.is_owner).length}
+                    </p>
+                  </div>
+                  <ShieldCheckIcon className="h-8 w-8 text-purple-600" />
+                </div>
+              </div>
+              <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Member Groups</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {userGroups.filter(g => !g.is_owner).length}
+                    </p>
+                  </div>
+                  <UsersIcon className="h-8 w-8 text-green-600" />
+                </div>
               </div>
             </div>
           </div>

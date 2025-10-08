@@ -1,96 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = 'https://kffiaqsihldgqdwagook.supabase.co'
-const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4'
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
+/**
+ * Get list of all users for admin operations
+ * GET /api/admin/users/list
+ */
 export async function GET(request: NextRequest) {
   try {
-    console.log('GET /api/admin/users/list - Starting request...')
-    const { searchParams } = new URL(request.url)
-    const limit = parseInt(searchParams.get('limit') || '100')
-    const offset = parseInt(searchParams.get('offset') || '0')
-    const search = searchParams.get('search')
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co'
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4'
+    const supabase = createClient(supabaseUrl, serviceKey)
 
-    let query = supabase
+    // Get all user profiles
+    const { data: users, error } = await supabase
       .from('user_profiles')
-      .select('id, email, username, full_name, company, role, created_at')
-
-    if (search) {
-      query = query.or(`email.ilike.%${search}%,full_name.ilike.%${search}%,company.ilike.%${search}%`)
-    }
-
-    if (limit > 0) {
-      query = query.range(offset, offset + limit - 1)
-    }
-
-    query = query.order('created_at', { ascending: false })
-
-    const { data: users, error } = await query
+      .select('id, email, full_name, username, role, is_active')
+      .eq('is_active', true)
+      .order('full_name', { ascending: true, nullsFirst: false })
 
     if (error) {
-      console.error('Database error in users list:', error)
+      console.error('Error fetching users:', error)
       return NextResponse.json({
-        users: [],
-        error: `Database error: ${error.message}`,
-        details: error
+        success: false,
+        error: 'Failed to fetch users'
       }, { status: 500 })
     }
 
-    // Enrich users with license count and activity status
-    const enrichedUsers = await Promise.all((users || []).map(async (user) => {
-      // Get user's license count
-      const { data: licenses, error: licenseError } = await supabase
-        .from('license_keys')
-        .select('id, key_code, license_type, status')
-        .eq('assigned_to', user.id)
-
-      console.log(`Checking licenses for user ${user.id} (${user.email}):`, licenses?.length || 0, 'licenses found')
-
-      // Get user auth status and last login from auth.users
-      const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(user.id)
-
-      const licenseCount = licenseError ? 0 : (licenses?.length || 0)
-      const isActive = authUser?.user && !authError ? true : false
-      
-      // Get last login time
-      const lastSignInAt = authUser?.user?.last_sign_in_at
-      const lastLogin = lastSignInAt ? new Date(lastSignInAt).toLocaleDateString() : 'Never'
-      
-      // Determine onboarding status (simplified for now)
-      const onboardingStatus = licenseCount > 0 ? 'in_progress' : 'pending'
-
-      console.log(`User ${user.email}: licenses=${licenseCount}, active=${isActive}, lastLogin=${lastLogin}`)
-
-      return {
-        ...user,
-        is_active: isActive,
-        license_count: licenseCount,
-        last_login: lastLogin,
-        onboarding_status: onboardingStatus,
-        // Ensure username is available, fallback to email local part if needed
-        username: user.username || user.email?.split('@')[0] || '',
-        licenses: licenses || [] // Include full license data for debugging
-      }
-    }))
-
-    console.log(`Successfully fetched ${enrichedUsers?.length || 0} users with license data`)
-    
     return NextResponse.json({
-      users: enrichedUsers || [],
-      total: enrichedUsers?.length || 0,
-      message: `Found ${enrichedUsers?.length || 0} users`
+      success: true,
+      users: users || [],
+      count: users?.length || 0
     })
 
-  } catch (error) {
-    console.error('Unexpected error in users list API:', error)
+  } catch (error: any) {
+    console.error('Users list error:', error)
     return NextResponse.json({
-      users: [],
-      error: 'Internal server error',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      details: error
+      success: false,
+      error: error?.message || 'Internal server error'
     }, { status: 500 })
   }
 }

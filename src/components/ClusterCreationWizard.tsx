@@ -25,10 +25,13 @@ import {
   Database,
   Clock,
   Shield,
-  Rocket
+  Rocket,
+  Brain,
+  Sparkles
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
+import { OptimizedClusterWizard } from './OptimizedClusterWizard'
 
 interface ClusterConfiguration {
   // Step 1: Basic Configuration
@@ -168,8 +171,23 @@ export default function ClusterCreationWizard({ onComplete, onCancel }: {
   onComplete: (cluster: any) => void
   onCancel: () => void 
 }) {
-  const [currentStep, setCurrentStep] = useState(1)
+  const [currentStep, setCurrentStep] = useState(0) // Start with deployment type selection
+  const [deploymentType, setDeploymentType] = useState<'traditional' | 'optimized' | null>(null)
   const [isCreating, setIsCreating] = useState(false)
+  
+  // Show optimized cluster wizard if selected
+  if (deploymentType === 'optimized') {
+    return (
+      <OptimizedClusterWizard
+        onComplete={onComplete}
+        onCancel={() => {
+          setDeploymentType(null)
+          setCurrentStep(0)
+        }}
+      />
+    )
+  }
+  
   const [formData, setFormData] = useState<ClusterConfiguration>({
     name: '',
     description: '',
@@ -218,16 +236,169 @@ export default function ClusterCreationWizard({ onComplete, onCancel }: {
   }, [formData.configuration, formData.cluster_type])
 
   const handleNext = () => {
-    if (currentStep < 4) {
+    if (currentStep === 0 && deploymentType === 'traditional') {
+      setCurrentStep(1) // Go to traditional cluster steps
+    } else if (currentStep < 4) {
       setCurrentStep(currentStep + 1)
     }
   }
 
   const handlePrevious = () => {
-    if (currentStep > 1) {
+    if (currentStep > 0) {
       setCurrentStep(currentStep - 1)
     }
+    if (currentStep === 1) {
+      setDeploymentType(null)
+      setCurrentStep(0)
+    }
   }
+
+  // Step 0: Deployment Type Selection
+  const renderStep0 = () => (
+    <div className="space-y-8">
+      <div className="text-center">
+        <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          Choose Your Cluster Type
+        </h2>
+        <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+          Select the deployment model that best fits your analytics needs and budget
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Traditional Cluster */}
+        <Card 
+          className={`cursor-pointer transition-all duration-200 ${
+            deploymentType === 'traditional' 
+              ? 'ring-2 ring-blue-500 shadow-lg' 
+              : 'hover:shadow-md'
+          }`}
+          onClick={() => setDeploymentType('traditional')}
+        >
+          <CardHeader className="text-center pb-4">
+            <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+              <Server className="w-8 h-8 text-blue-600" />
+            </div>
+            <CardTitle className="text-2xl">Traditional Cluster</CardTitle>
+            <CardDescription className="text-base">
+              Full-featured, always-on dedicated infrastructure
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                <span className="text-sm">Dedicated compute resources</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                <span className="text-sm">Full configuration control</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                <span className="text-sm">Persistent storage tiers</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                <span className="text-sm">Advanced networking</span>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="text-sm text-gray-600 mb-2">Starting at:</div>
+              <div className="text-2xl font-bold text-gray-900">$500-2000/month</div>
+              <div className="text-sm text-gray-600">Always-on infrastructure</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Optimized Cluster */}
+        <Card 
+          className={`cursor-pointer transition-all duration-200 relative ${
+            deploymentType === 'optimized' 
+              ? 'ring-2 ring-green-500 shadow-lg' 
+              : 'hover:shadow-md'
+          }`}
+          onClick={() => setDeploymentType('optimized')}
+        >
+          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+            <Badge className="bg-green-500 text-white px-3 py-1">
+              <Sparkles className="w-3 h-3 mr-1" />
+              Recommended
+            </Badge>
+          </div>
+          
+          <CardHeader className="text-center pb-4">
+            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <Zap className="w-8 h-8 text-green-600" />
+            </div>
+            <CardTitle className="text-2xl text-green-800">Optimized Cluster</CardTitle>
+            <CardDescription className="text-base">
+              Cost-optimized serverless analytics processing
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                <span className="text-sm">Serverless processing</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                <span className="text-sm">Auto-scaling from zero</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                <span className="text-sm">Intelligent storage lifecycle</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                <span className="text-sm">5-minute setup</span>
+              </div>
+            </div>
+            
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <div className="text-sm text-green-600 mb-2">Starting at:</div>
+              <div className="text-2xl font-bold text-green-800">$10-449/month</div>
+              <div className="text-sm text-green-600 font-medium">85% cost savings vs traditional</div>
+            </div>
+
+            <div className="flex items-center justify-center space-x-4 pt-2">
+              <div className="flex items-center space-x-1 text-orange-600">
+                <Clock className="w-4 h-4" />
+                <span className="text-xs font-medium">5min setup</span>
+              </div>
+              <div className="flex items-center space-x-1 text-blue-600">
+                <Brain className="w-4 h-4" />
+                <span className="text-xs font-medium">AI optimized</span>
+              </div>
+              <div className="flex items-center space-x-1 text-purple-600">
+                <DollarSign className="w-4 h-4" />
+                <span className="text-xs font-medium">Pay per use</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {deploymentType && (
+        <div className="text-center">
+          <Button 
+            size="lg" 
+            onClick={handleNext}
+            className={`${
+              deploymentType === 'optimized' 
+                ? 'bg-green-600 hover:bg-green-700' 
+                : 'bg-blue-600 hover:bg-blue-700'
+            }`}
+          >
+            Continue with {deploymentType === 'optimized' ? 'Optimized' : 'Traditional'} Cluster
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
+      )}
+    </div>
+  )
 
   const handleSubmit = async () => {
     if (!user) return
@@ -886,14 +1057,17 @@ export default function ClusterCreationWizard({ onComplete, onCancel }: {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-2xl font-bold">Create New Cluster</h1>
-          <span className="text-sm text-gray-600">Step {currentStep} of 4</span>
+          <span className="text-sm text-gray-600">
+            {currentStep === 0 ? 'Choose Type' : `Step ${currentStep} of 4`}
+          </span>
         </div>
-        <Progress value={(currentStep / 4) * 100} className="h-2" />
+        <Progress value={currentStep === 0 ? 0 : (currentStep / 4) * 100} className="h-2" />
       </div>
 
       {/* Step Content */}
       <Card className="min-h-[600px]">
         <CardContent className="p-8">
+          {currentStep === 0 && renderStep0()}
           {currentStep === 1 && renderStep1()}
           {currentStep === 2 && renderStep2()}
           {currentStep === 3 && renderStep3()}
@@ -905,16 +1079,16 @@ export default function ClusterCreationWizard({ onComplete, onCancel }: {
       <div className="flex justify-between mt-6">
         <Button
           variant="outline"
-          onClick={currentStep === 1 ? onCancel : handlePrevious}
+          onClick={currentStep === 0 ? onCancel : handlePrevious}
           disabled={isCreating}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          {currentStep === 1 ? 'Cancel' : 'Previous'}
+          {currentStep === 0 ? 'Cancel' : 'Previous'}
         </Button>
 
         <Button
           onClick={currentStep === 4 ? handleSubmit : handleNext}
-          disabled={!isStepValid() || isCreating}
+          disabled={(currentStep === 0 && !deploymentType) || (currentStep > 0 && !isStepValid()) || isCreating}
           className={currentStep === 4 ? 'bg-green-600 hover:bg-green-700' : ''}
         >
           {isCreating ? (
@@ -929,7 +1103,7 @@ export default function ClusterCreationWizard({ onComplete, onCancel }: {
             </>
           ) : (
             <>
-              Next
+              {currentStep === 0 ? 'Continue' : 'Next'}
               <ArrowRight className="h-4 w-4 ml-2" />
             </>
           )}

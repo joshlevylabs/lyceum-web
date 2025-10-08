@@ -65,7 +65,8 @@ export async function getClustersWithOptionalKey(userId: string, filters?: {
     updated_at,
     health_status,
     estimated_monthly_cost,
-    actual_monthly_cost
+    actual_monthly_cost,
+    pricing_model
   `
   
   const fields = hasClusterKey ? `${baseFields}, cluster_key` : baseFields

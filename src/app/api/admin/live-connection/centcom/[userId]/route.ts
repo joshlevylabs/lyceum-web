@@ -127,9 +127,10 @@ export async function GET(
 // DELETE /api/admin/live-connection/centcom/[userId] - End live connection session
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params
     const { searchParams } = new URL(request.url)
     const connectionToken = searchParams.get('token')
 
@@ -162,7 +163,7 @@ export async function DELETE(
       .insert([{
         admin_user_id: request.headers.get('user-id'),
         action: 'live_connection_ended',
-        target_user_id: params.userId,
+        target_user_id: userId,
         details: `Ended live Centcom connection session`,
         created_at: new Date().toISOString()
       }])

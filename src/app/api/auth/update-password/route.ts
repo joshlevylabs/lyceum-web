@@ -42,10 +42,15 @@ export async function POST(request: NextRequest) {
 
     console.log('About to update user password via admin API...')
 
-    // Update password using admin API
+    // Update password and metadata using admin API
     const { error: updateError } = await supabase.auth.admin.updateUserById(
       userId,
-      { password: new_password }
+      { 
+        password: new_password,
+        user_metadata: {
+          password_set: true
+        }
+      }
     )
 
     console.log('Password update result:', { error: updateError?.message })
@@ -58,7 +63,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    console.log('Password updated successfully for user:', userId)
+    console.log('Password and metadata updated successfully for user:', userId)
 
     return NextResponse.json({
       success: true,

@@ -1,0 +1,219 @@
+# Lyceum GKE Autopilot Cluster for Professional/Enterprise Tiers
+# Optimized for batch processing and real-time serving
+
+apiVersion: container.cnrm.cloud.google.com/v1beta1
+kind: ContainerCluster
+metadata:
+  name: lyceum-autopilot-cluster
+  namespace: default
+  labels:
+    tier: "professional-enterprise"
+    environment: "production"
+    cost-optimization: "enabled"
+    workload-type: "batch-processing"
+spec:
+  location: us-central1  # Regional for high availability
+  enableAutopilot: true
+  
+  # Release channel for stable updates
+  releaseChannel:
+    channel: STABLE
+  
+  # Network configuration
+  networkConfig:
+    enableIntraNodeVisibility: true
+    network: "default"
+    subnetwork: "default"
+    
+    # Enable Dataplane V2 for better performance
+    datapathProvider: ADVANCED_DATAPATH
+    
+    # DNS configuration
+    dnsConfig:
+      clusterDns: CLOUD_DNS
+      clusterDnsScope: VPC_SCOPE
+  
+  # Private cluster configuration for security
+  privateClusterConfig:
+    enablePrivateNodes: true
+    enablePrivateEndpoint: false  # Allow public access for management
+    masterIpv4CidrBlock: "172.16.0.0/28"
+    
+    # Master global access for multi-region management
+    masterGlobalAccessConfig:
+      enabled: true
+  
+  # IP allocation for pods and services
+  ipAllocationPolicy:
+    clusterIpv4CidrBlock: "10.4.0.0/16"
+    servicesIpv4CidrBlock: "10.5.0.0/16"
+    
+    # Enable IP alias for better networking
+    useIpAliases: true
+  
+  # Workload Identity for secure service account usage
+  workloadIdentityConfig:
+    workloadPool: lyceum-clusters-optimized.svc.id.goog
+  
+  # Resource usage export for cost tracking
+  resourceUsageExportConfig:
+    enable: true
+    bigqueryDestination:
+      datasetId: autopilot_cluster_usage
+    consumptionMeteringConfig:
+      enabled: true
+  
+  # Network policy for security
+  networkPolicy:
+    enabled: true
+    provider: CALICO
+  
+  # Database encryption
+  databaseEncryption:
+    state: ENCRYPTED
+    keyName: projects/lyceum-clusters-optimized/locations/us-central1/keyRings/lyceum-cluster-ring/cryptoKeys/cluster-encryption-key
+  
+  # Shielded nodes for security
+  shieldedNodes:
+    enabled: true
+  
+  # Binary Authorization for security (optional for cost optimization)
+  binaryAuthorization:
+    enabled: false
+  
+  # Notification configuration for cluster events
+  notificationConfig:
+    pubsub:
+      enabled: true
+      topic: projects/lyceum-clusters-optimized/topics/cluster-notifications
+  
+  # Addons configuration
+  addonsConfig:
+    httpLoadBalancing:
+      disabled: false
+    horizontalPodAutoscaling:
+      disabled: false
+    networkPolicyConfig:
+      disabled: false
+    dnsCacheConfig:
+      enabled: true
+    gcePersistentDiskCsiDriverConfig:
+      enabled: true
+    
+    # Cloud Run for Anthos (for serverless workloads)
+    cloudRunConfig:
+      disabled: false
+      loadBalancerType: LOAD_BALANCER_TYPE_INTERNAL
+    
+    # Istio service mesh (optional, can be enabled later)
+    istioConfig:
+      disabled: true
+    
+    # Config connector for infrastructure as code
+    configConnectorConfig:
+      enabled: true
+  
+  # Maintenance policy for automatic updates
+  maintenancePolicy:
+    dailyMaintenanceWindow:
+      startTime: "03:00"  # 3 AM UTC for minimal impact
+    
+    # Maintenance exclusions for critical periods
+    recurringWindow:
+      window:
+        startTime: "2024-01-01T00:00:00Z"
+        endTime: "2024-01-01T04:00:00Z"
+      recurrence: "FREQ=WEEKLY;BYDAY=SU"
+  
+  # Cluster autoscaling (Autopilot manages this automatically)
+  verticalPodAutoscaling:
+    enabled: true
+  
+  # Monitoring configuration
+  monitoringConfig:
+    enableComponents:
+    - SYSTEM_COMPONENTS
+    - WORKLOADS
+    - APISERVER
+    - CONTROLLER_MANAGER
+    - SCHEDULER
+    
+    # Managed Prometheus for better observability
+    managedPrometheusConfig:
+      enabled: true
+  
+  # Logging configuration
+  loggingConfig:
+    enableComponents:
+    - SYSTEM_COMPONENTS
+    - WORKLOADS
+    - APISERVER
+    - CONTROLLER_MANAGER
+    - SCHEDULER
+  
+  # Security posture (if needed for enterprise customers)
+  securityPostureConfig:
+    mode: BASIC
+    vulnerabilityMode: VULNERABILITY_BASIC
+
+---
+# BigQuery dataset for usage analytics
+apiVersion: bigquery.cnrm.cloud.google.com/v1beta1
+kind: BigQueryDataset
+metadata:
+  name: autopilot-cluster-usage
+  namespace: default
+spec:
+  datasetId: autopilot_cluster_usage
+  friendlyName: "Lyceum Autopilot Cluster Usage Analytics"
+  description: "Resource usage data for cost optimization and analytics"
+  location: US
+  
+  # Access control
+  access:
+  - role: OWNER
+    userByEmail: lyceum-cluster-manager@lyceum-clusters-optimized.iam.gserviceaccount.com
+  - role: READER
+    groupByEmail: lyceum-analytics@lyceum-clusters-optimized.iam.gserviceaccount.com
+
+---
+# Pub/Sub topic for cluster notifications
+apiVersion: pubsub.cnrm.cloud.google.com/v1beta1
+kind: PubSubTopic
+metadata:
+  name: cluster-notifications
+  namespace: default
+spec:
+  # Message retention for 7 days
+  messageRetentionDuration: "604800s"
+  
+  # Schema for structured notifications
+  schemaSettings:
+    encoding: JSON
+
+---
+# Cloud KMS key ring for encryption
+apiVersion: kms.cnrm.cloud.google.com/v1beta1
+kind: KMSKeyRing
+metadata:
+  name: lyceum-cluster-ring
+  namespace: default
+spec:
+  location: us-central1
+
+---
+# Cloud KMS crypto key for cluster encryption
+apiVersion: kms.cnrm.cloud.google.com/v1beta1
+kind: KMSCryptoKey
+metadata:
+  name: cluster-encryption-key
+  namespace: default
+spec:
+  keyRingRef:
+    name: lyceum-cluster-ring
+  rotationPeriod: "7776000s"  # 90 days
+  purpose: ENCRYPT_DECRYPT
+
+
+
+

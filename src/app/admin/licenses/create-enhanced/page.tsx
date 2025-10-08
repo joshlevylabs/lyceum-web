@@ -19,7 +19,7 @@ import { LICENSE_TYPES, PLUGIN_CONFIGURATIONS, getLicenseTypeConfig, formatLimit
 interface EnhancedLicenseFormData {
   // Basic info
   license_category: 'main_application' | 'plugin'
-  license_type: 'trial' | 'standard' | 'professional' | 'enterprise'
+  license_type: 'trial' | 'standard' | 'professional' | 'enterprise' | 'gratis'
   
   // Main Application
   main_app_version: string
@@ -272,6 +272,7 @@ export default function CreateEnhancedLicense() {
                       formData.license_type === 'enterprise' ? 'bg-purple-100 text-purple-800' :
                       formData.license_type === 'professional' ? 'bg-blue-100 text-blue-800' :
                       formData.license_type === 'standard' ? 'bg-green-100 text-green-800' :
+                      formData.license_type === 'gratis' ? 'bg-cyan-100 text-cyan-800' :
                       'bg-yellow-100 text-yellow-800'
                     }`}>
                       {formData.license_type}

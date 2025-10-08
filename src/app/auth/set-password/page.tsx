@@ -24,7 +24,25 @@ export default function SetPassword() {
 
   const checkUserSession = async () => {
     try {
-      // First try to get session data from localStorage (from auth callback)
+      // Always check current Supabase session first (for logged-in users)
+      const supabase = createClient()
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (session && !sessionError) {
+        console.log('Got active session from Supabase:', { email: session.user.email })
+        setUserInfo({
+          email: session.user.email,
+          full_name: session.user.user_metadata?.full_name || 'User'
+        })
+        setSessionData({
+          access_token: session.access_token,
+          user_id: session.user.id,
+          email: session.user.email
+        })
+        return
+      }
+
+      // If no active session, try to get session data from localStorage (from auth callback)
       const storedSession = localStorage.getItem('lyceum_password_reset_session')
       if (storedSession) {
         try {
@@ -48,7 +66,7 @@ export default function SetPassword() {
         }
       }
 
-      // Second try to get session data from URL (from auth callback)
+      // Try to get session data from URL (from auth callback)
       const sessionParam = searchParams.get('session')
       if (sessionParam) {
         try {
@@ -68,29 +86,12 @@ export default function SetPassword() {
         }
       }
 
-      // Fallback to checking current Supabase session
-      const supabase = createClient()
-      const { data: { session }, error } = await supabase.auth.getSession()
-      
-      if (error || !session) {
-        console.warn('No session found, redirecting to login')
-        router.push('/auth/login')
-        return
-      }
-
-      console.log('Got session from Supabase:', { email: session.user.email })
-      setUserInfo({
-        email: session.user.email,
-        full_name: session.user.user_metadata?.full_name || 'User'
-      })
-      setSessionData({
-        access_token: session.access_token,
-        user_id: session.user.id,
-        email: session.user.email
-      })
+      // No session found anywhere
+      console.warn('No session found, redirecting to login')
+      router.push('/auth/signin')
     } catch (error) {
       console.error('Session check failed:', error)
-      router.push('/auth/login')
+      router.push('/auth/signin')
     }
   }
 
@@ -158,13 +159,28 @@ export default function SetPassword() {
       
       console.log('Password updated successfully via API!')
 
-      // Clear any stored session data since we're redirecting to login
+      // Clear any stored session data
       localStorage.removeItem('lyceum_password_reset_session')
       
-      console.log('Redirecting to login with success message...')
+      console.log('Password set successfully, logging out and redirecting to sign in...')
       
-      // Redirect to login with success message (no session cleanup needed)
-      router.push('/auth/signin?message=password_updated')
+      // Show success state briefly
+      setSuccess(true)
+      
+      // Sign out to clear the old session (password change invalidates the session)
+      // This may fail with 403 since session is already invalid, which is fine
+      const supabase = createClient()
+      try {
+        await supabase.auth.signOut()
+      } catch (signOutError) {
+        // Ignore signout errors - session is already invalid after password change
+        console.log('Signout attempted (session may already be invalid)')
+      }
+      
+      // Redirect to sign in after a brief delay
+      setTimeout(() => {
+        router.push('/auth/signin?message=password_updated')
+      }, 2000)
       return
 
     } catch (error: any) {
@@ -214,8 +230,8 @@ export default function SetPassword() {
             </div>
             
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Password Set Successfully!</h1>
-            <p className="text-gray-600 mb-4">Your password has been updated. You can now access your account.</p>
-            <p className="text-sm text-gray-500">Redirecting to dashboard...</p>
+            <p className="text-gray-600 mb-4">Your password has been updated. Please sign in with your new password.</p>
+            <p className="text-sm text-gray-500">Redirecting to sign in page...</p>
           </div>
         </div>
       </div>

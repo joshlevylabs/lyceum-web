@@ -452,15 +452,46 @@ export default function UsageDashboard({ userId }: UsageDashboardProps) {
                 </Button>
               </div>
 
-              {/* BYOD Billing */}
+              {/* Responsible Licenses & Clusters */}
               <div className="mt-6 pt-6 border-t">
-                <h3 className="text-lg font-medium mb-3">BYOD Connections</h3>
+                <h3 className="text-lg font-medium mb-3">Your Payment Responsibilities</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Additional charges apply for bring-your-own-database connections at $10/month per connection.
+                  Items you are responsible for paying (only active, non-gratis items are billed).
                 </p>
                 
+                {usage.licenses?.filter((l: any) => l.license_type !== 'gratis').length > 0 && (
+                  <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                    <h4 className="font-medium text-sm mb-2">Licenses You Pay For:</h4>
+                    {usage.licenses.filter((l: any) => l.license_type !== 'gratis').map((license: any) => (
+                      <p key={license.id} className="text-sm">
+                        • {license.license_type} license - Active
+                      </p>
+                    ))}
+                  </div>
+                )}
+
+                {usage.clusters?.length > 0 && (
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-sm mb-2">Clusters You Pay For:</h4>
+                    {usage.clusters.map((cluster: any) => (
+                      <p key={cluster.id} className="text-sm">
+                        • {cluster.cluster_type} cluster - Active
+                      </p>
+                    ))}
+                  </div>
+                )}
+
+                {(!usage.licenses?.filter((l: any) => l.license_type !== 'gratis').length && !usage.clusters?.length) && (
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600">
+                      You are not currently responsible for paying for any licenses or clusters.
+                    </p>
+                  </div>
+                )}
+
+                {/* BYOD Billing */}
                 {usage.byod_connections_used > 0 && (
-                  <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="bg-blue-50 p-4 rounded-lg mt-4">
                     <p className="text-sm">
                       <strong>Current BYOD charges:</strong> ${(usage.byod_connections_used * 10).toFixed(2)}/month 
                       ({usage.byod_connections_used} connection{usage.byod_connections_used !== 1 ? 's' : ''})
