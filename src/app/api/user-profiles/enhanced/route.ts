@@ -27,8 +27,6 @@ export async function GET(request: NextRequest) {
         email,
         username,
         full_name,
-        avatar_url,
-        company,
         role,
         created_at,
         updated_at,
@@ -139,8 +137,6 @@ export async function GET(request: NextRequest) {
       email: profile.email,
       username: profile.username,
       full_name: profile.full_name,
-      avatar_url: profile.avatar_url,
-      company: profile.company,
       role: profile.role,
       
       // Account status

@@ -32,8 +32,6 @@ export async function GET(
         email,
         username,
         full_name,
-        avatar_url,
-        company,
         role,
         created_at,
         updated_at,
