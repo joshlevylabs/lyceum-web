@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-utils';
-
-// Import the progress map from the csv-import endpoint
-// In production, this would be stored in a database or Redis
-const importProgress: Map<string, any> = new Map();
+import { getImportProgress } from '@/lib/import-progress';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { importId: string } }
+  context: { params: Promise<{ importId: string }> }
 ) {
   try {
     // Authenticate the user
@@ -19,7 +16,7 @@ export async function GET(
       );
     }
 
-    const { importId } = await params;
+    const { importId } = await context.params;
 
     if (!importId) {
       return NextResponse.json(
@@ -53,9 +50,10 @@ export async function GET(
 
   } catch (error) {
     console.error('Error fetching import progress:', error);
+    const { importId } = await context.params;
     return NextResponse.json(
       { 
-        importId: (await params).importId,
+        importId,
         status: 'error',
         progress: 0,
         message: 'Failed to fetch import progress',

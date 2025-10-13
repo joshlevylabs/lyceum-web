@@ -644,10 +644,10 @@ export default function UnifiedClusterManagementPage() {
                         <Label htmlFor="classification">Billing Classification</Label>
                         <Select
                           value={basicInfoForm.classification}
-                          onValueChange={(value: 'gratis' | 'trial' | 'enterprise') => {
+                          onValueChange={(value) => {
                             setBasicInfoForm({
                               ...basicInfoForm, 
-                              classification: value
+                              classification: value as 'gratis' | 'trial' | 'enterprise'
                             })
                           }}
                         >
@@ -694,7 +694,8 @@ export default function UnifiedClusterManagementPage() {
                             setBasicInfoForm({
                               name: cluster?.name || '',
                               description: cluster?.description || '',
-                              cluster_type: cluster?.cluster_type || ''
+                              cluster_type: cluster?.cluster_type || '',
+                              classification: (cluster?.classification as 'gratis' | 'trial' | 'enterprise') || 'trial'
                             })
                           }}
                         >

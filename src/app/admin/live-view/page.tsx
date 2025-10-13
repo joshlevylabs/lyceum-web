@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import {
@@ -13,6 +13,8 @@ import {
   VideoCameraIcon,
   MicrophoneIcon
 } from '@heroicons/react/24/outline'
+
+export const dynamic = 'force-dynamic'
 
 interface ConnectionSession {
   session_token: string
@@ -32,7 +34,7 @@ interface ConnectionSession {
   }
 }
 
-export default function AdminLiveView() {
+function AdminLiveViewContent() {
   const { user } = useAuth()
   const searchParams = useSearchParams()
   const [connection, setConnection] = useState<ConnectionSession | null>(null)
@@ -396,8 +398,17 @@ export default function AdminLiveView() {
   )
 }
 
-
-
+export default function AdminLiveView() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <AdminLiveViewContent />
+    </Suspense>
+  )
+}
 
 
 

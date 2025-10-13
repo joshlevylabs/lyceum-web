@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createCentcomLicense } from '@/lib/licenses/centcom'
-import { randomUUID } from 'crypto'
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,17 +13,19 @@ export async function POST(req: NextRequest) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    const key_id = randomUUID()
     const expiration = new Date()
     expiration.setDate(expiration.getDate() + Number(expiration_days))
 
-    const signingKey = process.env.CENTCOM_SIGNING_KEY || 'dev-signing-key'
-    const license_key = createCentcomLicense({
-      key_id,
+    const permissions = features.length > 0 ? features : ['basic_access']
+    const metadata = { created_by, role }
+    
+    const { license_key, key_id } = createCentcomLicense(
       plugin_id,
-      user_id: user_id || null,
-      expiration_iso8601: expiration.toISOString(),
-    }, signingKey)
+      user_id || null,
+      expiration,
+      permissions,
+      metadata
+    )
 
     const { data, error } = await supabase
       .from('licenses')

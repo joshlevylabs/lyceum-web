@@ -163,3 +163,8 @@ export const createProfessionalLicense = (
   return generateCentcomLicenseKey(plugin_id, user_id, expiration, permissions, metadata)
 }
 
+// Aliases for backwards compatibility
+export const createCentcomLicense = generateCentcomLicenseKey
+export const verifyCentcomLicense = validateCentcomLicense
+export const base64UrlDecode = (str: string): Buffer => Buffer.from(str, 'base64url')
+

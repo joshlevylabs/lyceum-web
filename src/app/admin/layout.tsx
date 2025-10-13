@@ -164,10 +164,10 @@ export default function AdminLayout({
               <div className="flex items-center">
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
-                    {adminUser.full_name}
+                    {adminUser?.full_name}
                   </p>
                   <p className="text-xs font-medium text-gray-500 group-hover:text-gray-700">
-                    {adminUser.role.replace('_', ' ').replace('superadmin', 'Super Admin').toUpperCase()}
+                    {adminUser?.role.replace('_', ' ').replace('superadmin', 'Super Admin').toUpperCase()}
                   </p>
                 </div>
                 <button
@@ -203,7 +203,7 @@ export default function AdminLayout({
               <div className="ml-3 relative">
                 <div className="max-w-xs bg-white flex items-center text-sm rounded-full">
                   <span className="text-gray-700 text-sm font-medium">
-                    {adminUser.username}
+                    {adminUser?.username}
                   </span>
                 </div>
               </div>

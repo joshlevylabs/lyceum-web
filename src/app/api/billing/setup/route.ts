@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     
     const { success, user, response } = await requireAuth(request);
     if (!success || !user) {
-      return response;
+      return response || NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Admin only
@@ -167,7 +167,7 @@ export async function GET(request: NextRequest) {
   try {
     const { success, user, response } = await requireAuth(request);
     if (!success || !user) {
-      return response;
+      return response || NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Admin only

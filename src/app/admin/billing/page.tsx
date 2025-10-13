@@ -192,7 +192,7 @@ export default function BillingPage() {
                     {userBilling.subscription_status?.toUpperCase()}
                   </Badge>
                   <span className="font-semibold">
-                    {userBilling.plan_name?.charAt(0).toUpperCase() + userBilling.plan_name?.slice(1) || 'Unknown Plan'}
+                    {userBilling.plan_name ? userBilling.plan_name.charAt(0).toUpperCase() + userBilling.plan_name.slice(1) : 'Unknown Plan'}
                   </span>
                 </div>
                 <p className="text-sm text-gray-600">

@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     
     const { success, user, response } = await requireAuth(request);
     if (!success || !user) {
-      return response;
+      return response || NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -188,7 +188,7 @@ export async function DELETE(request: NextRequest) {
     
     const { success, user, response } = await requireAuth(request);
     if (!success || !user) {
-      return response;
+      return response || NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);

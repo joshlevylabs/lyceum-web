@@ -177,3 +177,4 @@ export default function OnboardingCalendar({ sessions, onSessionClick }: Onboard
     </div>
   )
 }
+

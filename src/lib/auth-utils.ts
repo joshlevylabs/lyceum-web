@@ -104,7 +104,10 @@ export function isAdmin(user: AuthUser): boolean {
 /**
  * Middleware helper for API routes that require authentication
  */
-export async function requireAuth(request: NextRequest) {
+export async function requireAuth(request: NextRequest): Promise<
+  | { success: true; user: AuthUser; error: null; response: null }
+  | { success: false; user: null; error: string | null; response: Response }
+> {
   const { user, error } = await authenticateRequest(request)
   
   if (!user) {
@@ -128,12 +131,15 @@ export async function requireAuth(request: NextRequest) {
 /**
  * Middleware helper for API routes that require admin privileges
  */
-export async function requireAdmin(request: NextRequest) {
+export async function requireAdmin(request: NextRequest): Promise<
+  | { success: true; user: AuthUser; error: null; response: null }
+  | { success: false; user: null; error: string | null; response: Response }
+> {
   const { success, user, error, response } = await requireAuth(request)
   
   if (!success) return { success: false, user: null, error, response }
   
-  if (!isAdmin(user!)) {
+  if (!isAdmin(user)) {
     return {
       success: false,
       user: null,

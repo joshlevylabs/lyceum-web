@@ -130,3 +130,5 @@ const [loadingUsage, setLoadingUsage] = useState(false)
 - Invoice data comes from the billing system database
 - Monthly costs are calculated from current usage and flexible pricing
 - All financial data is properly formatted in dollars (cents / 100)
+
+

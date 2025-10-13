@@ -238,7 +238,7 @@ export default function LicenseDetailsPage() {
         main_app_version: license.main_app_version || '1.0.0',
         
         // Granular Feature Configurations
-        feature_configurations: license.feature_configurations || {
+        feature_configurations: (license.feature_configurations || {
           data_visualization: {
             save_limits_to_projects: false,
             max_flagged_measurements: 100,
@@ -277,7 +277,7 @@ export default function LicenseDetailsPage() {
             integration_settings: false,
             backup_restore: false
           }
-        },
+        }) as any,
         
         // Plugin
         plugin_id: license.plugin_id || '',

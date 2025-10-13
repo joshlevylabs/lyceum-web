@@ -240,3 +240,5 @@ export async function logGroupActivity(
     // Don't throw error - logging failures shouldn't break the app
   }
 }
+
+

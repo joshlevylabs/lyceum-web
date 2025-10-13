@@ -16,7 +16,7 @@ export async function GET(
     
     const { success, user, response } = await requireAuth(request);
     if (!success || !user) {
-      return response;
+      return response || NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get invoice with line items (avoiding user_profiles JOIN due to missing FK)
@@ -111,7 +111,7 @@ export async function PATCH(
     
     const { success, user, response } = await requireAuth(request);
     if (!success || !user) {
-      return response;
+      return response || NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();

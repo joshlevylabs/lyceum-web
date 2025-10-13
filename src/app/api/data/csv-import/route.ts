@@ -1,19 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-utils';
 import { dbOperations } from '@/lib/supabase-direct';
-
-interface ImportProgress {
-  importId: string;
-  status: 'preparing' | 'processing' | 'validating' | 'importing' | 'completed' | 'error';
-  progress: number;
-  message: string;
-  rows_processed?: number;
-  total_rows?: number;
-  errors?: string[];
-}
-
-// In-memory storage for import progress (in production, use Redis or database)
-const importProgress: Map<string, ImportProgress> = new Map();
+import { setImportProgress, ImportProgress } from '@/lib/import-progress';
 
 function generateImportId(): string {
   return 'import_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -331,9 +319,6 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-// Export the progress map for the progress endpoint
-export { importProgress };
 
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {

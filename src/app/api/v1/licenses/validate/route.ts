@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { base64UrlDecode, verifyCentcomLicense } from '@/lib/licenses/centcom'
+import { verifyCentcomLicense, parseCentcomLicenseKey } from '@/lib/licenses/centcom'
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,16 +15,18 @@ export async function POST(req: NextRequest) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    const signingKey = process.env.CENTCOM_SIGNING_KEY || 'dev-signing-key'
-
     // 1) Verify key structure + signature
-    const verification = verifyCentcomLicense(license_key, signingKey)
-    if (!verification.valid) {
-      return NextResponse.json({ status: 'invalid', message: verification.reason || 'Invalid license signature' })
+    const verification = verifyCentcomLicense(license_key)
+    if (!verification.isValid || !verification.data) {
+      return NextResponse.json({ status: 'invalid', message: verification.error || 'Invalid license signature' })
     }
 
-    const dataStr = base64UrlDecode(license_key.split('.')[0]).toString('utf8')
-    const [key_id, licensePluginId, user_id = '', expiration = ''] = dataStr.split(':')
+    const parsed = parseCentcomLicenseKey(license_key)
+    if (!parsed.isValid || !parsed.data) {
+      return NextResponse.json({ status: 'invalid', message: parsed.error || 'Invalid license format' })
+    }
+
+    const { key_id, plugin_id: licensePluginId, user_id } = parsed.data
 
     if (licensePluginId !== plugin_id) {
       return NextResponse.json({ status: 'invalid', message: 'License not valid for this plugin' })
@@ -58,9 +60,9 @@ export async function POST(req: NextRequest) {
     }
 
     const now = new Date()
-    const expStr = expiration || row.expiration
-    if (expStr) {
-      const exp = new Date(expStr)
+    const expiration = parsed.data.expires_at || row.expiration
+    if (expiration) {
+      const exp = new Date(expiration)
       if (!isNaN(exp.getTime()) && exp < now) {
         return NextResponse.json({ status: 'expired', message: 'License has expired' })
       }
@@ -85,7 +87,7 @@ export async function POST(req: NextRequest) {
         plugin_id,
         user_id: row.user_id || user_id || null,
         features,
-        expiration: expStr || null,
+        expiration: expiration ? new Date(expiration).toISOString() : null,
         created_at: row.created_at,
         created_by: row.created_by || 'license_server',
         revoked: false,

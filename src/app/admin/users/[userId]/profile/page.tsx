@@ -4,12 +4,6 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import PaymentMethodSetup from '@/components/billing/PaymentMethodSetup'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4OTU0MTYsImV4cCI6MjA2ODQ3MTQxNn0.5Wzzoat1TsoLLbsqjuoUEKyawJgYmvrMYbJ-uvosdu0'
-)
 import {
   UserIcon,
   ShieldCheckIcon,
@@ -226,35 +220,62 @@ export default function UserProfilePage() {
         // It's a UUID, use directly
         setResolvedUserId(userId)
       } else if (userId.startsWith('USER-')) {
-        console.log('🔑 Detected user key format, resolving:', userId)
-        // It's a user key, resolve it
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        console.log('🔑 Detected user key format, resolving via API call:', userId)
         
-        if (sessionError || !session?.access_token) {
-          console.error('❌ Authentication error:', sessionError)
+        // Get the Supabase session for authentication
+        const { supabase } = await import('@/lib/supabase')
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (!session?.access_token) {
+          console.error('❌ No access token found')
           throw new Error('Authentication required')
         }
-
-        console.log('🔐 Got session, making API call to resolve key...')
-        const response = await fetch(`/api/admin/users/resolve-key/${userId}`, {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json'
-          }
-        })
-
-        console.log('📡 API response status:', response.status)
         
-        if (!response.ok) {
-          const errorData = await response.json()
-          console.error('❌ API error response:', errorData)
-          throw new Error(errorData.error || 'Failed to resolve user key')
+        // Use fetch with timeout instead of direct Supabase query
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => {
+          console.log('⏱️ Query timeout after 10s')
+          controller.abort()
+        }, 10000)
+        
+        try {
+          console.log('📞 Calling API to resolve user key...')
+          const response = await fetch(`/api/admin/users/resolve-key/${userId}`, {
+            signal: controller.signal,
+            credentials: 'include',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json'
+            }
+          })
+          
+          clearTimeout(timeoutId)
+          console.log('📡 API response status:', response.status)
+          
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+            console.error('❌ API error response:', errorData)
+            throw new Error(errorData.error || 'Failed to resolve user key')
+          }
+          
+          const data = await response.json()
+          console.log('✅ API response data:', data)
+          
+          if (!data.user_id) {
+            console.error('❌ No user_id in response')
+            throw new Error('User not found')
+          }
+          
+          console.log('✅ Resolved user ID:', data.user_id)
+          setResolvedUserId(data.user_id)
+        } catch (fetchError: any) {
+          clearTimeout(timeoutId)
+          if (fetchError.name === 'AbortError') {
+            console.error('❌ Request timed out')
+            throw new Error('Request timed out')
+          }
+          throw fetchError
         }
-
-        const data = await response.json()
-        console.log('✅ API response data:', data)
-        setResolvedUserId(data.user_id)
-        console.log('✅ Set resolved user ID:', data.user_id)
       } else {
         console.error('❌ Invalid user identifier format:', userId)
         throw new Error('Invalid user identifier format')

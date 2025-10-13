@@ -495,3 +495,5 @@ BEGIN
   RAISE NOTICE 'Created tables: groups, group_members, group_invitations, group_resource_access, group_activity_log';
   RAISE NOTICE 'Created functions: user_has_group_permission, get_user_groups, log_group_activity, cleanup_expired_invitations';
 END $$;
+
+

@@ -187,32 +187,56 @@ export default function Dashboard() {
     }
   }
 
-  // Fetch onboarding sessions
+  // Fetch onboarding sessions - Query directly from Supabase (bypasses hanging getSession)
   const fetchOnboardingSessions = async () => {
-    if (!user) return
+    if (!user) {
+      console.log('No user, skipping fetch')
+      return
+    }
 
+    console.log('Fetching onboarding sessions directly from Supabase...')
     setLoadingSessions(true)
+    
     try {
-      const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession()
-      if (!session?.access_token) {
-        setLoadingSessions(false)
-        return
-      }
+      const { supabase } = await import('@/lib/supabase')
       
-      const response = await fetch('/api/user/onboarding/sessions', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
+      console.log('Querying onboarding_sessions table...')
+      // Query sessions directly - RLS will automatically filter by user_id
+      const { data: sessions, error: sessionsError } = await supabase
+        .from('onboarding_sessions')
+        .select(`
+          *,
+          license_keys (
+            id,
+            key_code,
+            license_type,
+            status,
+            features,
+            enabled_plugins,
+            expires_at
+          )
+        `)
+        .in('status', ['scheduled', 'pending', 'rescheduled'])
+        .order('scheduled_at', { ascending: true })
+      
+      console.log('Query result:', { 
+        success: !sessionsError, 
+        count: sessions?.length || 0,
+        error: sessionsError?.message 
       })
-
-      if (response.ok) {
-        const data = await response.json()
-        setOnboardingSessions(data.sessions?.upcoming || [])
+      
+      if (sessionsError) {
+        console.error('Error querying sessions:', sessionsError)
+        setOnboardingSessions([])
+      } else {
+        console.log('Sessions loaded:', sessions?.length || 0)
+        setOnboardingSessions(sessions || [])
       }
-    } catch (error) {
-      console.warn('Could not fetch onboarding sessions:', error)
+    } catch (error: any) {
+      console.error('Error fetching onboarding sessions:', error.message || error)
+      setOnboardingSessions([])
     } finally {
+      console.log('Setting loadingSessions to false')
       setLoadingSessions(false)
     }
   }
