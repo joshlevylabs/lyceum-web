@@ -38,3 +38,4 @@ ALTER TABLE public.onboarding_sessions
 SELECT 'License keys table created successfully!' as status;
 
 
+

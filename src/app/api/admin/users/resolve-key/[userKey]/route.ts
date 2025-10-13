@@ -17,11 +17,16 @@ export async function GET(
   try {
     console.log('🔑 User key resolution API - Starting request...')
     
+    // Log the authorization header for debugging
+    const authHeader = request.headers.get('authorization')
+    console.log('🔑 Authorization header present:', !!authHeader)
+    console.log('🔑 Authorization header preview:', authHeader?.substring(0, 30) + '...')
+    
     const { success, user, response } = await requireAuth(request);
     console.log('🔑 User key resolution API - Auth result:', { success, userId: user?.id, userEmail: user?.email })
     
     if (!success) {
-      console.log('User key resolution API - Auth failed, returning 401')
+      console.log('🔑 User key resolution API - Auth failed, returning 401')
       return response || NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
@@ -47,7 +52,6 @@ export async function GET(
         email,
         username,
         full_name,
-        company,
         role,
         created_at,
         is_active

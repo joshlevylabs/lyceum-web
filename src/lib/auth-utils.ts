@@ -20,14 +20,17 @@ export async function authenticateRequest(request: NextRequest): Promise<{ user:
   try {
     // Get the Authorization header
     const authHeader = request.headers.get('authorization')
+    console.log('🔐 authenticateRequest - authHeader:', authHeader?.substring(0, 40) + '...')
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('🔐 authenticateRequest - Missing or invalid auth header format')
       return { user: null, error: 'Missing or invalid authorization header' }
     }
 
     // Extract the token
     const token = authHeader.substring(7)
     
-    console.log('Validating token:', token.substring(0, 20) + '...')
+    console.log('🔐 Validating token:', token.substring(0, 20) + '...', 'length:', token.length)
     
     // Simple JWT validation - decode and check basic structure
     try {

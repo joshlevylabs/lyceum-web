@@ -222,16 +222,54 @@ export default function UserProfilePage() {
       } else if (userId.startsWith('USER-')) {
         console.log('🔑 Detected user key format, resolving via API call:', userId)
         
-        // Get the Supabase session for authentication
-        const { supabase } = await import('@/lib/supabase')
-        const { data: { session } } = await supabase.auth.getSession()
+        // Get the auth token from localStorage (more reliable than getSession in this context)
+        console.log('🔐 Getting auth token from localStorage...')
+        let accessToken: string | null = null
         
-        if (!session?.access_token) {
-          console.error('❌ No access token found')
-          throw new Error('Authentication required')
+        try {
+          // Try to get from Supabase auth storage
+          const authData = localStorage.getItem('sb-kffiaqsihldgqdwagook-auth-token')
+          if (authData) {
+            const parsed = JSON.parse(authData)
+            accessToken = parsed.access_token
+            console.log('🔐 Token found in localStorage:', !!accessToken, 'length:', accessToken?.length)
+          } else {
+            console.log('🔐 No auth data in localStorage')
+          }
+        } catch (storageError) {
+          console.error('❌ Error reading from localStorage:', storageError)
         }
         
-        // Use fetch with timeout instead of direct Supabase query
+        // Fallback: try getSession() with timeout
+        if (!accessToken) {
+          console.log('🔐 Falling back to getSession()...')
+          try {
+            const { supabase } = await import('@/lib/supabase')
+            const sessionPromise = supabase.auth.getSession()
+            const timeoutPromise = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('getSession timeout')), 3000)
+            )
+            
+            const { data: { session } } = await Promise.race([
+              sessionPromise,
+              timeoutPromise
+            ]) as any
+            
+            accessToken = session?.access_token || null
+            console.log('🔐 Token from getSession:', !!accessToken)
+          } catch (sessionError: any) {
+            console.error('❌ getSession failed:', sessionError.message)
+          }
+        }
+        
+        if (!accessToken) {
+          console.error('❌ No access token found after all attempts')
+          throw new Error('Authentication required - please refresh the page and try again')
+        }
+        
+        console.log('✅ Access token ready, making API call')
+        
+        // Use fetch with timeout
         const controller = new AbortController()
         const timeoutId = setTimeout(() => {
           console.log('⏱️ Query timeout after 10s')
@@ -239,12 +277,12 @@ export default function UserProfilePage() {
         }, 10000)
         
         try {
-          console.log('📞 Calling API to resolve user key...')
+          console.log('📞 Calling API to resolve user key with auth header...')
           const response = await fetch(`/api/admin/users/resolve-key/${userId}`, {
             signal: controller.signal,
             credentials: 'include',
             headers: {
-              'Authorization': `Bearer ${session.access_token}`,
+              'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json'
             }
           })

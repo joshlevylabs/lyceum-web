@@ -44,3 +44,4 @@ SELECT COUNT(*) as total_sessions FROM public.onboarding_sessions;
 SELECT 'Profile check and fix complete!' as status;
 
 
+

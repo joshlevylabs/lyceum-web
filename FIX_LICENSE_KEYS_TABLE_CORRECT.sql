@@ -86,3 +86,4 @@ SELECT 'License keys table fixed with correct schema!' as status,
 FROM public.license_keys;
 
 
+

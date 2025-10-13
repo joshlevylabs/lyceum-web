@@ -275,3 +275,4 @@ Look for any error messages when you load the dashboard.
 **Let's start with checking if the tables exist - run that first query and tell me the results!** 🔍
 
 
+

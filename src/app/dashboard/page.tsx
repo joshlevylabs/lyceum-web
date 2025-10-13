@@ -200,9 +200,15 @@ export default function Dashboard() {
     try {
       const { supabase } = await import('@/lib/supabase')
       
-      console.log('Querying onboarding_sessions table...')
+      console.log('Querying onboarding_sessions table with 5s timeout...')
+      
+      // Create a timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Query timeout after 5 seconds')), 5000)
+      })
+      
       // Query sessions directly - RLS will automatically filter by user_id
-      const { data: sessions, error: sessionsError } = await supabase
+      const queryPromise = supabase
         .from('onboarding_sessions')
         .select(`
           *,
@@ -219,6 +225,10 @@ export default function Dashboard() {
         .in('status', ['scheduled', 'pending', 'rescheduled'])
         .order('scheduled_at', { ascending: true })
       
+      // Race the query against the timeout
+      const result = await Promise.race([queryPromise, timeoutPromise]) as any
+      const { data: sessions, error: sessionsError } = result
+      
       console.log('Query result:', { 
         success: !sessionsError, 
         count: sessions?.length || 0,
@@ -234,6 +244,9 @@ export default function Dashboard() {
       }
     } catch (error: any) {
       console.error('Error fetching onboarding sessions:', error.message || error)
+      if (error.message?.includes('timeout')) {
+        console.error('⚠️ Query timed out - Supabase might be slow or RLS policies might be blocking')
+      }
       setOnboardingSessions([])
     } finally {
       console.log('Setting loadingSessions to false')
