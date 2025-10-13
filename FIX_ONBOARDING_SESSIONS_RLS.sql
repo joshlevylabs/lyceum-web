@@ -23,6 +23,7 @@ ALTER TABLE onboarding_sessions ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can view their own onboarding sessions" ON onboarding_sessions;
 DROP POLICY IF EXISTS "Allow select own sessions" ON onboarding_sessions;
 DROP POLICY IF EXISTS "Users can read own sessions" ON onboarding_sessions;
+DROP POLICY IF EXISTS "Users can view own sessions" ON onboarding_sessions;
 
 -- Step 4: Create a simple, permissive SELECT policy
 CREATE POLICY "Users can view their own onboarding sessions"
@@ -49,7 +50,3 @@ WHERE tablename = 'onboarding_sessions';
 -- Expected output:
 -- Should show one policy: "Users can view their own onboarding sessions"
 -- with cmd = 'SELECT' and roles = '{authenticated}'
-
-RAISE NOTICE 'RLS policies updated successfully!';
-RAISE NOTICE 'Test by running: SELECT * FROM onboarding_sessions LIMIT 1;';
-

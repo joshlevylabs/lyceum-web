@@ -208,20 +208,10 @@ export default function Dashboard() {
       })
       
       // Query sessions directly - RLS will automatically filter by user_id
+      // NOTE: Removed license_keys join to avoid RLS timeout issues
       const queryPromise = supabase
         .from('onboarding_sessions')
-        .select(`
-          *,
-          license_keys (
-            id,
-            key_code,
-            license_type,
-            status,
-            features,
-            enabled_plugins,
-            expires_at
-          )
-        `)
+        .select('*')
         .in('status', ['scheduled', 'pending', 'rescheduled'])
         .order('scheduled_at', { ascending: true })
       
