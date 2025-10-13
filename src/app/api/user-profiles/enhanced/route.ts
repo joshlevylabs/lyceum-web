@@ -30,7 +30,6 @@ export async function GET(request: NextRequest) {
         role,
         created_at,
         updated_at,
-        last_sign_in,
         is_active
       `)
       .eq('id', userId)
@@ -124,10 +123,10 @@ export async function GET(request: NextRequest) {
     const accountCreated = new Date(profile.created_at)
     const daysSinceCreation = Math.floor((Date.now() - accountCreated.getTime()) / (1000 * 60 * 60 * 24))
     
-    // Use CentCom login time if available, otherwise fall back to web login
+    // Use CentCom login time if available (last_sign_in column doesn't exist in user_profiles)
     const lastSignIn = lastCentcomLogin?.created_at 
       ? new Date(lastCentcomLogin.created_at) 
-      : (profile.last_sign_in ? new Date(profile.last_sign_in) : null)
+      : null
     const daysSinceLastSignIn = lastSignIn ? Math.floor((Date.now() - lastSignIn.getTime()) / (1000 * 60 * 60 * 24)) : null
 
     // Build enhanced profile data
@@ -146,10 +145,10 @@ export async function GET(request: NextRequest) {
       // Dates and timing
       created_at: profile.created_at,
       updated_at: profile.updated_at,
-      last_sign_in: lastSignIn ? lastSignIn.toISOString() : profile.last_sign_in,
+      last_sign_in: lastSignIn ? lastSignIn.toISOString() : null,
       last_centcom_login: lastCentcomLogin?.created_at || null,
-      last_web_login: profile.last_sign_in,
-      login_source: lastCentcomLogin?.created_at ? 'centcom' : 'web',
+      last_web_login: null, // last_sign_in column doesn't exist in user_profiles
+      login_source: lastCentcomLogin?.created_at ? 'centcom' : 'unknown',
       days_since_creation: daysSinceCreation,
       days_since_last_sign_in: daysSinceLastSignIn,
       
