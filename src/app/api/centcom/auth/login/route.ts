@@ -152,8 +152,13 @@ export async function OPTIONS(req: NextRequest) {
 // Helper function: Get user profile with license info
 async function getUserProfile(supabase: any, userId: string) {
   try {
-    // Query user profile and license information
-    const { data: profile, error: profileError } = await supabase
+    // IMPORTANT: Use service role key to bypass RLS and get authoritative role data
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co'
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4'
+    const serviceSupabase = createClient(supabaseUrl, serviceKey)
+
+    // Query user profile and license information using service role
+    const { data: profile, error: profileError } = await serviceSupabase
       .from('user_profiles')
       .select(`
         username,
@@ -177,8 +182,8 @@ async function getUserProfile(supabase: any, userId: string) {
       }
     }
 
-    // Get user licenses - prioritize CentCom enterprise license
-    const { data: licenses } = await supabase
+    // Get user licenses - prioritize CentCom enterprise license (using service role)
+    const { data: licenses } = await serviceSupabase
       .from('licenses')
       .select('license_type, status, key_code')
       .eq('user_id', userId)
@@ -195,9 +200,12 @@ async function getUserProfile(supabase: any, userId: string) {
     const detectedLicenseType = activeLicense?.license_type || 'trial'
     console.log('🎫 Selected license:', activeLicense?.key_code || 'none', 'type:', detectedLicenseType)
 
+    const userRoles = profile.role ? [profile.role] : ['user']
+    console.log('🔐 SECURITY: Authoritative role from database:', profile.role, '→ roles array:', userRoles)
+
     return {
       username: profile.username,
-      roles: profile.role ? [profile.role] : ['user'],
+      roles: userRoles,
       license_type: detectedLicenseType,
       security_clearance: 'internal', // Default for now
       organization: profile.company
