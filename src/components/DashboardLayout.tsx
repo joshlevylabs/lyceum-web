@@ -28,11 +28,11 @@ import clsx from 'clsx'
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'Test Data', href: '/test-data', icon: TableCellsIcon },
-  { name: 'Data Visualizer', href: '/data-visualizer', icon: ChartBarIcon },
+  // { name: 'Data Visualizer', href: '/data-visualizer', icon: ChartBarIcon }, // TODO: Create route to fix 404 errors
   { name: 'Analytics Studio', href: '/analytics-studio', icon: PresentationChartLineIcon },
   { name: 'Groups', href: '/groups', icon: UserGroupIcon },
-  { name: 'Centcom Assets', href: '/assets', icon: CubeIcon },
-  { name: 'Sequencer', href: '/sequencer', icon: PlayIcon },
+  // { name: 'Centcom Assets', href: '/assets', icon: CubeIcon }, // TODO: Create route to fix 404 errors
+  // { name: 'Sequencer', href: '/sequencer', icon: PlayIcon }, // TODO: Create route to fix 404 errors
   { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
 ]
 
