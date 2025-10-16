@@ -163,7 +163,6 @@ async function getUserProfile(supabase: any, userId: string) {
       .select(`
         username,
         full_name,
-        company,
         role,
         is_active
       `)
@@ -208,7 +207,7 @@ async function getUserProfile(supabase: any, userId: string) {
       roles: userRoles,
       license_type: detectedLicenseType,
       security_clearance: 'internal', // Default for now
-      organization: profile.company
+      organization: null // Company column doesn't exist
     }
 
   } catch (error) {
