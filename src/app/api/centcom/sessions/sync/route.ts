@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getUserIdFromToken } from '@/lib/auth'
 
 // Interface matching CentCom's session sync format
 interface CentComSessionSyncRequest {
-  user_id: string
   session_data: {
     session_id: string                    // CentCom's session ID
     status: 'active' | 'idle' | 'terminated'
@@ -59,14 +59,33 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body: CentComSessionSyncRequest = await request.json()
-    console.log('🔄 CentCom session sync received:', JSON.stringify(body, null, 2))
-
-    // Validate required fields
-    if (!body.user_id || !body.session_data?.session_id) {
+    // Validate JWT token first
+    const authHeader = request.headers.get('Authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json({
         success: false,
-        error: 'Missing required fields: user_id and session_data.session_id'
+        error: 'Unauthorized - Missing or invalid Authorization header'
+      }, { status: 401, headers })
+    }
+
+    const token = authHeader.substring(7)
+    const userId = getUserIdFromToken(token)
+
+    if (!userId) {
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid token'
+      }, { status: 401, headers })
+    }
+
+    const body: CentComSessionSyncRequest = await request.json()
+    console.log('🔄 CentCom session sync received for user:', userId)
+
+    // Validate required fields
+    if (!body.session_data?.session_id) {
+      return NextResponse.json({
+        success: false,
+        error: 'Missing required field: session_data.session_id'
       }, { status: 400, headers })
     }
 
@@ -74,22 +93,22 @@ export async function POST(request: NextRequest) {
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4'
     const supabase = createClient(supabaseUrl, serviceKey)
 
-    const { user_id, session_data, sync_metadata } = body
+    const { session_data, sync_metadata } = body
 
     // Try to find existing session by CentCom session ID - use proper parameterized query
     console.log('🔍 Looking for existing session with session_id:', session_data.session_id)
-    
+
     // First try to find by external_session_id (most reliable)
     const { data: existingSessions, error: findError } = await supabase
       .from('centcom_sessions')
       .select('*')
-      .eq('user_id', user_id)
+      .eq('user_id', userId)
       .eq('external_session_id', session_data.session_id)
       .order('created_at', { ascending: false })
       .limit(1)
-    
+
     console.log('🔍 Found existing sessions:', existingSessions?.length || 0)
-    
+
     // If not found by external_session_id, try by centcom_session_id as fallback
     let fallbackSessions = null
     if (!existingSessions || existingSessions.length === 0) {
@@ -97,7 +116,7 @@ export async function POST(request: NextRequest) {
       const { data: fallbackData, error: fallbackError } = await supabase
         .from('centcom_sessions')
         .select('*')
-        .eq('user_id', user_id)
+        .eq('user_id', userId)
         .eq('centcom_session_id', session_data.session_id)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -130,15 +149,15 @@ export async function POST(request: NextRequest) {
       const { data: externalDuplicates } = await supabase
         .from('centcom_sessions')
         .select('id, created_at')
-        .eq('user_id', user_id)
+        .eq('user_id', userId)
         .eq('external_session_id', session_data.session_id)
         .neq('id', existingSession.id)
-      
+
       // Find duplicates by centcom_session_id
       const { data: centcomDuplicates } = await supabase
         .from('centcom_sessions')
         .select('id, created_at')
-        .eq('user_id', user_id)
+        .eq('user_id', userId)
         .eq('centcom_session_id', session_data.session_id)
         .neq('id', existingSession.id)
       
@@ -182,7 +201,7 @@ export async function POST(request: NextRequest) {
 
     // Prepare session data in Lyceum format with enhanced heartbeat support
     const sessionData = {
-      user_id: user_id,
+      user_id: userId,
       centcom_session_id: existingSession?.centcom_session_id || `centcom-sync-${Date.now()}-${Math.random().toString(36).substring(7)}`,
       external_session_id: session_data.session_id, // Store CentCom's session ID
       created_at: session_data.created_at,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { getUserIdFromToken } from '@/lib/auth'
 
 // Initialize Supabase client for server-side operations
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co'
@@ -10,8 +11,8 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey)
 export async function GET(request: NextRequest) {
   try {
     console.log('User onboarding sessions API - Starting request...')
-    
-    // Get user ID from the authorization header or session
+
+    // Get user ID from the authorization header
     const authHeader = request.headers.get('authorization')
     if (!authHeader) {
       console.log('No authorization header found')
@@ -20,16 +21,15 @@ export async function GET(request: NextRequest) {
 
     // Extract the JWT token
     const token = authHeader.replace('Bearer ', '')
-    
-    // Verify the user using the token
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    
-    if (authError || !user) {
-      console.log('Auth error:', authError)
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    // Verify the Lyceum JWT token
+    const userId = getUserIdFromToken(token)
+
+    if (!userId) {
+      console.log('Invalid token')
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const userId = user.id
     console.log('Fetching onboarding sessions for user:', userId)
 
     // Fetch user's onboarding sessions (simplified query to avoid foreign key issues)
@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     console.log('User onboarding session update API - Starting request...')
-    
+
     // Get user ID from the authorization header
     const authHeader = request.headers.get('authorization')
     if (!authHeader) {
@@ -140,14 +140,12 @@ export async function PUT(request: NextRequest) {
     }
 
     const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    
-    if (authError || !user) {
-      console.log('Auth error:', authError)
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const userId = getUserIdFromToken(token)
 
-    const userId = user.id
+    if (!userId) {
+      console.log('Invalid token')
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
     const body = await request.json()
     const { session_id, scheduled_at, duration_minutes } = body
 
@@ -203,7 +201,7 @@ export async function PUT(request: NextRequest) {
     }
 
     console.log('Successfully updated session:', session_id)
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: 'Session updated successfully',
       session: data
     })
@@ -215,4 +213,27 @@ export async function PUT(request: NextRequest) {
       { status: 500 }
     )
   }
+}
+
+/**
+ * Handle CORS preflight requests
+ */
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  const allowedOrigins = [
+    'http://localhost:3003',
+    'http://localhost:3594',
+    'tauri://localhost',
+    'https://centcom.thelyceum.io'
+  ];
+
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': allowedOrigins.includes(origin || '') ? origin! : '*',
+      'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
+    },
+  });
 }
