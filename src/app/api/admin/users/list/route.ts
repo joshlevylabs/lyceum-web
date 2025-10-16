@@ -11,12 +11,12 @@ export async function GET(request: NextRequest) {
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4'
     const supabase = createClient(supabaseUrl, serviceKey)
 
-    // Get all user profiles
+    // Get all user profiles with user_key
     const { data: users, error } = await supabase
       .from('user_profiles')
-      .select('id, email, full_name, username, role, is_active')
+      .select('id, email, full_name, username, role, is_active, user_key, created_at')
       .eq('is_active', true)
-      .order('full_name', { ascending: true, nullsFirst: false })
+      .order('created_at', { ascending: true })
 
     if (error) {
       console.error('Error fetching users:', error)

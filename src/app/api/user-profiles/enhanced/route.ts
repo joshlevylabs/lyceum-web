@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
       .from('user_profiles')
       .select(`
         id,
+        user_key,
         email,
         username,
         full_name,
@@ -133,6 +134,7 @@ export async function GET(request: NextRequest) {
     const enhancedProfile = {
       // Basic profile info
       id: profile.id,
+      user_key: profile.user_key,
       email: profile.email,
       username: profile.username,
       full_name: profile.full_name,

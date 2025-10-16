@@ -27,19 +27,11 @@ import {
   EyeSlashIcon
 } from '@heroicons/react/24/outline'
 
-// Helper function to generate stable user keys
-async function generateStableUserKeys(users: User[]): Promise<User[]> {
-  // Sort users by creation date to ensure consistent ordering
-  const sortedUsers = users.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-  
-  return sortedUsers.map((user, index) => ({
-    ...user,
-    user_key: `USER-${index + 1}`
-  }))
-}
+// User keys are now stored persistently in the database, no need for client-side generation
 
 interface User {
   id: string
+  user_key?: string
   email: string
   username: string
   full_name: string
@@ -189,9 +181,7 @@ export default function UserManagement() {
       if (!res.ok) throw new Error(json.error || 'Failed to load users')
 
       let data: User[] = json.users || []
-
-      // Generate stable user keys based on creation order
-      data = await generateStableUserKeys(data)
+      // User keys are now retrieved directly from the database
 
       if (filterRole !== 'all') data = data.filter(u => u.role === filterRole)
       if (filterStatus !== 'all') data = data.filter(u => filterStatus === 'active' ? u.is_active : !u.is_active)
