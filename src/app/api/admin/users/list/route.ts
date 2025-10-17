@@ -29,26 +29,66 @@ export async function GET(request: NextRequest) {
     // Fetch detailed license information for each user
     const usersWithLicenses = await Promise.all(
       (users || []).map(async (user) => {
-        // Get all licenses for this user with detailed info
-        const { data: licenses, error: licensesError } = await supabase
+        // Try multiple possible foreign key column names
+        // First try: user_id
+        let { data: licenses, error: licensesError } = await supabase
           .from('license_keys')
-          .select('id, key_code, license_type, status, category, expires_at')
+          .select('*')
           .eq('user_id', user.id)
+
+        // If error or no results, try: assigned_to
+        if (licensesError || !licenses || licenses.length === 0) {
+          const result = await supabase
+            .from('license_keys')
+            .select('*')
+            .eq('assigned_to', user.id)
+
+          if (!result.error && result.data && result.data.length > 0) {
+            licenses = result.data
+            licensesError = null
+          }
+        }
+
+        // If still no results, try: assigned_to_user_id
+        if (!licenses || licenses.length === 0) {
+          const result = await supabase
+            .from('license_keys')
+            .select('*')
+            .eq('assigned_to_user_id', user.id)
+
+          if (!result.error && result.data && result.data.length > 0) {
+            licenses = result.data
+            licensesError = null
+          }
+        }
 
         const userLicenses = licensesError ? [] : (licenses || [])
 
-        // Count licenses by category
-        const centcomLicenses = userLicenses.filter(l =>
-          l.category?.toLowerCase().includes('centcom') ||
-          l.category?.toLowerCase().includes('app')
-        )
-        const pluginLicenses = userLicenses.filter(l =>
-          l.category?.toLowerCase().includes('plugin')
-        )
+        // Count licenses by category (check multiple possible field names)
+        const centcomLicenses = userLicenses.filter(l => {
+          const category = l.category || l.license_category || ''
+          const licensetype = l.license_type || ''
+          const keyCode = l.key_code || ''
+
+          return category.toLowerCase().includes('centcom') ||
+                 category.toLowerCase().includes('app') ||
+                 licensetype.toLowerCase().includes('centcom') ||
+                 keyCode.toLowerCase().includes('centcom')
+        })
+
+        const pluginLicenses = userLicenses.filter(l => {
+          const category = l.category || l.license_category || ''
+          const licensetype = l.license_type || ''
+          const keyCode = l.key_code || ''
+
+          return category.toLowerCase().includes('plugin') ||
+                 licensetype.toLowerCase().includes('plugin') ||
+                 keyCode.toLowerCase().includes('plugin')
+        })
 
         // Count by status
         const activeLicenses = userLicenses.filter(l => l.status === 'active')
-        const trialLicenses = userLicenses.filter(l => l.status === 'trial')
+        const trialLicenses = userLicenses.filter(l => l.status === 'trial' || l.license_type === 'trial')
         const expiredLicenses = userLicenses.filter(l => l.status === 'expired')
 
         return {
