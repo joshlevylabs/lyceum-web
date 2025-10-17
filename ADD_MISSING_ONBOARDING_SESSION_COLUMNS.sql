@@ -146,6 +146,44 @@ BEGIN
   END IF;
 END $$;
 
+-- Add is_mandatory column if missing
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'onboarding_sessions'
+    AND column_name = 'is_mandatory'
+  ) THEN
+    ALTER TABLE public.onboarding_sessions
+    ADD COLUMN is_mandatory BOOLEAN DEFAULT FALSE;
+
+    RAISE NOTICE '✅ Added is_mandatory column';
+  ELSE
+    RAISE NOTICE '⚠️  is_mandatory column already exists';
+  END IF;
+END $$;
+
+-- Add meeting_link column if missing
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'onboarding_sessions'
+    AND column_name = 'meeting_link'
+  ) THEN
+    ALTER TABLE public.onboarding_sessions
+    ADD COLUMN meeting_link TEXT;
+
+    RAISE NOTICE '✅ Added meeting_link column';
+  ELSE
+    RAISE NOTICE '⚠️  meeting_link column already exists';
+  END IF;
+END $$;
+
 -- Verify all columns were added
 SELECT column_name, data_type, is_nullable
 FROM information_schema.columns
