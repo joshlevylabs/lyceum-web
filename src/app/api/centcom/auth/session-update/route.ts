@@ -82,8 +82,14 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Return detailed error for debugging
       return NextResponse.json(
-        { success: false, error: 'Failed to update session' },
+        {
+          success: false,
+          error: 'Failed to update session',
+          details: updateError.message,
+          code: updateError.code
+        },
         { status: 500 }
       );
     }
