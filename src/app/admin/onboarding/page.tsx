@@ -21,6 +21,15 @@ import {
   ChevronRightIcon
 } from '@heroicons/react/24/outline'
 
+interface License {
+  id: string
+  key_code: string
+  license_type: string
+  status: string
+  category: string
+  expires_at?: string
+}
+
 interface User {
   id: string
   email: string
@@ -29,6 +38,18 @@ interface User {
   created_at: string
   user_key?: string
   license_count?: number
+  licenses?: License[]
+  license_summary?: {
+    total: number
+    centcom: number
+    plugin: number
+    active: number
+    trial: number
+    expired: number
+    has_licenses: boolean
+    has_centcom: boolean
+    has_plugin: boolean
+  }
 }
 
 interface OnboardingSession {
@@ -161,6 +182,15 @@ export default function AdminOnboardingManagement() {
     scheduled_at: '',
     assigned_admin_id: user?.id || '',
     is_custom: false
+  })
+
+  // User search and filter state
+  const [userSearchTerm, setUserSearchTerm] = useState('')
+  const [userFilters, setUserFilters] = useState({
+    hasLicenses: false,
+    hasCentcom: false,
+    hasPlugin: false,
+    licenseStatus: 'all' as 'all' | 'active' | 'trial' | 'expired'
   })
 
   // License details modal state
@@ -473,15 +503,63 @@ export default function AdminOnboardingManagement() {
     }
   }
 
+  // Filter and search users
+  const filteredUsers = users.filter(user => {
+    // Search filter
+    if (userSearchTerm) {
+      const searchLower = userSearchTerm.toLowerCase()
+      const matchesSearch =
+        user.full_name?.toLowerCase().includes(searchLower) ||
+        user.email?.toLowerCase().includes(searchLower) ||
+        user.user_key?.toLowerCase().includes(searchLower) ||
+        user.company?.toLowerCase().includes(searchLower)
+
+      if (!matchesSearch) return false
+    }
+
+    // License filters
+    if (userFilters.hasLicenses && !user.license_summary?.has_licenses) {
+      return false
+    }
+
+    if (userFilters.hasCentcom && !user.license_summary?.has_centcom) {
+      return false
+    }
+
+    if (userFilters.hasPlugin && !user.license_summary?.has_plugin) {
+      return false
+    }
+
+    // License status filter
+    if (userFilters.licenseStatus !== 'all') {
+      const statusKey = userFilters.licenseStatus as keyof typeof user.license_summary
+      if (!user.license_summary || user.license_summary[statusKey] === 0) {
+        return false
+      }
+    }
+
+    return true
+  })
+
   const handleUserChange = (newUserId: string) => {
     setCreateSessionForm(prev => ({
       ...prev,
       user_id: newUserId,
       license_key_id: '' // Reset license selection when user changes
     }))
-    
+
     // Fetch licenses for the new user
     fetchUserLicenses(newUserId)
+  }
+
+  const resetFilters = () => {
+    setUserSearchTerm('')
+    setUserFilters({
+      hasLicenses: false,
+      hasCentcom: false,
+      hasPlugin: false,
+      licenseStatus: 'all'
+    })
   }
 
   const openLicenseDetailsModal = (userLicenses: any[], userName: string) => {
@@ -1483,35 +1561,153 @@ export default function AdminOnboardingManagement() {
             <h3 className="text-lg font-medium text-gray-900 mb-4">Create Onboarding Session</h3>
             
             <div className="space-y-4">
-              {/* User Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">User</label>
-                <select
-                  value={createSessionForm.user_id}
-                  onChange={(e) => handleUserChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                >
-                  <option value="">Select a user...</option>
-                  {users.map(user => {
-                    const displayName = user.full_name || user.email?.split('@')[0] || 'Unknown'
-                    const userKey = user.user_key || 'No Key'
-                    const licenseInfo = user.license_count !== undefined ? `${user.license_count} license${user.license_count !== 1 ? 's' : ''}` : 'No licenses'
+              {/* User Selection with Search and Filters */}
+              <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                <label className="block text-sm font-semibold text-gray-900 mb-3">Select User</label>
 
-                    return (
-                      <option key={`select-${user.id}`} value={user.id}>
-                        {`${displayName} | ${user.email} | ${userKey} | ${licenseInfo}`}
-                      </option>
-                    )
-                  })}
-                </select>
+                {/* Search Bar */}
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    placeholder="Search by name, email, user key, or company..."
+                    value={userSearchTerm}
+                    onChange={(e) => setUserSearchTerm(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900 placeholder-gray-500"
+                  />
+                </div>
+
+                {/* Filters */}
+                <div className="mb-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-700">Filters:</span>
+                    <button
+                      onClick={resetFilters}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Reset All
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Has Licenses Filter */}
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={userFilters.hasLicenses}
+                        onChange={(e) => setUserFilters(prev => ({ ...prev, hasLicenses: e.target.checked }))}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-xs text-gray-900">Has Licenses</span>
+                    </label>
+
+                    {/* Has Centcom Filter */}
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={userFilters.hasCentcom}
+                        onChange={(e) => setUserFilters(prev => ({ ...prev, hasCentcom: e.target.checked }))}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-xs text-gray-900">Has Centcom</span>
+                    </label>
+
+                    {/* Has Plugin Filter */}
+                    <label className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={userFilters.hasPlugin}
+                        onChange={(e) => setUserFilters(prev => ({ ...prev, hasPlugin: e.target.checked }))}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-xs text-gray-900">Has Plugin</span>
+                    </label>
+
+                    {/* License Status Filter */}
+                    <div>
+                      <select
+                        value={userFilters.licenseStatus}
+                        onChange={(e) => setUserFilters(prev => ({ ...prev, licenseStatus: e.target.value as any }))}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="all">All Statuses</option>
+                        <option value="active">Active Only</option>
+                        <option value="trial">Trial Only</option>
+                        <option value="expired">Expired Only</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* User Dropdown */}
+                <div>
+                  <select
+                    value={createSessionForm.user_id}
+                    onChange={(e) => handleUserChange(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm text-gray-900 bg-white"
+                    size={8}
+                  >
+                    <option value="" className="text-gray-500">Select a user...</option>
+                    {filteredUsers.map(user => {
+                      const displayName = user.full_name || user.email?.split('@')[0] || 'Unknown'
+                      const userKey = user.user_key || 'No Key'
+                      const summary = user.license_summary
+                      const licenseInfo = summary
+                        ? `${summary.total} total (C:${summary.centcom} P:${summary.plugin} A:${summary.active})`
+                        : 'No licenses'
+
+                      return (
+                        <option key={`select-${user.id}`} value={user.id} className="py-1">
+                          {`${displayName} | ${user.email} | ${userKey} | ${licenseInfo}`}
+                        </option>
+                      )
+                    })}
+                  </select>
+                  <div className="mt-1 text-xs text-gray-600">
+                    Showing {filteredUsers.length} of {users.length} users
+                  </div>
+                </div>
+
+                {/* Selected User Details */}
                 {createSessionForm.user_id && users.find(u => u.id === createSessionForm.user_id) && (
-                  <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
-                    <div className="text-xs text-blue-800">
-                      <div><span className="font-medium">Selected User:</span> {users.find(u => u.id === createSessionForm.user_id)?.full_name || 'N/A'}</div>
-                      <div><span className="font-medium">Email:</span> {users.find(u => u.id === createSessionForm.user_id)?.email}</div>
-                      <div><span className="font-medium">User Key:</span> {users.find(u => u.id === createSessionForm.user_id)?.user_key || 'Not assigned'}</div>
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="text-xs text-gray-900 space-y-1">
+                      <div className="font-semibold text-blue-900 mb-2">Selected User Details</div>
+                      <div><span className="font-medium text-gray-700">Name:</span> <span className="text-gray-900">{users.find(u => u.id === createSessionForm.user_id)?.full_name || 'N/A'}</span></div>
+                      <div><span className="font-medium text-gray-700">Email:</span> <span className="text-gray-900">{users.find(u => u.id === createSessionForm.user_id)?.email}</span></div>
+                      <div><span className="font-medium text-gray-700">User Key:</span> <span className="text-gray-900 font-mono">{users.find(u => u.id === createSessionForm.user_id)?.user_key || 'Not assigned'}</span></div>
                       {users.find(u => u.id === createSessionForm.user_id)?.company && (
-                        <div><span className="font-medium">Company:</span> {users.find(u => u.id === createSessionForm.user_id)?.company}</div>
+                        <div><span className="font-medium text-gray-700">Company:</span> <span className="text-gray-900">{users.find(u => u.id === createSessionForm.user_id)?.company}</span></div>
+                      )}
+                      {users.find(u => u.id === createSessionForm.user_id)?.license_summary && (
+                        <div className="mt-2 pt-2 border-t border-blue-300">
+                          <div className="font-medium text-gray-700 mb-1">License Summary:</div>
+                          <div className="grid grid-cols-3 gap-2 text-xs">
+                            <div>
+                              <span className="text-gray-600">Total:</span>
+                              <span className="ml-1 font-semibold text-gray-900">{users.find(u => u.id === createSessionForm.user_id)?.license_summary?.total}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Centcom:</span>
+                              <span className="ml-1 font-semibold text-gray-900">{users.find(u => u.id === createSessionForm.user_id)?.license_summary?.centcom}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Plugin:</span>
+                              <span className="ml-1 font-semibold text-gray-900">{users.find(u => u.id === createSessionForm.user_id)?.license_summary?.plugin}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Active:</span>
+                              <span className="ml-1 font-semibold text-green-700">{users.find(u => u.id === createSessionForm.user_id)?.license_summary?.active}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Trial:</span>
+                              <span className="ml-1 font-semibold text-yellow-700">{users.find(u => u.id === createSessionForm.user_id)?.license_summary?.trial}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Expired:</span>
+                              <span className="ml-1 font-semibold text-red-700">{users.find(u => u.id === createSessionForm.user_id)?.license_summary?.expired}</span>
+                            </div>
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>

@@ -26,13 +26,30 @@ export async function GET(request: NextRequest) {
       }, { status: 500 })
     }
 
-    // Fetch license counts for each user separately
-    const usersWithLicenseCount = await Promise.all(
+    // Fetch detailed license information for each user
+    const usersWithLicenses = await Promise.all(
       (users || []).map(async (user) => {
-        const { count, error: countError } = await supabase
+        // Get all licenses for this user with detailed info
+        const { data: licenses, error: licensesError } = await supabase
           .from('license_keys')
-          .select('*', { count: 'exact', head: true })
+          .select('id, key_code, license_type, status, category, expires_at')
           .eq('user_id', user.id)
+
+        const userLicenses = licensesError ? [] : (licenses || [])
+
+        // Count licenses by category
+        const centcomLicenses = userLicenses.filter(l =>
+          l.category?.toLowerCase().includes('centcom') ||
+          l.category?.toLowerCase().includes('app')
+        )
+        const pluginLicenses = userLicenses.filter(l =>
+          l.category?.toLowerCase().includes('plugin')
+        )
+
+        // Count by status
+        const activeLicenses = userLicenses.filter(l => l.status === 'active')
+        const trialLicenses = userLicenses.filter(l => l.status === 'trial')
+        const expiredLicenses = userLicenses.filter(l => l.status === 'expired')
 
         return {
           id: user.id,
@@ -44,15 +61,27 @@ export async function GET(request: NextRequest) {
           user_key: user.user_key,
           created_at: user.created_at,
           company: user.company,
-          license_count: countError ? 0 : (count || 0)
+          license_count: userLicenses.length,
+          licenses: userLicenses,
+          license_summary: {
+            total: userLicenses.length,
+            centcom: centcomLicenses.length,
+            plugin: pluginLicenses.length,
+            active: activeLicenses.length,
+            trial: trialLicenses.length,
+            expired: expiredLicenses.length,
+            has_licenses: userLicenses.length > 0,
+            has_centcom: centcomLicenses.length > 0,
+            has_plugin: pluginLicenses.length > 0
+          }
         }
       })
     )
 
     return NextResponse.json({
       success: true,
-      users: usersWithLicenseCount,
-      count: usersWithLicenseCount.length
+      users: usersWithLicenses,
+      count: usersWithLicenses.length
     })
 
   } catch (error: any) {
