@@ -355,6 +355,44 @@ BEGIN
   END IF;
 END $$;
 
+-- Add created_at column if missing
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'onboarding_sessions'
+    AND column_name = 'created_at'
+  ) THEN
+    ALTER TABLE public.onboarding_sessions
+    ADD COLUMN created_at TIMESTAMPTZ DEFAULT NOW();
+
+    RAISE NOTICE '✅ Added created_at column';
+  ELSE
+    RAISE NOTICE '⚠️  created_at column already exists';
+  END IF;
+END $$;
+
+-- Add updated_at column if missing
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'onboarding_sessions'
+    AND column_name = 'updated_at'
+  ) THEN
+    ALTER TABLE public.onboarding_sessions
+    ADD COLUMN updated_at TIMESTAMPTZ DEFAULT NOW();
+
+    RAISE NOTICE '✅ Added updated_at column';
+  ELSE
+    RAISE NOTICE '⚠️  updated_at column already exists';
+  END IF;
+END $$;
+
 -- Verify all columns were added
 SELECT column_name, data_type, is_nullable
 FROM information_schema.columns
