@@ -508,19 +508,24 @@ export default function UserProfilePage() {
 
     setIsSaving(true)
     try {
+      const updatePayload = {
+        user_id: resolvedUserId || userId,
+        ...editFormData
+      }
+      console.log('📤 Sending update request with payload:', updatePayload)
+
       const response = await fetch('/api/admin/users/update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          user_id: userId,
-          ...editFormData
-        })
+        body: JSON.stringify(updatePayload)
       })
 
       if (!response.ok) {
-        throw new Error('Failed to update user profile')
+        const errorData = await response.json()
+        console.error('API error response:', errorData)
+        throw new Error(errorData.error || 'Failed to update user profile')
       }
 
       // Refresh user data after successful update
