@@ -184,6 +184,25 @@ BEGIN
   END IF;
 END $$;
 
+-- Add notes column if missing (session_notes field)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'onboarding_sessions'
+    AND column_name = 'notes'
+  ) THEN
+    ALTER TABLE public.onboarding_sessions
+    ADD COLUMN notes TEXT;
+
+    RAISE NOTICE '✅ Added notes column';
+  ELSE
+    RAISE NOTICE '⚠️  notes column already exists';
+  END IF;
+END $$;
+
 -- Verify all columns were added
 SELECT column_name, data_type, is_nullable
 FROM information_schema.columns
