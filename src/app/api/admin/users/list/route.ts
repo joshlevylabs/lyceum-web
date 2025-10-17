@@ -11,21 +11,10 @@ export async function GET(request: NextRequest) {
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4'
     const supabase = createClient(supabaseUrl, serviceKey)
 
-    // Get all user profiles with user_key and license count
+    // Get all user profiles with user_key (without license count for now to avoid join errors)
     const { data: users, error } = await supabase
       .from('user_profiles')
-      .select(`
-        id,
-        email,
-        full_name,
-        username,
-        role,
-        is_active,
-        user_key,
-        created_at,
-        company,
-        license_keys!user_id(id)
-      `)
+      .select('id, email, full_name, username, role, is_active, user_key, created_at, company')
       .eq('is_active', true)
       .order('created_at', { ascending: true })
 
@@ -37,19 +26,28 @@ export async function GET(request: NextRequest) {
       }, { status: 500 })
     }
 
-    // Transform the data to include license_count
-    const usersWithLicenseCount = (users || []).map(user => ({
-      id: user.id,
-      email: user.email,
-      full_name: user.full_name,
-      username: user.username,
-      role: user.role,
-      is_active: user.is_active,
-      user_key: user.user_key,
-      created_at: user.created_at,
-      company: user.company,
-      license_count: Array.isArray(user.license_keys) ? user.license_keys.length : 0
-    }))
+    // Fetch license counts for each user separately
+    const usersWithLicenseCount = await Promise.all(
+      (users || []).map(async (user) => {
+        const { count, error: countError } = await supabase
+          .from('license_keys')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+
+        return {
+          id: user.id,
+          email: user.email,
+          full_name: user.full_name,
+          username: user.username,
+          role: user.role,
+          is_active: user.is_active,
+          user_key: user.user_key,
+          created_at: user.created_at,
+          company: user.company,
+          license_count: countError ? 0 : (count || 0)
+        }
+      })
+    )
 
     return NextResponse.json({
       success: true,
