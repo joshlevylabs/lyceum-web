@@ -29,26 +29,7 @@ export async function GET(request: Request) {
     // Find local cluster usage for this user
     const { data: clusters, error: clusterError } = await supabase
       .from('local_cluster_usage')
-      .select(`
-        id,
-        user_id,
-        machine_fingerprint,
-        storage_used_gb,
-        queries_this_month,
-        clickhouse_version,
-        machine_os,
-        machine_memory_gb,
-        machine_cpu_cores,
-        last_heartbeat_at,
-        created_at,
-        license_id,
-        license_keys (
-          license_type,
-          max_storage_gb,
-          max_monthly_queries,
-          offline_grace_days
-        )
-      `)
+      .select('*')
       .eq('user_id', profiles.id)
 
     if (clusterError) {
@@ -58,6 +39,16 @@ export async function GET(request: Request) {
         details: clusterError.message
       }, { status: 500 })
     }
+
+    // Get license data separately
+    const licenseIds = [...new Set((clusters || []).map((c: any) => c.license_id))]
+    const { data: licenses } = await supabase
+      .from('license_keys')
+      .select('id, license_type, local_cluster_limits')
+      .in('id', licenseIds)
+
+    // Create lookup map for licenses
+    const licenseMap = new Map(licenses?.map(l => [l.id, l]) || [])
 
     if (!clusters || clusters.length === 0) {
       return NextResponse.json({
@@ -75,22 +66,21 @@ export async function GET(request: Request) {
     const now = new Date()
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
 
-    const clustersWithStatus = clusters.map(cluster => {
+    const clustersWithStatus = clusters.map((cluster: any) => {
       const lastHeartbeat = new Date(cluster.last_heartbeat_at)
       const isOnline = lastHeartbeat > oneHourAgo
       const hoursSinceHeartbeat = (now.getTime() - lastHeartbeat.getTime()) / (1000 * 60 * 60)
 
-      // Calculate usage percentages
-      const licenseData = Array.isArray(cluster.license_keys)
-        ? cluster.license_keys[0]
-        : cluster.license_keys
+      // Get license data from map
+      const license = licenseMap.get(cluster.license_id)
+      const limits = license?.local_cluster_limits || {}
 
-      const storagePercent = licenseData?.max_storage_gb
-        ? (cluster.storage_used_gb / licenseData.max_storage_gb) * 100
+      const storagePercent = limits.max_storage_gb
+        ? (cluster.storage_used_gb / limits.max_storage_gb) * 100
         : 0
 
-      const queryPercent = licenseData?.max_monthly_queries
-        ? (cluster.queries_this_month / licenseData.max_monthly_queries) * 100
+      const queryPercent = limits.max_monthly_queries
+        ? (cluster.queries_this_month / limits.max_monthly_queries) * 100
         : 0
 
       return {
@@ -112,13 +102,13 @@ export async function GET(request: Request) {
         },
         usage: {
           storage_used_gb: cluster.storage_used_gb,
-          storage_limit_gb: licenseData?.max_storage_gb,
+          storage_limit_gb: limits.max_storage_gb || 0,
           storage_percent: Math.round(storagePercent * 10) / 10,
           queries_this_month: cluster.queries_this_month,
-          query_limit: licenseData?.max_monthly_queries,
+          query_limit: limits.max_monthly_queries || 0,
           query_percent: Math.round(queryPercent * 10) / 10
         },
-        license_type: licenseData?.license_type,
+        license_type: license?.license_type || 'unknown',
         created_at: cluster.created_at
       }
     })
