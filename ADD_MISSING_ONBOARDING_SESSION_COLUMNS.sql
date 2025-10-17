@@ -222,6 +222,25 @@ BEGIN
   END IF;
 END $$;
 
+-- Add session_objectives column if missing
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'onboarding_sessions'
+    AND column_name = 'session_objectives'
+  ) THEN
+    ALTER TABLE public.onboarding_sessions
+    ADD COLUMN session_objectives TEXT;
+
+    RAISE NOTICE '✅ Added session_objectives column';
+  ELSE
+    RAISE NOTICE '⚠️  session_objectives column already exists';
+  END IF;
+END $$;
+
 -- Verify all columns were added
 SELECT column_name, data_type, is_nullable
 FROM information_schema.columns
