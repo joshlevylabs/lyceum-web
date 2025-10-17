@@ -27,6 +27,8 @@ interface User {
   full_name?: string
   company?: string
   created_at: string
+  user_key?: string
+  license_count?: number
 }
 
 interface OnboardingSession {
@@ -1487,15 +1489,33 @@ export default function AdminOnboardingManagement() {
                 <select
                   value={createSessionForm.user_id}
                   onChange={(e) => handleUserChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
                 >
                   <option value="">Select a user...</option>
-                  {users.map(user => (
-                    <option key={`select-${user.id}`} value={user.id}>
-                      {user.full_name || user.email}
-                    </option>
-                  ))}
+                  {users.map(user => {
+                    const displayName = user.full_name || user.email?.split('@')[0] || 'Unknown'
+                    const userKey = user.user_key || 'No Key'
+                    const licenseInfo = user.license_count !== undefined ? `${user.license_count} license${user.license_count !== 1 ? 's' : ''}` : 'No licenses'
+
+                    return (
+                      <option key={`select-${user.id}`} value={user.id}>
+                        {`${displayName} | ${user.email} | ${userKey} | ${licenseInfo}`}
+                      </option>
+                    )
+                  })}
                 </select>
+                {createSessionForm.user_id && users.find(u => u.id === createSessionForm.user_id) && (
+                  <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="text-xs text-blue-800">
+                      <div><span className="font-medium">Selected User:</span> {users.find(u => u.id === createSessionForm.user_id)?.full_name || 'N/A'}</div>
+                      <div><span className="font-medium">Email:</span> {users.find(u => u.id === createSessionForm.user_id)?.email}</div>
+                      <div><span className="font-medium">User Key:</span> {users.find(u => u.id === createSessionForm.user_id)?.user_key || 'Not assigned'}</div>
+                      {users.find(u => u.id === createSessionForm.user_id)?.company && (
+                        <div><span className="font-medium">Company:</span> {users.find(u => u.id === createSessionForm.user_id)?.company}</div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* License Selection */}
