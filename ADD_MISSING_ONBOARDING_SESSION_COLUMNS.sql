@@ -241,6 +241,120 @@ BEGIN
   END IF;
 END $$;
 
+-- Add template_id column if missing
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'onboarding_sessions'
+    AND column_name = 'template_id'
+  ) THEN
+    ALTER TABLE public.onboarding_sessions
+    ADD COLUMN template_id UUID;
+
+    RAISE NOTICE '✅ Added template_id column';
+  ELSE
+    RAISE NOTICE '⚠️  template_id column already exists';
+  END IF;
+END $$;
+
+-- Add plugin_id column if missing
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'onboarding_sessions'
+    AND column_name = 'plugin_id'
+  ) THEN
+    ALTER TABLE public.onboarding_sessions
+    ADD COLUMN plugin_id TEXT;
+
+    RAISE NOTICE '✅ Added plugin_id column';
+  ELSE
+    RAISE NOTICE '⚠️  plugin_id column already exists';
+  END IF;
+END $$;
+
+-- Add session_type column if missing
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'onboarding_sessions'
+    AND column_name = 'session_type'
+  ) THEN
+    ALTER TABLE public.onboarding_sessions
+    ADD COLUMN session_type TEXT;
+
+    RAISE NOTICE '✅ Added session_type column';
+  ELSE
+    RAISE NOTICE '⚠️  session_type column already exists';
+  END IF;
+END $$;
+
+-- Add title column if missing
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'onboarding_sessions'
+    AND column_name = 'title'
+  ) THEN
+    ALTER TABLE public.onboarding_sessions
+    ADD COLUMN title TEXT;
+
+    RAISE NOTICE '✅ Added title column';
+  ELSE
+    RAISE NOTICE '⚠️  title column already exists';
+  END IF;
+END $$;
+
+-- Add description column if missing
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'onboarding_sessions'
+    AND column_name = 'description'
+  ) THEN
+    ALTER TABLE public.onboarding_sessions
+    ADD COLUMN description TEXT;
+
+    RAISE NOTICE '✅ Added description column';
+  ELSE
+    RAISE NOTICE '⚠️  description column already exists';
+  END IF;
+END $$;
+
+-- Add duration_minutes column if missing
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'onboarding_sessions'
+    AND column_name = 'duration_minutes'
+  ) THEN
+    ALTER TABLE public.onboarding_sessions
+    ADD COLUMN duration_minutes INTEGER DEFAULT 30;
+
+    RAISE NOTICE '✅ Added duration_minutes column';
+  ELSE
+    RAISE NOTICE '⚠️  duration_minutes column already exists';
+  END IF;
+END $$;
+
 -- Verify all columns were added
 SELECT column_name, data_type, is_nullable
 FROM information_schema.columns
