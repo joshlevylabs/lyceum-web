@@ -148,7 +148,7 @@ export default function UnifiedClusterManagement() {
       // Transform CentCom clusters to match UnifiedCluster interface
       const transformedCentcomClusters: UnifiedCluster[] = (centcomData.clusters || []).map((cc: any) => ({
         id: `centcom-${cc.id}`,
-        cluster_key: cc.machine_fingerprint || `centcom-${cc.id}`,
+        cluster_key: cc.cluster_key || cc.machine_fingerprint || `centcom-${cc.id}`,
         name: `${cc.user_full_name || cc.user_email}'s Local Cluster`,
         description: `Local ClickHouse cluster (${cc.machine_os || 'Unknown OS'})`,
         architecture: 'centcom' as const,
@@ -292,6 +292,7 @@ export default function UnifiedClusterManagement() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'active': return <CheckCircleIcon className="w-5 h-5 text-green-500" />
+      case 'offline': return <XCircleIcon className="w-5 h-5 text-gray-500" />
       case 'creating': return <ArrowPathIcon className="w-5 h-5 text-blue-500 animate-spin" />
       case 'maintenance': return <ClockIcon className="w-5 h-5 text-yellow-500" />
       case 'error': return <XCircleIcon className="w-5 h-5 text-red-500" />
@@ -303,12 +304,24 @@ export default function UnifiedClusterManagement() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return 'bg-green-100 text-green-800'
+      case 'offline': return 'bg-gray-100 text-gray-800'
       case 'creating': return 'bg-blue-100 text-blue-800'
       case 'maintenance': return 'bg-yellow-100 text-yellow-800'
       case 'error': return 'bg-red-100 text-red-800'
       case 'terminated': return 'bg-gray-100 text-gray-800'
       default: return 'bg-gray-100 text-gray-800'
     }
+  }
+
+  const getTimeAgo = (dateString: string) => {
+    const now = new Date()
+    const then = new Date(dateString)
+    const seconds = Math.floor((now.getTime() - then.getTime()) / 1000)
+
+    if (seconds < 60) return `${seconds}s ago`
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
+    return `${Math.floor(seconds / 86400)}d ago`
   }
 
   const getArchitectureIcon = (architecture: string) => {
@@ -701,6 +714,11 @@ export default function UnifiedClusterManagement() {
                             {cluster.status}
                           </Badge>
                         </div>
+                        {cluster.architecture === 'centcom' && cluster.last_heartbeat_at && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            Last seen: {getTimeAgo(cluster.last_heartbeat_at)}
+                          </div>
+                        )}
                       </td>
 
                       {/* Resources */}
@@ -715,6 +733,23 @@ export default function UnifiedClusterManagement() {
                               <CpuChipIcon className="h-3 w-3 mr-1" />
                               {cluster.cpu_per_node} CPU, {cluster.memory_per_node}
                             </div>
+                          </div>
+                        ) : cluster.architecture === 'centcom' ? (
+                          <div>
+                            <div className="flex items-center text-purple-600">
+                              <Database className="h-3 w-3 mr-1" />
+                              Local ClickHouse
+                            </div>
+                            {cluster.storage_used_gb !== undefined && (
+                              <div className="text-xs text-gray-600 mt-1">
+                                {cluster.storage_used_gb.toFixed(2)} GB used
+                              </div>
+                            )}
+                            {cluster.queries_this_month !== undefined && (
+                              <div className="text-xs text-gray-600">
+                                {cluster.queries_this_month.toLocaleString()} queries/mo
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div>

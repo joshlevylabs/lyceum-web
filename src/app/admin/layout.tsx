@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { 
+import {
   HomeIcon,
   UsersIcon,
   KeyIcon,
@@ -18,7 +18,8 @@ import {
   PuzzlePieceIcon,
   ArrowLeftIcon,
   UserIcon,
-  TicketIcon
+  TicketIcon,
+  WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline'
 
 const navigation = [
@@ -26,8 +27,8 @@ const navigation = [
   { name: 'Users', href: '/admin/users', icon: UsersIcon },
   { name: 'License Keys', href: '/admin/licenses', icon: KeyIcon },
   { name: 'Plugins', href: '/admin/plugins', icon: PuzzlePieceIcon },
-  { name: 'Database Clusters', href: '/admin/clusters', icon: CircleStackIcon },
-  { name: 'CentCom Clusters', href: '/admin/centcom-clusters', icon: CircleStackIcon },
+  { name: 'All Clusters', href: '/admin/clusters', icon: CircleStackIcon },
+  { name: 'Test Cluster', href: '/admin/test-cluster', icon: WrenchScrewdriverIcon },
   { name: 'CentCom Connections', href: '/admin/centcom-connections', icon: ChartBarIcon },
   { name: 'Analytics', href: '/admin/analytics', icon: ChartBarIcon },
   { name: 'Tickets', href: '/admin/tickets', icon: TicketIcon },
