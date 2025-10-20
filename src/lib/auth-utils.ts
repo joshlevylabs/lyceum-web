@@ -64,21 +64,28 @@ export async function authenticateRequest(request: NextRequest): Promise<{ user:
         console.log('Token expired:', new Date(payload.exp * 1000), 'Current:', new Date())
         return { user: null, error: 'Token expired' }
       }
-      
-      // Check if it's a Supabase JWT with proper issuer
-      if (!payload.iss || !payload.iss.includes('supabase')) {
-        console.log('Invalid issuer:', payload.iss)
+
+      // Check if it's a valid JWT from Lyceum or Supabase
+      if (!payload.iss || (!payload.iss.includes('supabase') && payload.iss !== 'lyceum')) {
+        console.log('Invalid issuer:', payload.iss, '- Expected: supabase or lyceum')
         return { user: null, error: 'Invalid token issuer' }
       }
-      
-      // Extract user information
+
+      // For Lyceum tokens, verify audience
+      if (payload.iss === 'lyceum' && payload.aud !== 'centcom') {
+        console.log('Invalid audience for Lyceum token:', payload.aud, '- Expected: centcom')
+        return { user: null, error: 'Invalid token audience' }
+      }
+
+      // Extract user information (handle both Supabase and Lyceum token formats)
       const authUser = {
         id: payload.sub || '',
         email: payload.email || '',
-        role: payload.user_metadata?.role || payload.app_metadata?.role || 'user'
+        // Lyceum tokens have roles array, Supabase has role in metadata
+        role: payload.roles?.[0] || payload.user_metadata?.role || payload.app_metadata?.role || 'user'
       }
       
-      console.log('Auth success for user:', authUser.email, 'role:', authUser.role)
+      console.log('Auth success for user:', authUser.email, 'role:', authUser.role, 'issuer:', payload.iss)
       
       return {
         user: authUser,
