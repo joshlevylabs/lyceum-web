@@ -126,6 +126,10 @@ USING (
 );
 
 -- 12. Create function to auto-generate cluster keys
+-- Drop existing function if it exists with different signature
+DROP FUNCTION IF EXISTS generate_cluster_key();
+DROP FUNCTION IF EXISTS generate_cluster_key(UUID);
+
 CREATE OR REPLACE FUNCTION generate_cluster_key()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -148,6 +152,9 @@ FOR EACH ROW
 EXECUTE FUNCTION generate_cluster_key();
 
 -- 14. Create function to check if cluster is online (last heartbeat < 30 min)
+-- Drop existing function if it exists with different signature
+DROP FUNCTION IF EXISTS is_cluster_online(UUID);
+
 CREATE OR REPLACE FUNCTION is_cluster_online(p_cluster_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -160,6 +167,9 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 15. Create function to get aggregated usage for a user (all machines)
+-- Drop existing function if it exists with different signature
+DROP FUNCTION IF EXISTS get_user_total_local_usage(UUID);
+
 CREATE OR REPLACE FUNCTION get_user_total_local_usage(p_user_id UUID)
 RETURNS TABLE (
     total_storage_gb DECIMAL,
@@ -181,6 +191,9 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 16. Create function to auto-decommission stale clusters (>30 days offline)
+-- Drop existing function if it exists with different signature
+DROP FUNCTION IF EXISTS decommission_stale_clusters();
+
 CREATE OR REPLACE FUNCTION decommission_stale_clusters()
 RETURNS TABLE (
     decommissioned_cluster_id UUID,
