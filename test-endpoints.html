@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyceum Phase 1 Endpoint Tests</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .config {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .config input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .info { color: #2196F3; }
+        .warning { color: #ff9800; }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-badge.pending {
+            background: #e0e0e0;
+            color: #666;
+        }
+        .status-badge.running {
+            background: #2196F3;
+            color: white;
+        }
+        .status-badge.success {
+            background: #4CAF50;
+            color: white;
+        }
+        .status-badge.error {
+            background: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Lyceum Phase 1 Endpoint Tests</h1>
+
+        <div class="config">
+            <h3>Configuration</h3>
+            <input type="email" id="email" value="josh@thelyceum.com" placeholder="Email">
+            <input type="password" id="password" value="W00dpusher!!" placeholder="Password">
+            <input type="text" id="licenseKey" value="PLUGIN-ENT-2025-HQ21CIBF" placeholder="License Key">
+            <input type="text" id="baseUrl" value="https://lyceum-sable.vercel.app" placeholder="Base URL">
+        </div>
+
+        <div class="test-section">
+            <h3>Test 1: Login <span id="status1" class="status-badge pending">Pending</span></h3>
+            <button onclick="runTest1()">Run Test 1</button>
+            <button onclick="runAllTests()">Run All Tests</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2: Register Cluster <span id="status2" class="status-badge pending">Pending</span></h3>
+            <button onclick="runTest2()" id="btn2" disabled>Run Test 2</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 3: Send Heartbeat <span id="status3" class="status-badge pending">Pending</span></h3>
+            <button onclick="runTest3()" id="btn3" disabled>Run Test 3</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 4: Discover Clusters <span id="status4" class="status-badge pending">Pending</span></h3>
+            <button onclick="runTest4()" id="btn4" disabled>Run Test 4</button>
+        </div>
+
+        <h3>Output:</h3>
+        <div class="output" id="output">
+            <div class="info">Ready to run tests. Click "Run All Tests" or run tests individually.</div>
+        </div>
+    </div>
+
+    <script>
+        let accessToken = null;
+        let syncToken = null;
+        let clusterId = null;
+
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = message;
+            output.appendChild(div);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearOutput() {
+            document.getElementById('output').innerHTML = '';
+        }
+
+        function setStatus(testNum, status) {
+            const badge = document.getElementById(`status${testNum}`);
+            badge.className = `status-badge ${status}`;
+            badge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+        }
+
+        function getConfig() {
+            return {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                licenseKey: document.getElementById('licenseKey').value,
+                baseUrl: document.getElementById('baseUrl').value
+            };
+        }
+
+        async function runTest1() {
+            const config = getConfig();
+            setStatus(1, 'running');
+            log('🔐 Test 1: Login to Lyceum...', 'info');
+
+            try {
+                const response = await fetch(`${config.baseUrl}/api/centcom/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: config.email,
+                        password: config.password,
+                        client_info: {
+                            version: '1.0.0',
+                            platform: 'Web Test'
+                        }
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    log(`❌ Login failed: ${JSON.stringify(data)}`, 'error');
+                    setStatus(1, 'error');
+                    return false;
+                }
+
+                accessToken = data.session.access_token;
+
+                log('✅ Login successful!', 'success');
+                log(`User: ${data.user.email}`, 'info');
+                log(`License Type: ${data.user.license_type}`, 'info');
+                log(`Access Token: ${accessToken.substring(0, 50)}...`, 'info');
+                log('', 'info');
+                setStatus(1, 'success');
+
+                document.getElementById('btn2').disabled = false;
+                return true;
+
+            } catch (error) {
+                log(`❌ Login error: ${error.message}`, 'error');
+                setStatus(1, 'error');
+                return false;
+            }
+        }
+
+        async function runTest2() {
+            if (!accessToken) {
+                log('❌ No access token. Run Test 1 first!', 'error');
+                return false;
+            }
+
+            const config = getConfig();
+            setStatus(2, 'running');
+            log('📝 Test 2: Register Local Cluster...', 'info');
+
+            try {
+                const response = await fetch(`${config.baseUrl}/api/centcom/clusters/local/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        machine_fingerprint: 'web-test-' + Date.now(),
+                        license_key: config.licenseKey,
+                        cluster_name: 'Web Test Cluster',
+                        installation_id: crypto.randomUUID(),
+                        centcom_version: '1.0.0-webtest',
+                        system_info: {
+                            os: navigator.platform.includes('Win') ? 'Windows' :
+                                navigator.platform.includes('Mac') ? 'macOS' : 'Linux',
+                            os_version: navigator.userAgent.match(/\(([^)]+)\)/)?.[1] || 'Unknown',
+                            architecture: navigator.userAgent.includes('x64') ? 'x64' : 'x86',
+                            hostname: 'WEB-TEST-PC',
+                            cpu_cores: navigator.hardwareConcurrency || 4,
+                            memory_gb: navigator.deviceMemory || 8
+                        },
+                        clickhouse_version: '25.9.2'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    log(`❌ Registration failed: ${response.status} ${JSON.stringify(data)}`, 'error');
+                    setStatus(2, 'error');
+                    return false;
+                }
+
+                syncToken = data.sync_token;
+                clusterId = data.cluster_id;
+
+                log('✅ Cluster registered successfully!', 'success');
+                log(`Cluster ID: ${data.cluster_id}`, 'info');
+                log(`Cluster Key: ${data.cluster_key}`, 'info');
+                log(`Sync Interval: ${data.sync_interval_seconds}s`, 'info');
+                log(`Max Storage: ${data.license.max_storage_gb}GB`, 'info');
+                log(`Max Queries: ${data.license.max_monthly_queries.toLocaleString()}`, 'info');
+                log('', 'info');
+                setStatus(2, 'success');
+
+                document.getElementById('btn3').disabled = false;
+                return true;
+
+            } catch (error) {
+                log(`❌ Registration error: ${error.message}`, 'error');
+                setStatus(2, 'error');
+                return false;
+            }
+        }
+
+        async function runTest3() {
+            if (!syncToken) {
+                log('❌ No sync token. Run Test 2 first!', 'error');
+                return false;
+            }
+
+            const config = getConfig();
+            setStatus(3, 'running');
+            log('💓 Test 3: Send Heartbeat...', 'info');
+
+            try {
+                const response = await fetch(`${config.baseUrl}/api/centcom/clusters/local/heartbeat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${syncToken}`
+                    },
+                    body: JSON.stringify({
+                        status: {
+                            is_running: true,
+                            uptime_seconds: 3600,
+                            version: '25.9.2'
+                        },
+                        usage_metrics: {
+                            storage_used_gb: 2.5,
+                            storage_bytes: 2684354560,
+                            queries_this_month: 1500,
+                            project_count: 3,
+                            measurement_count: 50000,
+                            table_count: 12
+                        },
+                        last_sync_at: new Date().toISOString()
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    log(`❌ Heartbeat failed: ${response.status} ${JSON.stringify(data)}`, 'error');
+                    setStatus(3, 'error');
+                    return false;
+                }
+
+                log('✅ Heartbeat sent successfully!', 'success');
+                log(`Cluster Status: ${data.cluster_status}`, 'info');
+                log(`Should Throttle: ${data.should_throttle}`, 'info');
+                log(`Next Heartbeat: ${data.next_heartbeat_seconds}s`, 'info');
+
+                if (data.warnings && data.warnings.length > 0) {
+                    log('⚠️  Warnings:', 'warning');
+                    data.warnings.forEach(w => {
+                        log(`  [${w.severity.toUpperCase()}] ${w.type}: ${w.message}`, 'warning');
+                    });
+                } else {
+                    log('✅ No warnings', 'success');
+                }
+
+                if (data.limits) {
+                    log(`Storage Usage: ${data.limits.storage_used_percentage.toFixed(2)}%`, 'info');
+                    log(`Queries Usage: ${data.limits.queries_used_percentage.toFixed(2)}%`, 'info');
+                }
+
+                if (data.sync_token) {
+                    log('🔄 Sync token renewed', 'info');
+                    syncToken = data.sync_token;
+                }
+
+                log('', 'info');
+                setStatus(3, 'success');
+
+                document.getElementById('btn4').disabled = false;
+                return true;
+
+            } catch (error) {
+                log(`❌ Heartbeat error: ${error.message}`, 'error');
+                setStatus(3, 'error');
+                return false;
+            }
+        }
+
+        async function runTest4() {
+            if (!accessToken) {
+                log('❌ No access token. Run Test 1 first!', 'error');
+                return false;
+            }
+
+            const config = getConfig();
+            setStatus(4, 'running');
+            log('🔍 Test 4: Discover All Clusters...', 'info');
+
+            try {
+                const response = await fetch(`${config.baseUrl}/api/centcom/clusters/discover`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    log(`❌ Discovery failed: ${response.status} ${JSON.stringify(data)}`, 'error');
+                    setStatus(4, 'error');
+                    return false;
+                }
+
+                log('✅ Discovery successful!', 'success');
+                log(`Total Clusters: ${data.total}`, 'info');
+                log(`Cloud: ${data.breakdown.cloud}`, 'info');
+                log(`Local: ${data.breakdown.local}`, 'info');
+                log('', 'info');
+
+                log('📋 Clusters:', 'info');
+                data.clusters.forEach((cluster, index) => {
+                    log(`${index + 1}. ${cluster.name} (${cluster.deployment_type})`, 'info');
+                    log(`   ID: ${cluster.id}`, 'info');
+                    log(`   Key: ${cluster.key}`, 'info');
+
+                    if (cluster.deployment_type === 'local') {
+                        log(`   Status: ${cluster.status}`, cluster.status === 'online' ? 'success' : 'warning');
+                        if (cluster.usage) {
+                            log(`   Storage: ${cluster.usage.storage_used_gb}GB`, 'info');
+                            log(`   Queries: ${cluster.usage.queries_this_month}`, 'info');
+                        }
+                    }
+                    log('', 'info');
+                });
+
+                const testCluster = data.clusters.find(c => c.id === clusterId);
+                if (testCluster) {
+                    log('✅ Found our test cluster in discovery!', 'success');
+                    log(`Name: ${testCluster.name}`, 'info');
+                    log(`Status: ${testCluster.status}`, 'info');
+                } else {
+                    log('⚠️  Test cluster not found (may take a few seconds)', 'warning');
+                }
+
+                log('', 'info');
+                log('🎉 All tests complete!', 'success');
+                setStatus(4, 'success');
+                return true;
+
+            } catch (error) {
+                log(`❌ Discovery error: ${error.message}`, 'error');
+                setStatus(4, 'error');
+                return false;
+            }
+        }
+
+        async function runAllTests() {
+            clearOutput();
+            log('🚀 Running all Phase 1 endpoint tests...', 'info');
+            log('═══════════════════════════════════════', 'info');
+            log('', 'info');
+
+            const test1Result = await runTest1();
+            if (!test1Result) return;
+
+            await new Promise(r => setTimeout(r, 1000));
+            log('═══════════════════════════════════════', 'info');
+            log('', 'info');
+
+            const test2Result = await runTest2();
+            if (!test2Result) return;
+
+            await new Promise(r => setTimeout(r, 1000));
+            log('═══════════════════════════════════════', 'info');
+            log('', 'info');
+
+            const test3Result = await runTest3();
+            if (!test3Result) return;
+
+            await new Promise(r => setTimeout(r, 1000));
+            log('═══════════════════════════════════════', 'info');
+            log('', 'info');
+
+            const test4Result = await runTest4();
+            if (!test4Result) return;
+
+            log('═══════════════════════════════════════', 'info');
+            log('✅ ALL TESTS PASSED! 🎉', 'success');
+            log('═══════════════════════════════════════', 'info');
+        }
+    </script>
+</body>
+</html>
