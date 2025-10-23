@@ -102,7 +102,11 @@ export async function GET(
         projects_count: 0,
         storage_used_gb: 0
       },
-      license_key: license.key_code || `LIC-${license.created_at ? new Date(license.created_at).getFullYear() : new Date().getFullYear()}-${String(licenseId).slice(-4).toUpperCase()}`
+      license_key: license.key_code || `LIC-${license.created_at ? new Date(license.created_at).getFullYear() : new Date().getFullYear()}-${String(licenseId).slice(-4).toUpperCase()}`,
+
+      // Local Cluster Configuration (direct columns)
+      allows_local_cluster: license.allows_local_cluster || false,
+      local_cluster_limits: license.local_cluster_limits || null
     }
 
     return NextResponse.json({
@@ -155,10 +159,18 @@ export async function PUT(
     if (updateData.max_projects !== undefined) updatePayload.max_projects = updateData.max_projects
     if (updateData.max_storage_gb !== undefined) updatePayload.max_storage_gb = updateData.max_storage_gb
     if (updateData.features) updatePayload.features = updateData.features
-    
+
     if (updateData.expires_at) {
       const expiryDate = new Date(updateData.expires_at)
       updatePayload.expires_at = expiryDate.toISOString()
+    }
+
+    // Local Cluster Configuration (direct columns)
+    if (updateData.allows_local_cluster !== undefined) {
+      updatePayload.allows_local_cluster = updateData.allows_local_cluster
+    }
+    if (updateData.local_cluster_limits !== undefined) {
+      updatePayload.local_cluster_limits = updateData.local_cluster_limits
     }
 
     // Handle enhanced fields in license_config JSONB
@@ -273,10 +285,14 @@ export async function PUT(
       
       usage_stats: {
         users_count: assignedUser ? 1 : 0,
-        projects_count: 0, 
+        projects_count: 0,
         storage_used_gb: 0
       },
-      license_key: updatedLicense.key_code || `LIC-${updatedLicense.created_at ? new Date(updatedLicense.created_at).getFullYear() : new Date().getFullYear()}-${String(licenseId).slice(-4).toUpperCase()}`
+      license_key: updatedLicense.key_code || `LIC-${updatedLicense.created_at ? new Date(updatedLicense.created_at).getFullYear() : new Date().getFullYear()}-${String(licenseId).slice(-4).toUpperCase()}`,
+
+      // Local Cluster Configuration (direct columns)
+      allows_local_cluster: updatedLicense.allows_local_cluster || false,
+      local_cluster_limits: updatedLicense.local_cluster_limits || null
     }
 
     return NextResponse.json({
