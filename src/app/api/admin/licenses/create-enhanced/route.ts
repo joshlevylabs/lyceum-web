@@ -75,10 +75,20 @@ export async function POST(request: NextRequest) {
       } : {},
       
       allowed_user_types: ['engineer', 'operator', 'analyst', 'admin'],
-      access_level: body.license_type === 'enterprise' ? 'full' : 
-                   body.license_type === 'professional' ? 'advanced' : 
+      access_level: body.license_type === 'enterprise' ? 'full' :
+                   body.license_type === 'professional' ? 'advanced' :
                    body.license_type === 'standard' ? 'standard' : 'basic',
-      
+
+      // Local Cluster Configuration
+      allows_local_cluster: body.allows_local_cluster || false,
+      local_cluster_limits: body.allows_local_cluster ? {
+        max_storage_gb: body.local_cluster_limits?.max_storage_gb || 10,
+        max_monthly_queries: body.local_cluster_limits?.max_monthly_queries || 100000,
+        max_users: body.local_cluster_limits?.max_users || 1,
+        lifecycle_tiers_enabled: body.local_cluster_limits?.lifecycle_tiers_enabled || false,
+        offline_grace_days: body.local_cluster_limits?.offline_grace_days || 7
+      } : null,
+
       restrictions: {},
       license_config: {
         created_with: 'enhanced_admin_portal_v2',
