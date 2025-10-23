@@ -941,7 +941,9 @@ export default function LicenseDetailsPage() {
                       <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                         <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Max Monthly Queries</div>
                         <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                          {(license.local_cluster_limits?.max_monthly_queries || 100000).toLocaleString()}
+                          {license.local_cluster_limits?.max_monthly_queries === -1
+                            ? 'Unlimited'
+                            : (license.local_cluster_limits?.max_monthly_queries || 100000).toLocaleString()}
                         </div>
                       </div>
                       <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
@@ -1002,19 +1004,38 @@ export default function LicenseDetailsPage() {
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Max Monthly Queries
                       </label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={editFormData.local_cluster_limits.max_monthly_queries}
-                        onChange={(e) => handleFormChange('local_cluster_limits', {
-                          ...editFormData.local_cluster_limits,
-                          max_monthly_queries: parseInt(e.target.value) || 100000
-                        })}
-                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                        placeholder="e.g., 10000000"
-                      />
+                      <div className="flex items-center space-x-3 mb-2">
+                        <input
+                          type="checkbox"
+                          id="edit-unlimited-queries"
+                          checked={editFormData.local_cluster_limits.max_monthly_queries === -1}
+                          onChange={(e) => handleFormChange('local_cluster_limits', {
+                            ...editFormData.local_cluster_limits,
+                            max_monthly_queries: e.target.checked ? -1 : 100000
+                          })}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="edit-unlimited-queries" className="text-sm text-gray-700 dark:text-gray-300">
+                          Unlimited Queries
+                        </label>
+                      </div>
+                      {editFormData.local_cluster_limits.max_monthly_queries !== -1 && (
+                        <input
+                          type="number"
+                          min="1"
+                          value={editFormData.local_cluster_limits.max_monthly_queries}
+                          onChange={(e) => handleFormChange('local_cluster_limits', {
+                            ...editFormData.local_cluster_limits,
+                            max_monthly_queries: parseInt(e.target.value) || 100000
+                          })}
+                          className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                          placeholder="e.g., 10000000"
+                        />
+                      )}
                       <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        Total queries across all clusters
+                        {editFormData.local_cluster_limits.max_monthly_queries === -1
+                          ? 'No limit on total queries'
+                          : 'Total queries across all clusters'}
                       </p>
                     </div>
 

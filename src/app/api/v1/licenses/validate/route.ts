@@ -79,6 +79,20 @@ export async function POST(req: NextRequest) {
     const features = row.features || []
     const rbac = buildRolePermissions(row.role || 'engineer', [row.plugin_id].filter(Boolean), features)
 
+    // 6) Check if license allows local cluster deployment
+    const localClusterConfig = row.allows_local_cluster ? {
+      enabled: true,
+      limits: row.local_cluster_limits || {
+        max_storage_gb: 10,
+        max_monthly_queries: 100000,
+        max_users: 1,
+        lifecycle_tiers_enabled: false,
+        offline_grace_days: 7
+      }
+    } : {
+      enabled: false
+    }
+
     return NextResponse.json({
       status: 'valid',
       message: 'License validation successful',
@@ -91,6 +105,7 @@ export async function POST(req: NextRequest) {
         created_at: row.created_at,
         created_by: row.created_by || 'license_server',
         revoked: false,
+        local_cluster: localClusterConfig
       },
       server_time: new Date().toISOString(),
       rbac,

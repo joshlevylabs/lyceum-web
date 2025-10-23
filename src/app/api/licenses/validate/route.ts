@@ -142,6 +142,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Step 9: Add local cluster configuration (if enabled)
+    if (license.allows_local_cluster) {
+      validationResult.local_cluster = {
+        enabled: true,
+        limits: license.local_cluster_limits || {
+          max_storage_gb: 10,
+          max_monthly_queries: 100000,
+          max_users: 1,
+          lifecycle_tiers_enabled: false,
+          offline_grace_days: 7
+        }
+      }
+    } else {
+      validationResult.local_cluster = {
+        enabled: false
+      }
+    }
+
     console.log('Validation successful:', validationResult)
 
     return NextResponse.json(validationResult)

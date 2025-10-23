@@ -130,7 +130,7 @@ export default function CreateEnhancedLicense() {
           allows_local_cluster: true,
           local_cluster_limits: {
             max_storage_gb: 500,
-            max_monthly_queries: 10000000,
+            max_monthly_queries: -1, // Unlimited
             max_users: -1, // Unlimited
             lifecycle_tiers_enabled: true,
             offline_grace_days: 30
@@ -871,21 +871,45 @@ export default function CreateEnhancedLicense() {
                         Max Monthly Queries
                         <span className="text-gray-500 font-normal ml-1">per license</span>
                       </label>
-                      <input
-                        type="number"
-                        min="1000"
-                        step="1000"
-                        value={formData.local_cluster_limits.max_monthly_queries}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          local_cluster_limits: {
-                            ...prev.local_cluster_limits,
-                            max_monthly_queries: parseInt(e.target.value) || 1000
-                          }
-                        }))}
-                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Total queries across all local clusters</p>
+                      <div className="flex items-center space-x-3 mb-2">
+                        <input
+                          type="checkbox"
+                          id="unlimited-queries"
+                          checked={formData.local_cluster_limits.max_monthly_queries === -1}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            local_cluster_limits: {
+                              ...prev.local_cluster_limits,
+                              max_monthly_queries: e.target.checked ? -1 : 100000
+                            }
+                          }))}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="unlimited-queries" className="text-sm text-gray-700">
+                          Unlimited Queries
+                        </label>
+                      </div>
+                      {formData.local_cluster_limits.max_monthly_queries !== -1 && (
+                        <input
+                          type="number"
+                          min="1000"
+                          step="1000"
+                          value={formData.local_cluster_limits.max_monthly_queries}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            local_cluster_limits: {
+                              ...prev.local_cluster_limits,
+                              max_monthly_queries: parseInt(e.target.value) || 1000
+                            }
+                          }))}
+                          className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        {formData.local_cluster_limits.max_monthly_queries === -1
+                          ? 'No limit on total queries'
+                          : 'Total queries across all local clusters'}
+                      </p>
                     </div>
 
                     <div>
