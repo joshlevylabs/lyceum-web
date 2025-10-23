@@ -43,11 +43,21 @@ interface EnhancedLicenseFormData {
   max_users: number
   max_projects: number
   max_storage_gb: number
-  
+
+  // Local Cluster Configuration
+  allows_local_cluster: boolean
+  local_cluster_limits: {
+    max_storage_gb: number
+    max_monthly_queries: number
+    max_users: number
+    lifecycle_tiers_enabled: boolean
+    offline_grace_days: number
+  }
+
   // Assignment
   assign_to_email: string
   expires_at: string
-  
+
   // Advanced options
   custom_key_code: string
   auto_generate_key: boolean
@@ -82,10 +92,19 @@ export default function CreateEnhancedLicense() {
     max_users: 10,
     max_projects: 50,
     max_storage_gb: 25,
-    
+
+    allows_local_cluster: false,
+    local_cluster_limits: {
+      max_storage_gb: 10,
+      max_monthly_queries: 100000,
+      max_users: 1,
+      lifecycle_tiers_enabled: false,
+      offline_grace_days: 7
+    },
+
     assign_to_email: '',
     expires_at: '',
-    
+
     custom_key_code: '',
     auto_generate_key: true
   })
@@ -94,13 +113,50 @@ export default function CreateEnhancedLicense() {
   useEffect(() => {
     const config = getLicenseTypeConfig(formData.license_type)
     if (config) {
+      // Set local cluster defaults based on license type
+      let localClusterDefaults = {
+        allows_local_cluster: false,
+        local_cluster_limits: {
+          max_storage_gb: 10,
+          max_monthly_queries: 100000,
+          max_users: 1,
+          lifecycle_tiers_enabled: false,
+          offline_grace_days: 7
+        }
+      }
+
+      if (formData.license_type === 'enterprise') {
+        localClusterDefaults = {
+          allows_local_cluster: true,
+          local_cluster_limits: {
+            max_storage_gb: 500,
+            max_monthly_queries: 10000000,
+            max_users: -1, // Unlimited
+            lifecycle_tiers_enabled: true,
+            offline_grace_days: 30
+          }
+        }
+      } else if (formData.license_type === 'professional') {
+        localClusterDefaults = {
+          allows_local_cluster: true,
+          local_cluster_limits: {
+            max_storage_gb: 100,
+            max_monthly_queries: 1000000,
+            max_users: 5,
+            lifecycle_tiers_enabled: true,
+            offline_grace_days: 14
+          }
+        }
+      }
+
       setFormData(prev => ({
         ...prev,
         max_users: config.max_users === -1 ? 999999 : config.max_users,
         max_projects: config.max_projects === -1 ? 999999 : config.max_projects,
         max_storage_gb: config.max_storage_gb === -1 ? 999999 : config.max_storage_gb,
         main_app_permissions: { ...config.default_main_app_permissions },
-        feature_configurations: { ...config.feature_configurations }
+        feature_configurations: { ...config.feature_configurations },
+        ...localClusterDefaults
       }))
     }
   }, [formData.license_type])
@@ -763,6 +819,155 @@ export default function CreateEnhancedLicense() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Local Cluster Configuration */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">Local Cluster Deployment</h3>
+                  <p className="text-sm text-gray-600">Allow users to deploy local ClickHouse clusters</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.allows_local_cluster}
+                    onChange={(e) => setFormData(prev => ({ ...prev, allows_local_cluster: e.target.checked }))}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <span className="ml-3 text-sm font-medium text-gray-900">
+                    {formData.allows_local_cluster ? 'Enabled' : 'Disabled'}
+                  </span>
+                </label>
+              </div>
+
+              {formData.allows_local_cluster && (
+                <div className="space-y-4 pt-4 border-t border-gray-200">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Max Storage (GB)
+                        <span className="text-gray-500 font-normal ml-1">per license</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={formData.local_cluster_limits.max_storage_gb}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          local_cluster_limits: {
+                            ...prev.local_cluster_limits,
+                            max_storage_gb: parseInt(e.target.value) || 1
+                          }
+                        }))}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Total storage across all local clusters</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Max Monthly Queries
+                        <span className="text-gray-500 font-normal ml-1">per license</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="1000"
+                        step="1000"
+                        value={formData.local_cluster_limits.max_monthly_queries}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          local_cluster_limits: {
+                            ...prev.local_cluster_limits,
+                            max_monthly_queries: parseInt(e.target.value) || 1000
+                          }
+                        }))}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Total queries across all local clusters</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Max Users
+                        <span className="text-gray-500 font-normal ml-1">per cluster</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="-1"
+                        value={formData.local_cluster_limits.max_users}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          local_cluster_limits: {
+                            ...prev.local_cluster_limits,
+                            max_users: parseInt(e.target.value) || 1
+                          }
+                        }))}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">-1 for unlimited users</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Offline Grace Period (days)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="90"
+                        value={formData.local_cluster_limits.offline_grace_days}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          local_cluster_limits: {
+                            ...prev.local_cluster_limits,
+                            offline_grace_days: parseInt(e.target.value) || 7
+                          }
+                        }))}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Days before offline cluster is throttled</p>
+                    </div>
+                  </div>
+
+                  <div className="pt-3">
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={formData.local_cluster_limits.lifecycle_tiers_enabled}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          local_cluster_limits: {
+                            ...prev.local_cluster_limits,
+                            lifecycle_tiers_enabled: e.target.checked
+                          }
+                        }))}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label className="text-sm font-medium text-gray-900">
+                        Enable Lifecycle Tiers (HOT/WARM/COLD)
+                      </label>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1 ml-7">
+                      Allows automatic data tiering based on age for cost optimization
+                    </p>
+                  </div>
+
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <div className="flex items-start space-x-2">
+                      <InformationCircleIcon className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm text-blue-900">
+                        <div className="font-medium">Local Cluster Limits</div>
+                        <div className="mt-1 text-blue-700">
+                          Users can deploy multiple local clusters (e.g., desktop + laptop).
+                          Limits are enforced on the <strong>aggregate</strong> across all their clusters.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-between">
