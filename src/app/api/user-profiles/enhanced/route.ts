@@ -67,8 +67,8 @@ export async function GET(request: NextRequest) {
       console.error('Error fetching CentCom login:', centcomError)
     }
 
-    // Fetch user assigned database clusters
-    const { data: clusters, error: clustersError } = await supabase
+    // Fetch user assigned cloud database clusters
+    const { data: cloudClusters, error: cloudClustersError } = await supabase
       .from('cluster_user_assignments')
       .select(`
         id,
@@ -94,8 +94,33 @@ export async function GET(request: NextRequest) {
       .eq('is_active', true)
       .order('assigned_at', { ascending: false })
 
-    if (clustersError) {
-      console.error('Error fetching clusters:', clustersError)
+    if (cloudClustersError) {
+      console.error('Error fetching cloud clusters:', cloudClustersError)
+    }
+
+    // Fetch user's local clusters
+    const { data: localClusters, error: localClustersError } = await supabase
+      .from('local_cluster_usage')
+      .select(`
+        cluster_id,
+        cluster_key,
+        cluster_name,
+        cluster_type,
+        cluster_status,
+        machine_fingerprint,
+        clickhouse_version,
+        storage_used_gb,
+        queries_this_month,
+        last_heartbeat_at,
+        created_at,
+        is_running
+      `)
+      .eq('user_id', userId)
+      .neq('cluster_status', 'decommissioned')
+      .order('created_at', { ascending: false })
+
+    if (localClustersError) {
+      console.error('Error fetching local clusters:', localClustersError)
     }
 
     // Fetch resource usage
@@ -182,36 +207,84 @@ export async function GET(request: NextRequest) {
         last_usage_update: null
       },
       
-      // Database clusters - transform assignment data to cluster data
-      database_clusters: (clusters || []).map(assignment => ({
-        id: assignment.database_clusters?.id,
-        cluster_key: assignment.database_clusters?.cluster_key,
-        cluster_name: assignment.database_clusters?.name,
-        cluster_type: assignment.database_clusters?.cluster_type,
-        status: assignment.database_clusters?.status,
-        region: assignment.database_clusters?.region,
-        storage_per_node: assignment.database_clusters?.storage_per_node,
-        cpu_per_node: assignment.database_clusters?.cpu_per_node,
-        memory_per_node: assignment.database_clusters?.memory_per_node,
-        estimated_monthly_cost: assignment.database_clusters?.estimated_monthly_cost,
-        created_at: assignment.database_clusters?.created_at,
-        // Assignment-specific info
-        assignment_id: assignment.id,
-        access_level: assignment.access_level,
-        assigned_at: assignment.assigned_at,
-        expires_at: assignment.expires_at,
-        is_active: assignment.is_active
-      })).filter(cluster => cluster.id), // Filter out any null clusters
-      
+      // Database clusters - combine cloud and local clusters
+      database_clusters: [
+        // Cloud clusters - transform assignment data
+        ...(cloudClusters || []).map(assignment => ({
+          id: assignment.database_clusters?.id,
+          cluster_key: assignment.database_clusters?.cluster_key,
+          cluster_name: assignment.database_clusters?.name,
+          cluster_type: assignment.database_clusters?.cluster_type,
+          status: assignment.database_clusters?.status,
+          region: assignment.database_clusters?.region,
+          storage_per_node: assignment.database_clusters?.storage_per_node,
+          cpu_per_node: assignment.database_clusters?.cpu_per_node,
+          memory_per_node: assignment.database_clusters?.memory_per_node,
+          estimated_monthly_cost: assignment.database_clusters?.estimated_monthly_cost,
+          created_at: assignment.database_clusters?.created_at,
+          // Assignment-specific info
+          assignment_id: assignment.id,
+          access_level: assignment.access_level,
+          assigned_at: assignment.assigned_at,
+          expires_at: assignment.expires_at,
+          is_active: assignment.is_active,
+          deployment_type: 'cloud'
+        })).filter(cluster => cluster.id),
+        // Local clusters - transform to match cloud cluster structure
+        ...(localClusters || []).map(localCluster => {
+          // Determine online status based on last heartbeat (< 30 minutes = online)
+          const lastHeartbeat = localCluster.last_heartbeat_at ? new Date(localCluster.last_heartbeat_at) : null
+          const isOnline = lastHeartbeat && ((Date.now() - lastHeartbeat.getTime()) < 30 * 60 * 1000) && localCluster.is_running
+
+          return {
+            id: localCluster.cluster_id,
+            cluster_key: localCluster.cluster_key,
+            cluster_name: localCluster.cluster_name,
+            cluster_type: 'local',
+            status: isOnline ? 'active' : 'offline',
+            region: 'local',
+            storage_per_node: `${localCluster.storage_used_gb || 0}GB`,
+            cpu_per_node: 'N/A',
+            memory_per_node: 'N/A',
+            estimated_monthly_cost: 0, // Local clusters have no cloud cost
+            created_at: localCluster.created_at,
+            // Local cluster specific info
+            assignment_id: null,
+            access_level: 'full',
+            assigned_at: localCluster.created_at,
+            expires_at: null,
+            is_active: localCluster.cluster_status !== 'decommissioned',
+            deployment_type: 'local',
+            // Additional local cluster metadata
+            machine_fingerprint: localCluster.machine_fingerprint,
+            clickhouse_version: localCluster.clickhouse_version,
+            queries_this_month: localCluster.queries_this_month,
+            last_heartbeat_at: localCluster.last_heartbeat_at,
+            is_running: localCluster.is_running
+          }
+        })
+      ],
+
       // Account statistics
       statistics: {
-        total_clusters: (clusters || []).length,
-        active_clusters: (clusters || []).filter(assignment => assignment.database_clusters?.status === 'active').length,
-        total_storage_mb: (clusters || []).reduce((sum, assignment) => {
-          const storageStr = assignment.database_clusters?.storage_per_node || '0GB';
-          const storageNum = parseInt(storageStr.replace(/[^0-9]/g, '')) || 0;
-          return sum + storageNum * 1024; // Convert GB to MB
-        }, 0),
+        total_clusters: (cloudClusters || []).length + (localClusters || []).length,
+        active_clusters: [
+          ...(cloudClusters || []).filter(assignment => assignment.database_clusters?.status === 'active'),
+          ...(localClusters || []).filter(lc => {
+            const lastHeartbeat = lc.last_heartbeat_at ? new Date(lc.last_heartbeat_at) : null
+            return lastHeartbeat && ((Date.now() - lastHeartbeat.getTime()) < 30 * 60 * 1000) && lc.is_running
+          })
+        ].length,
+        cloud_clusters: (cloudClusters || []).length,
+        local_clusters: (localClusters || []).length,
+        total_storage_mb: [
+          ...(cloudClusters || []).reduce((sum, assignment) => {
+            const storageStr = assignment.database_clusters?.storage_per_node || '0GB';
+            const storageNum = parseInt(storageStr.replace(/[^0-9]/g, '')) || 0;
+            return sum + storageNum * 1024; // Convert GB to MB
+          }, 0),
+          ...(localClusters || []).reduce((sum, lc) => sum + ((lc.storage_used_gb || 0) * 1024), 0)
+        ].reduce((a, b) => a + b, 0),
         account_age_days: daysSinceCreation,
         last_activity_days_ago: daysSinceLastSignIn
       }
