@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import jwt from 'jsonwebtoken'
+import { getLicenseTypeConfig } from '@/lib/license-types'
 
 interface CentcomAuthRequest {
   email: string
@@ -35,6 +36,19 @@ interface CentcomAuthResponse {
     expires_at: string
     permissions: string[]
   }
+  licenses?: Array<{
+    id: string
+    key_code: string
+    license_category: string
+    license_type: string
+    status: string
+    main_app_version: string
+    main_app_permissions: Record<string, boolean>
+    feature_configurations: Record<string, any>
+    usage_limits: Record<string, number>
+    license_config: Record<string, any>
+    expires_at: string | null
+  }>
   error?: string
 }
 
@@ -103,6 +117,9 @@ export async function POST(req: NextRequest) {
     // Step 4.5: Create CentCom session entry for real-time tracking
     await createCentComSessionEntry(req, supabase, authData.user.id, userProfile, app_id, client_info)
 
+    // Step 4.7: Fetch user licenses with full configuration
+    const userLicenses = await getUserLicenses(supabase, authData.user.id)
+
     // Step 5: Return authentication response
     const response: CentcomAuthResponse = {
       success: true,
@@ -119,7 +136,8 @@ export async function POST(req: NextRequest) {
         access_token: sessionToken,
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
         permissions: mapRolesToPermissions(userProfile.roles || ['user'])
-      }
+      },
+      licenses: userLicenses
     }
 
     console.log('✅ Centcom authentication successful for:', email)
@@ -573,6 +591,96 @@ function calculateRiskScore(ip: string, deviceInfo: any): number {
   
   // Cap at reasonable range (0-100)
   return Math.min(Math.max(score, 0), 100)
+}
+
+// Helper function: Get user licenses with full configuration
+async function getUserLicenses(supabase: any, userId: string) {
+  try {
+    // Use service role to fetch licenses
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co'
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4'
+    const serviceSupabase = createClient(supabaseUrl, serviceKey)
+
+    const { data: licenses, error } = await serviceSupabase
+      .from('licenses')
+      .select(`
+        id,
+        key_code,
+        license_category,
+        license_type,
+        status,
+        main_app_version,
+        main_app_permissions,
+        usage_limits,
+        license_config,
+        expires_at,
+        allows_local_cluster,
+        local_cluster_limits
+      `)
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('❌ Error fetching licenses:', error)
+      return []
+    }
+
+    if (!licenses || licenses.length === 0) {
+      console.log('⚠️ No licenses found for user:', userId)
+      return []
+    }
+
+    console.log('🎫 Found', licenses.length, 'license(s) for user')
+
+    // Build complete license structure with feature_configurations
+    return licenses.map(license => {
+      // Get base feature configurations from license type
+      const licenseTypeConfig = getLicenseTypeConfig(license.license_type)
+      const feature_configurations = licenseTypeConfig?.feature_configurations || {}
+
+      // Add local_cluster configuration to feature_configurations
+      if (license.allows_local_cluster && license.local_cluster_limits) {
+        feature_configurations.local_cluster = {
+          enabled: true,
+          max_storage_gb: license.local_cluster_limits.max_storage_gb || 10,
+          max_monthly_queries: license.local_cluster_limits.max_monthly_queries || 100000,
+          max_users: license.local_cluster_limits.max_users || 1,
+          lifecycle_tiers_enabled: license.local_cluster_limits.lifecycle_tiers_enabled || false,
+          offline_grace_days: license.local_cluster_limits.offline_grace_days || 7
+        }
+      } else {
+        feature_configurations.local_cluster = {
+          enabled: false
+        }
+      }
+
+      console.log('🎫 License', license.key_code, '- local_cluster:',
+        feature_configurations.local_cluster.enabled ? 'ENABLED' : 'DISABLED',
+        feature_configurations.local_cluster.enabled ?
+          `(${feature_configurations.local_cluster.max_storage_gb}GB, ${feature_configurations.local_cluster.max_monthly_queries === -1 ? 'Unlimited' : feature_configurations.local_cluster.max_monthly_queries} queries)` :
+          ''
+      )
+
+      return {
+        id: license.id,
+        key_code: license.key_code || 'UNKNOWN',
+        license_category: license.license_category || 'main_application',
+        license_type: license.license_type || 'trial',
+        status: license.status || 'active',
+        main_app_version: license.main_app_version || '1.0.0',
+        main_app_permissions: license.main_app_permissions || {},
+        feature_configurations,
+        usage_limits: license.usage_limits || {},
+        license_config: license.license_config || {},
+        expires_at: license.expires_at
+      }
+    })
+
+  } catch (error) {
+    console.error('❌ Error in getUserLicenses:', error)
+    return []
+  }
 }
 
 
