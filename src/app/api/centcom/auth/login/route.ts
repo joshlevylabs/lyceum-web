@@ -119,7 +119,20 @@ export async function POST(req: NextRequest) {
     await createCentComSessionEntry(req, supabase, authData.user.id, userProfile, app_id, client_info)
 
     // Step 4.7: Fetch user licenses with full configuration
-    const userLicenses = await getUserLicenses(supabase, authData.user.id)
+    console.log('🔍 About to call getUserLicenses for user:', authData.user.id)
+    let userLicenses: any[] = []
+    try {
+      userLicenses = await getUserLicenses(supabase, authData.user.id)
+      console.log('✅ getUserLicenses completed successfully, returned:', userLicenses.length, 'licenses')
+    } catch (licenseError: any) {
+      console.error('❌ CRITICAL: getUserLicenses threw an error:', licenseError)
+      console.error('❌ Error details:', {
+        message: licenseError.message,
+        stack: licenseError.stack
+      })
+      // Continue with empty array but log the error
+      userLicenses = []
+    }
 
     console.log('📦 License data prepared:', {
       count: userLicenses.length,
