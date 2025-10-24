@@ -8,7 +8,20 @@ SELECT
 FROM auth.users
 WHERE email = 'josh@thelyceum.io';
 
--- Step 2: Check direct licenses (user_id column in licenses table)
+-- Step 2A: Check license_keys table (PRIMARY METHOD - assigned_to field)
+SELECT
+  id,
+  key_code,
+  license_type,
+  status,
+  assigned_to,
+  license_config,
+  features,
+  created_at
+FROM license_keys
+WHERE assigned_to = '2c3d4747-8d67-45af-90f5-b5e9058ec246';
+
+-- Step 2B: Check licenses table (ALTERNATIVE METHOD - user_id field)
 SELECT
   id,
   key_code,
@@ -47,7 +60,22 @@ SELECT EXISTS (
    AND table_name = 'user_license_assignments'
 ) as table_exists;
 
--- Step 5: Check all licenses (to see what's in the table)
+-- Step 5A: Check all license_keys (to see what's in the table)
+SELECT
+  id,
+  key_code,
+  license_type,
+  assigned_to,
+  status,
+  CASE
+    WHEN assigned_to = '2c3d4747-8d67-45af-90f5-b5e9058ec246' THEN 'THIS USER'
+    ELSE 'other user'
+  END as user_match
+FROM license_keys
+ORDER BY created_at DESC
+LIMIT 10;
+
+-- Step 5B: Check all licenses table entries (if table exists)
 SELECT
   id,
   key_code,

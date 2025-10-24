@@ -636,8 +636,23 @@ async function getUserLicenses(supabase: any, userId: string) {
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4'
     const serviceSupabase = createClient(supabaseUrl, serviceKey)
 
-    // Method 1: Try direct user_id lookup in licenses table
-    console.log('📊 Querying licenses table with user_id:', userId)
+    // Method 0: Try license_keys table with assigned_to field (PRIMARY METHOD)
+    console.log('📊 Method 0: Querying license_keys table with assigned_to:', userId)
+    const { data: licenseKeys, error: licenseKeysError } = await serviceSupabase
+      .from('license_keys')
+      .select('*')
+      .eq('assigned_to', userId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+
+    if (licenseKeysError) {
+      console.error('❌ Error fetching license_keys:', licenseKeysError)
+    } else {
+      console.log('✅ license_keys query returned:', licenseKeys?.length || 0, 'licenses')
+    }
+
+    // Method 1: Try direct user_id lookup in licenses table (ALTERNATIVE TABLE)
+    console.log('📊 Method 1: Querying licenses table with user_id:', userId)
     const { data: directLicenses, error: directError } = await serviceSupabase
       .from('licenses')
       .select(`
@@ -697,10 +712,11 @@ async function getUserLicenses(supabase: any, userId: string) {
       console.log('✅ Assigned licenses query returned:', assignedLicenses?.length || 0, 'assignments')
     }
 
-    // Combine licenses from both sources
+    // Combine licenses from ALL three sources
     const allLicenses = [
-      ...(directLicenses || []),
-      ...(assignedLicenses || []).map(assignment => assignment.licenses).filter(Boolean)
+      ...(licenseKeys || []),  // Method 0: license_keys table
+      ...(directLicenses || []),  // Method 1: licenses table
+      ...(assignedLicenses || []).map(assignment => assignment.licenses).filter(Boolean)  // Method 2: user_license_assignments
     ]
 
     // Remove duplicates based on license id
@@ -709,6 +725,9 @@ async function getUserLicenses(supabase: any, userId: string) {
     )
 
     console.log('🎫 Total unique licenses found:', uniqueLicenses.length)
+    console.log('   - From license_keys:', licenseKeys?.length || 0)
+    console.log('   - From licenses table:', directLicenses?.length || 0)
+    console.log('   - From user_license_assignments:', assignedLicenses?.length || 0)
 
     if (uniqueLicenses.length === 0) {
       console.log('⚠️ No licenses found for user:', userId, '(checked both direct and assignment tables)')

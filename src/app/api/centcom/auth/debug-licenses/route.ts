@@ -29,7 +29,23 @@ export async function GET(req: NextRequest) {
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
     const serviceSupabase = createClient(supabaseUrl, serviceKey)
 
-    // Test 1: Direct licenses table query
+    // Test 0: license_keys table query (PRIMARY METHOD)
+    console.log('📊 Test 0: Querying license_keys table with assigned_to')
+    const { data: licenseKeys, error: licenseKeysError } = await serviceSupabase
+      .from('license_keys')
+      .select('*')
+      .eq('assigned_to', userId)
+      .eq('status', 'active')
+
+    const test0Result = {
+      success: !licenseKeysError,
+      error: licenseKeysError?.message || null,
+      count: licenseKeys?.length || 0,
+      licenses: licenseKeys || []
+    }
+    console.log('✅ Test 0 result:', test0Result.count, 'licenses from license_keys')
+
+    // Test 1: Direct licenses table query (ALTERNATIVE TABLE)
     console.log('📊 Test 1: Querying licenses table with user_id')
     const { data: directLicenses, error: directError } = await serviceSupabase
       .from('licenses')
@@ -43,7 +59,7 @@ export async function GET(req: NextRequest) {
       count: directLicenses?.length || 0,
       licenses: directLicenses || []
     }
-    console.log('✅ Test 1 result:', test1Result.count, 'licenses')
+    console.log('✅ Test 1 result:', test1Result.count, 'licenses from licenses table')
 
     // Test 2: user_license_assignments query
     console.log('📊 Test 2: Querying user_license_assignments table')
@@ -105,9 +121,10 @@ export async function GET(req: NextRequest) {
       user_id: userId,
       user_exists: test5Result.success,
       user_email: test5Result.user_email,
+      license_keys_count: test0Result.count,
       direct_licenses_count: test1Result.count,
       assigned_licenses_count: test2Result.count,
-      total_licenses_found: test1Result.count + test2Result.count,
+      total_licenses_found: test0Result.count + test1Result.count + test2Result.count,
       tables_checked: tablesData || [],
       recent_licenses_in_db: test4Result.count
     }
@@ -118,6 +135,7 @@ export async function GET(req: NextRequest) {
       success: true,
       summary,
       test_results: {
+        test0_license_keys: test0Result,
         test1_direct_licenses: test1Result,
         test2_assigned_licenses: test2Result,
         test3_tables: tablesData,
@@ -126,9 +144,11 @@ export async function GET(req: NextRequest) {
       },
       diagnosis: {
         likely_issue: summary.total_licenses_found === 0
-          ? 'No licenses found for this user in either table'
+          ? 'No licenses found for this user in ANY table (license_keys, licenses, or user_license_assignments)'
+          : summary.license_keys_count > 0
+          ? 'Licenses found in license_keys table - login endpoint should work now'
           : summary.direct_licenses_count > 0
-          ? 'Licenses found in direct table - login endpoint should work'
+          ? 'Licenses found in licenses table - login endpoint should work'
           : 'Licenses only in assignments table - login endpoint should work after fix',
         next_steps: summary.total_licenses_found === 0
           ? [
@@ -137,8 +157,8 @@ export async function GET(req: NextRequest) {
               'Check if licenses exist but with different status (not active)'
             ]
           : [
-              'Login endpoint should return licenses',
-              'Check Vercel deployment logs for errors',
+              'Login endpoint should now return licenses (fix deployed)',
+              'Check Vercel deployment logs for errors if still not working',
               'Test login endpoint directly with curl'
             ]
       }
