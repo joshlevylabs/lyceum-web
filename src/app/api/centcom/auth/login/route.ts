@@ -42,11 +42,12 @@ interface CentcomAuthResponse {
     license_category: string
     license_type: string
     status: string
-    main_app_version: string
-    main_app_permissions: Record<string, boolean>
-    feature_configurations: Record<string, any>
-    usage_limits: Record<string, number>
-    license_config: Record<string, any>
+    license_config: {
+      main_app_version: string
+      main_app_permissions: Record<string, boolean>
+      feature_configurations: Record<string, any>
+      [key: string]: any
+    }
     expires_at: string | null
   }>
   error?: string
@@ -637,30 +638,40 @@ async function getUserLicenses(supabase: any, userId: string) {
     return licenses.map(license => {
       // Get base feature configurations from license type
       const licenseTypeConfig = getLicenseTypeConfig(license.license_type)
-      const feature_configurations = licenseTypeConfig?.feature_configurations || {}
+
+      // IMPORTANT: Make a deep copy to avoid mutating the shared config object
+      const feature_configurations = JSON.parse(JSON.stringify(
+        licenseTypeConfig?.feature_configurations || {}
+      ))
 
       // Add local_cluster configuration to feature_configurations
-      if (license.allows_local_cluster && license.local_cluster_limits) {
-        feature_configurations.local_cluster = {
-          enabled: true,
-          max_storage_gb: license.local_cluster_limits.max_storage_gb || 10,
-          max_monthly_queries: license.local_cluster_limits.max_monthly_queries || 100000,
-          max_users: license.local_cluster_limits.max_users || 1,
-          lifecycle_tiers_enabled: license.local_cluster_limits.lifecycle_tiers_enabled || false,
-          offline_grace_days: license.local_cluster_limits.offline_grace_days || 7
-        }
-      } else {
-        feature_configurations.local_cluster = {
-          enabled: false
-        }
+      const local_cluster_config = license.allows_local_cluster && license.local_cluster_limits ? {
+        enabled: true,
+        max_storage_gb: license.local_cluster_limits.max_storage_gb ?? 10,
+        max_monthly_queries: license.local_cluster_limits.max_monthly_queries ?? 100000,
+        max_users: license.local_cluster_limits.max_users ?? 1,
+        lifecycle_tiers_enabled: license.local_cluster_limits.lifecycle_tiers_enabled ?? false,
+        offline_grace_days: license.local_cluster_limits.offline_grace_days ?? 7
+      } : {
+        enabled: false
       }
 
+      feature_configurations.local_cluster = local_cluster_config
+
       console.log('🎫 License', license.key_code, '- local_cluster:',
-        feature_configurations.local_cluster.enabled ? 'ENABLED' : 'DISABLED',
-        feature_configurations.local_cluster.enabled ?
-          `(${feature_configurations.local_cluster.max_storage_gb}GB, ${feature_configurations.local_cluster.max_monthly_queries === -1 ? 'Unlimited' : feature_configurations.local_cluster.max_monthly_queries} queries)` :
+        local_cluster_config.enabled ? 'ENABLED' : 'DISABLED',
+        local_cluster_config.enabled ?
+          `(${local_cluster_config.max_storage_gb}GB, ${local_cluster_config.max_monthly_queries === -1 ? 'Unlimited' : local_cluster_config.max_monthly_queries} queries, ${local_cluster_config.max_users === -1 ? 'Unlimited' : local_cluster_config.max_users} users)` :
           ''
       )
+
+      // Build license_config with nested structure as Centcom expects
+      const license_config = {
+        main_app_version: license.main_app_version || '1.0.0',
+        main_app_permissions: license.main_app_permissions || {},
+        feature_configurations,
+        ...(license.license_config || {})
+      }
 
       return {
         id: license.id,
@@ -668,11 +679,7 @@ async function getUserLicenses(supabase: any, userId: string) {
         license_category: license.license_category || 'main_application',
         license_type: license.license_type || 'trial',
         status: license.status || 'active',
-        main_app_version: license.main_app_version || '1.0.0',
-        main_app_permissions: license.main_app_permissions || {},
-        feature_configurations,
-        usage_limits: license.usage_limits || {},
-        license_config: license.license_config || {},
+        license_config,
         expires_at: license.expires_at
       }
     })
