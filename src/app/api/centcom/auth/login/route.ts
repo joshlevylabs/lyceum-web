@@ -121,6 +121,15 @@ export async function POST(req: NextRequest) {
     // Step 4.7: Fetch user licenses with full configuration
     const userLicenses = await getUserLicenses(supabase, authData.user.id)
 
+    console.log('📦 License data prepared:', {
+      count: userLicenses.length,
+      licenses: userLicenses.map(l => ({
+        key_code: l.key_code,
+        type: l.license_type,
+        has_local_cluster: !!l.license_config?.feature_configurations?.local_cluster
+      }))
+    })
+
     // Step 5: Return authentication response
     const response: CentcomAuthResponse = {
       success: true,
@@ -142,6 +151,16 @@ export async function POST(req: NextRequest) {
     }
 
     console.log('✅ Centcom authentication successful for:', email)
+    console.log('📤 Response includes licenses:', response.licenses?.length || 0)
+    if (response.licenses && response.licenses.length > 0) {
+      console.log('📤 First license structure:', JSON.stringify({
+        key_code: response.licenses[0].key_code,
+        has_license_config: !!response.licenses[0].license_config,
+        has_feature_configs: !!response.licenses[0].license_config?.feature_configurations,
+        local_cluster_enabled: response.licenses[0].license_config?.feature_configurations?.local_cluster?.enabled
+      }, null, 2))
+    }
+
     return NextResponse.json(response, { headers })
 
   } catch (error: any) {
@@ -597,12 +616,16 @@ function calculateRiskScore(ip: string, deviceInfo: any): number {
 // Helper function: Get user licenses with full configuration
 async function getUserLicenses(supabase: any, userId: string) {
   try {
+    console.log('🔍 getUserLicenses called for user:', userId)
+
     // Use service role to fetch licenses
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co'
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4'
     const serviceSupabase = createClient(supabaseUrl, serviceKey)
 
-    const { data: licenses, error } = await serviceSupabase
+    // Method 1: Try direct user_id lookup in licenses table
+    console.log('📊 Querying licenses table with user_id:', userId)
+    const { data: directLicenses, error: directError } = await serviceSupabase
       .from('licenses')
       .select(`
         id,
@@ -622,20 +645,69 @@ async function getUserLicenses(supabase: any, userId: string) {
       .eq('status', 'active')
       .order('created_at', { ascending: false })
 
-    if (error) {
-      console.error('❌ Error fetching licenses:', error)
+    if (directError) {
+      console.error('❌ Error fetching direct licenses:', directError)
+    } else {
+      console.log('✅ Direct licenses query returned:', directLicenses?.length || 0, 'licenses')
+    }
+
+    // Method 2: Try user_license_assignments relationship table
+    console.log('📊 Querying user_license_assignments table for user:', userId)
+    const { data: assignedLicenses, error: assignmentError } = await serviceSupabase
+      .from('user_license_assignments')
+      .select(`
+        id,
+        assigned_at,
+        is_primary,
+        licenses (
+          id,
+          key_code,
+          license_category,
+          license_type,
+          status,
+          main_app_version,
+          main_app_permissions,
+          usage_limits,
+          license_config,
+          expires_at,
+          allows_local_cluster,
+          local_cluster_limits
+        )
+      `)
+      .eq('user_id', userId)
+      .is('revoked_at', null)
+      .order('assigned_at', { ascending: false})
+
+    if (assignmentError) {
+      console.error('❌ Error fetching assigned licenses:', assignmentError)
+    } else {
+      console.log('✅ Assigned licenses query returned:', assignedLicenses?.length || 0, 'assignments')
+    }
+
+    // Combine licenses from both sources
+    const allLicenses = [
+      ...(directLicenses || []),
+      ...(assignedLicenses || []).map(assignment => assignment.licenses).filter(Boolean)
+    ]
+
+    // Remove duplicates based on license id
+    const uniqueLicenses = allLicenses.filter((license, index, self) =>
+      index === self.findIndex(l => l.id === license.id)
+    )
+
+    console.log('🎫 Total unique licenses found:', uniqueLicenses.length)
+
+    if (uniqueLicenses.length === 0) {
+      console.log('⚠️ No licenses found for user:', userId, '(checked both direct and assignment tables)')
       return []
     }
 
-    if (!licenses || licenses.length === 0) {
-      console.log('⚠️ No licenses found for user:', userId)
-      return []
-    }
-
-    console.log('🎫 Found', licenses.length, 'license(s) for user')
+    console.log('🎫 Processing', uniqueLicenses.length, 'license(s):',
+      uniqueLicenses.map(l => l.key_code || l.id).join(', ')
+    )
 
     // Build complete license structure with feature_configurations
-    return licenses.map(license => {
+    return uniqueLicenses.map(license => {
       // Get base feature configurations from license type
       const licenseTypeConfig = getLicenseTypeConfig(license.license_type)
 
