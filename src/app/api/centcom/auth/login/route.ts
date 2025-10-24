@@ -749,8 +749,13 @@ async function getUserLicenses(supabase: any, userId: string) {
       ))
 
       // Add local_cluster configuration to feature_configurations
-      const local_cluster_config = license.allows_local_cluster && license.local_cluster_limits ? {
-        enabled: true,
+      // Check if local_cluster_limits exists (from license_keys table or licenses table)
+      const hasLocalClusterLimits = license.local_cluster_limits &&
+        typeof license.local_cluster_limits === 'object' &&
+        Object.keys(license.local_cluster_limits).length > 0
+
+      const local_cluster_config = hasLocalClusterLimits ? {
+        enabled: license.allows_local_cluster !== false,  // Default to true if field doesn't exist
         max_storage_gb: license.local_cluster_limits.max_storage_gb ?? 10,
         max_monthly_queries: license.local_cluster_limits.max_monthly_queries ?? 100000,
         max_users: license.local_cluster_limits.max_users ?? 1,
@@ -762,6 +767,11 @@ async function getUserLicenses(supabase: any, userId: string) {
 
       feature_configurations.local_cluster = local_cluster_config
 
+      console.log('🔍 License', license.key_code, 'local_cluster_limits source:',
+        hasLocalClusterLimits ? 'FOUND' : 'NOT FOUND',
+        hasLocalClusterLimits ? JSON.stringify(license.local_cluster_limits) : 'N/A'
+      )
+
       console.log('🎫 License', license.key_code, '- local_cluster:',
         local_cluster_config.enabled ? 'ENABLED' : 'DISABLED',
         local_cluster_config.enabled ?
@@ -770,12 +780,18 @@ async function getUserLicenses(supabase: any, userId: string) {
       )
 
       // Build license_config with nested structure as Centcom expects
+      // Start with existing license_config (if any), then override with our constructed values
+      const existingConfig = license.license_config || {}
       const license_config = {
-        main_app_version: license.main_app_version || '1.0.0',
-        main_app_permissions: license.main_app_permissions || {},
-        feature_configurations,
-        ...(license.license_config || {})
+        ...existingConfig,  // Spread existing config first
+        main_app_version: license.main_app_version || existingConfig.main_app_version || '1.0.0',
+        main_app_permissions: license.main_app_permissions || existingConfig.main_app_permissions || {},
+        feature_configurations  // Our constructed feature_configurations takes precedence
       }
+
+      console.log('📦 Built license_config for', license.key_code, '- has local_cluster:',
+        !!license_config.feature_configurations?.local_cluster?.enabled
+      )
 
       return {
         id: license.id,
