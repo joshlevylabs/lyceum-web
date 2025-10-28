@@ -129,24 +129,14 @@ async function getUserLicenseType(supabase: any, userId: string): Promise<string
 
     const email = authUser.user.email
 
-    // Check Centcom licenses
-    const { data: centcomLicenses } = await supabase
-      .from('licenses')
-      .select('license_type')
-      .or(`user_id.eq.${userId},user_id.eq.${email}`)
-      .eq('status', 'active')
-
-    // Check legacy licenses
-    const { data: legacyLicenses } = await supabase
+    // Check license_keys table (only table being used)
+    const { data: licenses } = await supabase
       .from('license_keys')
       .select('license_type')
       .or(`assigned_to.eq.${userId},assigned_to.eq.${email}`)
       .eq('status', 'active')
 
-    // Combine and get best license type
-    const allLicenses = [...(centcomLicenses || []), ...(legacyLicenses || [])]
-
-    if (allLicenses.length === 0) return null
+    if (!licenses || licenses.length === 0) return null
 
     // License type priority
     const priority: Record<string, number> = {
@@ -156,7 +146,7 @@ async function getUserLicenseType(supabase: any, userId: string): Promise<string
       'trial': 1
     }
 
-    return allLicenses.reduce((best, current) => {
+    return licenses.reduce((best, current) => {
       const currentPriority = priority[current.license_type as keyof typeof priority] || 0
       const bestPriority = priority[best as keyof typeof priority] || 0
       return currentPriority > bestPriority ? current.license_type : best

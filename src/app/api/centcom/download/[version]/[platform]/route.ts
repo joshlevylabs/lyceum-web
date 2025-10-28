@@ -147,40 +147,22 @@ async function getUserLicenseType(supabase: any, userId: string): Promise<string
     const email = authUser.user.email
     console.log('📧 User email:', email)
 
-    // Check Centcom licenses
-    console.log('🔍 Checking licenses table...')
-    const { data: centcomLicenses, error: licenseError } = await supabase
-      .from('licenses')
-      .select('license_type, status, user_id')
-      .or(`user_id.eq.${userId},user_id.eq.${email}`)
-      .eq('status', 'active')
-
-    console.log('📋 Licenses table result:', {
-      count: centcomLicenses?.length || 0,
-      licenses: centcomLicenses,
-      error: licenseError?.message
-    })
-
-    // Check legacy licenses
+    // Check license_keys table (only table being used)
     console.log('🔍 Checking license_keys table...')
-    const { data: legacyLicenses, error: legacyError } = await supabase
+    const { data: licenses, error: licenseError } = await supabase
       .from('license_keys')
       .select('license_type, status, assigned_to')
       .or(`assigned_to.eq.${userId},assigned_to.eq.${email}`)
       .eq('status', 'active')
 
     console.log('📋 License_keys table result:', {
-      count: legacyLicenses?.length || 0,
-      licenses: legacyLicenses,
-      error: legacyError?.message
+      count: licenses?.length || 0,
+      licenses: licenses,
+      error: licenseError?.message
     })
 
-    // Combine and get best license type
-    const allLicenses = [...(centcomLicenses || []), ...(legacyLicenses || [])]
-    console.log('📊 Total licenses found:', allLicenses.length)
-
-    if (allLicenses.length === 0) {
-      console.error('❌ No active licenses found in either table')
+    if (!licenses || licenses.length === 0) {
+      console.error('❌ No active licenses found')
       return null
     }
 
@@ -192,7 +174,7 @@ async function getUserLicenseType(supabase: any, userId: string): Promise<string
       'trial': 1
     }
 
-    const bestLicense = allLicenses.reduce((best, current) => {
+    const bestLicense = licenses.reduce((best, current) => {
       const currentPriority = priority[current.license_type as keyof typeof priority] || 0
       const bestPriority = priority[best as keyof typeof priority] || 0
       return currentPriority > bestPriority ? current.license_type : best
