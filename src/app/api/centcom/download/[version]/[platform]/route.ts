@@ -23,13 +23,19 @@ export async function GET(
     const supabase = createClient(supabaseUrl, serviceKey)
 
     // Verify user has valid license
+    console.log('🔍 Checking license for user:', userId)
     const userLicense = await getUserLicenseType(supabase, userId)
+    console.log('📋 License lookup result:', userLicense)
+
     if (!userLicense) {
+      console.error('❌ No license found for user:', userId)
       return NextResponse.json({
         success: false,
-        error: 'No valid license found'
+        error: 'No valid license found. Please contact support to activate your license.'
       }, { status: 403 })
     }
+
+    console.log('✅ License verified:', userLicense)
 
     // Get version details
     const { data: version, error } = await supabase
@@ -127,30 +133,56 @@ async function trackDownload(supabase: any, downloadData: any) {
 
 async function getUserLicenseType(supabase: any, userId: string): Promise<string | null> {
   try {
+    console.log('👤 Getting user info for:', userId)
+
     // Get user email
-    const { data: authUser } = await supabase.auth.admin.getUserById(userId)
-    if (!authUser?.user) return null
+    const { data: authUser, error: userError } = await supabase.auth.admin.getUserById(userId)
+    console.log('📧 User lookup result:', { hasUser: !!authUser?.user, error: userError?.message })
+
+    if (!authUser?.user) {
+      console.error('❌ User not found in auth.users')
+      return null
+    }
 
     const email = authUser.user.email
+    console.log('📧 User email:', email)
 
     // Check Centcom licenses
-    const { data: centcomLicenses } = await supabase
+    console.log('🔍 Checking licenses table...')
+    const { data: centcomLicenses, error: licenseError } = await supabase
       .from('licenses')
-      .select('license_type')
+      .select('license_type, status, user_id')
       .or(`user_id.eq.${userId},user_id.eq.${email}`)
       .eq('status', 'active')
 
+    console.log('📋 Licenses table result:', {
+      count: centcomLicenses?.length || 0,
+      licenses: centcomLicenses,
+      error: licenseError?.message
+    })
+
     // Check legacy licenses
-    const { data: legacyLicenses } = await supabase
+    console.log('🔍 Checking license_keys table...')
+    const { data: legacyLicenses, error: legacyError } = await supabase
       .from('license_keys')
-      .select('license_type')
+      .select('license_type, status, assigned_to')
       .or(`assigned_to.eq.${userId},assigned_to.eq.${email}`)
       .eq('status', 'active')
 
+    console.log('📋 License_keys table result:', {
+      count: legacyLicenses?.length || 0,
+      licenses: legacyLicenses,
+      error: legacyError?.message
+    })
+
     // Combine and get best license type
     const allLicenses = [...(centcomLicenses || []), ...(legacyLicenses || [])]
+    console.log('📊 Total licenses found:', allLicenses.length)
 
-    if (allLicenses.length === 0) return null
+    if (allLicenses.length === 0) {
+      console.error('❌ No active licenses found in either table')
+      return null
+    }
 
     // License type priority
     const priority: Record<string, number> = {
@@ -160,14 +192,17 @@ async function getUserLicenseType(supabase: any, userId: string): Promise<string
       'trial': 1
     }
 
-    return allLicenses.reduce((best, current) => {
+    const bestLicense = allLicenses.reduce((best, current) => {
       const currentPriority = priority[current.license_type as keyof typeof priority] || 0
       const bestPriority = priority[best as keyof typeof priority] || 0
       return currentPriority > bestPriority ? current.license_type : best
     }, 'trial')
 
+    console.log('✅ Best license found:', bestLicense)
+    return bestLicense
+
   } catch (error) {
-    console.warn('Failed to get user license type:', error)
+    console.error('❌ Exception in getUserLicenseType:', error)
     return null
   }
 }
