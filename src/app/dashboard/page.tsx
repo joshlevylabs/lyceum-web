@@ -389,39 +389,18 @@ export default function Dashboard() {
     }
 
     try {
-      console.log('Step 1: Importing supabase...')
-      const { supabase } = await import('@/lib/supabase')
-
-      console.log('Step 2: Getting session...')
-      const { data, error: sessionError } = await supabase.auth.getSession()
-
-      console.log('Step 3: Session result:', {
-        hasData: !!data,
-        hasSession: !!data?.session,
-        hasToken: !!data?.session?.access_token,
-        error: sessionError
-      })
-
-      if (sessionError) {
-        console.error('❌ Session error:', sessionError)
-        return
-      }
-
-      if (!data?.session?.access_token) {
-        console.log('❌ No session token, skipping desktop app info fetch')
-        return
-      }
-
       // Detect user's platform
       const platform = detectPlatform()
       console.log('✅ Platform detected:', platform)
 
-      console.log('Step 4: Making API call...')
+      console.log('Step 1: Making API call without explicit auth (using cookies)...')
+      // Try making the API call without fetching session explicitly
+      // The API should use cookies to authenticate on the server side
       const response = await fetch(
         `/api/centcom/versions/latest?platform=${platform}&user_id=${user.id}`,
         {
+          credentials: 'include', // Include cookies for auth
           headers: {
-            'Authorization': `Bearer ${data.session.access_token}`,
             'Content-Type': 'application/json'
           }
         }
