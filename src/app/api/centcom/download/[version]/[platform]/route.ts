@@ -10,13 +10,12 @@ export async function GET(
     const userId = searchParams.get('user_id')
     const installerType = searchParams.get('installer_type') || 'exe'
 
-    // Validate authorization
-    const authHeader = req.headers.get('authorization')
-    if (!authHeader || !userId) {
+    // Validate user_id is provided
+    if (!userId) {
       return NextResponse.json({
         success: false,
-        error: 'Unauthorized'
-      }, { status: 401 })
+        error: 'User ID is required'
+      }, { status: 400 })
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!

@@ -5,7 +5,12 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(curl:*)",
-      "Bash(npx supabase --version)"
+      "Bash(npx supabase --version)",
+      "Bash(git restore:*)",
+      "Bash(test:*)",
+      "Read(//c/Users/joshual/Documents/Cursor/datacenter/src-tauri/target/release/bundle/msi/**)",
+      "Bash(findstr:*)",
+      "Read(//c/Users/joshual/Documents/Cursor/datacenter/src-tauri/target/release/bundle/nsis/**)"
     ],
     "deny": [],
     "ask": []

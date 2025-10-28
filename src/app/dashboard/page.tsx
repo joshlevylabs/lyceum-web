@@ -437,17 +437,11 @@ export default function Dashboard() {
     setDownloadingApp(true)
 
     try {
-      const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession()
-      if (!session?.access_token) {
-        setDownloadingApp(false)
-        return
-      }
-
       const response = await fetch(
         `/api/centcom/download/${desktopAppInfo.latestVersion}/${desktopAppInfo.platform}?user_id=${user.id}&installer_type=${installerType}`,
         {
+          credentials: 'include', // Include cookies for auth
           headers: {
-            'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json'
           }
         }
@@ -470,8 +464,8 @@ export default function Dashboard() {
       // Track download completion
       await fetch('/api/centcom/download/track', {
         method: 'POST',
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
