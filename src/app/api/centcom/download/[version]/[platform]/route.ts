@@ -37,21 +37,38 @@ export async function GET(
 
     console.log('✅ License verified:', userLicense)
 
-    // Get version details
+    // Get version details - filter by installer_type too
+    console.log('🔍 Looking for version:', {
+      app: 'centcom',
+      version: params.version,
+      platform: params.platform,
+      installerType
+    })
+
     const { data: version, error } = await supabase
       .from('application_versions')
       .select('*')
       .eq('application_name', 'centcom')
       .eq('version_number', params.version)
       .eq('platform', params.platform)
+      .eq('installer_type', installerType)
       .single()
 
+    console.log('📦 Version query result:', { found: !!version, error: error?.message })
+
     if (error || !version) {
+      console.error('❌ Version not found:', { error, params, installerType })
       return NextResponse.json({
         success: false,
-        error: 'Version not found'
+        error: `Version not found for ${params.platform} ${installerType} installer`
       }, { status: 404 })
     }
+
+    console.log('✅ Version found:', {
+      version: version.version_number,
+      installer: version.installer_type,
+      url: version.download_url
+    })
 
     // Get download URL - either from download_url (GitHub) or generate signed URL (Supabase Storage)
     let downloadUrl = version.download_url
