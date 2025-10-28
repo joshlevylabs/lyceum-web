@@ -382,14 +382,22 @@ export default function Dashboard() {
 
   // Fetch desktop app version info
   const fetchDesktopAppInfo = async () => {
-    if (!user) return
+    console.log('🎯 Fetching desktop app info...', { user: !!user })
+    if (!user) {
+      console.log('❌ No user, skipping desktop app info fetch')
+      return
+    }
 
     try {
       const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession()
-      if (!session?.access_token) return
+      if (!session?.access_token) {
+        console.log('❌ No session token, skipping desktop app info fetch')
+        return
+      }
 
       // Detect user's platform
       const platform = detectPlatform()
+      console.log('✅ Platform detected:', platform)
 
       const response = await fetch(
         `/api/centcom/versions/latest?platform=${platform}&user_id=${user.id}`,
@@ -401,8 +409,11 @@ export default function Dashboard() {
         }
       )
 
+      console.log('📡 API Response status:', response.status)
+
       if (response.ok) {
         const data = await response.json()
+        console.log('✅ Desktop app info received:', data)
         setDesktopAppInfo({
           hasApp: false, // Will be true if Centcom is installed and reports version
           currentVersion: null,
