@@ -30,6 +30,14 @@ interface DashboardStats {
   onboardingSessions: number
 }
 
+interface DesktopAppInfo {
+  hasApp: boolean
+  currentVersion: string | null
+  latestVersion: string | null
+  updateAvailable: boolean
+  platform: string
+}
+
 interface OnboardingSession {
   id: string
   title: string
@@ -91,6 +99,9 @@ export default function Dashboard() {
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [showSessionDetails, setShowSessionDetails] = useState(false)
   const [showCreateTicketModal, setShowCreateTicketModal] = useState(false)
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
+  const [downloadingApp, setDownloadingApp] = useState(false)
+  const [desktopAppInfo, setDesktopAppInfo] = useState<DesktopAppInfo | null>(null)
   const [activeTab, setActiveTab] = useState<'onboarding' | 'posts' | 'tickets'>('onboarding')
   const [scheduleForm, setScheduleForm] = useState({
     scheduled_at: '',
@@ -356,12 +367,122 @@ export default function Dashboard() {
     setShowSessionDetails(true)
   }
 
+  // Helper function to detect platform
+  const detectPlatform = (): string => {
+    if (typeof window === 'undefined') return 'windows'
+
+    const userAgent = window.navigator.userAgent.toLowerCase()
+
+    if (userAgent.includes('win')) return 'windows'
+    if (userAgent.includes('mac')) return 'macos'
+    if (userAgent.includes('linux')) return 'linux'
+
+    return 'windows' // Default fallback
+  }
+
+  // Fetch desktop app version info
+  const fetchDesktopAppInfo = async () => {
+    if (!user) return
+
+    try {
+      const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession()
+      if (!session?.access_token) return
+
+      // Detect user's platform
+      const platform = detectPlatform()
+
+      const response = await fetch(
+        `/api/centcom/versions/latest?platform=${platform}&user_id=${user.id}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+
+      if (response.ok) {
+        const data = await response.json()
+        setDesktopAppInfo({
+          hasApp: false, // Will be true if Centcom is installed and reports version
+          currentVersion: null,
+          latestVersion: data.latest_version?.version,
+          updateAvailable: data.update_available,
+          platform: platform
+        })
+      }
+    } catch (error) {
+      console.warn('Could not fetch desktop app info:', error)
+    }
+  }
+
+  // Handle download
+  const handleDownload = async (installerType: string) => {
+    if (!user || !desktopAppInfo) return
+
+    setDownloadingApp(true)
+
+    try {
+      const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession()
+      if (!session?.access_token) {
+        setDownloadingApp(false)
+        return
+      }
+
+      const response = await fetch(
+        `/api/centcom/download/${desktopAppInfo.latestVersion}/${desktopAppInfo.platform}?user_id=${user.id}&installer_type=${installerType}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to get download URL')
+      }
+
+      const data = await response.json()
+
+      // Trigger download
+      const link = document.createElement('a')
+      link.href = data.download_url
+      link.download = data.file_name
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      // Track download completion
+      await fetch('/api/centcom/download/track', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          download_id: data.download_id,
+          status: 'success'
+        })
+      })
+
+      setShowDownloadModal(false)
+
+    } catch (error) {
+      console.error('Download error:', error)
+      alert('Failed to download application. Please try again.')
+    } finally {
+      setDownloadingApp(false)
+    }
+  }
+
   // Load data when user is available
   useEffect(() => {
     if (user && !loading) {
       fetchDashboardStats()
       fetchOnboardingSessions()
       fetchTickets()
+      fetchDesktopAppInfo()
       
       // Retry after a delay if first attempt fails
       const retryTimeout = setTimeout(() => {
@@ -475,7 +596,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {/* Test Data Projects */}
           <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow ring-1 ring-gray-200 dark:ring-gray-700">
             <div className="p-5">
@@ -559,6 +680,53 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
+
+          {/* Desktop App Download */}
+          {desktopAppInfo && (
+            <div className="overflow-hidden rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 shadow ring-1 ring-indigo-400">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                    </svg>
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="truncate text-sm font-medium text-indigo-100">
+                        Desktop Application
+                      </dt>
+                      <dd className="mt-1 text-lg font-semibold text-white">
+                        {desktopAppInfo.hasApp ? (
+                          <>
+                            v{desktopAppInfo.currentVersion}
+                            {desktopAppInfo.updateAvailable && (
+                              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-400 text-yellow-900">
+                                Update Available
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          'Not Installed'
+                        )}
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <button
+                    onClick={() => setShowDownloadModal(true)}
+                    className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  >
+                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                    </svg>
+                    {desktopAppInfo.hasApp ? 'Download Update' : 'Download Centcom'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Tabs Section */}
@@ -1067,6 +1235,202 @@ export default function Dashboard() {
                   >
                     Create Ticket
                   </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Download Centcom Modal */}
+        {showDownloadModal && desktopAppInfo && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border max-w-2xl shadow-lg rounded-md bg-white dark:bg-gray-800">
+              <div className="mt-3">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                    Download {userProfile?.license_type?.includes('CENTCOM') ? 'Centcom' : 'Native Lyceum'}
+                  </h3>
+                  <button
+                    onClick={() => setShowDownloadModal(false)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <XMarkIcon className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                          Latest Version: {desktopAppInfo.latestVersion}
+                        </h3>
+                        <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
+                          <p>Platform detected: <strong className="capitalize">{desktopAppInfo.platform}</strong></p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+                      Choose your installer format:
+                    </h4>
+                    <div className="space-y-2">
+                      {desktopAppInfo.platform === 'windows' && (
+                        <>
+                          <button
+                            onClick={() => handleDownload('exe')}
+                            disabled={downloadingApp}
+                            className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                          >
+                            <div className="flex items-center">
+                              <svg className="h-8 w-8 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" />
+                              </svg>
+                              <div className="ml-3 text-left">
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                  Setup.exe (Recommended)
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  Standard Windows installer
+                                </p>
+                              </div>
+                            </div>
+                            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleDownload('msi')}
+                            disabled={downloadingApp}
+                            className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                          >
+                            <div className="flex items-center">
+                              <svg className="h-8 w-8 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" />
+                              </svg>
+                              <div className="ml-3 text-left">
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                  Setup.msi
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  For enterprise deployment
+                                </p>
+                              </div>
+                            </div>
+                            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                          </button>
+                        </>
+                      )}
+                      {desktopAppInfo.platform === 'macos' && (
+                        <button
+                          onClick={() => handleDownload('dmg')}
+                          disabled={downloadingApp}
+                          className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                        >
+                          <div className="flex items-center">
+                            <svg className="h-8 w-8 text-gray-700" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+                            </svg>
+                            <div className="ml-3 text-left">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                Disk Image (.dmg)
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Standard macOS installer
+                              </p>
+                            </div>
+                          </div>
+                          <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                        </button>
+                      )}
+                      {desktopAppInfo.platform === 'linux' && (
+                        <>
+                          <button
+                            onClick={() => handleDownload('AppImage')}
+                            disabled={downloadingApp}
+                            className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                          >
+                            <div className="flex items-center">
+                              <svg className="h-8 w-8 text-orange-600" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.84-.41 1.684-.287 2.489a6.372 6.372 0 002.716 4.521c.885.584 1.249.584 2.716.584 1.092 0 2.716-.584 2.716-2.489 0-1.467.584-2.716 1.467-2.716 1.467 0 2.716 1.467 2.716 2.716 0 1.905 1.624 2.489 2.716 2.489 1.467 0 1.831 0 2.716-.584a6.372 6.372 0 002.716-4.521c.123-.805-.009-1.649-.287-2.489-.589-1.771-1.831-3.47-2.716-4.521-.75-1.067-.974-1.928-1.05-3.02-.065-1.491 1.056-5.965-3.17-6.298-.165-.013-.325-.021-.48-.021z" />
+                              </svg>
+                              <div className="ml-3 text-left">
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                  AppImage
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  Universal Linux package
+                                </p>
+                              </div>
+                            </div>
+                            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleDownload('deb')}
+                            disabled={downloadingApp}
+                            className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                          >
+                            <div className="flex items-center">
+                              <svg className="h-8 w-8 text-red-600" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.84-.41 1.684-.287 2.489a6.372 6.372 0 002.716 4.521c.885.584 1.249.584 2.716.584 1.092 0 2.716-.584 2.716-2.489 0-1.467.584-2.716 1.467-2.716 1.467 0 2.716 1.467 2.716 2.716 0 1.905 1.624 2.489 2.716 2.489 1.467 0 1.831 0 2.716-.584a6.372 6.372 0 002.716-4.521c.123-.805-.009-1.649-.287-2.489-.589-1.771-1.831-3.47-2.716-4.521-.75-1.067-.974-1.928-1.05-3.02-.065-1.491 1.056-5.965-3.17-6.298-.165-.013-.325-.021-.48-.021z" />
+                              </svg>
+                              <div className="ml-3 text-left">
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                  Debian Package (.deb)
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  For Debian/Ubuntu systems
+                                </p>
+                              </div>
+                            </div>
+                            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 text-xs text-gray-600 dark:text-gray-400">
+                    <p className="font-medium text-gray-900 dark:text-white mb-1">System Requirements:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      {desktopAppInfo.platform === 'windows' && (
+                        <>
+                          <li>Windows 10 or later (64-bit)</li>
+                          <li>4GB RAM minimum (8GB recommended)</li>
+                          <li>500MB available disk space</li>
+                        </>
+                      )}
+                      {desktopAppInfo.platform === 'macos' && (
+                        <>
+                          <li>macOS 10.15 (Catalina) or later</li>
+                          <li>4GB RAM minimum (8GB recommended)</li>
+                          <li>500MB available disk space</li>
+                        </>
+                      )}
+                      {desktopAppInfo.platform === 'linux' && (
+                        <>
+                          <li>Ubuntu 20.04+ or equivalent</li>
+                          <li>4GB RAM minimum (8GB recommended)</li>
+                          <li>500MB available disk space</li>
+                        </>
+                      )}
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
