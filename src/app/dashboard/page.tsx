@@ -389,8 +389,25 @@ export default function Dashboard() {
     }
 
     try {
-      const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession()
-      if (!session?.access_token) {
+      console.log('Step 1: Importing supabase...')
+      const { supabase } = await import('@/lib/supabase')
+
+      console.log('Step 2: Getting session...')
+      const { data, error: sessionError } = await supabase.auth.getSession()
+
+      console.log('Step 3: Session result:', {
+        hasData: !!data,
+        hasSession: !!data?.session,
+        hasToken: !!data?.session?.access_token,
+        error: sessionError
+      })
+
+      if (sessionError) {
+        console.error('❌ Session error:', sessionError)
+        return
+      }
+
+      if (!data?.session?.access_token) {
         console.log('❌ No session token, skipping desktop app info fetch')
         return
       }
@@ -399,11 +416,12 @@ export default function Dashboard() {
       const platform = detectPlatform()
       console.log('✅ Platform detected:', platform)
 
+      console.log('Step 4: Making API call...')
       const response = await fetch(
         `/api/centcom/versions/latest?platform=${platform}&user_id=${user.id}`,
         {
           headers: {
-            'Authorization': `Bearer ${session.access_token}`,
+            'Authorization': `Bearer ${data.session.access_token}`,
             'Content-Type': 'application/json'
           }
         }
@@ -412,18 +430,24 @@ export default function Dashboard() {
       console.log('📡 API Response status:', response.status)
 
       if (response.ok) {
-        const data = await response.json()
-        console.log('✅ Desktop app info received:', data)
+        const responseData = await response.json()
+        console.log('✅ Desktop app info received:', responseData)
         setDesktopAppInfo({
           hasApp: false, // Will be true if Centcom is installed and reports version
           currentVersion: null,
-          latestVersion: data.latest_version?.version,
-          updateAvailable: data.update_available,
+          latestVersion: responseData.latest_version?.version,
+          updateAvailable: responseData.update_available,
           platform: platform
         })
+        console.log('✅ Desktop app info state set!')
+      } else {
+        console.error('❌ API call failed:', response.status)
+        const errorText = await response.text()
+        console.error('Error response:', errorText)
       }
     } catch (error) {
-      console.warn('Could not fetch desktop app info:', error)
+      console.error('❌ ERROR in fetchDesktopAppInfo:', error)
+      console.error('Error details:', error instanceof Error ? error.message : String(error))
     }
   }
 
