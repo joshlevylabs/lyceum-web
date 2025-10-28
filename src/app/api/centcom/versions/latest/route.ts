@@ -133,7 +133,7 @@ async function getUserLicenseType(supabase: any, userId: string): Promise<string
     const { data: licenses } = await supabase
       .from('license_keys')
       .select('license_type')
-      .or(`assigned_to.eq.${userId},assigned_to.eq.${email}`)
+      .eq('assigned_to', userId)
       .eq('status', 'active')
 
     if (!licenses || licenses.length === 0) return null
