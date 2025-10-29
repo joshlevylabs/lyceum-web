@@ -26,12 +26,20 @@ export async function GET(req: NextRequest) {
       userLicenseType = await getUserLicenseType(supabase, userId)
     }
 
-    // Query latest stable version for platform
+    // Get user's brand type (lyceum or centcom)
+    const brandType = userId
+      ? await getUserBrandType(supabase, userId)
+      : 'lyceum' // Default to lyceum for anonymous requests
+
+    console.log('✅ User brand type:', brandType)
+
+    // Query latest stable version for platform and brand
     const { data: latestVersion, error } = await supabase
       .from('application_versions')
       .select('*')
       .eq('application_name', 'centcom')
       .eq('platform', platform)
+      .eq('brand_type', brandType)
       .eq('is_stable', true)
       .eq('is_supported', true)
       .eq('auto_update_enabled', true)
@@ -155,5 +163,53 @@ async function getUserLicenseType(supabase: any, userId: string): Promise<string
   } catch (error) {
     console.warn('Failed to get user license type:', error)
     return null
+  }
+}
+
+// Helper: Get user's brand type based on company field in user_profiles
+async function getUserBrandType(supabase: any, userId: string): Promise<string> {
+  try {
+    // Get user's profile and check company field
+    const { data: profile, error } = await supabase
+      .from('user_profiles')
+      .select('company')
+      .eq('id', userId)
+      .single()
+
+    if (error) {
+      console.warn('Failed to get user profile:', error)
+      return 'lyceum' // Safe default
+    }
+
+    // Companies that should get Centcom brand
+    const centcomCompanies = [
+      'centcom',
+      'sonance',
+      'blaze',
+      'iport',
+      'danainnovations',
+      'dana innovations',
+      'james',
+      'trufig'
+    ]
+
+    // Check if company contains any of the Centcom company names (case-insensitive)
+    if (profile?.company) {
+      const companyLower = profile.company.toLowerCase()
+      const isCentcom = centcomCompanies.some(name => companyLower.includes(name))
+
+      if (isCentcom) {
+        console.log(`✅ Centcom brand detected for company: ${profile.company}`)
+        return 'centcom'
+      }
+    }
+
+    // Default to lyceum for all other cases
+    console.log(`✅ Lyceum brand (default) for company: ${profile?.company || 'null'}`)
+    return 'lyceum'
+
+  } catch (error) {
+    console.warn('Failed to get user brand type:', error)
+    return 'lyceum' // Safe default
   }
 }

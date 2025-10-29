@@ -37,12 +37,17 @@ export async function GET(
 
     console.log('✅ License verified:', userLicense)
 
-    // Get version details - filter by installer_type too
+    // Get user's brand type
+    const brandType = await getUserBrandType(supabase, userId)
+    console.log('✅ User brand type:', brandType)
+
+    // Get version details - filter by installer_type AND brand_type
     console.log('🔍 Looking for version:', {
       app: 'centcom',
       version: params.version,
       platform: params.platform,
-      installerType
+      installerType,
+      brandType
     })
 
     const { data: version, error } = await supabase
@@ -52,6 +57,7 @@ export async function GET(
       .eq('version_number', params.version)
       .eq('platform', params.platform)
       .eq('installer_type', installerType)
+      .eq('brand_type', brandType)
       .single()
 
     console.log('📦 Version query result:', { found: !!version, error: error?.message })
@@ -105,6 +111,7 @@ export async function GET(
       version: params.version,
       platform: params.platform,
       installerType,
+      brandType,
       licenseType: userLicense,
       ipAddress: req.headers.get('x-forwarded-for') || null,
       userAgent: req.headers.get('user-agent')
@@ -138,6 +145,7 @@ async function trackDownload(supabase: any, downloadData: any) {
       version: downloadData.version,
       platform: downloadData.platform,
       installer_type: downloadData.installerType,
+      brand_type: downloadData.brandType,
       license_type: downloadData.licenseType,
       ip_address: downloadData.ipAddress,
       user_agent: downloadData.userAgent
@@ -203,5 +211,53 @@ async function getUserLicenseType(supabase: any, userId: string): Promise<string
   } catch (error) {
     console.error('❌ Exception in getUserLicenseType:', error)
     return null
+  }
+}
+
+// Helper: Get user's brand type based on company field in user_profiles
+async function getUserBrandType(supabase: any, userId: string): Promise<string> {
+  try {
+    // Get user's profile and check company field
+    const { data: profile, error } = await supabase
+      .from('user_profiles')
+      .select('company')
+      .eq('id', userId)
+      .single()
+
+    if (error) {
+      console.warn('Failed to get user profile:', error)
+      return 'lyceum' // Safe default
+    }
+
+    // Companies that should get Centcom brand
+    const centcomCompanies = [
+      'centcom',
+      'sonance',
+      'blaze',
+      'iport',
+      'danainnovations',
+      'dana innovations',
+      'james',
+      'trufig'
+    ]
+
+    // Check if company contains any of the Centcom company names (case-insensitive)
+    if (profile?.company) {
+      const companyLower = profile.company.toLowerCase()
+      const isCentcom = centcomCompanies.some(name => companyLower.includes(name))
+
+      if (isCentcom) {
+        console.log(`✅ Centcom brand detected for company: ${profile.company}`)
+        return 'centcom'
+      }
+    }
+
+    // Default to lyceum for all other cases
+    console.log(`✅ Lyceum brand (default) for company: ${profile?.company || 'null'}`)
+    return 'lyceum'
+
+  } catch (error) {
+    console.warn('Failed to get user brand type:', error)
+    return 'lyceum' // Safe default
   }
 }
