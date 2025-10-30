@@ -233,12 +233,12 @@ WHERE id = '2c3d4747-8d67-45af-90f5-b5e9058ec246';
 Open **incognito browser** and paste these URLs:
 
 **Lyceum:**
-- https://github.com/lyceum-platform/centcom-releases/releases/download/v1.0.0/Lyceum_1.0.0_x64-setup.exe
-- https://github.com/lyceum-platform/centcom-releases/releases/download/v1.0.0/Lyceum_1.0.0_x64_en-US.msi
+- https://github.com/joshlevylabs/datacenter-releases/releases/download/v1.0.0/Lyceum_1.0.0_x64-setup.exe
+- https://github.com/joshlevylabs/datacenter-releases/releases/download/v1.0.0/Lyceum_1.0.0_x64_en-US.msi
 
 **Centcom:**
-- https://github.com/lyceum-platform/centcom-releases/releases/download/v1.0.0/Centcom_1.0.0_x64-setup.exe
-- https://github.com/lyceum-platform/centcom-releases/releases/download/v1.0.0/Centcom_1.0.0_x64_en-US.msi
+- https://github.com/joshlevylabs/datacenter-releases/releases/download/v1.0.0/Centcom_1.0.0_x64-setup.exe
+- https://github.com/joshlevylabs/datacenter-releases/releases/download/v1.0.0/Centcom_1.0.0_x64_en-US.msi
 
 All should download immediately without login!
 
@@ -502,7 +502,7 @@ WHERE id = 'USER_ID';
 **Problem:** Files don't exist on GitHub
 
 **Fix:**
-- Visit: https://github.com/lyceum-platform/centcom-releases/releases/tag/v1.0.0
+- Visit: https://github.com/joshlevylabs/datacenter-releases/releases/tag/v1.0.0
 - Verify all 4 files are uploaded
 - Check filenames match exactly:
   - `Centcom_1.0.0_x64-setup.exe`

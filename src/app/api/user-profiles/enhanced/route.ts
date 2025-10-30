@@ -277,14 +277,11 @@ export async function GET(request: NextRequest) {
         ].length,
         cloud_clusters: (cloudClusters || []).length,
         local_clusters: (localClusters || []).length,
-        total_storage_mb: [
-          ...(cloudClusters || []).reduce((sum, assignment) => {
-            const storageStr = assignment.database_clusters?.storage_per_node || '0GB';
-            const storageNum = parseInt(storageStr.replace(/[^0-9]/g, '')) || 0;
-            return sum + storageNum * 1024; // Convert GB to MB
-          }, 0),
-          ...(localClusters || []).reduce((sum, lc) => sum + ((lc.storage_used_gb || 0) * 1024), 0)
-        ].reduce((a, b) => a + b, 0),
+        total_storage_mb: (cloudClusters || []).reduce((sum, assignment) => {
+          const storageStr = assignment.database_clusters?.storage_per_node || '0GB';
+          const storageNum = parseInt(storageStr.replace(/[^0-9]/g, '')) || 0;
+          return sum + storageNum * 1024; // Convert GB to MB
+        }, 0) + (localClusters || []).reduce((sum, lc) => sum + ((lc.storage_used_gb || 0) * 1024), 0),
         account_age_days: daysSinceCreation,
         last_activity_days_ago: daysSinceLastSignIn
       }

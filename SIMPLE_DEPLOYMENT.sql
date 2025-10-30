@@ -1,5 +1,5 @@
 -- SIMPLE DEPLOYMENT - Using user_profiles.company for Brand Detection
--- Repository: lyceum-platform/centcom-releases
+-- Repository: joshlevylabs/datacenter-releases
 -- Brand logic: company contains ANY of these → Centcom, else → Lyceum
 --   - Centcom
 --   - Sonance
@@ -72,8 +72,8 @@ INSERT INTO application_versions (
   'msi',
   323946496, -- ~309 MB
   'C5020E23F74B9DC4B235F865F3D6C28F928F49B44E0E24DC65BAA0718C28A026',
-  'https://github.com/lyceum-platform/centcom-releases/releases/download/v1.0.0/Centcom_1.0.0_x64_en-US.msi',
-  'https://github.com/lyceum-platform/centcom-releases/releases/tag/v1.0.0',
+  'https://github.com/joshlevylabs/datacenter-releases/releases/download/v1.0.0/Centcom_1.0.0_x64_en-US.msi',
+  'https://github.com/joshlevylabs/datacenter-releases/releases/tag/v1.0.0',
   NOW(),
   true,
   true,
@@ -107,8 +107,8 @@ INSERT INTO application_versions (
   'exe',
   319815680, -- ~305 MB
   'D8C72E9ABB1A0B5C15FDFC37C0908C3F536B85B4A8492F46B7319DF357A70941',
-  'https://github.com/lyceum-platform/centcom-releases/releases/download/v1.0.0/Centcom_1.0.0_x64-setup.exe',
-  'https://github.com/lyceum-platform/centcom-releases/releases/tag/v1.0.0',
+  'https://github.com/joshlevylabs/datacenter-releases/releases/download/v1.0.0/Centcom_1.0.0_x64-setup.exe',
+  'https://github.com/joshlevylabs/datacenter-releases/releases/tag/v1.0.0',
   NOW(),
   true,
   true,
@@ -142,8 +142,8 @@ INSERT INTO application_versions (
   'msi',
   323946496, -- ~309 MB
   '6D090766EB932ED33428F5396C357803480CA029977131E972435DED52B154A4',
-  'https://github.com/lyceum-platform/centcom-releases/releases/download/v1.0.0/Lyceum_1.0.0_x64_en-US.msi',
-  'https://github.com/lyceum-platform/centcom-releases/releases/tag/v1.0.0',
+  'https://github.com/joshlevylabs/datacenter-releases/releases/download/v1.0.0/Lyceum_1.0.0_x64_en-US.msi',
+  'https://github.com/joshlevylabs/datacenter-releases/releases/tag/v1.0.0',
   NOW(),
   true,
   true,
@@ -177,8 +177,8 @@ INSERT INTO application_versions (
   'exe',
   320864256, -- ~306 MB
   '43FF3FCDC9AED5502900192573523406247F230BF767AF3BCC281D242EB5A0C1',
-  'https://github.com/lyceum-platform/centcom-releases/releases/download/v1.0.0/Lyceum_1.0.0_x64-setup.exe',
-  'https://github.com/lyceum-platform/centcom-releases/releases/tag/v1.0.0',
+  'https://github.com/joshlevylabs/datacenter-releases/releases/download/v1.0.0/Lyceum_1.0.0_x64-setup.exe',
+  'https://github.com/joshlevylabs/datacenter-releases/releases/tag/v1.0.0',
   NOW(),
   true,
   true,
@@ -250,7 +250,7 @@ WHERE id = '2c3d4747-8d67-45af-90f5-b5e9058ec246';
 -- Summary:
 -- ✅ Added brand_type to application_versions
 -- ✅ Inserted 4 version records (Centcom MSI/EXE + Lyceum MSI/EXE)
--- ✅ All download URLs point to lyceum-platform/centcom-releases
+-- ✅ All download URLs point to joshlevylabs/datacenter-releases
 -- ✅ All SHA256 hashes match the actual built files
 -- ✅ Using user_profiles.company for brand detection
 
