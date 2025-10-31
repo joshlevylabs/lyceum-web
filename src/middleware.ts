@@ -123,6 +123,15 @@ export async function middleware(request: NextRequest) {
   // Email verification enforcement for protected routes
   if (isProtectedRoute) {
     console.log(`Middleware: Checking protected route: ${request.nextUrl.pathname}`)
+
+    // Debug: Check what cookies we have
+    const allCookies = request.cookies.getAll()
+    console.log('Middleware: Cookies present:', {
+      count: allCookies.length,
+      names: allCookies.map(c => c.name),
+      hasAuthCookies: allCookies.some(c => c.name.includes('auth'))
+    })
+
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
     console.log('Middleware: Session check result:', {
