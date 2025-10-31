@@ -35,13 +35,54 @@ function AuthCallbackContent() {
       
       console.log('Auth callback - URL params:', { type, accessToken: !!accessToken, refreshToken: !!refreshToken })
       console.log('Auth callback - Full URL:', window.location.href)
-      
+
+      // Check for email verification code (from email confirmation link)
+      const code = searchParams.get('code')
+      if (code) {
+        console.log('Email verification code detected')
+        setMessage('Verifying your email address...')
+
+        // Exchange the code for a session
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+
+        if (error) {
+          throw new Error(`Email verification failed: ${error.message}`)
+        }
+
+        if (data.session && data.user) {
+          // Update user_profiles to mark email as verified
+          const { error: updateError } = await supabase
+            .from('user_profiles')
+            .update({ email_verified: true })
+            .eq('id', data.user.id)
+
+          if (updateError) {
+            console.error('Error updating email_verified status:', updateError)
+          }
+
+          setUserInfo({
+            email: data.user.email,
+            full_name: data.user.user_metadata?.full_name || 'User'
+          })
+          setStatus('success')
+          setMessage('Email verified successfully! Redirecting to dashboard...')
+
+          // Redirect to dashboard after successful verification
+          setTimeout(() => {
+            router.push('/dashboard')
+          }, 2000)
+          return
+        } else {
+          throw new Error('No session data received from email verification')
+        }
+      }
+
       // Check if this is a recovery flow (either by type param or hash content)
       const hash = window.location.hash
       const hashParams = new URLSearchParams(hash.substring(1))
       const hashType = hashParams.get('type')
       const isRecovery = type === 'recovery' || hashType === 'recovery'
-      
+
       console.log('Detection:', { type, hashType, isRecovery })
       
       if (isRecovery) {
