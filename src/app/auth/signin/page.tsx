@@ -29,6 +29,14 @@ function SignInContent() {
 
   // After successful SIGNED_IN (AuthContext updates user), navigate
   useEffect(() => {
+    // Check if user just logged out - if so, don't auto-redirect
+    const justLoggedOut = sessionStorage.getItem('justLoggedOut')
+    if (justLoggedOut) {
+      console.log('User just logged out, clearing flag and preventing auto-redirect')
+      sessionStorage.removeItem('justLoggedOut')
+      return
+    }
+
     if (user && !authLoading) {
       const redirectedFrom = searchParams.get('redirectedFrom')
       const destination = redirectedFrom || '/dashboard'

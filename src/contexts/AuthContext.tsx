@@ -134,10 +134,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      }
     })
 
     if (data.user && !error) {
-      // Create user profile
+      // Create user profile with email_verified set to false
+      // User must verify email before accessing the platform
       const profileData = {
         id: data.user.id,
         email: data.user.email,
@@ -145,8 +149,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         full_name: userData.fullName,
         company: userData.company,
         role: userData.role || 'analyst',
+        email_verified: false,
       }
-      
+
       const { data: profileResult, error: profileError } = await supabase
         .from('user_profiles')
         .insert([profileData])
@@ -163,28 +168,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       console.log('AuthContext: Signing out...')
-      
+
       // Clear state first
       setUser(null)
       setUserProfile(null)
-      
-      // Sign out from Supabase
-      const { error } = await supabase.auth.signOut()
-      
+
+      // Sign out from Supabase with scope: 'local' to clear local cookies immediately
+      const { error } = await supabase.auth.signOut({ scope: 'local' })
+
       if (error) {
         console.error('AuthContext: Sign out error:', error)
       }
-      
+
       console.log('AuthContext: Sign out complete, redirecting...')
-      
-      // Use window.location for a hard redirect to ensure clean state
+
+      // Add a flag to prevent auto-redirect on signin page
       if (typeof window !== 'undefined') {
+        sessionStorage.setItem('justLoggedOut', 'true')
+        // Use window.location for a hard redirect to ensure clean state
         window.location.href = '/auth/signin'
       }
     } catch (error) {
       console.error('AuthContext: Sign out failed:', error)
       // Force redirect even on error
       if (typeof window !== 'undefined') {
+        sessionStorage.setItem('justLoggedOut', 'true')
         window.location.href = '/auth/signin'
       }
     }

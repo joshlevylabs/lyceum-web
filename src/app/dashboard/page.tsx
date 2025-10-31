@@ -142,6 +142,13 @@ export default function Dashboard() {
     }
   }, [user, loading, router])
 
+  // Redirect to verification page if email is not verified
+  useEffect(() => {
+    if (!loading && user && userProfile && !userProfile.email_verified) {
+      router.push('/auth/verify-email')
+    }
+  }, [user, userProfile, loading, router])
+
   const handleSetPassword = () => {
     router.push('/auth/set-password')
   }

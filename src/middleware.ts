@@ -116,6 +116,35 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
+  // Define protected routes that require email verification
+  const protectedRoutes = ['/dashboard', '/profile', '/settings', '/onboarding', '/tickets', '/groups', '/clusters']
+  const isProtectedRoute = protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route))
+
+  // Email verification enforcement for protected routes
+  if (isProtectedRoute) {
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (!session) {
+      // Not authenticated - redirect to sign in
+      const redirectUrl = new URL('/auth/signin', request.url)
+      return NextResponse.redirect(redirectUrl)
+    }
+
+    // Check if email is verified in user_profiles
+    const { data: profile, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('email_verified')
+      .eq('id', session.user.id)
+      .single()
+
+    if (!profileError && profile && !profile.email_verified) {
+      // Email not verified - redirect to verification page
+      const redirectUrl = new URL('/auth/verify-email', request.url)
+      console.log('Middleware: Redirecting unverified user to verification page')
+      return NextResponse.redirect(redirectUrl)
+    }
+  }
+
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
   return supabaseResponse
 }

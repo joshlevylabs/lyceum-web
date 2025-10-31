@@ -36,6 +36,12 @@ export default function SignUp() {
     setLoading(true)
     setError('')
 
+    if (!formData.company.trim()) {
+      setError('Company name is required')
+      setLoading(false)
+      return
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match')
       setLoading(false)
@@ -55,11 +61,12 @@ export default function SignUp() {
         company: formData.company,
         role: formData.role
       })
-      
+
       if (error) {
         setError(error.message)
       } else {
-        router.push('/dashboard')
+        // Redirect to email verification page instead of dashboard
+        router.push('/auth/verify-email')
       }
     } catch (err) {
       setError('An unexpected error occurred')
@@ -153,6 +160,7 @@ export default function SignUp() {
                   id="company"
                   name="company"
                   type="text"
+                  required
                   className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-800 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   placeholder="Your Company"
                   value={formData.company}
