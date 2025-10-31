@@ -73,29 +73,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         try {
-          console.log('AuthContext: Auth state changed:', { event, hasSession: !!session })
+          console.log('=== AuthContext: Auth state changed ===', { event, hasSession: !!session, userId: session?.user?.id })
           setUser(session?.user ?? null)
-          
+
           if (session?.user) {
+            console.log('AuthContext: User exists, fetching profile for user:', session.user.id)
             try {
+              console.log('AuthContext: Starting profile query...')
               const { data: profile, error: profileError } = await supabase
                 .from('user_profiles')
                 .select('*')
                 .eq('id', session.user.id)
                 .single()
-              console.log('AuthContext: Profile loaded on auth change:', { profile: !!profile, error: profileError?.message })
+
+              console.log('AuthContext: Profile query complete:', {
+                hasProfile: !!profile,
+                profileData: profile,
+                error: profileError?.message,
+                errorDetails: profileError
+              })
+
+              if (profileError) {
+                console.error('AuthContext: Profile error details:', profileError)
+              }
+
               setUserProfile(profile)
+              console.log('AuthContext: setUserProfile called with:', profile)
             } catch (profileErr) {
-              console.warn('AuthContext: Profile fetch failed on auth change:', profileErr)
+              console.error('AuthContext: Exception during profile fetch:', profileErr)
               setUserProfile(null)
             }
           } else {
+            console.log('AuthContext: No user in session, clearing profile')
             setUserProfile(null)
           }
-          
+
           setLoading(false)
           clearTimeout(loadingTimeoutId)
-          console.log('AuthContext: Auth state change processed')
+          console.log('=== AuthContext: Auth state change processed ===')
         } catch (error) {
           console.error('AuthContext: Auth state change failed:', error)
           setLoading(false)

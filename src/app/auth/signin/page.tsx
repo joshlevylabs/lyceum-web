@@ -29,6 +29,13 @@ function SignInContent() {
 
   // After successful SIGNED_IN (AuthContext updates user), navigate
   useEffect(() => {
+    console.log('=== SignIn useEffect running ===', {
+      hasUser: !!user,
+      hasUserProfile: !!userProfile,
+      authLoading,
+      emailVerified: userProfile?.email_verified
+    })
+
     // Check if user just logged out - if so, don't auto-redirect
     const justLoggedOut = sessionStorage.getItem('justLoggedOut')
     if (justLoggedOut) {
@@ -39,6 +46,7 @@ function SignInContent() {
 
     // Only redirect if user is authenticated AND email is verified
     if (user && !authLoading && userProfile) {
+      console.log('SignIn: All conditions met, checking email verification')
       if (userProfile.email_verified) {
         const redirectedFrom = searchParams.get('redirectedFrom')
         const destination = redirectedFrom || '/dashboard'
@@ -49,6 +57,12 @@ function SignInContent() {
         console.log('Unverified user detected, redirecting to verify-email page')
         router.push('/auth/verify-email')
       }
+    } else {
+      console.log('SignIn: Not all conditions met:', {
+        hasUser: !!user,
+        authLoadingFalse: !authLoading,
+        hasUserProfile: !!userProfile
+      })
     }
   }, [user, userProfile, authLoading, router, searchParams])
 
