@@ -16,7 +16,7 @@ function SignInContent() {
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   
-  const { signIn, user, loading: authLoading } = useAuth()
+  const { signIn, user, userProfile, loading: authLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -37,13 +37,20 @@ function SignInContent() {
       return
     }
 
-    if (user && !authLoading) {
-      const redirectedFrom = searchParams.get('redirectedFrom')
-      const destination = redirectedFrom || '/dashboard'
-      console.log('User detected after signin, redirecting to', destination)
-      router.push(destination)
+    // Only redirect if user is authenticated AND email is verified
+    if (user && !authLoading && userProfile) {
+      if (userProfile.email_verified) {
+        const redirectedFrom = searchParams.get('redirectedFrom')
+        const destination = redirectedFrom || '/dashboard'
+        console.log('Verified user detected after signin, redirecting to', destination)
+        router.push(destination)
+      } else {
+        // User is authenticated but not verified - redirect to verify page
+        console.log('Unverified user detected, redirecting to verify-email page')
+        router.push('/auth/verify-email')
+      }
     }
-  }, [user, authLoading, router, searchParams])
+  }, [user, userProfile, authLoading, router, searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

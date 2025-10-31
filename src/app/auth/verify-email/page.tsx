@@ -1,29 +1,42 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { EnvelopeIcon } from '@heroicons/react/24/outline'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function VerifyEmail() {
   const [resending, setResending] = useState(false)
   const [resent, setResent] = useState(false)
   const [error, setError] = useState('')
+  const router = useRouter()
+  const { signOut } = useAuth()
 
   const handleResendEmail = async () => {
+    console.log('=== Resend Email Button Clicked ===')
     setResending(true)
     setError('')
 
     try {
       // Get the current user email from session
-      const { data: { user } } = await supabase.auth.getUser()
+      console.log('Fetching current user...')
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      console.log('User fetch result:', {
+        hasUser: !!user,
+        email: user?.email,
+        userError: userError?.message
+      })
 
       if (!user?.email) {
+        console.error('No user or email found')
         setError('No email found. Please sign up again.')
         setResending(false)
         return
       }
 
+      console.log('Attempting to resend confirmation email to:', user.email)
       // Resend confirmation email
       const { error: resendError } = await supabase.auth.resend({
         type: 'signup',
@@ -33,15 +46,24 @@ export default function VerifyEmail() {
         }
       })
 
+      console.log('Resend result:', {
+        success: !resendError,
+        error: resendError?.message
+      })
+
       if (resendError) {
+        console.error('Resend error:', resendError)
         setError(resendError.message)
       } else {
+        console.log('Verification email sent successfully!')
         setResent(true)
       }
-    } catch (err) {
-      setError('Failed to resend email. Please try again.')
+    } catch (err: any) {
+      console.error('Exception during resend:', err)
+      setError(`Failed to resend email: ${err.message || 'Please try again.'}`)
     } finally {
       setResending(false)
+      console.log('=== Resend Email Complete ===')
     }
   }
 
@@ -99,13 +121,19 @@ export default function VerifyEmail() {
           </div>
         </div>
 
-        <div className="text-center">
-          <Link
-            href="/auth/signin"
-            className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+        <div className="text-center space-y-2">
+          <button
+            onClick={async () => {
+              await signOut()
+              router.push('/auth/signin')
+            }}
+            className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 block w-full"
           >
-            Back to sign in
-          </Link>
+            Sign out and return to sign in
+          </button>
+          <p className="text-xs text-gray-500 dark:text-gray-500">
+            Need to sign in with a different account?
+          </p>
         </div>
       </div>
     </div>

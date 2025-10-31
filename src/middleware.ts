@@ -116,12 +116,16 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
+  // Allow unverified users to access auth pages (signin, signup, etc.)
+  const authPages = ['/auth/signin', '/auth/signup', '/auth/forgot-password', '/auth/reset-password', '/auth/verify-email']
+  const isAuthPage = authPages.some(page => request.nextUrl.pathname.startsWith(page))
+
   // Define protected routes that require email verification
   const protectedRoutes = ['/dashboard', '/profile', '/settings', '/onboarding', '/tickets', '/groups', '/clusters']
   const isProtectedRoute = protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route))
 
-  // Email verification enforcement for protected routes
-  if (isProtectedRoute) {
+  // Email verification enforcement for protected routes (but not auth pages)
+  if (isProtectedRoute && !isAuthPage) {
     console.log(`Middleware: Checking protected route: ${request.nextUrl.pathname}`)
 
     // Debug: Check what cookies we have
