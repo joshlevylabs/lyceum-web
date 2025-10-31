@@ -122,10 +122,18 @@ export async function middleware(request: NextRequest) {
 
   // Email verification enforcement for protected routes
   if (isProtectedRoute) {
-    const { data: { session } } = await supabase.auth.getSession()
+    console.log(`Middleware: Checking protected route: ${request.nextUrl.pathname}`)
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+    console.log('Middleware: Session check result:', {
+      hasSession: !!session,
+      userId: session?.user?.id,
+      sessionError: sessionError?.message
+    })
 
     if (!session) {
       // Not authenticated - redirect to sign in
+      console.log('Middleware: No session found, redirecting to signin')
       const redirectUrl = new URL('/auth/signin', request.url)
       return NextResponse.redirect(redirectUrl)
     }
@@ -136,6 +144,12 @@ export async function middleware(request: NextRequest) {
       .select('email_verified')
       .eq('id', session.user.id)
       .single()
+
+    console.log('Middleware: Profile check result:', {
+      hasProfile: !!profile,
+      emailVerified: profile?.email_verified,
+      profileError: profileError?.message
+    })
 
     if (!profileError && profile && !profile.email_verified) {
       // Email not verified - redirect to verification page
