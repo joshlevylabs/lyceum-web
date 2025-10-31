@@ -1,22 +1,23 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 
 // Use hardcoded values temporarily to test if the issue is with environment loading
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co'
 // Temporarily force the correct anon key to bypass environment variable issues
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4OTU0MTYsImV4cCI6MjA2ODQ3MTQxNn0.5Wzzoat1TsoLLbsqjuoUEKyawJgYmvrMYbJ-uvosdu0'
 
-console.log('Supabase config:', { 
-  url: supabaseUrl, 
+console.log('Supabase config:', {
+  url: supabaseUrl,
   hasAnonKey: !!supabaseAnonKey,
   anonKeyPreview: supabaseAnonKey?.substring(0, 20) + '...',
   anonKeyLength: supabaseAnonKey?.length,
   anonKeyEnding: supabaseAnonKey?.substring(supabaseAnonKey.length - 20),
   forcedCorrectKey: true,
-  expectedEnding: '5Wzzoat1TsoLLbsqjuoUEKyawJgYmvrMYbJ-uvosdu0'
+  expectedEnding: '5Wzzoat1TsoLLbsqjuoUEKyawJgYmvrMYbJ-uvosdu0',
+  usingCookieStorage: true
 })
 
-// Create singleton client
-export const supabase = createSupabaseClient(supabaseUrl, supabaseAnonKey)
+// Create singleton client with cookie storage for SSR compatibility
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey)
 
 // Alias functions that return the same singleton client
 export const createClientComponentClient = () => supabase
