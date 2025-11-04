@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { EnvelopeIcon } from '@heroicons/react/24/outline'
@@ -11,7 +11,20 @@ export default function VerifyEmail() {
   const [resent, setResent] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
-  const { signOut } = useAuth()
+  const { user, userProfile, loading, signOut } = useAuth()
+
+  // Redirect if not authenticated or if already verified
+  useEffect(() => {
+    if (!loading) {
+      if (!user) {
+        console.log('Not authenticated, redirecting to signin')
+        router.push('/auth/signin')
+      } else if (userProfile?.email_verified) {
+        console.log('Already verified, redirecting to dashboard')
+        router.push('/dashboard')
+      }
+    }
+  }, [user, userProfile, loading, router])
 
   const handleResendEmail = async () => {
     console.log('=== Resend Email Button Clicked ===')
