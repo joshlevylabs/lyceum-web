@@ -139,7 +139,7 @@ export default function HomePage() {
               Everything you need for industrial analytics
             </p>
             <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-300">
-              Replicate and enhance your desktop Centcom experience in the cloud with advanced collaboration 
+              Replicate and enhance your desktop Native Lyceum experience in the cloud with advanced collaboration
               and real-time analytics capabilities.
             </p>
           </div>
