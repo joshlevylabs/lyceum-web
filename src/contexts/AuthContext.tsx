@@ -37,15 +37,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (user) {
           try {
-            // Fetch user profile data
-            console.log('AuthContext: Fetching user profile...')
-            const { data: profile, error: profileError } = await supabase
-              .from('user_profiles')
-              .select('*')
-              .eq('id', user.id)
-              .single()
-            console.log('AuthContext: Profile result:', { profile: !!profile, error: profileError?.message })
-            setUserProfile(profile)
+            // Fetch user profile via API route to avoid browser client issues
+            console.log('AuthContext: Fetching user profile via API...')
+            const response = await fetch('/api/user-profile')
+            const result = await response.json()
+
+            console.log('AuthContext: Profile API result:', {
+              success: response.ok,
+              hasProfile: !!result.profile,
+              error: result.error
+            })
+
+            if (response.ok && result.profile) {
+              setUserProfile(result.profile)
+            } else {
+              console.error('AuthContext: Profile fetch error:', result.error)
+              setUserProfile(null)
+            }
           } catch (profileErr) {
             console.warn('AuthContext: Profile fetch failed:', profileErr)
             setUserProfile(null)
@@ -80,26 +88,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (session?.user) {
             console.log('AuthContext: User exists, fetching profile for user:', session.user.id)
             try {
-              console.log('AuthContext: Starting profile query...')
-              const { data: profile, error: profileError } = await supabase
-                .from('user_profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .single()
+              console.log('AuthContext: Starting profile API call...')
+              const response = await fetch('/api/user-profile')
+              const result = await response.json()
 
-              console.log('AuthContext: Profile query complete:', {
-                hasProfile: !!profile,
-                profileData: profile,
-                error: profileError?.message,
-                errorDetails: profileError
+              console.log('AuthContext: Profile API complete:', {
+                success: response.ok,
+                hasProfile: !!result.profile,
+                profileData: result.profile,
+                error: result.error
               })
 
-              if (profileError) {
-                console.error('AuthContext: Profile error details:', profileError)
+              if (response.ok && result.profile) {
+                setUserProfile(result.profile)
+                console.log('AuthContext: setUserProfile called with:', result.profile)
+              } else {
+                console.error('AuthContext: Profile API error:', result.error)
+                setUserProfile(null)
               }
-
-              setUserProfile(profile)
-              console.log('AuthContext: setUserProfile called with:', profile)
             } catch (profileErr) {
               console.error('AuthContext: Exception during profile fetch:', profileErr)
               setUserProfile(null)
