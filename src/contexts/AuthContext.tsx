@@ -21,6 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [userProfile, setUserProfile] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
+  const [signingOut, setSigningOut] = useState(false)
   const router = useRouter()
   // Use singleton supabase client to avoid multiple instances
 
@@ -181,7 +182,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
+    // Prevent multiple simultaneous sign out calls
+    if (signingOut) {
+      console.log('AuthContext: Sign out already in progress, skipping...')
+      return
+    }
+
     try {
+      setSigningOut(true)
       console.log('AuthContext: Signing out...')
 
       // Clear state first
@@ -210,6 +218,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         sessionStorage.setItem('justLoggedOut', 'true')
         window.location.href = '/auth/signin'
       }
+    } finally {
+      // Don't reset signingOut here - let the page redirect happen
     }
   }
 
