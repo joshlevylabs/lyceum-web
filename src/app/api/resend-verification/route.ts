@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { emailVerificationTemplate } from '@/lib/email-templates'
 
 export async function POST() {
   try {
@@ -87,49 +88,17 @@ export async function POST() {
     // Initialize Resend
     const resend = new Resend(process.env.RESEND_API_KEY!)
 
-    // Send email via Resend with magic link
+    // Send email via Resend with magic link and beautiful template
     const verificationLink = linkData.properties.action_link
+
+    // Get user's name from user metadata if available
+    const userName = user.user_metadata?.full_name || user.user_metadata?.user_name || user.email?.split('@')[0] || 'there'
 
     const { data: emailData, error: emailError } = await resend.emails.send({
       from: 'Lyceum <noreply@thelyceum.io>',
       to: [user.email!],
-      subject: 'Verify your email address',
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #2563eb; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-            .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
-            .button { display: inline-block; background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
-            .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #6b7280; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Verify Your Email</h1>
-            </div>
-            <div class="content">
-              <p>Thank you for signing up for Lyceum!</p>
-              <p>Please verify your email address by clicking the button below:</p>
-              <div style="text-align: center;">
-                <a href="${verificationLink}" class="button">Verify Email Address</a>
-              </div>
-              <p>Or copy and paste this link into your browser:</p>
-              <p style="word-break: break-all; font-size: 12px; color: #6b7280;">${verificationLink}</p>
-              <p>This link will expire in 24 hours.</p>
-              <p>If you didn't create an account with Lyceum, you can safely ignore this email.</p>
-            </div>
-            <div class="footer">
-              <p>© 2025 Lyceum. All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `
+      subject: 'Verify your email address - Lyceum',
+      html: emailVerificationTemplate(verificationLink, userName)
     })
 
     if (emailError) {

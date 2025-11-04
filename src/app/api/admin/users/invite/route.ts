@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { generateCentcomLicenseKey } from '@/lib/licenses/centcom'
+import { Resend } from 'resend'
+import { userInviteTemplate } from '@/lib/email-templates'
 
 export async function POST(req: NextRequest) {
   try {
@@ -141,16 +143,47 @@ export async function POST(req: NextRequest) {
     let emailInfo = null
     if (send_email) {
       try {
-        const { error: emailError } = await supabase.auth.admin.inviteUserByEmail(email, {
-          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3594'}/auth/callback`
+        // Generate invitation link via admin API
+        const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+          type: 'invite',
+          email: email,
+          options: {
+            redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thelyceum.io'}/auth/callback`
+          }
         })
 
-        if (emailError) {
-          emailInfo = { error: emailError.message }
+        if (linkError || !linkData?.properties?.action_link) {
+          console.error('Invitation link generation failed:', linkError)
+          emailInfo = { error: linkError?.message || 'Failed to generate invitation link' }
         } else {
-          emailInfo = { sent: true, message: 'Invitation email sent successfully' }
+          // Send beautiful invitation email via Resend
+          const inviteLink = linkData.properties.action_link
+          const resend = new Resend(process.env.RESEND_API_KEY!)
+
+          const { data: emailData, error: emailError } = await resend.emails.send({
+            from: 'Lyceum <noreply@thelyceum.io>',
+            to: [email],
+            subject: 'You\'re invited to join Lyceum',
+            html: userInviteTemplate(inviteLink, 'Your administrator', company)
+          })
+
+          if (emailError) {
+            console.error('Resend email error:', emailError)
+            emailInfo = { error: emailError.message }
+          } else {
+            console.log('Invitation email sent successfully via Resend:', {
+              emailId: emailData?.id,
+              to: email
+            })
+            emailInfo = {
+              sent: true,
+              message: 'Invitation email sent successfully',
+              emailId: emailData?.id
+            }
+          }
         }
       } catch (emailErr: any) {
+        console.error('Invitation email error:', emailErr)
         emailInfo = { error: emailErr.message }
       }
     }
