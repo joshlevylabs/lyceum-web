@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { EnvelopeIcon } from '@heroicons/react/24/outline'
-import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function VerifyEmail() {
@@ -18,44 +17,31 @@ export default function VerifyEmail() {
     console.log('=== Resend Email Button Clicked ===')
     setResending(true)
     setError('')
+    setResent(false)
 
     try {
-      // Get the current user email from session
-      console.log('Fetching current user...')
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-      console.log('User fetch result:', {
-        hasUser: !!user,
-        email: user?.email,
-        userError: userError?.message
+      console.log('Calling API route to resend verification email...')
+
+      // Use API route instead of broken browser Supabase client
+      const response = await fetch('/api/resend-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       })
 
-      if (!user?.email) {
-        console.error('No user or email found')
-        setError('No email found. Please sign up again.')
-        setResending(false)
-        return
-      }
-
-      console.log('Attempting to resend confirmation email to:', user.email)
-      // Resend confirmation email
-      const { error: resendError } = await supabase.auth.resend({
-        type: 'signup',
-        email: user.email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        }
+      const result = await response.json()
+      console.log('API response:', {
+        status: response.status,
+        success: response.ok,
+        result
       })
 
-      console.log('Resend result:', {
-        success: !resendError,
-        error: resendError?.message
-      })
-
-      if (resendError) {
-        console.error('Resend error:', resendError)
-        setError(resendError.message)
+      if (!response.ok) {
+        console.error('API error:', result.error)
+        setError(result.error || 'Failed to send verification email')
       } else {
-        console.log('Verification email sent successfully!')
+        console.log('Verification email sent successfully via API!')
         setResent(true)
       }
     } catch (err: any) {
