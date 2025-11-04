@@ -263,12 +263,24 @@ function AuthCallbackContent() {
             }
 
             if (data.session) {
+              // Update email_verified status for magic link verification
+              const { error: updateError } = await supabase
+                .from('user_profiles')
+                .update({ email_verified: true })
+                .eq('id', data.session.user.id)
+
+              if (updateError) {
+                console.error('Error updating email_verified status:', updateError)
+              } else {
+                console.log('Successfully updated email_verified to true')
+              }
+
               setUserInfo({
                 email: data.session.user.email,
                 full_name: data.session.user.user_metadata?.full_name || 'User'
               })
               setStatus('success')
-              setMessage('Authentication successful! Redirecting...')
+              setMessage('Email verified successfully! Redirecting to dashboard...')
 
               setTimeout(() => {
                 router.push('/dashboard')
