@@ -42,9 +42,9 @@ export async function POST() {
       )
     }
 
-    console.log('API: Generating verification link for:', user.email)
+    console.log('API: Generating verification link for existing user:', user.email)
 
-    // Create admin client with service role key to generate link
+    // Create admin client with service role key
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -56,9 +56,10 @@ export async function POST() {
       }
     )
 
-    // Generate email verification link without sending email
+    // For existing users, generate a magic link which works for both new and existing users
+    // This will sign them in and we'll mark them as verified on callback
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'signup',
+      type: 'magiclink',
       email: user.email!,
       options: {
         redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thelyceum.io'}/auth/callback`,
@@ -73,7 +74,7 @@ export async function POST() {
       )
     }
 
-    if (!linkData.properties?.action_link) {
+    if (!linkData?.properties?.action_link) {
       console.error('API: No action link in response')
       return NextResponse.json(
         { error: 'Failed to generate verification link' },
@@ -86,7 +87,9 @@ export async function POST() {
     // Initialize Resend
     const resend = new Resend(process.env.RESEND_API_KEY!)
 
-    // Send email via Resend
+    // Send email via Resend with magic link
+    const verificationLink = linkData.properties.action_link
+
     const { data: emailData, error: emailError } = await resend.emails.send({
       from: 'Lyceum <noreply@thelyceum.io>',
       to: [user.email!],
@@ -113,10 +116,10 @@ export async function POST() {
               <p>Thank you for signing up for Lyceum!</p>
               <p>Please verify your email address by clicking the button below:</p>
               <div style="text-align: center;">
-                <a href="${linkData.properties.action_link}" class="button">Verify Email Address</a>
+                <a href="${verificationLink}" class="button">Verify Email Address</a>
               </div>
               <p>Or copy and paste this link into your browser:</p>
-              <p style="word-break: break-all; font-size: 12px; color: #6b7280;">${linkData.properties.action_link}</p>
+              <p style="word-break: break-all; font-size: 12px; color: #6b7280;">${verificationLink}</p>
               <p>This link will expire in 24 hours.</p>
               <p>If you didn't create an account with Lyceum, you can safely ignore this email.</p>
             </div>
