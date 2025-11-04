@@ -244,24 +244,24 @@ function AuthCallbackContent() {
           throw new Error('No user data received')
         }
       } else {
-        // Regular auth callback (OAuth, etc.)
-        console.log('Regular auth callback')
-        
+        // Regular auth callback (OAuth, etc.) or email verification without code
+        console.log('Regular auth callback or email verification redirect')
+
         // Check if we have tokens in the URL hash
         if (hash) {
           const access_token = hashParams.get('access_token')
           const refresh_token = hashParams.get('refresh_token')
-          
+
           if (access_token) {
             const { data, error } = await supabase.auth.setSession({
               access_token,
               refresh_token: refresh_token || ''
             })
-            
+
             if (error) {
               throw new Error(`Auth error: ${error.message}`)
             }
-            
+
             if (data.session) {
               setUserInfo({
                 email: data.session.user.email,
@@ -269,7 +269,7 @@ function AuthCallbackContent() {
               })
               setStatus('success')
               setMessage('Authentication successful! Redirecting...')
-              
+
               setTimeout(() => {
                 router.push('/dashboard')
               }, 2000)
@@ -280,7 +280,39 @@ function AuthCallbackContent() {
             throw new Error('No tokens found in URL')
           }
         } else {
-          throw new Error('No authentication data found in URL')
+          // No URL parameters - check if user is already authenticated
+          // This happens when Supabase's verify endpoint auto-signs in the user
+          console.log('No URL params, checking if user is already authenticated...')
+
+          const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+          if (userError || !user) {
+            throw new Error('No authentication data found in URL')
+          }
+
+          console.log('User is authenticated, updating email verification status...')
+          setMessage('Verifying your email address...')
+
+          // User is authenticated - update their email_verified status
+          const { error: updateError } = await supabase
+            .from('user_profiles')
+            .update({ email_verified: true })
+            .eq('id', user.id)
+
+          if (updateError) {
+            console.error('Error updating email_verified status:', updateError)
+          }
+
+          setUserInfo({
+            email: user.email,
+            full_name: user.user_metadata?.full_name || 'User'
+          })
+          setStatus('success')
+          setMessage('Email verified successfully! Redirecting to dashboard...')
+
+          setTimeout(() => {
+            router.push('/dashboard')
+          }, 2000)
         }
       }
     } catch (error: any) {
@@ -303,7 +335,7 @@ function AuthCallbackContent() {
   }
 
   const handleRetryLogin = () => {
-    router.push('/auth/login')
+    router.push('/auth/signin')
   }
 
   if (status === 'loading') {
