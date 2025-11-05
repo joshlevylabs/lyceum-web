@@ -116,6 +116,29 @@ export default function Dashboard() {
   })
   const router = useRouter()
 
+  // Helper: Get user's brand type based on company field
+  const getUserBrandType = (): 'centcom' | 'lyceum' => {
+    if (!userProfile?.company) return 'lyceum'
+
+    const centcomCompanies = [
+      'centcom',
+      'sonance',
+      'blaze',
+      'iport',
+      'danainnovations',
+      'dana innovations',
+      'james',
+      'trufig'
+    ]
+
+    const companyLower = userProfile.company.toLowerCase()
+    const isCentcom = centcomCompanies.some(name => companyLower.includes(name))
+
+    return isCentcom ? 'centcom' : 'lyceum'
+  }
+
+  const brandName = getUserBrandType() === 'centcom' ? 'Centcom' : 'Lyceum Native'
+
   useEffect(() => {
     if (user && user.user_metadata?.invited_by_admin && !user.user_metadata?.password_set) {
       setNeedsPasswordReset(true)
@@ -419,7 +442,7 @@ export default function Dashboard() {
         const responseData = await response.json()
         console.log('✅ Desktop app info received:', responseData)
         setDesktopAppInfo({
-          hasApp: false, // Will be true if Centcom is installed and reports version
+          hasApp: false, // Will be true if Native Lyceum is installed and reports version
           currentVersion: null,
           latestVersion: responseData.latest_version?.version,
           updateAvailable: responseData.update_available,
@@ -736,7 +759,7 @@ export default function Dashboard() {
                     <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                     </svg>
-                    {desktopAppInfo.hasApp ? 'Download Update' : 'Download Centcom'}
+                    {desktopAppInfo.hasApp ? 'Download Update' : `Download ${brandName}`}
                   </button>
                 </div>
               </div>
@@ -1256,14 +1279,14 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Download Centcom Modal */}
+        {/* Download Desktop Application Modal */}
         {showDownloadModal && desktopAppInfo && (
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
             <div className="relative top-20 mx-auto p-5 border max-w-2xl shadow-lg rounded-md bg-white dark:bg-gray-800">
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                    Download {userProfile?.license_type?.includes('CENTCOM') ? 'Centcom' : 'Native Lyceum'}
+                    Download {brandName}
                   </h3>
                   <button
                     onClick={() => setShowDownloadModal(false)}
