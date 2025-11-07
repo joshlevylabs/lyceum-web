@@ -221,47 +221,40 @@ export default function UserProfilePage() {
         setResolvedUserId(userId)
       } else if (userId.startsWith('USER-')) {
         console.log('🔑 Detected user key format, resolving via API call:', userId)
-        
-        // Get the auth token from localStorage (more reliable than getSession in this context)
-        console.log('🔐 Getting auth token from localStorage...')
+
+        // Get fresh auth token using getSession() - this automatically refreshes expired tokens
+        console.log('🔐 Getting fresh auth token from Supabase...')
         let accessToken: string | null = null
-        
+
         try {
-          // Try to get from Supabase auth storage
-          const authData = localStorage.getItem('sb-kffiaqsihldgqdwagook-auth-token')
-          if (authData) {
-            const parsed = JSON.parse(authData)
-            accessToken = parsed.access_token
-            console.log('🔐 Token found in localStorage:', !!accessToken, 'length:', accessToken?.length)
+          const { supabase } = await import('@/lib/supabase')
+
+          // First, refresh the session to ensure we have a valid token
+          const { data: { session } } = await supabase.auth.getSession()
+
+          if (session?.access_token) {
+            accessToken = session.access_token
+            console.log('🔐 Fresh token obtained from getSession, length:', accessToken.length)
           } else {
-            console.log('🔐 No auth data in localStorage')
+            console.log('🔐 No session found, user may need to re-authenticate')
           }
-        } catch (storageError) {
-          console.error('❌ Error reading from localStorage:', storageError)
-        }
-        
-        // Fallback: try getSession() with timeout
-        if (!accessToken) {
-          console.log('🔐 Falling back to getSession()...')
+        } catch (sessionError: any) {
+          console.error('❌ getSession failed:', sessionError.message)
+
+          // Fallback: try to get from localStorage (less reliable, may be expired)
           try {
-            const { supabase } = await import('@/lib/supabase')
-            const sessionPromise = supabase.auth.getSession()
-            const timeoutPromise = new Promise((_, reject) => 
-              setTimeout(() => reject(new Error('getSession timeout')), 3000)
-            )
-            
-            const { data: { session } } = await Promise.race([
-              sessionPromise,
-              timeoutPromise
-            ]) as any
-            
-            accessToken = session?.access_token || null
-            console.log('🔐 Token from getSession:', !!accessToken)
-          } catch (sessionError: any) {
-            console.error('❌ getSession failed:', sessionError.message)
+            console.log('🔐 Falling back to localStorage...')
+            const authData = localStorage.getItem('sb-kffiaqsihldgqdwagook-auth-token')
+            if (authData) {
+              const parsed = JSON.parse(authData)
+              accessToken = parsed.access_token
+              console.log('🔐 Token found in localStorage (may be expired), length:', accessToken?.length)
+            }
+          } catch (storageError) {
+            console.error('❌ Error reading from localStorage:', storageError)
           }
         }
-        
+
         if (!accessToken) {
           console.error('❌ No access token found after all attempts')
           throw new Error('Authentication required - please refresh the page and try again')

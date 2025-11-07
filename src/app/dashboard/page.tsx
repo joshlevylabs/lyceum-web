@@ -99,8 +99,9 @@ export default function Dashboard() {
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [showSessionDetails, setShowSessionDetails] = useState(false)
   const [showCreateTicketModal, setShowCreateTicketModal] = useState(false)
+  // Download modal removed - now routes to /download-app page
   const [showDownloadModal, setShowDownloadModal] = useState(false)
-  const [downloadingApp, setDownloadingApp] = useState(false)
+  // const [downloadingApp, setDownloadingApp] = useState(false)
   const [desktopAppInfo, setDesktopAppInfo] = useState<DesktopAppInfo | null>(null)
   const [activeTab, setActiveTab] = useState<'onboarding' | 'posts' | 'tickets'>('onboarding')
   const [scheduleForm, setScheduleForm] = useState({
@@ -753,7 +754,7 @@ export default function Dashboard() {
                 </div>
                 <div className="mt-4">
                   <button
-                    onClick={() => setShowDownloadModal(true)}
+                    onClick={() => router.push('/download-app')}
                     className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                   >
                     <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

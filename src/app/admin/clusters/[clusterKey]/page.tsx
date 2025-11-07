@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -88,6 +89,7 @@ interface ClusterDetails {
 export default function UnifiedClusterManagementPage() {
   const params = useParams()
   const router = useRouter()
+  const { session } = useAuth()
   const [cluster, setCluster] = useState<ClusterDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [availableUsers, setAvailableUsers] = useState<any[]>([])
@@ -119,9 +121,11 @@ export default function UnifiedClusterManagementPage() {
   })
 
   useEffect(() => {
+    if (session?.access_token) {
       loadClusterDetails()
-    loadAvailableUsers()
-  }, [params.clusterKey])
+      loadAvailableUsers()
+    }
+  }, [params.clusterKey, session?.access_token])
 
   useEffect(() => {
     if (cluster) {
@@ -148,17 +152,14 @@ export default function UnifiedClusterManagementPage() {
   const loadClusterDetails = async () => {
     try {
       setLoading(true)
-      
-      const authData = JSON.parse(localStorage.getItem('sb-kffiaqsihldgqdwagook-auth-token') || '{}')
-      const accessToken = authData.access_token
 
-      if (!accessToken) {
+      if (!session?.access_token) {
         throw new Error('Authentication required')
       }
 
       const response = await fetch(`/api/clusters/by-key/${params.clusterKey}`, {
         headers: {
-          'Authorization': `Bearer ${accessToken}`
+          'Authorization': `Bearer ${session.access_token}`
         }
       })
       
@@ -182,14 +183,11 @@ export default function UnifiedClusterManagementPage() {
 
   const loadAvailableUsers = async () => {
     try {
-      const authData = JSON.parse(localStorage.getItem('sb-kffiaqsihldgqdwagook-auth-token') || '{}')
-      const accessToken = authData.access_token
-
-      if (!accessToken) return
+      if (!session?.access_token) return
 
       const response = await fetch('/api/admin/users/list', {
         headers: {
-          'Authorization': `Bearer ${accessToken}`
+          'Authorization': `Bearer ${session.access_token}`
         }
       })
 

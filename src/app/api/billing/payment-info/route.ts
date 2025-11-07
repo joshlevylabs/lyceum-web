@@ -24,17 +24,52 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user profile with Stripe customer ID
-    const { data: userProfile, error: profileError } = await dbOperations.supabaseAdmin
+    let { data: userProfile, error: profileError } = await dbOperations.supabaseAdmin
       .from('user_profiles')
       .select('id, email, full_name, stripe_customer_id')
       .eq('id', userId)
       .single()
 
+    // If profile doesn't exist, try to create it from auth.users
     if (profileError || !userProfile) {
-      return NextResponse.json(
-        { error: 'User profile not found' },
-        { status: 404 }
-      )
+      console.log('User profile not found, attempting to create one for user:', userId)
+
+      // Get user from auth.users
+      const { data: { user: authUser }, error: authUserError } = await dbOperations.supabaseAdmin.auth.admin.getUserById(userId)
+
+      if (authUserError || !authUser) {
+        return NextResponse.json(
+          { error: 'User not found' },
+          { status: 404 }
+        )
+      }
+
+      // Create user profile
+      const username = authUser.email?.split('@')[0] || 'user'
+      const { data: newProfile, error: createError } = await dbOperations.supabaseAdmin
+        .from('user_profiles')
+        .insert({
+          id: authUser.id,
+          email: authUser.email,
+          username: username,
+          full_name: authUser.user_metadata?.full_name || username,
+          company: authUser.user_metadata?.company || '',
+          role: 'engineer',
+          is_active: true
+        })
+        .select('id, email, full_name, stripe_customer_id')
+        .single()
+
+      if (createError || !newProfile) {
+        console.error('Failed to create user profile:', createError)
+        return NextResponse.json(
+          { error: 'User profile not found and could not be created' },
+          { status: 404 }
+        )
+      }
+
+      userProfile = newProfile
+      console.log('Successfully created user profile:', userProfile.id)
     }
 
     // If no Stripe customer ID, return basic info
@@ -82,10 +117,15 @@ export async function GET(request: NextRequest) {
     // Fetch recent invoices from our database
     const { data: invoices, error: invoicesError } = await dbOperations.supabaseAdmin
       .from('invoices')
-      .select('id, invoice_number, total_amount_cents, status, created_at, due_date')
+      .select('id, invoice_number, total_cents, status, created_at, due_date')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(10)
+
+    // Log any invoice fetch errors but don't fail the request
+    if (invoicesError) {
+      console.error('Error fetching invoices:', invoicesError)
+    }
 
     return NextResponse.json({
       success: true,

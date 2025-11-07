@@ -1394,7 +1394,7 @@ export default function SettingsPage() {
                   <div>
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white">Your Clusters</h3>
                     <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                      Manage all your database clusters including online, optimized, and local CentCom clusters.
+                      Manage all your database clusters including online, optimized, and local Native Lyceum clusters.
                     </p>
                   </div>
                   {loadingClusters ? (
@@ -1766,7 +1766,7 @@ export default function SettingsPage() {
                         </div>
                         <div className="flex items-center space-x-4">
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            ${(invoice.total_amount_cents / 100).toFixed(2)}
+                            ${((invoice.total_cents || invoice.total_amount_cents || 0) / 100).toFixed(2)}
                           </div>
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             invoice.status === 'paid'

@@ -26,6 +26,8 @@ import {
   BanknotesIcon,
   EyeSlashIcon
 } from '@heroicons/react/24/outline'
+import UserActionsMenu from '@/components/admin/UserActionsMenu'
+import { validateEmail } from '@/lib/email-validator'
 
 // User keys are now stored persistently in the database, no need for client-side generation
 
@@ -166,7 +168,8 @@ export default function UserManagement() {
     { id: 'licenses', name: 'Licenses', align: 'center' },
     { id: 'clusters', name: 'Clusters', align: 'center' },
     { id: 'invoices', name: 'Invoices', align: 'center' },
-    { id: 'edit', name: 'Edit Profile', align: 'center' }
+    { id: 'edit', name: 'Edit Profile', align: 'center' },
+    { id: 'actions', name: 'Actions', align: 'center' }
   ])
 
   useEffect(() => {
@@ -375,9 +378,18 @@ export default function UserManagement() {
           </td>
         )
       case 'email':
+        const emailValidation = validateEmail(user.email)
         return (
           <td key="email" className="px-6 py-4 whitespace-nowrap">
-            <div className="text-sm text-gray-900">{user.email}</div>
+            <div className="flex items-center">
+              <div className="text-sm text-gray-900 dark:text-white">{user.email}</div>
+              {emailValidation.isDisposable && (
+                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200">
+                  <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
+                  Throwaway
+                </span>
+              )}
+            </div>
           </td>
         )
       case 'company':
@@ -498,6 +510,15 @@ export default function UserManagement() {
               <PencilIcon className="h-4 w-4 mr-1" />
               Edit
             </button>
+          </td>
+        )
+      case 'actions':
+        return (
+          <td key="actions" className="px-6 py-4 whitespace-nowrap text-center">
+            <UserActionsMenu
+              user={user}
+              onActionComplete={() => loadUsers()}
+            />
           </td>
         )
       default:

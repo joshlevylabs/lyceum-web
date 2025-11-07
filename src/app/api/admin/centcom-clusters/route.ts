@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     if (usageError) {
       console.error('Error fetching cluster usage:', usageError)
-      
+
       // If table doesn't exist yet, return empty array
       if (usageError.message?.includes('does not exist') || usageError.code === '42P01') {
         console.log('⚠️ Table does not exist yet, returning empty array')
@@ -41,40 +41,71 @@ export async function GET(request: NextRequest) {
           note: 'No data yet - waiting for CentCom to connect'
         })
       }
-      
+
       return NextResponse.json(
         { error: 'Failed to fetch cluster usage', details: usageError.message },
         { status: 500 }
       )
     }
 
-    // Get user and license data separately for enrichment
-    const userIds = [...new Set((clusterUsage || []).map((c: any) => c.user_id))]
-    const licenseIds = [...new Set((clusterUsage || []).map((c: any) => c.license_id))]
-    
+    // Filter out old test data: only keep clusters with recent heartbeats (last 30 days)
+    // and valid cluster_key (not null)
+    console.log(`📊 Raw cluster data: ${clusterUsage?.length || 0} records`)
+
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+    const recentClusters = (clusterUsage || []).filter((cluster: any) => {
+      const hasValidKey = cluster.cluster_key && cluster.cluster_key !== 'null'
+      const hasRecentHeartbeat = cluster.last_heartbeat_at &&
+        new Date(cluster.last_heartbeat_at) > thirtyDaysAgo
+
+      return hasValidKey && hasRecentHeartbeat
+    })
+
+    console.log(`✂️ Filtered to ${recentClusters.length} recent clusters (last 30 days, valid keys)`)
+
+    // Deduplicate by cluster_key (keep only most recent per cluster_key)
+    const clustersByKey = new Map<string, any>()
+    for (const cluster of recentClusters) {
+      const key = cluster.cluster_key
+      if (key && !clustersByKey.has(key)) {
+        clustersByKey.set(key, cluster)
+      }
+    }
+
+    const uniqueClusters = Array.from(clustersByKey.values())
+    console.log(`🔑 Deduplicated to ${uniqueClusters.length} unique clusters by cluster_key`)
+
+    // Get user and license data separately for enrichment (use filtered uniqueClusters)
+    const userIds = [...new Set(uniqueClusters.map((c: any) => c.user_id))]
+    const licenseIds = [...new Set(uniqueClusters.map((c: any) => c.license_key_id || c.license_id))]
+
     // Fetch users
     const { data: users } = await supabase
       .from('user_profiles')
       .select('id, email, full_name')
       .in('id', userIds)
-    
+
     // Fetch licenses
     const { data: licenses } = await supabase
       .from('license_keys')
       .select('id, key_code, license_type, local_cluster_limits')
       .in('id', licenseIds)
-    
+
     // Create lookup maps
     const userMap = new Map(users?.map(u => [u.id, u]) || [])
     const licenseMap = new Map(licenses?.map(l => [l.id, l]) || [])
-    
-    // Transform and enrich the data
+
+    // Transform and enrich the data (use filtered uniqueClusters)
     const now = new Date()
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
 
-    const enrichedClusters = (clusterUsage || []).map((cluster: any) => {
+    const enrichedClusters = uniqueClusters.map((cluster: any) => {
+      // Try license_key_id first (new schema), fall back to license_id (old schema)
+      const licenseId = cluster.license_key_id || cluster.license_id
       const user = userMap.get(cluster.user_id)
-      const license = licenseMap.get(cluster.license_id)
+      const license = licenseMap.get(licenseId)
       const limits = license?.local_cluster_limits || {}
 
       // Calculate online status
@@ -88,7 +119,7 @@ export async function GET(request: NextRequest) {
       return {
         id: cluster.id,
         user_id: cluster.user_id,
-        license_id: cluster.license_id,
+        license_id: licenseId,
         cluster_key: cluster.cluster_key,
         machine_fingerprint: cluster.machine_fingerprint,
         storage_used_gb: cluster.storage_used_gb || 0,

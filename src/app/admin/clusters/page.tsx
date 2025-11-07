@@ -108,20 +108,23 @@ export default function UnifiedClusterManagement() {
   const loadClusters = async () => {
     try {
       setLoading(true)
-      
-      const authData = JSON.parse(localStorage.getItem('sb-kffiaqsihldgqdwagook-auth-token') || '{}')
-      const accessToken = authData.access_token
-      
-      if (!accessToken) {
+
+      // Get auth headers using getSession (auto-refreshes tokens)
+      const { supabase } = await import('@/lib/supabase')
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
         throw new Error('No access token found. Please refresh the page and try again.')
       }
-      
+
+      const accessToken = session.access_token
+
       const params = new URLSearchParams()
       if (filterArchitecture !== 'all' && filterArchitecture !== 'centcom') params.append('architecture', filterArchitecture)
       if (filterType !== 'all') params.append('cluster_type', filterType)
       if (filterStatus !== 'all') params.append('status', filterStatus)
       params.append('limit', '50')
-      
+
       // Fetch regular clusters and CentCom clusters in parallel
       const [clustersResponse, centcomResponse] = await Promise.all([
         // Regular clusters
@@ -130,8 +133,12 @@ export default function UnifiedClusterManagement() {
             'Authorization': `Bearer ${accessToken}`
           }
         }),
-        // CentCom clusters  
-        fetch('/api/admin/centcom-clusters')
+        // CentCom clusters with auth header
+        fetch('/api/admin/centcom-clusters', {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        })
       ])
       
       if (!clustersResponse.ok) {
@@ -185,16 +192,29 @@ export default function UnifiedClusterManagement() {
         created_at: cc.first_heartbeat_at || cc.created_at,
         updated_at: cc.last_heartbeat_at || cc.updated_at
       }))
-      
-      // Combine regular clusters with CentCom clusters
-      const allClusters = [
-        ...(clustersData.clusters || []),
-        ...transformedCentcomClusters
-      ]
-      
+
+      // Combine regular clusters with CentCom clusters, deduplicating by cluster_key
+      const clusterMap = new Map()
+
+      // Add regular clusters first
+      for (const cluster of (clustersData.clusters || [])) {
+        if (cluster.cluster_key) {
+          clusterMap.set(cluster.cluster_key, cluster)
+        }
+      }
+
+      // Add CentCom clusters only if they don't already exist
+      for (const cluster of transformedCentcomClusters) {
+        if (cluster.cluster_key && !clusterMap.has(cluster.cluster_key)) {
+          clusterMap.set(cluster.cluster_key, cluster)
+        }
+      }
+
+      const allClusters = Array.from(clusterMap.values())
+
       // Apply architecture filter for CentCom
-      const filteredClusters = filterArchitecture === 'centcom' 
-        ? transformedCentcomClusters
+      const filteredClusters = filterArchitecture === 'centcom'
+        ? allClusters.filter(c => c.architecture === 'centcom')
         : filterArchitecture === 'all'
           ? allClusters
           : allClusters.filter(c => c.architecture !== 'centcom')

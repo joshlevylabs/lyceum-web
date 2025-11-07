@@ -153,15 +153,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, userData: any) => {
+    // Sign up WITHOUT automatic email confirmation (we'll send via Resend)
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: {
+          user_name: userData.username,
+          full_name: userData.fullName,
+          company: userData.company,
+          role: userData.role || 'analyst'
+        }
       }
     })
 
-    if (data.user && !error) {
+    if (error) {
+      return { data, error }
+    }
+
+    if (data.user) {
       // Create user profile with email_verified set to false
       // User must verify email before accessing the platform
       const profileData = {
@@ -181,6 +192,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (profileError) {
         console.error('Error creating profile:', profileError)
+      }
+
+      // Send custom verification email via Resend API
+      try {
+        console.log('Sending verification email via Resend...')
+        const verifyResponse = await fetch('/api/send-verification-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: data.user.email,
+            userId: data.user.id,
+            userName: userData.fullName || userData.username || data.user.email?.split('@')[0]
+          })
+        })
+
+        if (!verifyResponse.ok) {
+          console.error('Failed to send verification email:', await verifyResponse.text())
+          // Don't fail signup if email sending fails
+        } else {
+          console.log('Verification email sent successfully')
+        }
+      } catch (emailError) {
+        console.error('Error sending verification email:', emailError)
+        // Don't fail signup if email sending fails
       }
     }
 

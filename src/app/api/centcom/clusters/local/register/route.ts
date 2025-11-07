@@ -66,6 +66,20 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
+    // Validate machine_fingerprint format (prevent corrupted values)
+    if (typeof machine_fingerprint !== 'string' ||
+        machine_fingerprint.length < 8 ||
+        machine_fingerprint.includes('[object') ||
+        machine_fingerprint.includes('undefined') ||
+        machine_fingerprint.includes('null')) {
+      console.error('❌ Invalid machine_fingerprint format:', machine_fingerprint)
+      return NextResponse.json({
+        error: 'Invalid machine_fingerprint format. Expected a hash string (min 8 characters), got: ' +
+               (typeof machine_fingerprint === 'string' ? machine_fingerprint.substring(0, 20) : typeof machine_fingerprint),
+        hint: 'The Tauri app must send a proper hash string, not a serialized object'
+      }, { status: 400 })
+    }
+
     if (!license_key) {
       return NextResponse.json({
         error: 'Missing required field: license_key'

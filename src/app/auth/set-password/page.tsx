@@ -164,12 +164,12 @@ function SetPasswordContent() {
 
       // Clear any stored session data
       localStorage.removeItem('lyceum_password_reset_session')
-      
-      console.log('Password set successfully, logging out and redirecting to sign in...')
-      
+
+      console.log('Password set successfully, logging in with new password...')
+
       // Show success state briefly
       setSuccess(true)
-      
+
       // Sign out to clear the old session (password change invalidates the session)
       // This may fail with 403 since session is already invalid, which is fine
       const supabase = createClient()
@@ -179,11 +179,29 @@ function SetPasswordContent() {
         // Ignore signout errors - session is already invalid after password change
         console.log('Signout attempted (session may already be invalid)')
       }
-      
-      // Redirect to sign in after a brief delay
-      setTimeout(() => {
-        router.push('/auth/signin?message=password_updated')
-      }, 2000)
+
+      // Wait briefly, then sign in with new password and redirect to dashboard
+      setTimeout(async () => {
+        try {
+          console.log('Attempting to sign in with new password...')
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: userInfo?.email || sessionData.email,
+            password: password,
+          })
+
+          if (signInError) {
+            console.error('Auto sign-in failed:', signInError)
+            // If auto sign-in fails, redirect to signin page
+            router.push('/auth/signin?message=password_updated')
+          } else {
+            console.log('Auto sign-in successful, redirecting to dashboard')
+            router.push('/dashboard')
+          }
+        } catch (err) {
+          console.error('Error during auto sign-in:', err)
+          router.push('/auth/signin?message=password_updated')
+        }
+      }, 1500)
       return
 
     } catch (error: any) {
@@ -233,8 +251,8 @@ function SetPasswordContent() {
             </div>
             
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Password Set Successfully!</h1>
-            <p className="text-gray-600 mb-4">Your password has been updated. Please sign in with your new password.</p>
-            <p className="text-sm text-gray-500">Redirecting to sign in page...</p>
+            <p className="text-gray-600 mb-4">Your password has been updated. Signing you in...</p>
+            <p className="text-sm text-gray-500">Redirecting to your dashboard...</p>
           </div>
         </div>
       </div>

@@ -3,7 +3,7 @@
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { useState, useEffect } from 'react'
-import { 
+import {
   MagnifyingGlassIcon,
   PlusIcon,
   EyeIcon,
@@ -15,8 +15,29 @@ import {
   CalendarIcon,
   UserIcon,
   CircleStackIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  CloudIcon,
+  ComputerDesktopIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline'
+
+interface ClusterProject {
+  id: string
+  name: string
+  description?: string
+  external_project_id: string
+  cluster_id: string
+  cluster_name?: string
+  cluster_type?: 'local' | 'cloud'
+  project_type: string
+  metadata: Record<string, any>
+  sync_status: 'synced' | 'pending' | 'error' | 'disabled'
+  last_synced_at?: string
+  created_at: string
+  updated_at: string
+  measurement_count?: number
+  file_count?: number
+}
 
 interface Project {
   id: string
@@ -36,49 +57,70 @@ interface Project {
 
 export default function TestData() {
   const { user, userProfile } = useAuth()
-  const [projects, setProjects] = useState<Project[]>([])
+  const [projects, setProjects] = useState<ClusterProject[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [filterType, setFilterType] = useState<'all' | 'my-projects' | 'shared' | 'flagged'>('all')
+  const [filterType, setFilterType] = useState<'all' | 'local' | 'cloud' | 'error'>('all')
+  const [stats, setStats] = useState({
+    total_projects: 0,
+    total_measurements: 0,
+    total_files: 0,
+    by_cluster_type: { local: 0, cloud: 0 }
+  })
 
   useEffect(() => {
     loadProjects()
-  }, [filterType, searchTerm])
+  }, [filterType])
 
   const loadProjects = async () => {
     try {
       setLoading(true)
-      
-      // Fetch real projects from the API
+
+      // Fetch cluster projects from the API
       const queryParams = new URLSearchParams({
-        filterType: filterType,
-        page: '1',
-        pageSize: '50'
+        project_type: 'test_data'
       })
-      
-      if (searchTerm) {
-        queryParams.append('search', searchTerm)
+
+      if (filterType === 'error') {
+        queryParams.append('sync_status', 'error')
       }
 
-      const response = await fetch(`/api/projects?${queryParams}`)
-      
+      const response = await fetch(`/api/cluster-projects?${queryParams}`)
+
       if (!response.ok) {
-        throw new Error('Failed to fetch projects')
+        throw new Error('Failed to fetch cluster projects')
       }
-      
+
       const data = await response.json()
       setProjects(data.projects || [])
+      setStats(data.stats || stats)
     } catch (error) {
-      console.error('Error loading projects:', error)
-      // Show empty state instead of fallback data
+      console.error('Error loading cluster projects:', error)
       setProjects([])
     } finally {
       setLoading(false)
     }
   }
 
-  // Since filtering is now handled by the API, we just use projects directly
-  const filteredProjects = projects
+  // Filter projects by cluster type and search term
+  const filteredProjects = projects.filter(project => {
+    // Filter by cluster type
+    if (filterType === 'local' && project.cluster_type !== 'local') return false
+    if (filterType === 'cloud' && project.cluster_type !== 'cloud') return false
+    if (filterType === 'error' && project.sync_status !== 'error') return false
+
+    // Filter by search term
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase()
+      return (
+        project.name.toLowerCase().includes(searchLower) ||
+        project.cluster_name?.toLowerCase().includes(searchLower) ||
+        project.description?.toLowerCase().includes(searchLower)
+      )
+    }
+
+    return true
+  })
 
   const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString)
@@ -117,14 +159,78 @@ export default function TestData() {
           </div>
         </div>
 
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <CircleStackIcon className="h-6 w-6 text-gray-400" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Projects</dt>
+                    <dd className="text-lg font-semibold text-gray-900 dark:text-white">{stats.total_projects}</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <ChartBarIcon className="h-6 w-6 text-gray-400" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Measurements</dt>
+                    <dd className="text-lg font-semibold text-gray-900 dark:text-white">{stats.total_measurements.toLocaleString()}</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <ComputerDesktopIcon className="h-6 w-6 text-gray-400" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Local Clusters</dt>
+                    <dd className="text-lg font-semibold text-gray-900 dark:text-white">{stats.by_cluster_type.local}</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <CloudIcon className="h-6 w-6 text-gray-400" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Cloud Clusters</dt>
+                    <dd className="text-lg font-semibold text-gray-900 dark:text-white">{stats.by_cluster_type.cloud}</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Filters and Search */}
         <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div className="flex space-x-4">
             {[
               { key: 'all', label: 'All Projects' },
-              { key: 'my-projects', label: 'My Projects' },
-              { key: 'shared', label: 'Shared' },
-              { key: 'flagged', label: 'Flagged' },
+              { key: 'local', label: 'Local' },
+              { key: 'cloud', label: 'Cloud' },
+              { key: 'error', label: 'Sync Errors' },
             ].map((filter) => (
               <button
                 key={filter.key}
@@ -178,16 +284,16 @@ export default function TestData() {
                         Project
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Groups & Tags
+                        Cluster
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Measurements
+                        Measurements / Files
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Status
+                        Sync Status
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Updated
+                        Last Synced
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Actions
@@ -197,7 +303,7 @@ export default function TestData() {
                   <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {filteredProjects.map((project) => (
                       <tr key={project.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10">
                               <div className="h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
@@ -208,69 +314,85 @@ export default function TestData() {
                               <div className="text-sm font-medium text-gray-900 dark:text-white">
                                 {project.name}
                               </div>
-                              <div className="text-sm text-gray-500 dark:text-gray-400">
-                                {project.project_key}
-                              </div>
+                              {project.description && (
+                                <div className="text-sm text-gray-500 dark:text-gray-400">
+                                  {project.description}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="space-y-1">
-                            <div className="flex flex-wrap gap-1">
-                              {project.groups.slice(0, 2).map((group) => (
-                                <span
-                                  key={group}
-                                  className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
-                                >
-                                  {group}
-                                </span>
-                              ))}
-                            </div>
-                            <div className="flex flex-wrap gap-1">
-                              {project.tags.slice(0, 3).map((tag) => (
-                                <span
-                                  key={tag}
-                                  className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
-                                >
-                                  <TagIcon className="h-3 w-3 mr-1" />
-                                  {tag}
-                                </span>
-                              ))}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            {project.cluster_type === 'local' ? (
+                              <ComputerDesktopIcon className="h-5 w-5 text-gray-400 mr-2" />
+                            ) : (
+                              <CloudIcon className="h-5 w-5 text-gray-400 mr-2" />
+                            )}
+                            <div>
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                {project.cluster_name || 'Unknown'}
+                              </div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400 capitalize">
+                                {project.cluster_type}
+                              </div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900 dark:text-white">
-                            {project.measurement_count.toLocaleString()}
+                            {(project.measurement_count || 0).toLocaleString()} measurements
                           </div>
-                          {project.flagged_count > 0 && (
-                            <div className="flex items-center text-sm text-orange-600 dark:text-orange-400">
-                              <FlagIcon className="h-4 w-4 mr-1" />
-                              {project.flagged_count} flagged
-                            </div>
-                          )}
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            {(project.file_count || 0).toLocaleString()} files
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                            Active
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            project.sync_status === 'synced'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                              : project.sync_status === 'pending'
+                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                              : project.sync_status === 'error'
+                              ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                          }`}>
+                            {project.sync_status === 'pending' && <ArrowPathIcon className="h-3 w-3 mr-1 animate-spin" />}
+                            {project.sync_status}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          <div className="flex items-center">
-                            <CalendarIcon className="h-4 w-4 mr-1" />
-                            {formatRelativeTime(project.updated_at)}
-                          </div>
+                          {project.last_synced_at ? (
+                            <div className="flex items-center">
+                              <CalendarIcon className="h-4 w-4 mr-1" />
+                              {formatRelativeTime(project.last_synced_at)}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">Never</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center justify-end space-x-2">
-                            <button className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                            <button
+                              className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                              title="View project"
+                            >
                               <EyeIcon className="h-4 w-4" />
                             </button>
-                            <button className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300">
+                            <button
+                              className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
+                              title="View analytics"
+                            >
                               <ChartBarIcon className="h-4 w-4" />
                             </button>
-                            <button className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300">
-                              <Cog6ToothIcon className="h-4 w-4" />
+                            <button
+                              className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
+                              title="Sync now"
+                              onClick={() => {
+                                // TODO: Trigger sync
+                              }}
+                            >
+                              <ArrowPathIcon className="h-4 w-4" />
                             </button>
                           </div>
                         </td>

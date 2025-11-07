@@ -399,54 +399,126 @@ export async function GET(request: NextRequest) {
         } : undefined
       }))
 
-      // Also fetch CentCom clusters (local clusters)
+      // Also fetch CentCom clusters (local clusters) - using manual join
       let centcomClusters: any[] = []
       try {
         const { data: localClusters, error: localError } = await dbOperations.supabaseAdmin
           .from('local_cluster_usage')
-          .select('*, license_keys(key_code, license_type, local_cluster_limits)')
+          .select('*')
           .eq('user_id', user.id)
           .order('last_heartbeat_at', { ascending: false })
 
-        if (!localError && localClusters) {
-          centcomClusters = localClusters.map((cluster: any) => ({
-            id: cluster.id,
-            cluster_key: `centcom-${cluster.machine_fingerprint}`,
-            name: `CentCom Local - ${cluster.machine_fingerprint?.substring(0, 8)}`,
-            description: `Local ClickHouse cluster on ${cluster.machine_os}`,
-            architecture: 'centcom',
-            cluster_type: 'analytics',
-            status: cluster.last_heartbeat_at && 
-              (new Date().getTime() - new Date(cluster.last_heartbeat_at).getTime()) < 24 * 60 * 60 * 1000 
-              ? 'active' : 'offline',
-            health_status: 'unknown',
-            region: 'local',
-            
-            // CentCom-specific fields
-            machine_fingerprint: cluster.machine_fingerprint,
-            storage_used_gb: cluster.storage_used_gb,
-            queries_this_month: cluster.queries_this_month,
-            clickhouse_version: cluster.clickhouse_version,
-            machine_os: cluster.machine_os,
-            machine_memory_gb: cluster.machine_memory_gb,
-            machine_cpu_cores: cluster.machine_cpu_cores,
-            last_heartbeat_at: cluster.last_heartbeat_at,
-            license_type: cluster.license_keys?.license_type || 'unknown',
-            offline_grace_days: cluster.license_keys?.local_cluster_limits?.offline_grace_days || 30,
-            
-            // Billing
-            estimated_monthly_cost: 0,
-            pricing_model: 'free',
-            responsible_user_id: user.id,
-            
-            // Timestamps
-            created_at: cluster.created_at,
-            updated_at: cluster.updated_at,
-            user_role: 'owner'
-          }))
+        if (localError) {
+          console.error('Error fetching local clusters:', localError)
+        }
+
+        if (localClusters && localClusters.length > 0) {
+          console.log(`Found ${localClusters.length} local cluster records for user ${user.id}`)
+
+          // Log all cluster identifiers to debug duplication
+          console.log('All cluster identifiers:', localClusters.map(c => ({
+            cluster_key: c.cluster_key,
+            cluster_id: c.cluster_id,
+            machine_fingerprint: c.machine_fingerprint?.substring(0, 8),
+            heartbeat: c.last_heartbeat_at
+          })))
+
+          // Filter out old test data: only keep clusters with recent heartbeats (last 30 days)
+          // and valid cluster_key (not null)
+          const thirtyDaysAgo = new Date()
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+          const recentClusters = localClusters.filter(cluster => {
+            const hasValidKey = cluster.cluster_key && cluster.cluster_key !== 'null'
+            const hasRecentHeartbeat = cluster.last_heartbeat_at &&
+              new Date(cluster.last_heartbeat_at) > thirtyDaysAgo
+
+            return hasValidKey && hasRecentHeartbeat
+          })
+
+          console.log(`Filtered to ${recentClusters.length} recent clusters (last 30 days, valid keys)`)
+
+          // Deduplicate by cluster_key STRICTLY (the stable user-visible identifier)
+          // This is the canonical identifier that should be unique per physical cluster
+          const clustersByKey = new Map<string, any>()
+
+          for (const cluster of recentClusters) {
+            const primaryKey = cluster.cluster_key
+
+            if (primaryKey && !clustersByKey.has(primaryKey)) {
+              // Only take the first occurrence (most recent due to sort)
+              clustersByKey.set(primaryKey, cluster)
+            }
+          }
+
+          const uniqueLocalClusters = Array.from(clustersByKey.values())
+          console.log(`Deduplicated to ${uniqueLocalClusters.length} unique local clusters`)
+          console.log('Unique cluster keys:', uniqueLocalClusters.map(c => ({
+            key: c.cluster_key,
+            id: c.cluster_id,
+            fingerprint: c.machine_fingerprint?.substring(0, 8)
+          })))
+          // Fetch license keys separately to avoid relationship syntax issues
+          const licenseIds = uniqueLocalClusters
+            .map(c => c.license_key_id)
+            .filter(Boolean)
+
+          let licenseData: any = {}
+          if (licenseIds.length > 0) {
+            const { data: licenses } = await dbOperations.supabaseAdmin
+              .from('license_keys')
+              .select('id, key_code, license_type, local_cluster_limits')
+              .in('id', licenseIds)
+
+            if (licenses) {
+              licenseData = licenses.reduce((acc, lic) => {
+                acc[lic.id] = lic
+                return acc
+              }, {} as any)
+            }
+          }
+
+          centcomClusters = uniqueLocalClusters.map((cluster: any) => {
+            const license = licenseData[cluster.license_key_id]
+            return {
+              id: cluster.cluster_id || cluster.id,
+              cluster_key: cluster.cluster_key || `LOCAL-${cluster.machine_fingerprint?.substring(0, 4) || 'UNKNOWN'}`,
+              name: cluster.cluster_name || `CentCom Local - ${cluster.machine_fingerprint?.substring(0, 8) || 'Unknown'}`,
+              description: `Local ClickHouse cluster on ${cluster.machine_os}`,
+              architecture: 'centcom',
+              cluster_type: 'analytics',
+              status: cluster.last_heartbeat_at &&
+                (new Date().getTime() - new Date(cluster.last_heartbeat_at).getTime()) < 24 * 60 * 60 * 1000
+                ? 'active' : 'offline',
+              health_status: 'unknown',
+              region: 'local',
+
+              // CentCom-specific fields
+              machine_fingerprint: cluster.machine_fingerprint,
+              storage_used_gb: cluster.storage_used_gb,
+              queries_this_month: cluster.queries_this_month,
+              clickhouse_version: cluster.clickhouse_version,
+              machine_os: cluster.machine_os,
+              machine_memory_gb: cluster.machine_memory_gb,
+              machine_cpu_cores: cluster.machine_cpu_cores,
+              last_heartbeat_at: cluster.last_heartbeat_at,
+              license_type: license?.license_type || 'unknown',
+              offline_grace_days: license?.local_cluster_limits?.offline_grace_days || 30,
+
+              // Billing
+              estimated_monthly_cost: 0,
+              pricing_model: 'free',
+              responsible_user_id: user.id,
+
+              // Timestamps
+              created_at: cluster.created_at,
+              updated_at: cluster.updated_at,
+              user_role: 'owner'
+            }
+          })
         }
       } catch (centcomError) {
-        console.log('Could not fetch CentCom clusters:', centcomError)
+        console.error('Could not fetch CentCom clusters:', centcomError)
         // Continue without CentCom clusters if there's an error
       }
 

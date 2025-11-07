@@ -23,6 +23,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Email is required' }, { status: 400 })
     }
 
+    if (!company || !company.trim()) {
+      return NextResponse.json({ success: false, error: 'Company is required' }, { status: 400 })
+    }
+
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co'
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4'
     const supabase = createClient(supabaseUrl, serviceKey)
@@ -38,7 +42,7 @@ export async function POST(req: NextRequest) {
       user_metadata: {
         full_name: full_name || username || email.split('@')[0],
         user_name: username || email.split('@')[0],
-        company: company || '',
+        company: company,
         role: role,
         invited_by_admin: true
       }
@@ -65,7 +69,7 @@ export async function POST(req: NextRequest) {
       email,
       username: username || email.split('@')[0],
       full_name: full_name || username || email.split('@')[0],
-      company: company || '',
+      company: company,
       role,
       is_active: true
     }

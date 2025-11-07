@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getUserIdFromToken } from '@/lib/auth'
+import { requireAuth } from '@/lib/auth-utils'
 
 // Initialize Supabase client for server-side operations
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co'
@@ -12,23 +12,11 @@ export async function GET(request: NextRequest) {
   try {
     console.log('User onboarding sessions API - Starting request...')
 
-    // Get user ID from the authorization header
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader) {
-      console.log('No authorization header found')
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    // Use standardized auth middleware that handles both Supabase and Lyceum tokens
+    const { user, error: authError, response: authResponse } = await requireAuth(request)
+    if (authResponse) return authResponse
 
-    // Extract the JWT token
-    const token = authHeader.replace('Bearer ', '')
-
-    // Verify the Lyceum JWT token
-    const userId = getUserIdFromToken(token)
-
-    if (!userId) {
-      console.log('Invalid token')
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
-    }
+    const userId = user.id
 
     console.log('Fetching onboarding sessions for user:', userId)
 
@@ -132,20 +120,11 @@ export async function PUT(request: NextRequest) {
   try {
     console.log('User onboarding session update API - Starting request...')
 
-    // Get user ID from the authorization header
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader) {
-      console.log('No authorization header found')
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    // Use standardized auth middleware that handles both Supabase and Lyceum tokens
+    const { user, error: authError, response: authResponse } = await requireAuth(request)
+    if (authResponse) return authResponse
 
-    const token = authHeader.replace('Bearer ', '')
-    const userId = getUserIdFromToken(token)
-
-    if (!userId) {
-      console.log('Invalid token')
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
-    }
+    const userId = user.id
     const body = await request.json()
     const { session_id, scheduled_at, duration_minutes } = body
 

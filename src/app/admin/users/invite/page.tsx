@@ -147,7 +147,7 @@ export default function InviteUserPage() {
 
                 <div>
                   <label htmlFor="company" className="block text-sm font-medium text-gray-700">
-                    Company
+                    Company *
                   </label>
                   <div className="mt-1 relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -156,6 +156,7 @@ export default function InviteUserPage() {
                     <input
                       type="text"
                       id="company"
+                      required
                       value={formData.company}
                       onChange={(e) => handleInputChange('company', e.target.value)}
                       className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
@@ -287,7 +288,7 @@ export default function InviteUserPage() {
               </Link>
               <button
                 type="submit"
-                disabled={loading || !formData.email}
+                disabled={loading || !formData.email || !formData.company}
                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (

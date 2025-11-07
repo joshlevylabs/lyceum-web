@@ -57,13 +57,16 @@ export async function GET(
       console.log('Cluster by ID fallback result:', { cluster: !!clusterById, error: idError?.message })
 
       if (idError || !clusterById) {
-        // Try looking in CentCom local clusters
-        const { data: localCluster, error: localError } = await dbOperations.supabaseAdmin
+        // Try looking in CentCom local clusters - get most recent heartbeat
+        const { data: localClusters, error: localError } = await dbOperations.supabaseAdmin
           .from('local_cluster_usage')
           .select('*')
           .eq('cluster_key', clusterKey)
           .eq('user_id', user.id)
-          .single()
+          .order('last_heartbeat_at', { ascending: false })
+          .limit(1)
+
+        const localCluster = localClusters?.[0]
 
         console.log('Local cluster lookup result:', { cluster: !!localCluster, error: localError?.message })
 
@@ -73,15 +76,15 @@ export async function GET(
             idError: idError?.message,
             localError: localError?.message
           })
-          return NextResponse.json({ error: 'Failed to fetch cluster' }, { status: 500 })
+          return NextResponse.json({ error: 'Cluster not found' }, { status: 404 })
         }
 
-        // Get license info for local cluster
+        // Get license info for local cluster - use license_key_id not license_id
         const { data: license } = await dbOperations.supabaseAdmin
           .from('license_keys')
           .select('id, license_type, local_cluster_limits')
-          .eq('id', localCluster.license_id)
-          .single()
+          .eq('id', localCluster.license_key_id)
+          .maybeSingle()
 
         const limits = license?.local_cluster_limits || {}
 
@@ -93,9 +96,9 @@ export async function GET(
 
         // Transform local cluster to unified format
         const transformedCluster = {
-          id: `centcom-${localCluster.id}`,
+          id: localCluster.cluster_id || localCluster.id,
           cluster_key: localCluster.cluster_key,
-          name: `Local ClickHouse Cluster`,
+          name: localCluster.cluster_name || `Local ClickHouse Cluster`,
           description: `Local ClickHouse cluster (${localCluster.machine_os || 'Unknown OS'})`,
           architecture: 'centcom',
           cluster_type: 'local',

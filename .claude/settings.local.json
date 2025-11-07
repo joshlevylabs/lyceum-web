@@ -10,7 +10,19 @@
       "Bash(test:*)",
       "Read(//c/Users/joshual/Documents/Cursor/datacenter/src-tauri/target/release/bundle/msi/**)",
       "Bash(findstr:*)",
-      "Read(//c/Users/joshual/Documents/Cursor/datacenter/src-tauri/target/release/bundle/nsis/**)"
+      "Read(//c/Users/joshual/Documents/Cursor/datacenter/src-tauri/target/release/bundle/nsis/**)",
+      "Bash(nul)",
+      "Bash(if exist nul del nul)",
+      "Bash(cat:*)",
+      "Bash(npm install resend)",
+      "Bash(find:*)",
+      "Bash(if exist \"C:\\Users\\joshual\\Documents\\Cursor\\lyceum\\DEPLOYMENT_CHECKLIST.md\" echo exists)",
+      "Bash(if [ -d \"src-tauri\" ])",
+      "Bash(then echo \"Tauri directory exists\")",
+      "Bash(else echo \"No src-tauri directory found\")",
+      "Bash(fi)",
+      "Bash(powershell -ExecutionPolicy Bypass -File .find-centcom-data.ps1)",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"C:\\Users\\joshual\\Documents\\Cursor\\lyceum\\find-centcom-data.ps1\")"
     ],
     "deny": [],
     "ask": []
