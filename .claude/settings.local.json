@@ -22,7 +22,10 @@
       "Bash(else echo \"No src-tauri directory found\")",
       "Bash(fi)",
       "Bash(powershell -ExecutionPolicy Bypass -File .find-centcom-data.ps1)",
-      "Bash(powershell -ExecutionPolicy Bypass -File \"C:\\Users\\joshual\\Documents\\Cursor\\lyceum\\find-centcom-data.ps1\")"
+      "Bash(powershell -ExecutionPolicy Bypass -File \"C:\\Users\\joshual\\Documents\\Cursor\\lyceum\\find-centcom-data.ps1\")",
+      "Bash(psql:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []

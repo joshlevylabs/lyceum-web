@@ -88,11 +88,24 @@ export async function GET(
 
         const limits = license?.local_cluster_limits || {}
 
-        // Calculate online status
+        // Calculate connection status based on recent heartbeat
+        // CentCom sends heartbeats every 10 minutes, so we consider it connected if heartbeat is within 15 minutes (1.5x interval)
         const now = new Date()
-        const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
+        const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000)
         const lastHeartbeat = new Date(localCluster.last_heartbeat_at)
-        const isOnline = lastHeartbeat > oneHourAgo
+        const isConnected = lastHeartbeat > fifteenMinutesAgo
+
+        // Parse projects metadata if present
+        let projectsMetadata = []
+        if (localCluster.projects_metadata) {
+          try {
+            projectsMetadata = typeof localCluster.projects_metadata === 'string'
+              ? JSON.parse(localCluster.projects_metadata)
+              : localCluster.projects_metadata
+          } catch (e) {
+            console.error('Failed to parse projects_metadata:', e)
+          }
+        }
 
         // Transform local cluster to unified format
         const transformedCluster = {
@@ -103,8 +116,11 @@ export async function GET(
           architecture: 'centcom',
           cluster_type: 'local',
           tier: license?.license_type || 'unknown',
-          status: isOnline ? 'active' : 'offline',
-          health_status: isOnline ? 'healthy' : 'offline',
+          status: isConnected ? 'active' : 'offline',
+          health_status: localCluster.health_status || (isConnected ? 'healthy' : 'offline'), // Use actual health status
+          is_connected: isConnected, // Add explicit connection flag
+          last_error: localCluster.last_error, // Include last error if any
+          projects_metadata: projectsMetadata, // Include projects data
           region: 'Local',
           storage_used_gb: localCluster.storage_used_gb,
           queries_this_month: localCluster.queries_this_month,

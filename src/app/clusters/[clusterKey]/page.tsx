@@ -19,6 +19,15 @@ import {
   ArrowLeftIcon
 } from '@heroicons/react/24/outline'
 
+interface ProjectMetadata {
+  project_id: string
+  project_name: string
+  created_at: string
+  last_updated_at: string
+  measurement_count: number
+  table_names: string[]
+}
+
 interface ClusterDetails {
   id: string
   cluster_key?: string
@@ -29,6 +38,9 @@ interface ClusterDetails {
   architecture?: string
   status: string
   health_status: string
+  is_connected?: boolean
+  last_error?: string
+  projects_metadata?: ProjectMetadata[]
   tier?: string
   region?: string
   storage_used_gb: number
@@ -63,6 +75,17 @@ export default function ClusterDetailsPage() {
       loadClusterDetails()
     }
   }, [params.clusterKey, user])
+
+  // Auto-refresh cluster details every 30 seconds to keep connection status current
+  useEffect(() => {
+    if (!user || !params.clusterKey) return
+
+    const interval = setInterval(() => {
+      loadClusterDetails()
+    }, 30000) // 30 seconds
+
+    return () => clearInterval(interval)
+  }, [user, params.clusterKey])
 
   const loadClusterDetails = async () => {
     try {
@@ -208,15 +231,43 @@ export default function ClusterDetailsPage() {
               Back to Clusters
             </button>
             <div className="flex items-center space-x-3">
-              {cluster.cluster_type === 'local' ? (
-                <ComputerDesktopIcon className="h-8 w-8 text-blue-500" />
-              ) : (
-                <CloudIcon className="h-8 w-8 text-purple-500" />
-              )}
+              <div className="relative">
+                {cluster.cluster_type === 'local' ? (
+                  <ComputerDesktopIcon className="h-8 w-8 text-blue-500" />
+                ) : (
+                  <CloudIcon className="h-8 w-8 text-purple-500" />
+                )}
+                {/* Connection indicator dot for local clusters */}
+                {cluster.cluster_type === 'local' && (
+                  <span
+                    className={`absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white dark:border-gray-900 ${
+                      cluster.is_connected
+                        ? 'bg-green-500 animate-pulse'
+                        : 'bg-gray-400'
+                    }`}
+                    title={cluster.is_connected ? 'Connected' : 'Offline'}
+                  />
+                )}
+              </div>
               <div>
-                <h1 className="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
-                  {cluster.name}
-                </h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
+                    {cluster.name}
+                  </h1>
+                  {/* Connection status badge for local clusters */}
+                  {cluster.cluster_type === 'local' && (
+                    <span
+                      className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${
+                        cluster.is_connected
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                          : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full mr-1.5 ${cluster.is_connected ? 'bg-green-500' : 'bg-gray-400'}`} />
+                      {cluster.is_connected ? 'Connected' : 'Offline'}
+                    </span>
+                  )}
+                </div>
                 <div className="mt-1 space-y-1">
                   {cluster.cluster_key && (
                     <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -226,6 +277,11 @@ export default function ClusterDetailsPage() {
                   <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">
                     ID: {cluster.id}
                   </p>
+                  {cluster.cluster_type === 'local' && cluster.last_heartbeat_at && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Last seen: {new Date(cluster.last_heartbeat_at).toLocaleString()}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -442,6 +498,69 @@ export default function ClusterDetailsPage() {
                 </dl>
               </div>
             </div>
+
+            {/* Projects Table (for local clusters) */}
+            {cluster.cluster_type === 'local' && cluster.projects_metadata && cluster.projects_metadata.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                    Projects ({cluster.projects_metadata.length})
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    ClickHouse projects synced from your local cluster
+                  </p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-900">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Project Name
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Measurements
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Tables
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Created
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Last Updated
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                      {cluster.projects_metadata.map((project) => (
+                        <tr key={project.project_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <CircleStackIcon className="h-5 w-5 text-blue-500 mr-2" />
+                              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                {project.project_name}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                            {project.measurement_count.toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                            {project.table_names.length}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {new Date(project.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {new Date(project.last_updated_at).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
             {/* Description */}
             {cluster.description && (

@@ -22,6 +22,13 @@ interface LicenseData {
   brand_type?: string
 }
 
+interface Subscription {
+  id: string
+  subscription_type: 'trial' | 'paid'
+  status: 'active' | 'expired' | 'cancelled'
+  expires_at: string | null
+}
+
 export default function DownloadAppPage() {
   const { user, userProfile, loading } = useAuth()
   const router = useRouter()
@@ -31,6 +38,9 @@ export default function DownloadAppPage() {
   const [license, setLicense] = useState<LicenseData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [downloadingApp, setDownloadingApp] = useState(false)
+  const [checkingSubscription, setCheckingSubscription] = useState(true)
+  const [hasSubscription, setHasSubscription] = useState(false)
+  const [subscription, setSubscription] = useState<Subscription | null>(null)
 
   // Detect platform and brand
   const detectPlatform = (): string => {
@@ -68,6 +78,48 @@ export default function DownloadAppPage() {
   useEffect(() => {
     if (!loading && !user) {
       router.push('/auth/signin')
+    }
+  }, [user, loading, router])
+
+  // Check subscription status before allowing download
+  useEffect(() => {
+    const checkSubscription = async () => {
+      if (!user) return
+
+      try {
+        const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession()
+        if (!session?.access_token) {
+          setCheckingSubscription(false)
+          return
+        }
+
+        const response = await fetch('/api/subscriptions/native-app', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setHasSubscription(data.hasSubscription)
+          setSubscription(data.subscription)
+
+          // If user doesn't have subscription, redirect to subscribe page
+          if (!data.hasSubscription) {
+            router.push('/native-app/subscribe')
+          }
+        }
+      } catch (err) {
+        console.error('Error checking subscription:', err)
+        setError('Failed to verify subscription status')
+      } finally {
+        setCheckingSubscription(false)
+      }
+    }
+
+    if (!loading && user) {
+      checkSubscription()
     }
   }, [user, loading, router])
 
@@ -194,7 +246,18 @@ export default function DownloadAppPage() {
     }
   }
 
-  if (loading) {
+  if (loading || checkingSubscription) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  // Don't render if no subscription (user will be redirected)
+  if (!hasSubscription) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-screen">
@@ -215,6 +278,16 @@ export default function DownloadAppPage() {
           <p className="mt-2 text-gray-600 dark:text-gray-400">
             Review and accept the license agreement to download the desktop application
           </p>
+          {subscription && (
+            <div className="mt-4 inline-flex items-center px-4 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+              <CheckCircleIcon className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
+              <span className="text-sm text-green-800 dark:text-green-200">
+                {subscription.subscription_type === 'trial'
+                  ? `Trial Active${subscription.expires_at ? ` • Expires ${new Date(subscription.expires_at).toLocaleDateString()}` : ''}`
+                  : 'Paid Subscription Active'}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Error Message */}

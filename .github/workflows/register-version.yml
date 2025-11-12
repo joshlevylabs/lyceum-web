@@ -1,0 +1,64 @@
+# GitHub Actions workflow to automatically register new versions
+# Triggers when you create a GitHub release
+# Calls the Lyceum API to add the version to the database
+
+name: Register Version
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  register-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Extract version from tag
+        id: version
+        run: |
+          # Remove 'v' prefix from tag (v1.0.2 -> 1.0.2)
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Detected version: $VERSION"
+
+      - name: Determine brand type
+        id: brand
+        run: |
+          # Detect brand from repository name
+          REPO_NAME="${{ github.event.repository.name }}"
+          if [[ "$REPO_NAME" == *"centcom"* ]]; then
+            echo "brand=centcom" >> $GITHUB_OUTPUT
+            echo "🏢 Brand: Centcom"
+          else
+            echo "brand=lyceum" >> $GITHUB_OUTPUT
+            echo "🏢 Brand: Lyceum"
+          fi
+
+      - name: Register version with Lyceum API
+        env:
+          LYCEUM_API_URL: ${{ secrets.LYCEUM_API_URL }}  # e.g., https://lyceum.yourdomain.com
+          LYCEUM_API_KEY: ${{ secrets.LYCEUM_API_KEY }}  # Admin API key
+          VERSION: ${{ steps.version.outputs.version }}
+          BRAND: ${{ steps.brand.outputs.brand }}
+        run: |
+          echo "🚀 Registering version $VERSION for $BRAND..."
+
+          # Call Lyceum API to register version
+          curl -X POST "$LYCEUM_API_URL/api/admin/versions/register" \
+            -H "Authorization: Bearer $LYCEUM_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "version": "'"$VERSION"'",
+              "brand_type": "'"$BRAND"'",
+              "platform": "windows",
+              "github_release_url": "'"${{ github.event.release.html_url }}"'",
+              "release_tag": "'"${{ github.event.release.tag_name }}"'"
+            }'
+
+          echo "✅ Version registered successfully!"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Failed to register version. Please register manually in database."
+          exit 1

@@ -480,6 +480,28 @@ export async function GET(request: NextRequest) {
 
           centcomClusters = uniqueLocalClusters.map((cluster: any) => {
             const license = licenseData[cluster.license_key_id]
+
+            // Determine connection status based on recent heartbeat
+            // CentCom sends heartbeats every 10 minutes, so we consider it connected if heartbeat is within 15 minutes (1.5x interval)
+            const fifteenMinutesAgo = new Date().getTime() - (15 * 60 * 1000)
+            const isConnected = cluster.last_heartbeat_at &&
+              new Date(cluster.last_heartbeat_at).getTime() > fifteenMinutesAgo
+
+            // Parse projects metadata if present
+            let projectsMetadata = []
+            if (cluster.projects_metadata) {
+              try {
+                projectsMetadata = typeof cluster.projects_metadata === 'string'
+                  ? JSON.parse(cluster.projects_metadata)
+                  : cluster.projects_metadata
+              } catch (e) {
+                console.error('Failed to parse projects_metadata for cluster', cluster.cluster_key, e)
+              }
+            }
+
+            // Determine health status - use actual health_status if available, otherwise derive
+            const healthStatus = cluster.health_status || (isConnected ? 'healthy' : 'offline')
+
             return {
               id: cluster.cluster_id || cluster.id,
               cluster_key: cluster.cluster_key || `LOCAL-${cluster.machine_fingerprint?.substring(0, 4) || 'UNKNOWN'}`,
@@ -487,10 +509,11 @@ export async function GET(request: NextRequest) {
               description: `Local ClickHouse cluster on ${cluster.machine_os}`,
               architecture: 'centcom',
               cluster_type: 'analytics',
-              status: cluster.last_heartbeat_at &&
-                (new Date().getTime() - new Date(cluster.last_heartbeat_at).getTime()) < 24 * 60 * 60 * 1000
-                ? 'active' : 'offline',
-              health_status: 'unknown',
+              status: isConnected ? 'active' : 'offline',
+              health_status: healthStatus, // Use actual or derived health status
+              is_connected: isConnected, // Add explicit connection flag
+              last_error: cluster.last_error, // Include last error if any
+              projects_metadata: projectsMetadata, // Include projects data
               region: 'local',
 
               // CentCom-specific fields

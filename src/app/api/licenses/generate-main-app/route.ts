@@ -2,6 +2,79 @@ import { NextResponse, NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 /**
+ * GET /api/licenses/generate-main-app
+ *
+ * Check if user has an existing main-application license
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Get the authenticated user
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader) {
+      return NextResponse.json({
+        error: 'Not authenticated'
+      }, { status: 401 })
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+
+    if (authError || !user) {
+      return NextResponse.json({
+        error: 'Invalid authentication'
+      }, { status: 401 })
+    }
+
+    // Check if user has a main-application license
+    const { data: existingLicense, error: checkError } = await supabase
+      .from('license_keys')
+      .select('*')
+      .eq('assigned_to', user.id)
+      .eq('license_type', 'main-application')
+      .eq('status', 'active')
+      .maybeSingle()
+
+    if (checkError) {
+      console.error('Error checking existing license:', checkError)
+      return NextResponse.json({
+        error: 'Failed to check license'
+      }, { status: 500 })
+    }
+
+    if (existingLicense) {
+      return NextResponse.json({
+        hasLicense: true,
+        license: {
+          key_code: existingLicense.key_code,
+          license_type: existingLicense.license_type,
+          status: existingLicense.status,
+          created_at: existingLicense.created_at,
+          expires_at: existingLicense.expires_at,
+          features: existingLicense.features
+        }
+      })
+    }
+
+    return NextResponse.json({
+      hasLicense: false,
+      license: null
+    })
+
+  } catch (error) {
+    console.error('License check error:', error)
+    return NextResponse.json({
+      error: 'Failed to check license',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
+  }
+}
+
+/**
  * POST /api/licenses/generate-main-app
  *
  * Generates a main-application license for the authenticated user

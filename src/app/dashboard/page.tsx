@@ -754,13 +754,55 @@ export default function Dashboard() {
                 </div>
                 <div className="mt-4">
                   <button
-                    onClick={() => router.push('/download-app')}
+                    onClick={async () => {
+                      // Check if user already has a license
+                      console.log('🔍 Checking if user has existing license...')
+                      try {
+                        const { supabase } = await import('@/lib/supabase')
+                        const { data: { session } } = await supabase.auth.getSession()
+
+                        if (session?.access_token) {
+                          const licenseResponse = await fetch('/api/licenses/generate-main-app', {
+                            headers: {
+                              'Authorization': `Bearer ${session.access_token}`,
+                              'Content-Type': 'application/json'
+                            }
+                          })
+
+                          console.log('📄 License check response status:', licenseResponse.status)
+
+                          if (licenseResponse.ok) {
+                            const licenseData = await licenseResponse.json()
+                            console.log('📄 License data:', licenseData)
+
+                            if (licenseData.hasLicense) {
+                              // User has license, go directly to download page
+                              console.log('✅ User has license, redirecting to download page')
+                              router.push('/download-app')
+                              return
+                            } else {
+                              console.log('❌ User does not have license')
+                            }
+                          } else {
+                            console.error('❌ License check failed:', await licenseResponse.text())
+                          }
+                        } else {
+                          console.error('❌ No session found')
+                        }
+                      } catch (error) {
+                        console.error('Error checking license:', error)
+                      }
+
+                      // No license found, go to subscription page
+                      console.log('➡️  Redirecting to subscription page')
+                      router.push('/native-app/subscribe')
+                    }}
                     className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                   >
                     <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                     </svg>
-                    {desktopAppInfo.hasApp ? 'Download Update' : `Download ${brandName}`}
+                    {desktopAppInfo.hasApp ? 'Manage Subscription' : `Get ${brandName}`}
                   </button>
                 </div>
               </div>

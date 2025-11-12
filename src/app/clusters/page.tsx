@@ -27,6 +27,8 @@ interface Cluster {
   architecture?: string
   status: 'active' | 'inactive' | 'configuring' | 'error' | 'maintenance' | 'offline'
   health_status: 'healthy' | 'degraded' | 'unhealthy' | 'unknown' | 'offline'
+  is_connected?: boolean
+  last_heartbeat_at?: string
   provider?: string
   region?: string
   connection_config: Record<string, any>
@@ -51,6 +53,17 @@ export default function ClustersPage() {
     if (user) {
       loadClusters()
     }
+  }, [user])
+
+  // Auto-refresh clusters every 30 seconds to keep connection status current
+  useEffect(() => {
+    if (!user) return
+
+    const interval = setInterval(() => {
+      loadClusters()
+    }, 30000) // 30 seconds
+
+    return () => clearInterval(interval)
   }, [user])
 
   const loadClusters = async () => {
@@ -354,16 +367,41 @@ export default function ClustersPage() {
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0">
+                          <div className="flex-shrink-0 relative">
                             {cluster.cluster_type === 'local' ? (
                               <ComputerDesktopIcon className="h-6 w-6 text-blue-500" />
                             ) : (
                               <CloudIcon className="h-6 w-6 text-purple-500" />
                             )}
+                            {/* Connection indicator dot for local clusters */}
+                            {cluster.cluster_type === 'local' && (
+                              <span
+                                className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border border-white dark:border-gray-800 ${
+                                  cluster.is_connected
+                                    ? 'bg-green-500 animate-pulse'
+                                    : 'bg-gray-400'
+                                }`}
+                                title={cluster.is_connected ? 'Connected' : 'Offline'}
+                              />
+                            )}
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {cluster.name}
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                {cluster.name}
+                              </span>
+                              {/* Connection status badge for local clusters */}
+                              {cluster.cluster_type === 'local' && (
+                                <span
+                                  className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                    cluster.is_connected
+                                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                      : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                                  }`}
+                                >
+                                  {cluster.is_connected ? 'Connected' : 'Offline'}
+                                </span>
+                              )}
                             </div>
                             {cluster.cluster_key && (
                               <div className="text-xs text-gray-500 dark:text-gray-400">

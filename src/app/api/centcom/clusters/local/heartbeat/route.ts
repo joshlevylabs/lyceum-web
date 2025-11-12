@@ -2,11 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { dbOperations } from '@/lib/supabase-direct'
 import jwt from 'jsonwebtoken'
 
+interface ProjectMetadata {
+  project_id: string
+  project_name: string
+  created_at: string
+  last_updated_at: string
+  measurement_count: number
+  table_names: string[]
+}
+
 interface HeartbeatRequest {
   status: {
     is_running: boolean
     uptime_seconds: number
     version: string // ClickHouse version
+    health?: 'healthy' | 'degraded' | 'offline' // NEW: Health status
+    last_error?: string // NEW: Last error message
   }
   usage_metrics: {
     storage_used_gb: number
@@ -16,6 +27,7 @@ interface HeartbeatRequest {
     measurement_count: number
     table_count: number
   }
+  projects?: ProjectMetadata[] // NEW: Project metadata
   last_sync_at?: string
 }
 
@@ -73,13 +85,24 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body: HeartbeatRequest = await request.json()
-    const { status, usage_metrics, last_sync_at } = body
+    const { status, usage_metrics, last_sync_at, projects } = body
+
+    // Log enhanced data if present
+    if (status.health) {
+      console.log('📊 Health status:', status.health)
+    }
+    if (projects && projects.length > 0) {
+      console.log(`📁 Received ${projects.length} projects from cluster`)
+    }
 
     if (!status || !usage_metrics) {
       return NextResponse.json({
         error: 'Missing required fields: status or usage_metrics'
       }, { status: 400 })
     }
+
+    // Determine health status - use provided health or derive from is_running
+    const healthStatus = status.health || (status.is_running ? 'healthy' : 'offline')
 
     // Update cluster in database
     const { data: cluster, error: updateError } = await dbOperations.supabaseAdmin
@@ -88,12 +111,15 @@ export async function POST(request: NextRequest) {
         is_running: status.is_running,
         uptime_seconds: status.uptime_seconds,
         clickhouse_version: status.version,
+        health_status: healthStatus, // NEW: Store health status
+        last_error: status.last_error || null, // NEW: Store last error
         storage_used_gb: usage_metrics.storage_used_gb,
         storage_bytes: usage_metrics.storage_bytes,
         queries_this_month: usage_metrics.queries_this_month,
         project_count: usage_metrics.project_count,
         measurement_count: usage_metrics.measurement_count,
         table_count: usage_metrics.table_count,
+        projects_metadata: body.projects ? JSON.stringify(body.projects) : null, // NEW: Store projects
         last_heartbeat_at: new Date().toISOString(),
         cluster_status: status.is_running ? 'online' : 'offline',
         updated_at: new Date().toISOString()
