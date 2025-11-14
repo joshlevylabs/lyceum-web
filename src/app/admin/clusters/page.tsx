@@ -22,7 +22,8 @@ import {
   UserGroupIcon,
   CurrencyDollarIcon,
   UsersIcon,
-  BanknotesIcon
+  BanknotesIcon,
+  WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline'
 import { 
   Zap, 
@@ -391,7 +392,7 @@ export default function UnifiedClusterManagement() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center">
                 <CircleStackIcon className="mr-3 h-8 w-8 text-blue-600" />
-                Unified Cluster Management
+                Clusters
               </h1>
               <p className="mt-2 text-gray-600">
                 Manage your traditional and optimized analytics clusters with comprehensive user and billing control
@@ -406,6 +407,13 @@ export default function UnifiedClusterManagement() {
               >
                 <ArrowPathIcon className="-ml-1 mr-2 h-5 w-5" />
                 Refresh
+              </button>
+              <button
+                onClick={() => router.push('/admin/test-cluster')}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              >
+                <WrenchScrewdriverIcon className="-ml-1 mr-2 h-5 w-5" />
+                Test Clusters
               </button>
               <button
                 onClick={() => setShowWizard(true)}

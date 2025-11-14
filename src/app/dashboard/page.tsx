@@ -736,7 +736,7 @@ export default function Dashboard() {
                         Desktop Application
                       </dt>
                       <dd className="mt-1 text-lg font-semibold text-white">
-                        {desktopAppInfo.hasApp ? (
+                        {desktopAppInfo.hasApp && (
                           <>
                             v{desktopAppInfo.currentVersion}
                             {desktopAppInfo.updateAvailable && (
@@ -745,8 +745,6 @@ export default function Dashboard() {
                               </span>
                             )}
                           </>
-                        ) : (
-                          'Not Installed'
                         )}
                       </dd>
                     </dl>

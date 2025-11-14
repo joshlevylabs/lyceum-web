@@ -19,7 +19,8 @@ import {
   ArrowLeftIcon,
   UserIcon,
   TicketIcon,
-  WrenchScrewdriverIcon
+  WrenchScrewdriverIcon,
+  ComputerDesktopIcon
 } from '@heroicons/react/24/outline'
 
 const navigation = [
@@ -27,13 +28,11 @@ const navigation = [
   { name: 'Users', href: '/admin/users', icon: UsersIcon },
   { name: 'License Keys', href: '/admin/licenses', icon: KeyIcon },
   { name: 'Plugins', href: '/admin/plugins', icon: PuzzlePieceIcon },
-  { name: 'All Clusters', href: '/admin/clusters', icon: CircleStackIcon },
-  { name: 'Test Cluster', href: '/admin/test-cluster', icon: WrenchScrewdriverIcon },
-  { name: 'CentCom Connections', href: '/admin/centcom-connections', icon: ChartBarIcon },
-  { name: 'Analytics', href: '/admin/analytics', icon: ChartBarIcon },
+  { name: 'Clusters', href: '/admin/clusters', icon: CircleStackIcon },
   { name: 'Tickets', href: '/admin/tickets', icon: TicketIcon },
   { name: 'Onboarding', href: '/admin/onboarding', icon: DocumentTextIcon },
   { name: 'System Health', href: '/admin/health', icon: ShieldCheckIcon },
+  { name: 'Desktop-App', href: '/admin/versions', icon: ComputerDesktopIcon },
   { name: 'Settings', href: '/admin/settings', icon: CogIcon },
 ]
 
