@@ -70,22 +70,8 @@ export async function POST(request: NextRequest) {
     console.log(`   EXE: ${exeUrl}`)
     console.log(`   MSI: ${msiUrl}`)
 
-    // First, disable auto_update for all previous versions of this brand
-    const { error: updateError } = await supabase
-      .from('application_versions')
-      .update({ auto_update_enabled: false })
-      .eq('application_name', 'centcom')
-      .eq('platform', platform)
-      .eq('brand_type', brand_type)
-      .eq('auto_update_enabled', true)
-
-    if (updateError) {
-      console.error('Error disabling old versions:', updateError)
-      // Don't fail - continue with insertion
-    }
-
-    // Insert new version records (both exe and msi)
-    // Only using columns that exist in the application_versions table
+    // Insert new version records (both exe and msi) as "unreleased"
+    // Requires admin approval to promote to testing or production
     const versionRecords = [
       {
         application_name: 'centcom',
@@ -95,7 +81,8 @@ export async function POST(request: NextRequest) {
         installer_type: 'exe',
         is_stable: true,
         is_supported: true,
-        auto_update_enabled: true,
+        auto_update_enabled: false, // Not auto-enabled until promoted to production
+        release_stage: 'unreleased', // New versions start as unreleased
         release_date: new Date().toISOString(),
         download_url: exeUrl,
         storage_path: null
@@ -108,7 +95,8 @@ export async function POST(request: NextRequest) {
         installer_type: 'msi',
         is_stable: true,
         is_supported: true,
-        auto_update_enabled: true,
+        auto_update_enabled: false, // Not auto-enabled until promoted to production
+        release_stage: 'unreleased', // New versions start as unreleased
         release_date: new Date().toISOString(),
         download_url: msiUrl,
         storage_path: null

@@ -33,8 +33,16 @@ export async function GET(req: NextRequest) {
 
     console.log('✅ User brand type:', brandType)
 
-    // Query latest stable version for platform and brand
-    const { data: latestVersion, error } = await supabase
+    // Get user's role to determine which release stages they can access
+    const userRole = userId ? await getUserRole(supabase, userId) : null
+    const isAdminOrSuperadmin = userRole === 'admin' || userRole === 'superadmin'
+
+    console.log('✅ User role:', userRole, '- Can access testing:', isAdminOrSuperadmin)
+
+    // Build query for latest version
+    // - Regular users: production only
+    // - Admin/Superadmin: testing + production
+    let query = supabase
       .from('application_versions')
       .select('*')
       .eq('application_name', 'centcom')
@@ -42,7 +50,17 @@ export async function GET(req: NextRequest) {
       .eq('brand_type', brandType)
       .eq('is_stable', true)
       .eq('is_supported', true)
-      .eq('auto_update_enabled', true)
+
+    // Filter by release stage based on user role
+    if (isAdminOrSuperadmin) {
+      // Admins can access both testing and production versions
+      query = query.in('release_stage', ['testing', 'production'])
+    } else {
+      // Regular users only get production versions
+      query = query.eq('release_stage', 'production')
+    }
+
+    const { data: latestVersion, error } = await query
       .order('release_date', { ascending: false })
       .limit(1)
       .single()
@@ -211,5 +229,26 @@ async function getUserBrandType(supabase: any, userId: string): Promise<string> 
   } catch (error) {
     console.warn('Failed to get user brand type:', error)
     return 'lyceum' // Safe default
+  }
+}
+
+// Helper: Get user's role from user_profiles
+async function getUserRole(supabase: any, userId: string): Promise<string | null> {
+  try {
+    const { data: profile, error } = await supabase
+      .from('user_profiles')
+      .select('role')
+      .eq('id', userId)
+      .single()
+
+    if (error) {
+      console.warn('Failed to get user role:', error)
+      return null
+    }
+
+    return profile?.role || null
+  } catch (error) {
+    console.warn('Failed to get user role:', error)
+    return null
   }
 }

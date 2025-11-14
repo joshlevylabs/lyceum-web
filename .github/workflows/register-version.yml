@@ -1,8 +1,4 @@
-# GitHub Actions workflow to automatically register new versions
-# Triggers when you create a GitHub release
-# Calls the Lyceum API to add the version to the database
-
-name: Register Version
+name: Register New Version
 
 on:
   release:
@@ -16,35 +12,50 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          # Remove 'v' prefix from tag (v1.0.2 -> 1.0.2)
+          # Extract version from tag (e.g., v1.0.2 -> 1.0.2)
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "📦 Detected version: $VERSION"
+          echo "📦 Version detected: $VERSION"
 
       - name: Determine brand type
         id: brand
         run: |
-          # Detect brand from repository name
+          # Determine brand based on repository name
           REPO_NAME="${{ github.event.repository.name }}"
           if [[ "$REPO_NAME" == *"centcom"* ]]; then
-            echo "brand=centcom" >> $GITHUB_OUTPUT
-            echo "🏢 Brand: Centcom"
+            BRAND="centcom"
           else
-            echo "brand=lyceum" >> $GITHUB_OUTPUT
-            echo "🏢 Brand: Lyceum"
+            BRAND="lyceum"
           fi
+          echo "brand=$BRAND" >> $GITHUB_OUTPUT
+          echo "🏷️  Brand detected: $BRAND"
 
       - name: Register version with Lyceum API
+        id: register
         env:
-          LYCEUM_API_URL: ${{ secrets.LYCEUM_API_URL }}  # e.g., https://lyceum.yourdomain.com
-          LYCEUM_API_KEY: ${{ secrets.LYCEUM_API_KEY }}  # Admin API key
+          LYCEUM_API_URL: ${{ secrets.LYCEUM_API_URL }}
+          LYCEUM_API_KEY: ${{ secrets.LYCEUM_API_KEY }}
           VERSION: ${{ steps.version.outputs.version }}
           BRAND: ${{ steps.brand.outputs.brand }}
         run: |
           echo "🚀 Registering version $VERSION for $BRAND..."
 
-          # Call Lyceum API to register version
-          curl -X POST "$LYCEUM_API_URL/api/admin/versions/register" \
+          # Remove trailing slash from URL if present
+          API_URL="${LYCEUM_API_URL%/}"
+
+          # Make sure URL starts with https://
+          if [[ ! "$API_URL" =~ ^https?:// ]]; then
+            API_URL="https://${API_URL}"
+          fi
+
+          echo "🔗 API URL: $API_URL"
+          echo "🔗 Full endpoint: $API_URL/api/admin/versions/register"
+
+          # Test the URL first to see what's happening
+          echo "🧪 Testing URL accessibility..."
+          curl -I -s "$API_URL" | head -5
+
+          RESPONSE=$(curl -L -X POST "$API_URL/api/admin/versions/register" \
             -H "Authorization: Bearer $LYCEUM_API_KEY" \
             -H "Content-Type: application/json" \
             -d '{
@@ -53,12 +64,43 @@ jobs:
               "platform": "windows",
               "github_release_url": "'"${{ github.event.release.html_url }}"'",
               "release_tag": "'"${{ github.event.release.tag_name }}"'"
-            }'
+            }' \
+            -w "\n%{http_code}" \
+            -s)
 
-          echo "✅ Version registered successfully!"
+          # Extract HTTP status code (last line)
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
+          # Extract response body (all but last line)
+          BODY=$(echo "$RESPONSE" | sed '$d')
 
-      - name: Notify on failure
+          echo "📡 HTTP Status: $HTTP_STATUS"
+          echo "📄 Response: $BODY"
+
+          if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 201 ]; then
+            echo "✅ Version registered successfully"
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Failed to register version"
+            echo "status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Post success summary
+        if: steps.register.outputs.status == 'success'
+        run: |
+          echo "## ✅ Version Registration Successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Version **${{ steps.version.outputs.version }}** has been registered in Lyceum Admin Panel." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** Unreleased (requires admin approval)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [Manage Versions in Admin Panel](${{ secrets.LYCEUM_API_URL }}/admin/versions)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Post failure summary
         if: failure()
         run: |
-          echo "❌ Failed to register version. Please register manually in database."
-          exit 1
+          echo "## ❌ Version Registration Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Failed to register version **${{ steps.version.outputs.version }}** in Lyceum." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Please check the workflow logs above for details." >> $GITHUB_STEP_SUMMARY
