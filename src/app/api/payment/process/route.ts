@@ -92,8 +92,6 @@ export async function POST(request: NextRequest) {
       amount: subscription_type === 'paid' ? 49.00 : 0.00
     })
 
-    const [expMonth, expYear] = expiry_date.split('/')
-
     // Store payment method for reuse
     const { error: pmError } = await supabase
       .from('stored_payment_methods')

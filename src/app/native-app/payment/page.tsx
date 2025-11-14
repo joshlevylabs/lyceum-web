@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/DashboardLayout'
@@ -12,7 +12,7 @@ import {
   ShieldCheckIcon
 } from '@heroicons/react/24/outline'
 
-export default function PaymentPage() {
+function PaymentPageContent() {
   const { user, loading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -382,5 +382,19 @@ export default function PaymentPage() {
         </div>
       </div>
     </DashboardLayout>
+  )
+}
+
+export default function PaymentPage() {
+  return (
+    <Suspense fallback={
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </DashboardLayout>
+    }>
+      <PaymentPageContent />
+    </Suspense>
   )
 }
