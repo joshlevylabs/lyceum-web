@@ -29,7 +29,20 @@
       "Bash(dir /s /b srcappapi 2)",
       "Bash(npm run build:*)",
       "Bash(git log:*)",
-      "Bash(git tag:*)"
+      "Bash(git tag:*)",
+      "Bash(.gitignore)",
+      "Bash(npx supabase:*)",
+      "Bash(dir \"c:\\Users\\joshual\\Documents\\Cursor\\lyceum\\prisma\")",
+      "Bash(dir:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(timeout /t 5 /nobreak)",
+      "Bash(timeout //t 5 //nobreak)",
+      "Bash(timeout:*)",
+      "Bash(wmic process:*)",
+      "Bash(if exist \"src\\app\\admin\\subscriptions\\page.tsx\" del \"src\\app\\admin\\subscriptions\\page.tsx\")",
+      "Bash(if not exist \"src\\app\\api\\subscriptions\\plugin\" mkdir \"src\\app\\api\\subscriptions\\plugin\")",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

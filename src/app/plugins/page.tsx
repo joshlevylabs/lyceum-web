@@ -215,9 +215,9 @@ export default function PluginsStorePage() {
     } else if (plugin.pricing_model === 'enterprise') {
       return 'Contact Sales'
     } else if (plugin.pricing_model === 'subscription_monthly') {
-      return `${formatPrice(plugin.monthly_price || 0)}/mo`
+      return `${formatPrice(plugin.monthly_price || plugin.base_price || 0)}/mo`
     } else if (plugin.pricing_model === 'subscription_annual') {
-      return `${formatPrice(plugin.annual_price || 0)}/yr`
+      return `${formatPrice(plugin.annual_price || plugin.base_price || 0)}/yr`
     } else {
       return formatPrice(plugin.base_price)
     }

@@ -50,14 +50,22 @@ interface License {
 
 interface Subscription {
   id: string
-  payment_status: string
-  subscription_type: string
+  // Native app subscription fields
+  subscription_type: 'trial' | 'paid'
+  status: 'active' | 'expired' | 'cancelled'
+  amount_paid_cents?: number
+  currency?: string
+  trial_start_date?: string
+  trial_end_date?: string
+  cancelled_at?: string
+  created_at: string
+  // Legacy payment status fields
+  payment_status?: string
   monthly_amount?: number
-  currency: string
-  billing_cycle: string
+  billing_cycle?: string
   next_billing_date?: string
   last_payment_date?: string
-  payment_failures: number
+  payment_failures?: number
 }
 
 interface Session {
@@ -143,7 +151,20 @@ export default function SettingsPage() {
   const [loadingPayment, setLoadingPayment] = useState(false)
   const [usageData, setUsageData] = useState<any>(null)
   const [loadingUsage, setLoadingUsage] = useState(false)
-  
+
+  // Subscription cancellation state
+  const [showCancelModal, setShowCancelModal] = useState(false)
+  const [cancellingSubscription, setCancellingSubscription] = useState(false)
+  const [cancellationReason, setCancellationReason] = useState('')
+
+  // Plugin subscriptions state
+  const [pluginSubscriptions, setPluginSubscriptions] = useState<any[]>([])
+  const [loadingPluginSubscriptions, setLoadingPluginSubscriptions] = useState(false)
+  const [showCancelPluginModal, setShowCancelPluginModal] = useState(false)
+  const [cancellingPluginSubscription, setCancellingPluginSubscription] = useState(false)
+  const [pluginCancellationReason, setPluginCancellationReason] = useState('')
+  const [selectedPluginForCancellation, setSelectedPluginForCancellation] = useState<any>(null)
+
   // Groups state
   const [userGroups, setUserGroups] = useState<any[]>([])
   const [loadingGroups, setLoadingGroups] = useState(false)
@@ -236,7 +257,7 @@ export default function SettingsPage() {
 
   const fetchPaymentInfo = async () => {
     if (!user?.id) return
-    
+
     setLoadingPayment(true)
     setLoadingUsage(true)
     try {
@@ -244,7 +265,7 @@ export default function SettingsPage() {
       const { createClient } = await import('@/lib/supabase')
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
-      
+
       if (!session?.access_token) {
         console.error('No session found for payment info fetch')
         setLoadingPayment(false)
@@ -281,6 +302,88 @@ export default function SettingsPage() {
     } finally {
       setLoadingPayment(false)
       setLoadingUsage(false)
+    }
+  }
+
+  const fetchPluginSubscriptions = async () => {
+    if (!user?.id) return
+
+    setLoadingPluginSubscriptions(true)
+    try {
+      const { createClient } = await import('@/lib/supabase')
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        console.error('No session found for plugin subscriptions fetch')
+        setLoadingPluginSubscriptions(false)
+        return
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      }
+
+      // Fetch user's plugin subscriptions from user-specific endpoint
+      const response = await fetch('/api/subscriptions/plugin/user', { headers })
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Plugin subscriptions loaded:', data.subscriptions)
+        setPluginSubscriptions(data.subscriptions || [])
+      } else {
+        console.error('Plugin subscriptions fetch failed:', response.status)
+      }
+    } catch (error) {
+      console.error('Error fetching plugin subscriptions:', error)
+    } finally {
+      setLoadingPluginSubscriptions(false)
+    }
+  }
+
+  const handleCancelPluginSubscription = async () => {
+    if (!selectedPluginForCancellation) return
+
+    setCancellingPluginSubscription(true)
+    try {
+      const { createClient } = await import('@/lib/supabase')
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        alert('No session found. Please log in again.')
+        return
+      }
+
+      const response = await fetch('/api/subscriptions/plugin/cancel', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          plugin_type: selectedPluginForCancellation.plugin_type,
+          cancellation_reason: pluginCancellationReason || null
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        alert(`Subscription cancelled successfully. ${data.remainingMessage || ''}`)
+        // Refresh plugin subscriptions
+        await fetchPluginSubscriptions()
+        setShowCancelPluginModal(false)
+        setSelectedPluginForCancellation(null)
+        setPluginCancellationReason('')
+      } else {
+        alert(`Failed to cancel subscription: ${data.error}`)
+      }
+    } catch (error) {
+      console.error('Error cancelling plugin subscription:', error)
+      alert('An error occurred while cancelling the subscription.')
+    } finally {
+      setCancellingPluginSubscription(false)
     }
   }
 
@@ -378,6 +481,85 @@ export default function SettingsPage() {
     router.push('/auth/set-password')
   }
 
+  const handleCancelSubscription = async () => {
+    if (!subscription) return
+
+    // Calculate remaining days
+    let remainingDays = 0
+    let accessMessage = ''
+
+    if (subscription.subscription_type === 'trial' && subscription.trial_end_date) {
+      const now = new Date()
+      const trialEnd = new Date(subscription.trial_end_date)
+      remainingDays = Math.max(0, Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+
+      if (remainingDays > 0) {
+        accessMessage = `You will continue to have access to your trial license for the remaining ${remainingDays} day${remainingDays !== 1 ? 's' : ''} of your trial period.`
+      }
+    } else if (subscription.subscription_type === 'paid') {
+      // For paid subscriptions, if they have a next billing date, calculate remaining days
+      // For lifetime licenses, they keep access indefinitely
+      accessMessage = 'You will continue to have access to your license as it is a lifetime purchase.'
+    }
+
+    setCancellingSubscription(true)
+    try {
+      const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession()
+      if (!session?.access_token) {
+        throw new Error('Not authenticated')
+      }
+
+      const response = await fetch('/api/subscriptions/native-app/cancel', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          subscription_id: subscription.id,
+          reason: cancellationReason || 'User requested cancellation'
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to cancel subscription')
+      }
+
+      // Update local state
+      setSubscription({
+        ...subscription,
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString()
+      })
+
+      setShowCancelModal(false)
+      setCancellationReason('')
+
+      // Show success message with remaining access info
+      const successMessage = accessMessage
+        ? `Subscription cancelled successfully.\n\n${accessMessage}`
+        : 'Subscription cancelled successfully'
+      alert(successMessage)
+
+      // Refresh data
+      if (user) {
+        const licensesResponse = await fetch(`/api/user-profiles/licenses?user_id=${user.id}`)
+        if (licensesResponse.ok) {
+          const licensesData = await licensesResponse.json()
+          setLicenses(licensesData.data.licenses || [])
+          setSubscription(licensesData.data.subscription)
+        }
+      }
+
+    } catch (error) {
+      console.error('Error cancelling subscription:', error)
+      alert(error instanceof Error ? error.message : 'Failed to cancel subscription')
+    } finally {
+      setCancellingSubscription(false)
+    }
+  }
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -471,7 +653,10 @@ export default function SettingsPage() {
               Payment
             </button>
             <button
-              onClick={() => setActiveTab('licenses')}
+              onClick={() => {
+                setActiveTab('licenses')
+                if (pluginSubscriptions.length === 0 && !loadingPluginSubscriptions) fetchPluginSubscriptions()
+              }}
               className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                 activeTab === 'licenses'
                   ? 'border-blue-500 text-blue-600 dark:text-blue-400'
@@ -1123,14 +1308,22 @@ export default function SettingsPage() {
                               </p>
                             </div>
                           </div>
-                          <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-                            license.status === 'active'
+                          <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full capitalize ${
+                            license.status === 'active' && subscription?.subscription_type === 'trial'
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
+                              : license.status === 'active'
                               ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
                               : license.status === 'expired'
                               ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
+                              : license.status === 'revoked'
+                              ? 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-200'
                               : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200'
                           }`}>
-                            {license.status}
+                            {license.status === 'revoked'
+                              ? 'Inactive'
+                              : (license.status === 'active' && subscription?.subscription_type === 'trial')
+                              ? 'Trial'
+                              : license.status}
                           </span>
                         </div>
 
@@ -1179,7 +1372,7 @@ export default function SettingsPage() {
                   <div className="text-center py-8">
                     <ShieldCheckIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500 dark:text-gray-400">No licenses found</p>
-                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                       Contact your administrator to get licenses assigned.
                     </p>
                   </div>
@@ -1194,84 +1387,328 @@ export default function SettingsPage() {
                 
                 {subscription ? (
                   <div className="space-y-4">
+                    {/* Trial Warning Banner (if applicable) */}
+                    {subscription.subscription_type === 'trial' && subscription.trial_end_date && (
+                      (() => {
+                        const now = new Date()
+                        const trialEnd = new Date(subscription.trial_end_date)
+                        const daysRemaining = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                        const isExpiringSoon = daysRemaining <= 7 && daysRemaining > 0
+
+                        return (
+                          <div className={`rounded-lg p-4 ${
+                            isExpiringSoon
+                              ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800'
+                              : 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800'
+                          }`}>
+                            <div className="flex items-start">
+                              <ClockIcon className={`h-5 w-5 mt-0.5 ${
+                                isExpiringSoon ? 'text-yellow-600 dark:text-yellow-400' : 'text-blue-600 dark:text-blue-400'
+                              }`} />
+                              <div className="ml-3">
+                                <h4 className={`text-sm font-medium ${
+                                  isExpiringSoon ? 'text-yellow-800 dark:text-yellow-300' : 'text-blue-800 dark:text-blue-300'
+                                }`}>
+                                  {isExpiringSoon ? 'Trial Expiring Soon' : 'Free Trial Active'}
+                                </h4>
+                                <p className={`text-sm mt-1 ${
+                                  isExpiringSoon ? 'text-yellow-700 dark:text-yellow-400' : 'text-blue-700 dark:text-blue-400'
+                                }`}>
+                                  {daysRemaining > 0
+                                    ? `${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} remaining in your trial`
+                                    : 'Your trial has expired'
+                                  }
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })()
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Subscription Type
                         </label>
                         <div className="mt-1">
-                          <span className="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 capitalize">
-                            {subscription.subscription_type}
+                          <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                            subscription.subscription_type === 'trial'
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
+                              : 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200'
+                          } capitalize`}>
+                            {subscription.subscription_type === 'trial' ? '30-Day Free Trial' : 'Lifetime License'}
                           </span>
                         </div>
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Payment Status
+                          Status
                         </label>
                         <div className="mt-1">
                           <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
-                            subscription.payment_status === 'active'
+                            subscription.status === 'active'
                               ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
-                              : subscription.payment_status === 'overdue'
+                              : subscription.status === 'expired'
                               ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
-                              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200'
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-200'
                           } capitalize`}>
-                            {subscription.payment_status}
+                            {subscription.status}
                           </span>
                         </div>
                       </div>
 
-                      {subscription.monthly_amount && (
+                      {subscription.amount_paid_cents !== undefined && subscription.amount_paid_cents > 0 && (
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Monthly Amount
+                            Amount Paid
                           </label>
                           <div className="mt-1 text-sm text-gray-900 dark:text-white">
-                            ${subscription.monthly_amount} {subscription.currency}
+                            ${(subscription.amount_paid_cents / 100).toFixed(2)} {subscription.currency?.toUpperCase() || 'USD'}
                           </div>
                         </div>
                       )}
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                          Billing Cycle
+                          Started
                         </label>
-                        <div className="mt-1 text-sm text-gray-900 dark:text-white capitalize">
-                          {subscription.billing_cycle}
+                        <div className="mt-1 text-sm text-gray-900 dark:text-white">
+                          {new Date(subscription.trial_start_date || subscription.created_at).toLocaleDateString()}
                         </div>
                       </div>
 
-                      {subscription.next_billing_date && (
+                      {subscription.subscription_type === 'trial' && subscription.trial_end_date && (
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Next Billing Date
+                            Trial Expires
                           </label>
                           <div className="mt-1 text-sm text-gray-900 dark:text-white">
-                            {new Date(subscription.next_billing_date).toLocaleDateString()}
+                            {new Date(subscription.trial_end_date).toLocaleDateString()}
                           </div>
                         </div>
                       )}
 
-                      {subscription.last_payment_date && (
+                      {subscription.subscription_type === 'paid' && (
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Last Payment
+                            Billing Type
                           </label>
                           <div className="mt-1 text-sm text-gray-900 dark:text-white">
-                            {new Date(subscription.last_payment_date).toLocaleDateString()}
+                            One-time payment (Lifetime)
                           </div>
                         </div>
                       )}
                     </div>
+
+                    {/* Legacy subscription fields (if available) */}
+                    {subscription.billing_cycle && (
+                      <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-4">Additional Billing Info</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Billing Cycle
+                            </label>
+                            <div className="mt-1 text-sm text-gray-900 dark:text-white capitalize">
+                              {subscription.billing_cycle}
+                            </div>
+                          </div>
+
+                          {subscription.monthly_amount && (
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Monthly Amount
+                              </label>
+                              <div className="mt-1 text-sm text-gray-900 dark:text-white">
+                                ${subscription.monthly_amount} {subscription.currency}
+                              </div>
+                            </div>
+                          )}
+
+                          {subscription.next_billing_date && (
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Next Billing Date
+                              </label>
+                              <div className="mt-1 text-sm text-gray-900 dark:text-white">
+                                {new Date(subscription.next_billing_date).toLocaleDateString()}
+                              </div>
+                            </div>
+                          )}
+
+                          {subscription.last_payment_date && (
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Last Payment
+                              </label>
+                              <div className="mt-1 text-sm text-gray-900 dark:text-white">
+                                {new Date(subscription.last_payment_date).toLocaleDateString()}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Cancel Subscription Button */}
+                    {subscription.status === 'active' && (
+                      <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                              Cancel Subscription
+                            </h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                              Cancel your subscription and revoke access to the desktop application.
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => setShowCancelModal(true)}
+                            className="px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-300 rounded-lg hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/30 transition-colors"
+                          >
+                            Cancel Subscription
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-8">
                     <CurrencyDollarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500 dark:text-gray-400">No subscription information available</p>
-                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                      You may be on a free plan or trial account.
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Subscribe to the desktop app to see subscription details here.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Plugin Subscriptions Section */}
+            <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Plugin Subscriptions</h3>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      Manage your plugin subscriptions (Klippel QC and APx500).
+                    </p>
+                  </div>
+                  {loadingPluginSubscriptions && (
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  )}
+                </div>
+
+                {pluginSubscriptions.length > 0 ? (
+                  <div className="space-y-4">
+                    {pluginSubscriptions.map((pluginSub) => {
+                      const pluginName = pluginSub.plugin_type === 'klippel_qc' ? 'Klippel QC' : 'APx500'
+                      const now = new Date()
+                      const trialEnd = pluginSub.trial_end_date ? new Date(pluginSub.trial_end_date) : null
+                      const daysRemaining = trialEnd ? Math.max(0, Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))) : 0
+
+                      return (
+                        <div key={pluginSub.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <h4 className="text-lg font-medium text-gray-900 dark:text-white">
+                                {pluginName} Plugin
+                              </h4>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {pluginSub.subscription_type === 'trial' ? '30-Day Free Trial' : 'Lifetime License'}
+                              </p>
+                            </div>
+                            <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full capitalize ${
+                              pluginSub.status === 'active' && pluginSub.subscription_type === 'trial'
+                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
+                                : pluginSub.status === 'active'
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
+                                : pluginSub.status === 'cancelled'
+                                ? 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-200'
+                                : 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
+                            }`}>
+                              {pluginSub.status}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            {pluginSub.amount_paid_cents !== undefined && pluginSub.amount_paid_cents > 0 && (
+                              <div>
+                                <span className="font-medium text-gray-700 dark:text-gray-300">Amount Paid:</span>
+                                <span className="ml-1 text-gray-900 dark:text-white">
+                                  ${(pluginSub.amount_paid_cents / 100).toFixed(2)} {pluginSub.currency?.toUpperCase() || 'USD'}
+                                </span>
+                              </div>
+                            )}
+
+                            <div>
+                              <span className="font-medium text-gray-700 dark:text-gray-300">Started:</span>
+                              <span className="ml-1 text-gray-900 dark:text-white">
+                                {new Date(pluginSub.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+
+                            {pluginSub.trial_end_date && (
+                              <div>
+                                <span className="font-medium text-gray-700 dark:text-gray-300">
+                                  {pluginSub.status === 'active' && pluginSub.subscription_type === 'trial' ? 'Trial Expires:' : 'Trial Ended:'}
+                                </span>
+                                <span className="ml-1 text-gray-900 dark:text-white">
+                                  {new Date(pluginSub.trial_end_date).toLocaleDateString()}
+                                  {pluginSub.status === 'active' && pluginSub.subscription_type === 'trial' && daysRemaining > 0 && (
+                                    <span className="ml-2 text-blue-600 dark:text-blue-400">
+                                      ({daysRemaining} day{daysRemaining !== 1 ? 's' : ''} remaining)
+                                    </span>
+                                  )}
+                                </span>
+                              </div>
+                            )}
+
+                            {pluginSub.cancelled_at && (
+                              <div>
+                                <span className="font-medium text-gray-700 dark:text-gray-300">Cancelled:</span>
+                                <span className="ml-1 text-gray-900 dark:text-white">
+                                  {new Date(pluginSub.cancelled_at).toLocaleDateString()}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Cancel Button */}
+                          {pluginSub.status === 'active' && (
+                            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    {pluginSub.subscription_type === 'trial'
+                                      ? 'Cancel your trial subscription. You will continue to have access until the trial expires.'
+                                      : 'Cancel your subscription. You will retain lifetime access to this plugin.'}
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    setSelectedPluginForCancellation(pluginSub)
+                                    setShowCancelPluginModal(true)
+                                  }}
+                                  className="ml-4 px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-300 rounded-lg hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/30 transition-colors whitespace-nowrap"
+                                >
+                                  Cancel Plugin
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <ShieldCheckIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400">No plugin subscriptions</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Subscribe to Klippel QC or APx500 plugins to see them here.
                     </p>
                   </div>
                 )}
@@ -1584,7 +2021,7 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Estimated Monthly Total</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                           {usageData.estimated_monthly_cost.summary || 'Based on current usage'}
                         </p>
                       </div>
@@ -1720,7 +2157,7 @@ export default function SettingsPage() {
                     <p className="text-gray-500 dark:text-gray-400 mb-4">
                       No payment information configured
                     </p>
-                    <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
                       Add a payment method to create paid clusters and manage subscriptions.
                     </p>
                     <button
@@ -1787,7 +2224,7 @@ export default function SettingsPage() {
                   <div className="text-center py-8">
                     <DocumentTextIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500 dark:text-gray-400">No invoices yet</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
                       Invoices will appear here once you start using paid services.
                     </p>
                   </div>
@@ -1868,7 +2305,7 @@ export default function SettingsPage() {
                   <div className="text-center py-12">
                     <UserGroupIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500 dark:text-gray-400 mb-4">No groups yet</p>
-                    <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
                       Create or join a group to collaborate with your team on shared resources.
                     </p>
                     <button
@@ -1972,6 +2409,154 @@ export default function SettingsPage() {
           </div>
         )}
       </div>
+
+      {/* Cancel Subscription Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                Cancel Subscription
+              </h3>
+            </div>
+
+            <div className="px-6 py-4">
+              <div className="mb-4">
+                <XMarkIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
+                  Are you sure you want to cancel your subscription? This will:
+                </p>
+                <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-2 mb-4">
+                  <li>Revoke access to the desktop application</li>
+                  <li>Deactivate your license immediately</li>
+                  {subscription?.subscription_type === 'trial' && (
+                    <li>End your free trial period</li>
+                  )}
+                  <li>You can resubscribe at any time</li>
+                </ul>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Reason for cancellation (optional)
+                </label>
+                <textarea
+                  value={cancellationReason}
+                  onChange={(e) => setCancellationReason(e.target.value)}
+                  placeholder="Help us improve by telling us why you're cancelling..."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900/50 rounded-b-lg flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowCancelModal(false)
+                  setCancellationReason('')
+                }}
+                disabled={cancellingSubscription}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600 disabled:opacity-50"
+              >
+                Keep Subscription
+              </button>
+              <button
+                onClick={handleCancelSubscription}
+                disabled={cancellingSubscription}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center"
+              >
+                {cancellingSubscription ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Cancelling...
+                  </>
+                ) : (
+                  'Cancel Subscription'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Plugin Subscription Modal */}
+      {showCancelPluginModal && selectedPluginForCancellation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                Cancel Plugin Subscription
+              </h3>
+            </div>
+
+            <div className="px-6 py-4">
+              <div className="mb-4">
+                <XMarkIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
+                  Are you sure you want to cancel your {selectedPluginForCancellation.plugin_type === 'klippel_qc' ? 'Klippel QC' : 'APx500'} plugin subscription?
+                </p>
+                <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-2 mb-4">
+                  {selectedPluginForCancellation.subscription_type === 'trial' ? (
+                    <>
+                      <li>You will continue to have access until the trial expires</li>
+                      <li>Your license will remain valid during the trial period</li>
+                      <li>You can resubscribe at any time</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>You will retain lifetime access to this plugin</li>
+                      <li>This is a one-time purchase, no refunds</li>
+                      <li>Your license will remain valid</li>
+                    </>
+                  )}
+                </ul>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Reason for cancellation (optional)
+                </label>
+                <textarea
+                  value={pluginCancellationReason}
+                  onChange={(e) => setPluginCancellationReason(e.target.value)}
+                  placeholder="Help us improve by telling us why you're cancelling..."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900/50 rounded-b-lg flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowCancelPluginModal(false)
+                  setSelectedPluginForCancellation(null)
+                  setPluginCancellationReason('')
+                }}
+                disabled={cancellingPluginSubscription}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600 disabled:opacity-50"
+              >
+                Keep Plugin
+              </button>
+              <button
+                onClick={handleCancelPluginSubscription}
+                disabled={cancellingPluginSubscription}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center"
+              >
+                {cancellingPluginSubscription ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Cancelling...
+                  </>
+                ) : (
+                  'Cancel Plugin Subscription'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   )
 }

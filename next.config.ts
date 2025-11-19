@@ -33,15 +33,15 @@ const nextConfig: NextConfig = {
         source: '/(.*)',
         headers: [
           {
-            key: 'Content-Security-Policy',
+            key: 'Content-Security-Policy-Report-Only',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "font-src 'self' https://fonts.gstatic.com https://js.stripe.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.stripe.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.stripe.com",
+              "font-src 'self' data: https://fonts.gstatic.com https://js.stripe.com https://*.stripe.com",
               "img-src 'self' data: https: blob:",
-              "connect-src 'self' https://api.stripe.com https://maps.googleapis.com https://*.supabase.co wss://*.supabase.co",
-              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+              "connect-src 'self' https://api.stripe.com https://*.stripe.com https://maps.googleapis.com https://*.supabase.co wss://*.supabase.co",
+              "frame-src 'self' https://js.stripe.com https://*.stripe.com https://hooks.stripe.com",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'"

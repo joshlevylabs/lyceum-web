@@ -9,8 +9,7 @@ import {
   XMarkIcon,
   SparklesIcon,
   RocketLaunchIcon,
-  ClockIcon,
-  InfinitySymbol
+  ClockIcon
 } from '@heroicons/react/24/outline'
 
 interface Subscription {
@@ -59,9 +58,9 @@ export default function NativeAppSubscribePage() {
     }
   }, [user, loading, router])
 
-  // Check existing subscription
+  // Check existing license (NOT subscription - subscription without payment is invalid)
   useEffect(() => {
-    const checkSubscription = async () => {
+    const checkLicense = async () => {
       if (!user) return
 
       try {
@@ -71,34 +70,63 @@ export default function NativeAppSubscribePage() {
           return
         }
 
-        const response = await fetch('/api/subscriptions/native-app', {
+        console.log('Checking if user has valid license...')
+
+        // Check if user has a license
+        const licenseResponse = await fetch('/api/licenses/generate-main-app', {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json'
           }
         })
 
-        if (response.ok) {
-          const data = await response.json()
-          setHasSubscription(data.hasSubscription)
-          setSubscription(data.subscription)
+        if (licenseResponse.ok) {
+          const licenseData = await licenseResponse.json()
 
-          // If user already has subscription, redirect to download page
-          if (data.hasSubscription) {
+          if (licenseData.hasLicense) {
+            // User already has a license - redirect to download
+            console.log('User already has a license, redirecting to download...')
             router.push('/download-app')
+          } else {
+            // No license - user needs to subscribe (show the page)
+            console.log('No license found - user needs to subscribe')
           }
         }
       } catch (err) {
-        console.error('Error checking subscription:', err)
+        console.error('Error checking license:', err)
       } finally {
         setCheckingSubscription(false)
       }
     }
 
     if (!loading && user) {
-      checkSubscription()
+      checkLicense()
     }
   }, [user, loading, router])
+
+  const checkPaymentMethod = async (): Promise<boolean> => {
+    try {
+      if (!user?.id) return false
+
+      const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession()
+      if (!session?.access_token) return false
+
+      const response = await fetch(`/api/user-billing/payment-methods?user_id=${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) return false
+
+      const data = await response.json()
+      return data.paymentMethods && data.paymentMethods.length > 0
+    } catch (error) {
+      console.error('Error checking payment method:', error)
+      return false
+    }
+  }
 
   const handleSubscribe = async (subscriptionType: 'trial' | 'paid') => {
     setError(null)
@@ -112,52 +140,131 @@ export default function NativeAppSubscribePage() {
         return
       }
 
-      // Check if user already has payment method on file
-      console.log('Checking for existing payment methods...')
-      const paymentCheckResponse = await fetch('/api/payment/check', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
-      })
+      // Check if user has a payment method
+      const hasPaymentMethod = await checkPaymentMethod()
+      console.log('Has payment method:', hasPaymentMethod)
 
-      console.log('Payment check response status:', paymentCheckResponse.status)
+      // Handle FREE TRIAL
+      if (subscriptionType === 'trial') {
+        if (!hasPaymentMethod) {
+          // No payment method - redirect to Stripe to collect one
+          console.log('No payment method found - redirecting to Stripe to collect...')
 
-      if (paymentCheckResponse.ok) {
-        const paymentData = await paymentCheckResponse.json()
-        console.log('Payment data:', paymentData)
-
-        if (paymentData.hasPaymentMethod) {
-          // User has payment on file, process subscription directly
-          console.log('Payment method on file, processing subscription directly!')
-
-          // Since user has payment method, always create a PAID subscription
-          // (even if they clicked "Start Free Trial")
-          const finalSubscriptionType = 'paid'
-          console.log(`Creating ${finalSubscriptionType} subscription (user has payment method on file)`)
-
-          // Create subscription
-          const subscriptionResponse = await fetch('/api/subscriptions/native-app', {
+          const setupResponse = await fetch('/api/stripe/create-trial-setup', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${session.access_token}`,
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ subscription_type: finalSubscriptionType })
+            body: JSON.stringify({ subscription_type: 'trial' })
           })
 
-          if (!subscriptionResponse.ok) {
-            const errorData = await subscriptionResponse.json()
-            throw new Error(errorData.error || 'Failed to create subscription')
+          if (!setupResponse.ok) {
+            const errorData = await setupResponse.json()
+            throw new Error(errorData.error || 'Failed to create trial setup')
           }
 
-          // Generate license
+          const setupData = await setupResponse.json()
+
+          if (setupData.setupUrl) {
+            console.log('Redirecting to Stripe to collect payment method for trial...')
+            window.location.href = setupData.setupUrl
+          } else {
+            throw new Error('No setup URL returned')
+          }
+          return
+        } else {
+          // Has payment method - generate trial license directly
+          console.log('Payment method exists - generating trial license directly...')
+
           const licenseResponse = await fetch('/api/licenses/generate-main-app', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${session.access_token}`,
               'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify({ license_type: 'trial' })
+          })
+
+          if (!licenseResponse.ok) {
+            const errorData = await licenseResponse.json()
+            throw new Error(errorData.error || 'Failed to generate trial license')
+          }
+
+          const licenseData = await licenseResponse.json()
+          console.log('Trial license generated:', licenseData)
+
+          // Redirect to download page
+          router.push('/download-app')
+          return
+        }
+      }
+
+      // Handle PAID SUBSCRIPTION
+      if (subscriptionType === 'paid') {
+        if (!hasPaymentMethod) {
+          // No payment method - redirect to Stripe Checkout
+          console.log('No payment method found - redirecting to Stripe Checkout...')
+
+          const checkoutResponse = await fetch('/api/stripe/create-native-app-checkout', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              subscription_type: 'paid',
+              amount: 4900, // $49.00 in cents
+            })
+          })
+
+          if (!checkoutResponse.ok) {
+            const errorData = await checkoutResponse.json()
+            throw new Error(errorData.error || 'Failed to create checkout session')
+          }
+
+          const checkoutData = await checkoutResponse.json()
+
+          if (checkoutData.checkoutUrl) {
+            window.location.href = checkoutData.checkoutUrl
+          } else {
+            throw new Error('No checkout URL returned')
+          }
+          return
+        } else {
+          // Has payment method - charge it directly and generate license
+          console.log('Payment method exists - charging existing payment method...')
+
+          // Charge the existing payment method
+          const chargeResponse = await fetch('/api/stripe/charge-payment-method', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              amount: 4900, // $49.00 in cents
+              description: `${brandName} Paid Subscription`,
+              subscription_type: 'paid'
+            })
+          })
+
+          if (!chargeResponse.ok) {
+            const errorData = await chargeResponse.json()
+            throw new Error(errorData.error || 'Failed to process payment')
+          }
+
+          const chargeData = await chargeResponse.json()
+          console.log('Payment successful:', chargeData)
+
+          // Generate paid license
+          const licenseResponse = await fetch('/api/licenses/generate-main-app', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ license_type: 'paid' })
           })
 
           if (!licenseResponse.ok) {
@@ -165,19 +272,14 @@ export default function NativeAppSubscribePage() {
             throw new Error(errorData.error || 'Failed to generate license')
           }
 
-          // Success! Redirect to download page
+          const licenseData = await licenseResponse.json()
+          console.log('Paid license generated:', licenseData)
+
+          // Redirect to download page
           router.push('/download-app')
           return
-        } else {
-          console.log('No payment method on file, redirecting to payment page')
         }
-      } else {
-        console.error('Payment check failed:', await paymentCheckResponse.text())
       }
-
-      // No payment method on file, redirect to payment page
-      console.log(`Redirecting to payment page: /native-app/payment?type=${subscriptionType}`)
-      router.push(`/native-app/payment?type=${subscriptionType}`)
 
     } catch (err) {
       console.error('Subscription error:', err)

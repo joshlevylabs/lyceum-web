@@ -14,7 +14,10 @@ import {
   EnvelopeIcon,
   ClockIcon,
   ChartBarIcon,
-  CloudArrowDownIcon
+  CloudArrowDownIcon,
+  XMarkIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline'
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid'
 
@@ -76,6 +79,21 @@ export default function PluginDetailsPage() {
   const [showReviewForm, setShowReviewForm] = useState(false)
   const [newReview, setNewReview] = useState({ rating: 5, title: '', review_text: '' })
   const [submittingReview, setSubmittingReview] = useState(false)
+  const [checkingSubscription, setCheckingSubscription] = useState(true)
+  const [hasValidLicense, setHasValidLicense] = useState(false)
+  const [subscription, setSubscription] = useState<any>(null)
+  const [generatingLicense, setGeneratingLicense] = useState(false)
+
+  // Modal states
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [showErrorModal, setShowErrorModal] = useState(false)
+  const [modalData, setModalData] = useState<{
+    licenseType?: 'trial' | 'paid'
+    licenseKey?: string
+    errorMessage?: string
+    isExisting?: boolean
+  }>({})
 
   // Helper function to get auth headers
   const getAuthHeaders = async () => {
@@ -88,7 +106,15 @@ export default function PluginDetailsPage() {
 
   useEffect(() => {
     if (user && slug) {
-      loadPluginDetails()
+      loadPluginDetails().then(() => {
+        // Check subscription only for klippel-qc and apx500 plugins
+        if (slug === 'klippel-qc' || slug === 'apx500') {
+          checkPluginSubscription()
+        } else {
+          setCheckingSubscription(false)
+          setHasValidLicense(true)
+        }
+      })
       checkUserLicense()
       loadReviews()
     }
@@ -117,6 +143,50 @@ export default function PluginDetailsPage() {
       setError(err.message || 'Failed to load plugin')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const checkPluginSubscription = async () => {
+    try {
+      setCheckingSubscription(true)
+
+      // Map slug to plugin_type
+      const pluginTypeMap: { [key: string]: string } = {
+        'klippel-qc': 'klippel_qc',
+        'apx500': 'apx500'
+      }
+
+      const plugin_type = pluginTypeMap[slug]
+      if (!plugin_type) {
+        // Not a subscription-based plugin, skip check
+        setCheckingSubscription(false)
+        setHasValidLicense(true)
+        return
+      }
+
+      const headers = await getAuthHeaders()
+      const response = await fetch(`/api/subscriptions/plugin?plugin_type=${plugin_type}`, { headers })
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        if (data.hasValidLicense) {
+          setHasValidLicense(true)
+          setSubscription(data.subscription)
+        } else {
+          setHasValidLicense(false)
+          setSubscription(data.subscription)
+          // Don't redirect - let the user see the plugin details page with subscribe buttons
+        }
+      } else {
+        // No subscription found - show the plugin details page with subscribe options
+        setHasValidLicense(false)
+      }
+    } catch (err) {
+      console.error('Error checking plugin subscription:', err)
+      setHasValidLicense(false)
+      // Don't redirect on error - show the plugin details page
+    } finally {
+      setCheckingSubscription(false)
     }
   }
 
@@ -188,15 +258,121 @@ export default function PluginDetailsPage() {
     }
   }
 
+  // Check if user has payment method
+  const checkPaymentMethod = async (): Promise<boolean> => {
+    try {
+      const headers = await getAuthHeaders()
+      const response = await fetch(`/api/user-billing/payment-methods?user_id=${user?.id}`, {
+        headers
+      })
+
+      if (!response.ok) {
+        return false
+      }
+
+      const data = await response.json()
+      return data.paymentMethods && data.paymentMethods.length > 0
+    } catch (error) {
+      console.error('Error checking payment method:', error)
+      return false
+    }
+  }
+
+  // Generate plugin license (paid or trial)
+  const generatePluginLicense = async (licenseType: 'trial' | 'paid') => {
+    if (!user || !slug) return
+
+    setGeneratingLicense(true)
+    setShowConfirmModal(false)
+
+    try {
+      // Check for payment method (required for paid licenses)
+      if (licenseType === 'paid') {
+        const hasPaymentMethod = await checkPaymentMethod()
+        if (!hasPaymentMethod) {
+          setModalData({
+            errorMessage: 'Please add a payment method before purchasing a paid license. Go to Settings > Payment to add a payment method.'
+          })
+          setShowErrorModal(true)
+          setGeneratingLicense(false)
+          return
+        }
+      }
+
+      // Map slug to plugin_type
+      const pluginTypeMap: Record<string, string> = {
+        'klippel-qc': 'klippel_qc',
+        'apx500': 'apx500'
+      }
+      const pluginType = pluginTypeMap[slug as string] || slug
+
+      const headers = await getAuthHeaders()
+      const response = await fetch('/api/licenses/generate-plugin', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          plugin_type: pluginType,
+          license_type: licenseType
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate license')
+      }
+
+      // Show success modal
+      setModalData({
+        licenseType,
+        licenseKey: data.license.key_code,
+        isExisting: !data.is_new
+      })
+      setShowSuccessModal(true)
+
+      // Update state to reflect new license
+      setHasValidLicense(true)
+      setUserHasLicense(true)
+
+      // Reload subscription status
+      checkPluginSubscription()
+
+    } catch (err: any) {
+      console.error('Error generating license:', err)
+      setModalData({
+        errorMessage: err.message || 'Failed to generate license'
+      })
+      setShowErrorModal(true)
+    } finally {
+      setGeneratingLicense(false)
+    }
+  }
+
+  const handleStartTrial = () => {
+    // Show confirmation modal
+    setModalData({ licenseType: 'trial' })
+    setShowConfirmModal(true)
+  }
+
   const handleRequestLicense = () => {
     // For enterprise plugins, open email to contact sales
     if (plugin?.pricing_model === 'enterprise') {
       const subject = encodeURIComponent(`License Request: ${plugin.display_name}`)
       const body = encodeURIComponent(`Hello,\n\nI would like to request a license for ${plugin.display_name}.\n\nUser Email: ${user?.email}\nPlugin: ${plugin.display_name} (${plugin.slug})\nVersion: ${plugin.current_version}\n\nPlease provide pricing and licensing information.\n\nThank you!`)
       window.location.href = `mailto:sales@lyceum.com?subject=${subject}&body=${body}`
+    } else if (slug === 'klippel-qc' || slug === 'apx500') {
+      // Show confirmation modal for paid license
+      setModalData({ licenseType: 'paid' })
+      setShowConfirmModal(true)
     } else {
-      // For other plugins, go to checkout/purchase flow
-      router.push(`/plugins/${slug}/purchase`)
+      // For other subscription-based plugins, go to subscribe page
+      router.push(`/plugins/${slug}/subscribe`)
+    }
+  }
+
+  const confirmLicenseGeneration = () => {
+    if (modalData.licenseType) {
+      generatePluginLicense(modalData.licenseType)
     }
   }
 
@@ -215,6 +391,53 @@ export default function PluginDetailsPage() {
       }
     }
     return stars
+  }
+
+  const renderSubscriptionBadge = () => {
+    if (!subscription || (slug !== 'klippel-qc' && slug !== 'apx500')) {
+      return null
+    }
+
+    const formatDate = (dateString: string) => {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      })
+    }
+
+    const isTrial = subscription.subscription_type === 'trial'
+    const isCancelled = subscription.cancel_at_period_end === true
+    const isPaid = subscription.subscription_type === 'paid'
+
+    if (isTrial && !isCancelled) {
+      return (
+        <div className="inline-flex items-center px-4 py-2 rounded-md bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-sm font-medium">
+          <ClockIcon className="h-4 w-4 mr-2" />
+          Trial Active • Expires {formatDate(subscription.current_period_end)}
+        </div>
+      )
+    }
+
+    if (isTrial && isCancelled) {
+      return (
+        <div className="inline-flex items-center px-4 py-2 rounded-md bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-sm font-medium">
+          <ClockIcon className="h-4 w-4 mr-2" />
+          Trial (Cancelled) • Valid until {formatDate(subscription.current_period_end)}
+        </div>
+      )
+    }
+
+    if (isPaid) {
+      return (
+        <div className="inline-flex items-center px-4 py-2 rounded-md bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-sm font-medium">
+          <CheckIcon className="h-4 w-4 mr-2" />
+          Paid Subscription Active
+        </div>
+      )
+    }
+
+    return null
   }
 
   const renderPricingInfo = () => {
@@ -273,12 +496,14 @@ export default function PluginDetailsPage() {
     )
   }
 
-  if (loading) {
+  if (loading || checkingSubscription) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-600 dark:text-gray-400">Loading plugin details...</span>
+          <span className="ml-2 text-gray-600 dark:text-gray-400">
+            {loading ? 'Loading plugin details...' : 'Checking subscription status...'}
+          </span>
         </div>
       </DashboardLayout>
     )
@@ -338,7 +563,10 @@ export default function PluginDetailsPage() {
                     {plugin.short_description}
                   </p>
 
-                  <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                  {/* Subscription Badge */}
+                  {renderSubscriptionBadge()}
+
+                  <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 mt-3">
                     <div className="flex items-center">
                       {renderRatingStars(plugin.average_rating)}
                       <span className="ml-2">
@@ -585,9 +813,12 @@ export default function PluginDetailsPage() {
                   <>
                     <button
                       onClick={handleRequestLicense}
-                      className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700"
+                      disabled={generatingLicense}
+                      className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {plugin.pricing_model === 'enterprise' ? (
+                      {generatingLicense ? (
+                        'Generating License...'
+                      ) : plugin.pricing_model === 'enterprise' ? (
                         <>
                           <EnvelopeIcon className="h-5 w-5 mr-2" />
                           Contact Sales
@@ -607,10 +838,18 @@ export default function PluginDetailsPage() {
 
                     {plugin.has_free_trial && plugin.trial_duration_days > 0 && (
                       <button
-                        className="w-full inline-flex items-center justify-center px-6 py-3 border border-blue-600 rounded-md text-base font-medium text-blue-600 bg-white hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:hover:bg-gray-600"
+                        onClick={handleStartTrial}
+                        disabled={generatingLicense}
+                        className="w-full inline-flex items-center justify-center px-6 py-3 border border-blue-600 rounded-md text-base font-medium text-blue-600 bg-white hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <ClockIcon className="h-5 w-5 mr-2" />
-                        {plugin.trial_duration_days}-Day Free Trial
+                        {generatingLicense ? (
+                          'Generating License...'
+                        ) : (
+                          <>
+                            <ClockIcon className="h-5 w-5 mr-2" />
+                            {plugin.trial_duration_days}-Day Free Trial
+                          </>
+                        )}
                       </button>
                     )}
                   </>
@@ -638,6 +877,151 @@ export default function PluginDetailsPage() {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-start mb-4">
+              <div className="flex-shrink-0">
+                <ExclamationTriangleIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="ml-3 flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  {modalData.licenseType === 'trial' ? 'Start Free Trial?' : 'Purchase License?'}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                  {modalData.licenseType === 'trial'
+                    ? `You are about to start a ${plugin?.trial_duration_days}-day free trial for ${plugin?.display_name}. The trial license will expire after ${plugin?.trial_duration_days} days.`
+                    : `You are about to purchase a lifetime license for ${plugin?.display_name} at ${plugin?.base_price ? `$${plugin.base_price.toFixed(2)}` : '$49.00'}. Your payment method will be charged immediately.`
+                  }
+                </p>
+                {modalData.licenseType === 'paid' && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                    By clicking "Confirm Purchase", you agree to be charged and acknowledge that this is a one-time payment for a lifetime license.
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowConfirmModal(false)
+                  setModalData({})
+                }}
+                disabled={generatingLicense}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmLicenseGeneration}
+                disabled={generatingLicense}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {generatingLicense ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Processing...
+                  </>
+                ) : (
+                  modalData.licenseType === 'trial' ? 'Start Trial' : 'Confirm Purchase'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-start mb-4">
+              <div className="flex-shrink-0">
+                <CheckCircleIcon className="h-8 w-8 text-green-600 dark:text-green-400" />
+              </div>
+              <div className="ml-3 flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  {modalData.isExisting ? 'License Already Active' : 'License Generated Successfully!'}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                  {modalData.isExisting
+                    ? `You already have an active ${modalData.licenseType} license for this plugin.`
+                    : `Your ${modalData.licenseType === 'trial' ? 'trial' : 'lifetime'} license has been generated successfully.`
+                  }
+                </p>
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-md p-3 mb-4">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">License Key:</p>
+                  <p className="text-sm font-mono text-gray-900 dark:text-white break-all">
+                    {modalData.licenseKey}
+                  </p>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  You can view and manage your license in Settings → Licenses tab.
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => router.push('/settings?tab=licenses')}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md"
+              >
+                View Licenses
+              </button>
+              <button
+                onClick={() => {
+                  setShowSuccessModal(false)
+                  setModalData({})
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Modal */}
+      {showErrorModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-start mb-4">
+              <div className="flex-shrink-0">
+                <XMarkIcon className="h-8 w-8 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="ml-3 flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Unable to Generate License
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                  {modalData.errorMessage}
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              {modalData.errorMessage?.includes('payment method') && (
+                <button
+                  onClick={() => router.push('/settings?tab=payment')}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+                >
+                  Add Payment Method
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setShowErrorModal(false)
+                  setModalData({})
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   )
 }

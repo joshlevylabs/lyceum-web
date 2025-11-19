@@ -29,12 +29,11 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Check for active subscription
+    // Get the most recent subscription (regardless of status)
     const { data: subscription, error: subError } = await supabase
-      .from('native_app_subscriptions')
+      .from('user_subscriptions_native_app')
       .select('*')
       .eq('user_id', user.id)
-      .eq('status', 'active')
       .order('created_at', { ascending: false })
       .limit(1)
       .single()
@@ -47,29 +46,61 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Check if trial has expired
-    if (subscription && subscription.subscription_type === 'trial' && subscription.expires_at) {
-      const expiresAt = new Date(subscription.expires_at)
-      const now = new Date()
+    // If no subscription exists at all
+    if (!subscription) {
+      return NextResponse.json({
+        hasSubscription: false,
+        subscription: null,
+        hasValidLicense: false
+      })
+    }
 
-      if (now > expiresAt) {
-        // Mark as expired
+    // Check if there's a valid license for this user (licenses are linked by user_id, not subscription_id)
+    const { data: license, error: licenseError } = await supabase
+      .from('license_keys')
+      .select('*')
+      .eq('assigned_to', user.id)
+      .eq('license_type', 'main-application')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (licenseError && licenseError.code !== 'PGRST116') {
+      console.error('Error checking license:', licenseError)
+    }
+
+    // Check if license is valid (not expired and status is active)
+    let hasValidLicense = false
+    let licenseExpired = false
+
+    if (license) {
+      const now = new Date()
+      const expiresAt = license.expires_at ? new Date(license.expires_at) : null
+
+      // License is valid if status is active and not expired
+      hasValidLicense = license.status === 'active' && (!expiresAt || now < expiresAt)
+      licenseExpired = expiresAt && now >= expiresAt
+
+      // If license has expired, update both license and subscription status
+      if (licenseExpired && license.status === 'active') {
         await supabase
-          .from('native_app_subscriptions')
+          .from('license_keys')
+          .update({ status: 'expired' })
+          .eq('id', license.id)
+
+        await supabase
+          .from('user_subscriptions_native_app')
           .update({ status: 'expired' })
           .eq('id', subscription.id)
-
-        return NextResponse.json({
-          hasSubscription: false,
-          subscription: null,
-          message: 'Trial subscription has expired'
-        })
       }
     }
 
     return NextResponse.json({
-      hasSubscription: !!subscription,
-      subscription: subscription || null
+      hasSubscription: subscription.status === 'active',
+      subscription: subscription,
+      hasValidLicense: hasValidLicense,
+      license: license || null,
+      licenseExpired: licenseExpired
     })
 
   } catch (error) {
@@ -116,7 +147,7 @@ export async function POST(request: NextRequest) {
 
     // Check if user already has an active subscription
     const { data: existingSubscription } = await supabase
-      .from('native_app_subscriptions')
+      .from('user_subscriptions_native_app')
       .select('*')
       .eq('user_id', user.id)
       .eq('status', 'active')
@@ -135,7 +166,7 @@ export async function POST(request: NextRequest) {
     // Check if user already had a trial
     if (subscription_type === 'trial') {
       const { data: previousTrial } = await supabase
-        .from('native_app_subscriptions')
+        .from('user_subscriptions_native_app')
         .select('*')
         .eq('user_id', user.id)
         .eq('subscription_type', 'trial')
@@ -152,19 +183,22 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Calculate expiration date for trial (30 days from now)
-    const expiresAt = subscription_type === 'trial'
-      ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    // Calculate trial dates (30 days from now)
+    const now = new Date()
+    const trialStartDate = subscription_type === 'trial' ? now.toISOString() : null
+    const trialEndDate = subscription_type === 'trial'
+      ? new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
       : null
 
     // Create subscription
     const { data: subscription, error: createError } = await supabase
-      .from('native_app_subscriptions')
+      .from('user_subscriptions_native_app')
       .insert({
         user_id: user.id,
         subscription_type,
         status: 'active',
-        expires_at: expiresAt
+        trial_start_date: trialStartDate,
+        trial_end_date: trialEndDate
       })
       .select()
       .single()

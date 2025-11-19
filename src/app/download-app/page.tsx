@@ -27,6 +27,14 @@ interface Subscription {
   subscription_type: 'trial' | 'paid'
   status: 'active' | 'expired' | 'cancelled'
   expires_at: string | null
+  trial_end_date?: string | null
+}
+
+interface License {
+  id: string
+  key_code: string
+  status: string
+  expires_at: string | null
 }
 
 export default function DownloadAppPage() {
@@ -41,6 +49,8 @@ export default function DownloadAppPage() {
   const [checkingSubscription, setCheckingSubscription] = useState(true)
   const [hasSubscription, setHasSubscription] = useState(false)
   const [subscription, setSubscription] = useState<Subscription | null>(null)
+  const [hasValidLicense, setHasValidLicense] = useState(false)
+  const [subscriptionLicense, setSubscriptionLicense] = useState<License | null>(null)
 
   // Detect platform and brand
   const detectPlatform = (): string => {
@@ -81,7 +91,7 @@ export default function DownloadAppPage() {
     }
   }, [user, loading, router])
 
-  // Check subscription status before allowing download
+  // Check subscription and license status before allowing download
   useEffect(() => {
     const checkSubscription = async () => {
       if (!user) return
@@ -104,11 +114,23 @@ export default function DownloadAppPage() {
           const data = await response.json()
           setHasSubscription(data.hasSubscription)
           setSubscription(data.subscription)
+          setHasValidLicense(data.hasValidLicense)
+          setSubscriptionLicense(data.license)
 
-          // If user doesn't have subscription, redirect to subscribe page
-          if (!data.hasSubscription) {
-            router.push('/native-app/subscribe')
+          // If license has expired, redirect to subscribe page (no trial offered)
+          if (data.licenseExpired) {
+            router.push('/native-app/subscribe?expired=true')
+            return
           }
+
+          // If no valid license at all (no subscription or subscription but no license), redirect to subscribe
+          if (!data.hasValidLicense && !data.subscription) {
+            router.push('/native-app/subscribe')
+            return
+          }
+
+          // If user has cancelled subscription but license is still valid, allow download
+          // (This prevents the infinite loop - we check license validity, not just subscription status)
         }
       } catch (err) {
         console.error('Error checking subscription:', err)
@@ -256,8 +278,8 @@ export default function DownloadAppPage() {
     )
   }
 
-  // Don't render if no subscription (user will be redirected)
-  if (!hasSubscription) {
+  // Don't render if no valid license (user will be redirected)
+  if (!hasValidLicense && !hasSubscription) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-screen">
@@ -278,12 +300,34 @@ export default function DownloadAppPage() {
           <p className="mt-2 text-gray-600 dark:text-gray-400">
             Review and accept the license agreement to download the desktop application
           </p>
-          {subscription && (
-            <div className="mt-4 inline-flex items-center px-4 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-              <CheckCircleIcon className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
-              <span className="text-sm text-green-800 dark:text-green-200">
-                {subscription.subscription_type === 'trial'
-                  ? `Trial Active${subscription.expires_at ? ` • Expires ${new Date(subscription.expires_at).toLocaleDateString()}` : ''}`
+          {subscription && hasValidLicense && (
+            <div className={`mt-4 inline-flex items-center px-4 py-2 rounded-lg border ${
+              subscription.subscription_type === 'trial'
+                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                : subscription.status === 'cancelled'
+                ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+                : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+            }`}>
+              <CheckCircleIcon className={`h-5 w-5 mr-2 ${
+                subscription.subscription_type === 'trial'
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : subscription.status === 'cancelled'
+                  ? 'text-yellow-600 dark:text-yellow-400'
+                  : 'text-green-600 dark:text-green-400'
+              }`} />
+              <span className={`text-sm ${
+                subscription.subscription_type === 'trial'
+                  ? 'text-blue-800 dark:text-blue-200'
+                  : subscription.status === 'cancelled'
+                  ? 'text-yellow-800 dark:text-yellow-200'
+                  : 'text-green-800 dark:text-green-200'
+              }`}>
+                {subscription.subscription_type === 'trial' && subscription.status === 'active'
+                  ? `Trial Active${subscription.trial_end_date ? ` • Expires ${new Date(subscription.trial_end_date).toLocaleDateString()}` : ''}`
+                  : subscription.subscription_type === 'trial' && subscription.status === 'cancelled'
+                  ? `Trial (Cancelled)${subscription.trial_end_date ? ` • Valid until ${new Date(subscription.trial_end_date).toLocaleDateString()}` : ''}`
+                  : subscription.status === 'cancelled'
+                  ? 'Subscription Cancelled • License still valid'
                   : 'Paid Subscription Active'}
               </span>
             </div>

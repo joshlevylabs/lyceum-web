@@ -5,10 +5,10 @@ import { supabaseAdmin } from '@/lib/supabase-direct'
 // GET /api/plugins/[slug]/reviews - Get reviews for a plugin
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { slug } = params
+    const { slug } = await params
 
     // Get plugin ID from slug
     const { data: plugin, error: pluginError } = await supabaseAdmin
@@ -81,7 +81,7 @@ export async function GET(
 // POST /api/plugins/[slug]/reviews - Submit a new review
 export async function POST(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const { success, user, response } = await requireAuth(request)
@@ -89,7 +89,7 @@ export async function POST(
       return response || NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const { slug } = params
+    const { slug } = await params
     const body = await request.json()
     const { rating, title, review_text } = body
 

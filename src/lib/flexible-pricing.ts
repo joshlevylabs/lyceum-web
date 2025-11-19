@@ -3,7 +3,7 @@ import { stripe } from './stripe';
 // Pricing configuration for flexible billing
 export const PRICING_CONFIG = {
   // Base platform fee
-  basePlatformFee: 10, // $10/month base
+  basePlatformFee: 0, // $0/month - no base fee
 
   // License pricing (per license per month)
   licenses: {
@@ -32,6 +32,17 @@ export interface BillingLineItem {
   totalPrice: number; // in cents
 }
 
+export interface CouponDiscount {
+  couponId: string;
+  couponCode: string;
+  couponName: string;
+  discountType: 'percentage' | 'fixed_amount';
+  discountValue: number;
+  discountAmountCents: number;
+  originalAmountCents: number;
+  finalAmountCents: number;
+}
+
 export interface FlexibleBillingParams {
   userId: string;
   licenses: {
@@ -58,14 +69,16 @@ export function calculateFlexiblePricing(params: FlexibleBillingParams): {
 } {
   const lineItems: BillingLineItem[] = [];
 
-  // Base platform fee
-  lineItems.push({
-    name: 'Platform Base Fee',
-    description: 'Base platform access and support',
-    quantity: 1,
-    unitPrice: PRICING_CONFIG.basePlatformFee * 100,
-    totalPrice: PRICING_CONFIG.basePlatformFee * 100,
-  });
+  // Base platform fee (only add if non-zero)
+  if (PRICING_CONFIG.basePlatformFee > 0) {
+    lineItems.push({
+      name: 'Platform Base Fee',
+      description: 'Base platform access and support',
+      quantity: 1,
+      unitPrice: PRICING_CONFIG.basePlatformFee * 100,
+      totalPrice: PRICING_CONFIG.basePlatformFee * 100,
+    });
+  }
 
   // License fees (skip gratis licenses as they're free)
   params.licenses.forEach(license => {
@@ -127,6 +140,106 @@ export function calculateFlexiblePricing(params: FlexibleBillingParams): {
 }
 
 /**
+ * Apply coupon discount to billing amount
+ * @param originalAmountCents - Original billing amount in cents
+ * @param coupon - Coupon details from database
+ * @returns Discount information including final amount
+ */
+export function applyCouponDiscount(
+  originalAmountCents: number,
+  coupon: {
+    id: string;
+    code: string;
+    name: string;
+    discount_type: 'percentage' | 'fixed_amount';
+    discount_value: number;
+  }
+): CouponDiscount {
+  let discountAmountCents: number;
+
+  if (coupon.discount_type === 'percentage') {
+    // Calculate percentage discount
+    discountAmountCents = Math.round((originalAmountCents * coupon.discount_value) / 100);
+  } else {
+    // Fixed amount discount (convert dollars to cents)
+    discountAmountCents = Math.round(coupon.discount_value * 100);
+  }
+
+  // Ensure discount doesn't exceed original amount
+  if (discountAmountCents > originalAmountCents) {
+    discountAmountCents = originalAmountCents;
+  }
+
+  const finalAmountCents = originalAmountCents - discountAmountCents;
+
+  return {
+    couponId: coupon.id,
+    couponCode: coupon.code,
+    couponName: coupon.name,
+    discountType: coupon.discount_type,
+    discountValue: coupon.discount_value,
+    discountAmountCents,
+    originalAmountCents,
+    finalAmountCents,
+  };
+}
+
+/**
+ * Calculate flexible pricing with optional coupon discount
+ */
+export function calculateFlexiblePricingWithDiscount(params: FlexibleBillingParams & {
+  coupon?: {
+    id: string;
+    code: string;
+    name: string;
+    discount_type: 'percentage' | 'fixed_amount';
+    discount_value: number;
+  };
+}): {
+  lineItems: BillingLineItem[];
+  subtotalAmount: number;
+  discount?: CouponDiscount;
+  totalAmount: number;
+  summary: string;
+} {
+  // Calculate base pricing
+  const basePricing = calculateFlexiblePricing(params);
+  const subtotalAmount = basePricing.totalAmount;
+
+  // Apply coupon if provided
+  let discount: CouponDiscount | undefined;
+  let finalTotal = subtotalAmount;
+
+  if (params.coupon) {
+    discount = applyCouponDiscount(subtotalAmount, params.coupon);
+    finalTotal = discount.finalAmountCents;
+
+    // Add discount as a line item (negative amount)
+    basePricing.lineItems.push({
+      name: `Discount: ${params.coupon.code}`,
+      description: params.coupon.discount_type === 'percentage'
+        ? `${params.coupon.discount_value}% off - ${params.coupon.name}`
+        : `$${params.coupon.discount_value.toFixed(2)} off - ${params.coupon.name}`,
+      quantity: 1,
+      unitPrice: -discount.discountAmountCents,
+      totalPrice: -discount.discountAmountCents,
+    });
+  }
+
+  const summary = discount
+    ? `${basePricing.lineItems.length} items, Subtotal: $${(subtotalAmount / 100).toFixed(2)}, Discount: -$${(discount.discountAmountCents / 100).toFixed(2)}, Total: $${(finalTotal / 100).toFixed(2)}/month`
+    : basePricing.summary;
+
+  return {
+    lineItems: basePricing.lineItems,
+    subtotalAmount,
+    discount,
+    totalAmount: finalTotal,
+    summary,
+  };
+}
+
+/**
  * Create a flexible Stripe checkout session with dynamic pricing
  */
 export async function createFlexibleCheckoutSession({
@@ -184,22 +297,30 @@ export async function createFlexibleCheckoutSession({
 
 /**
  * Get current usage for a user to calculate billing
+ * NOTE: This function is dynamically imported to avoid circular dependencies
  */
 export async function getCurrentUsage(userId: string) {
-  // This would integrate with your database to get actual usage
-  // For now, returning mock data structure
-  return {
-    licenses: [
-      { type: 'professional' as const, quantity: 2 },
-      { type: 'basic' as const, quantity: 5 },
-    ],
-    clusters: [
-      { size: 'medium' as const, type: 'production' as const, quantity: 1 },
-      { size: 'small' as const, type: 'development' as const, quantity: 2 },
-    ],
-    additionalUsers: 8,
-    storageOverageGB: 15.5,
-  };
+  try {
+    // Import the UsageTrackingService to get actual usage data
+    const { UsageTrackingService } = await import('./billing-service');
+    const usage = await UsageTrackingService.getCurrentUsage(userId);
+
+    return {
+      licenses: usage.licenses,
+      clusters: usage.clusters,
+      additionalUsers: usage.additionalUsers,
+      storageOverageGB: usage.storageOverageGB,
+    };
+  } catch (error) {
+    console.error('❌ Error fetching current usage, returning empty usage:', error);
+    // Return empty usage as fallback (no charges)
+    return {
+      licenses: [],
+      clusters: [],
+      additionalUsers: 0,
+      storageOverageGB: 0,
+    };
+  }
 }
 
 /**

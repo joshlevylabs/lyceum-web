@@ -99,7 +99,36 @@ export async function GET(request: NextRequest) {
       console.error('Error fetching license assignments:', assignmentsError)
     }
 
-    // Fetch subscription/payment information
+    // Fetch subscription/payment information from native app subscriptions
+    // Fetch the most recent subscription (active, cancelled, or expired)
+    const { data: nativeAppSubscription, error: subscriptionError } = await supabase
+      .from('user_subscriptions_native_app')
+      .select(`
+        id,
+        subscription_type,
+        status,
+        stripe_session_id,
+        stripe_customer_id,
+        stripe_payment_intent_id,
+        amount_paid_cents,
+        currency,
+        trial_start_date,
+        trial_end_date,
+        cancelled_at,
+        metadata,
+        created_at,
+        updated_at
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (subscriptionError && subscriptionError.code !== 'PGRST116') { // PGRST116 = no rows returned
+      console.error('Error fetching native app subscription:', subscriptionError)
+    }
+
+    // Also fetch legacy payment status if it exists
     const { data: paymentStatus, error: paymentError } = await supabase
       .from('user_payment_status')
       .select(`
@@ -297,7 +326,9 @@ export async function GET(request: NextRequest) {
           plugins: pluginLicenses,
           other: otherLicenses
         },
-        subscription: paymentStatus || null,
+        subscription: nativeAppSubscription || paymentStatus || null,
+        native_app_subscription: nativeAppSubscription || null,
+        legacy_payment_status: paymentStatus || null,
         transactions: transactions || [],
         resource_usage: resourceUsage || null,
         statistics: {

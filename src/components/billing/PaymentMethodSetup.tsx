@@ -65,6 +65,18 @@ interface BillingInfo {
   usage: any
 }
 
+interface PaymentHistoryItem {
+  id: string
+  date: string
+  description: string
+  amount_cents: number
+  currency: string
+  type: 'subscription' | 'plugin_subscription'
+  status: string
+  payment_method?: string
+  stripe_session_id?: string
+}
+
 interface PaymentMethodSetupProps {
   userId: string
   onPaymentMethodAdded?: () => void
@@ -82,6 +94,8 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [expandedInvoices, setExpandedInvoices] = useState<Set<string>>(new Set())
   const [invoiceDetails, setInvoiceDetails] = useState<Record<string, Invoice>>({})
+  const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryItem[]>([])
+  const [loadingPaymentHistory, setLoadingPaymentHistory] = useState(true)
 
   useEffect(() => {
     if (userId) {
@@ -89,6 +103,7 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
       loadInvoices()
       loadBillingInfo()
       loadCurrentUser()
+      loadPaymentHistory()
     }
   }, [userId])
 
@@ -318,7 +333,7 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
 
   const toggleInvoiceExpansion = async (invoiceId: string) => {
     const newExpanded = new Set(expandedInvoices)
-    
+
     if (expandedInvoices.has(invoiceId)) {
       newExpanded.delete(invoiceId)
     } else {
@@ -328,8 +343,42 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
         await loadInvoiceDetails(invoiceId)
       }
     }
-    
+
     setExpandedInvoices(newExpanded)
+  }
+
+  const loadPaymentHistory = async () => {
+    try {
+      setLoadingPaymentHistory(true)
+      console.log('💰 Loading payment history for user:', userId)
+
+      const supabase = createClient()
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+      if (sessionError || !session?.access_token) {
+        console.error('No session for payment history:', sessionError)
+        return
+      }
+
+      const response = await fetch(`/api/billing/payment-history?user_id=${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        console.log('💰 Payment history loaded:', data)
+        setPaymentHistory(data.payments || [])
+      } else {
+        console.error('Error response from payment history API:', response.status)
+      }
+    } catch (error) {
+      console.error('Error loading payment history:', error)
+    } finally {
+      setLoadingPaymentHistory(false)
+    }
   }
 
   const loadBillingInfo = async () => {
@@ -437,40 +486,33 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
 
   const hasActiveSubscription = subscriptionStatus === 'active'
 
+  const stripeMode = process.env.NEXT_PUBLIC_STRIPE_MODE || 'test'
+  const isTestMode = stripeMode === 'test'
+
   return (
     <div className="space-y-6">
-      {/* 1. Active Subscriptions */}
-      <Card className={hasActiveSubscription ? "border-green-200 bg-green-50" : "border-gray-200"}>
-        <CardHeader>
-          <CardTitle className={`flex items-center gap-2 ${hasActiveSubscription ? 'text-green-800' : 'text-gray-700'}`}>
-            <CheckCircle className="w-5 h-5" />
-            Active Subscriptions
-          </CardTitle>
-          <CardDescription>
-            What you're currently subscribed to
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {hasActiveSubscription ? (
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-green-700 font-medium">Monthly Flexible Billing Plan</p>
-                <p className="text-sm text-green-600">Active and ready to use</p>
+      {/* Stripe Test Mode Banner */}
+      {isTestMode && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <AlertTriangle className="h-5 w-5 text-yellow-400" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                Test Mode Active
+              </h3>
+              <div className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
+                <p>
+                  You're in <strong>Stripe test mode</strong>. No real charges will be made. Use test card <code className="bg-yellow-100 dark:bg-yellow-800 px-1 rounded">4242 4242 4242 4242</code> to test payments.
+                </p>
               </div>
-              <Button onClick={handleManageBilling} variant="outline">
-                Manage Subscription
-              </Button>
             </div>
-          ) : (
-            <div className="text-center py-4">
-              <p className="text-gray-600">No active subscriptions</p>
-              <p className="text-sm text-gray-500">Add a payment method to get started</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      )}
 
-      {/* 2. Current Bill */}
+      {/* Current Bill */}
       {billingInfo && (
         <Card>
           <CardHeader>
@@ -485,26 +527,26 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
           <CardContent>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="font-medium">Estimated Monthly Total:</span>
-                <span className="text-2xl font-bold text-green-600">
+                <span className="font-medium text-gray-900 dark:text-white">Estimated Monthly Total:</span>
+                <span className="text-2xl font-bold text-green-600 dark:text-green-400">
                   ${billingInfo.preview?.totalAmount ? (billingInfo.preview.totalAmount / 100).toFixed(2) : '0.00'}
                 </span>
               </div>
-              
+
               <Separator />
-              
+
               <div className="space-y-2">
                 {billingInfo.preview?.lineItems?.map((item, index) => (
                   <div key={index} className="flex justify-between items-center text-sm">
                     <div>
-                      <span className="font-medium">{item.name}</span>
-                      <p className="text-gray-500 text-xs">{item.description}</p>
+                      <span className="font-medium text-gray-900 dark:text-white">{item.name}</span>
+                      <p className="text-gray-600 dark:text-gray-400 text-xs">{item.description}</p>
                     </div>
-                    <span className="font-medium">
+                    <span className="font-medium text-gray-900 dark:text-white">
                       ${(item.totalPrice / 100).toFixed(2)}
                     </span>
                   </div>
-                )) || <p className="text-gray-500 text-sm">No billing items found</p>}
+                )) || <p className="text-gray-600 dark:text-gray-400 text-sm">No billing items found</p>}
               </div>
             </div>
           </CardContent>
@@ -547,9 +589,9 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
         <CardContent>
           {paymentMethods.length === 0 ? (
             <div className="text-center py-8">
-              <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No payment methods</h3>
-              <p className="text-gray-600 mb-4">
+              <CreditCard className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No payment methods</h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
                 Add a payment method to enable billing
               </p>
               <Button onClick={handleAddPaymentMethod} disabled={addingMethod}>
@@ -562,22 +604,22 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
               {paymentMethods?.map((method) => (
                 <div key={method.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-8 bg-gray-100 rounded flex items-center justify-center">
-                      <CreditCard className="w-5 h-5 text-gray-600" />
+                    <div className="w-12 h-8 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-center">
+                      <CreditCard className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">
+                        <span className="font-medium text-gray-900 dark:text-white">
                           •••• •••• •••• {method.last4}
                         </span>
-                        <span className="text-sm text-gray-500 uppercase">
+                        <span className="text-sm text-gray-600 dark:text-gray-400 uppercase">
                           {method.brand}
                         </span>
                         {method.is_default && (
                           <Badge variant="secondary">Default</Badge>
                         )}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
                         Expires {method.exp_month.toString().padStart(2, '0')}/{method.exp_year}
                       </div>
                     </div>
@@ -597,7 +639,77 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
         </CardContent>
       </Card>
 
-      {/* 4. Invoice History */}
+      {/* 4. Payment History (Subscriptions and Plugins) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CheckCircle className="w-5 h-5" />
+            Payment History
+          </CardTitle>
+          <CardDescription>
+            All completed payments for subscriptions and plugins
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loadingPaymentHistory ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            </div>
+          ) : paymentHistory.length === 0 ? (
+            <div className="text-center py-8">
+              <CheckCircle className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No payment history</h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                Payment history will appear here when you purchase subscriptions or plugins
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {paymentHistory.map((payment) => (
+                <div key={payment.id} className="border rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                        <span className="font-medium text-gray-900 dark:text-white">{payment.description}</span>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {new Date(payment.date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge
+                          variant={payment.status === 'active' || payment.status === 'cancelled' ? 'default' : 'secondary'}
+                        >
+                          {payment.status}
+                        </Badge>
+                        <Badge variant="secondary">
+                          {payment.type === 'subscription' ? 'Main App' : 'Plugin'}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="text-right ml-4">
+                      <div className="font-semibold text-lg text-green-600 dark:text-green-400">
+                        ${(payment.amount_cents / 100).toFixed(2)}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 uppercase">
+                        {payment.currency}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 5. Invoice History */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -615,9 +727,9 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
             </div>
           ) : invoices.length === 0 ? (
             <div className="text-center py-8">
-              <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No invoices yet</h3>
-              <p className="text-gray-600">
+              <CreditCard className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No invoices yet</h3>
+              <p className="text-gray-600 dark:text-gray-300">
                 Invoices will appear here when billing periods are processed
               </p>
             </div>
@@ -625,13 +737,13 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
             <div className="space-y-4">
               {invoices?.map((invoice) => (
                 <div key={invoice.id} className="border rounded-lg">
-                  <div 
-                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
+                  <div
+                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
                     onClick={() => toggleInvoiceExpansion(invoice.id)}
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium">{invoice.invoice_number}</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{invoice.invoice_number}</span>
                         <Badge 
                           variant={
                             invoice.status === 'paid' ? 'default' : 
@@ -642,46 +754,46 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
                           {invoice.status}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         Invoice Date: {new Date(invoice.invoice_date).toLocaleDateString()}
                       </p>
                       {invoice.due_date && (
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
                           Due Date: {new Date(invoice.due_date).toLocaleDateString()}
                         </p>
                       )}
                       {invoice.paid_date && (
-                        <p className="text-sm text-green-600">
+                        <p className="text-sm text-green-600 dark:text-green-400">
                           Paid Date: {new Date(invoice.paid_date).toLocaleDateString()}
                         </p>
                       )}
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-right">
-                        <div className="font-semibold text-lg">
+                        <div className="font-semibold text-lg text-gray-900 dark:text-white">
                           ${(invoice.total_cents / 100).toFixed(2)}
                         </div>
-                        <div className="text-sm text-gray-500 uppercase">
+                        <div className="text-sm text-gray-600 dark:text-gray-400 uppercase">
                           {invoice.currency}
                         </div>
                       </div>
                       {expandedInvoices.has(invoice.id) ? (
-                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                        <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-500" />
                       ) : (
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                        <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500" />
                       )}
                     </div>
                   </div>
                   
                   {/* Expanded Invoice Details */}
                   {expandedInvoices.has(invoice.id) && (
-                    <div className="border-t bg-gray-50 p-4">
+                    <div className="border-t bg-gray-50 dark:bg-gray-900 p-4">
                       {invoiceDetails[invoice.id] ? (
                         <div className="space-y-4">
                           {/* Payment Information */}
                           {invoiceDetails[invoice.id].stripe_invoice_id && (
                             <div>
-                              <h4 className="font-medium text-sm text-gray-700 mb-2">Payment Information</h4>
+                              <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300 mb-2">Payment Information</h4>
                               <div className="text-sm space-y-1">
                                 <p>Stripe Invoice ID: <span className="font-mono text-xs">{invoiceDetails[invoice.id].stripe_invoice_id}</span></p>
                                 
@@ -722,16 +834,16 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
                           {/* Line Items */}
                           {invoiceDetails[invoice.id].line_items && invoiceDetails[invoice.id].line_items!.length > 0 && (
                             <div>
-                              <h4 className="font-medium text-sm text-gray-700 mb-2">Invoice Details</h4>
+                              <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300 mb-2">Invoice Details</h4>
                               <div className="space-y-2">
                                 {invoiceDetails[invoice.id].line_items!.map((item, index) => (
-                                  <div key={index} className="flex justify-between items-center text-sm bg-white p-2 rounded">
+                                  <div key={index} className="flex justify-between items-center text-sm bg-white dark:bg-gray-700 p-2 rounded">
                                     <div className="flex-1">
-                                      <div className="font-medium">{item.name}</div>
-                                      <div className="text-gray-600 text-xs">{item.description}</div>
-                                      <div className="text-gray-500 text-xs">Qty: {item.quantity} × ${(item.unit_price_cents / 100).toFixed(2)}</div>
+                                      <div className="font-medium text-gray-900 dark:text-white">{item.name}</div>
+                                      <div className="text-gray-600 dark:text-gray-400 text-xs">{item.description}</div>
+                                      <div className="text-gray-600 dark:text-gray-400 text-xs">Qty: {item.quantity} × ${(item.unit_price_cents / 100).toFixed(2)}</div>
                                     </div>
-                                    <div className="font-medium">
+                                    <div className="font-medium text-gray-900 dark:text-white">
                                       ${(item.total_price_cents / 100).toFixed(2)}
                                     </div>
                                   </div>
@@ -749,7 +861,7 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
                                       <span>${(invoiceDetails[invoice.id].tax_cents / 100).toFixed(2)}</span>
                                     </div>
                                   )}
-                                  <div className="flex justify-between font-medium text-base border-t pt-1">
+                                  <div className="flex justify-between font-medium text-base border-t pt-1 text-gray-900 dark:text-white">
                                     <span>Total:</span>
                                     <span>${(invoiceDetails[invoice.id].total_cents / 100).toFixed(2)}</span>
                                   </div>
@@ -773,7 +885,7 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
         </CardContent>
       </Card>
 
-      {/* 5. Test Billing System (Admin Only) */}
+      {/* 6. Test Billing System (Admin Only) */}
       {currentUser?.user_metadata?.role === 'admin' && billingInfo && paymentMethods.length > 0 && (
         <Card className="border-orange-200 bg-orange-50">
           <CardHeader>

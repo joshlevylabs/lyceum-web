@@ -42,3 +42,8 @@ next-env.d.ts
 
 .vercel
 nul
+
+# Documentation with sensitive examples
+STRIPE_PAYMENT_METHOD_SETUP_GUIDE.md
+PAYMENT_TESTING_GUIDE.md
+*_GUIDE.md

@@ -1,15 +1,55 @@
 import Stripe from 'stripe';
 
-// Initialize Stripe with your secret key
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+// Determine which Stripe mode to use (test or live)
+const stripeMode = process.env.STRIPE_MODE || 'test';
+const isLiveMode = stripeMode === 'live';
+
+// Select the appropriate secret key based on mode
+const stripeSecretKey = isLiveMode
+  ? process.env.STRIPE_LIVE_SECRET_KEY
+  : process.env.STRIPE_SECRET_KEY;
+
+// Detailed logging for debugging
+console.log('🔧 Stripe Configuration:', {
+  mode: stripeMode,
+  isLiveMode,
+  hasSecretKey: !!stripeSecretKey,
+  keyPrefix: stripeSecretKey?.substring(0, 12) || 'MISSING',
+  keyLength: stripeSecretKey?.length || 0,
+  expectedKeyType: isLiveMode ? 'sk_live_' : 'sk_test_',
+  allEnvKeys: Object.keys(process.env).filter(key => key.includes('STRIPE')).sort(),
+});
 
 if (!stripeSecretKey) {
-  throw new Error('STRIPE_SECRET_KEY is not defined in environment variables. Please check your .env.local file.');
+  const errorMsg =
+    `❌ ${isLiveMode ? 'STRIPE_LIVE_SECRET_KEY' : 'STRIPE_SECRET_KEY'} is not defined in environment variables.\n` +
+    `Current STRIPE_MODE: ${stripeMode}\n` +
+    `Available STRIPE env vars: ${Object.keys(process.env).filter(key => key.includes('STRIPE')).join(', ')}\n` +
+    `Please check your environment configuration.`;
+  console.error(errorMsg);
+  throw new Error(errorMsg);
 }
+
+// Validate the key format
+const expectedPrefix = isLiveMode ? 'sk_live_' : 'sk_test_';
+if (!stripeSecretKey.startsWith(expectedPrefix)) {
+  const errorMsg =
+    `❌ Invalid Stripe key format. Expected key to start with '${expectedPrefix}' but got '${stripeSecretKey.substring(0, 12)}...'\n` +
+    `Current STRIPE_MODE: ${stripeMode}\n` +
+    `Key length: ${stripeSecretKey.length} characters`;
+  console.error(errorMsg);
+  throw new Error(errorMsg);
+}
+
+console.log('✅ Stripe key validated successfully');
 
 const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2024-06-20',
 });
+
+// Export mode information
+export const STRIPE_MODE = stripeMode;
+export const IS_LIVE_MODE = isLiveMode;
 
 export { stripe };
 

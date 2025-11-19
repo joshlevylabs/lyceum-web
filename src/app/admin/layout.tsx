@@ -26,7 +26,7 @@ import {
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
   { name: 'Users', href: '/admin/users', icon: UsersIcon },
-  { name: 'License Keys', href: '/admin/licenses', icon: KeyIcon },
+  { name: 'Subscriptions & Keys', href: '/admin/licenses', icon: KeyIcon },
   { name: 'Plugins', href: '/admin/plugins', icon: PuzzlePieceIcon },
   { name: 'Clusters', href: '/admin/clusters', icon: CircleStackIcon },
   { name: 'Tickets', href: '/admin/tickets', icon: TicketIcon },
