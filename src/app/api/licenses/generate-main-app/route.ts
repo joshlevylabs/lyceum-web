@@ -278,7 +278,7 @@ export async function POST(request: NextRequest) {
     const licenseData = {
       key_code: keyCode,
       license_type: 'main-application',
-      status: 'active',
+      status: isTrialLicense ? 'trial' : 'active',
       max_users: 1, // Personal license
       max_projects: 100,
       max_storage_gb: 50,
