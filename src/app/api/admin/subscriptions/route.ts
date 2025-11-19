@@ -47,12 +47,13 @@ export async function GET(request: NextRequest) {
       role: userProfile?.role
     })
 
-    if (userProfile?.role !== 'admin' && userProfile?.role !== 'super_admin') {
+    const allowedRoles = ['admin', 'super_admin', 'superadmin']
+    if (!userProfile?.role || !allowedRoles.includes(userProfile.role)) {
       console.error('Access denied:', {
         userId: user.id,
         email: user.email,
         role: userProfile?.role,
-        required: ['admin', 'super_admin']
+        required: allowedRoles
       })
       return NextResponse.json(
         { error: 'Unauthorized: Admin access required', userRole: userProfile?.role },

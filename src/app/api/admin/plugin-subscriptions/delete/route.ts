@@ -39,7 +39,8 @@ export async function DELETE(request: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    if (userProfile?.role !== 'admin' && userProfile?.role !== 'super_admin') {
+    const allowedRoles = ['admin', 'super_admin', 'superadmin']
+    if (!userProfile?.role || !allowedRoles.includes(userProfile.role)) {
       return NextResponse.json(
         { error: 'Unauthorized: Admin access required' },
         { status: 403 }
