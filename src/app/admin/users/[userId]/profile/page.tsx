@@ -124,8 +124,8 @@ interface EnhancedProfile {
 export default function UserProfilePage() {
   const params = useParams()
   const router = useRouter()
-  const { user: currentUser, loading: authLoading } = useAuth()
-  
+  const { user: currentUser, userProfile, loading: authLoading } = useAuth()
+
   const userId = params.userId as string
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(null)
   const [isResolvingKey, setIsResolvingKey] = useState(false)
@@ -199,7 +199,7 @@ export default function UserProfilePage() {
 
     const allowedRoles = ['admin', 'super_admin', 'superadmin']
     const metadataRole = currentUser.user_metadata?.role
-    const profileRole = (currentUser as any).userProfile?.role
+    const profileRole = userProfile?.role
 
     console.log('🔒 Admin check details:', {
       email: currentUser.email,
@@ -212,7 +212,7 @@ export default function UserProfilePage() {
     })
 
     return allowedRoles.includes(metadataRole) || allowedRoles.includes(profileRole)
-  }, [currentUser])
+  }, [currentUser, userProfile])
 
   useEffect(() => {
     console.log('🎯 Profile page useEffect:', { authLoading, hasCurrentUser: !!currentUser, isAdmin, userEmail: currentUser?.email })
