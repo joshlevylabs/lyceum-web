@@ -130,8 +130,8 @@ interface LicenseDetails {
 export default function LicenseDetailsPage() {
   const params = useParams()
   const router = useRouter()
-  const { user: currentUser, loading: authLoading } = useAuth()
-  
+  const { user: currentUser, userProfile, loading: authLoading } = useAuth()
+
   const licenseId = params.licenseId as string
   const [license, setLicense] = useState<LicenseDetails | null>(null)
   const [loading, setLoading] = useState(true)
@@ -223,10 +223,10 @@ export default function LicenseDetailsPage() {
 
     const allowedRoles = ['admin', 'super_admin', 'superadmin']
     const metadataRole = currentUser.user_metadata?.role
-    const profileRole = (currentUser as any).userProfile?.role
+    const profileRole = userProfile?.role
 
     return allowedRoles.includes(metadataRole) || allowedRoles.includes(profileRole)
-  }, [currentUser])
+  }, [currentUser, userProfile])
 
   useEffect(() => {
     if (authLoading) return
