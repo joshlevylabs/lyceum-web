@@ -44,7 +44,8 @@
       "Bash(if not exist \"src\\app\\api\\subscriptions\\plugin\" mkdir \"src\\app\\api\\subscriptions\\plugin\")",
       "Bash(npx tsc:*)",
       "Bash(git rm:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(README.md)"
     ],
     "deny": [],
     "ask": []

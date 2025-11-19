@@ -192,18 +192,33 @@ export default function UserProfilePage() {
 
   // Check admin permissions - memoized to prevent infinite loops
   const isAdmin = useMemo(() => {
-    if (!currentUser) return false
+    if (!currentUser) {
+      console.log('🔒 Admin check: No current user')
+      return false
+    }
 
     const allowedRoles = ['admin', 'super_admin', 'superadmin']
     const metadataRole = currentUser.user_metadata?.role
     const profileRole = (currentUser as any).userProfile?.role
 
+    console.log('🔒 Admin check details:', {
+      email: currentUser.email,
+      metadataRole,
+      profileRole,
+      allowedRoles,
+      metadataMatch: allowedRoles.includes(metadataRole),
+      profileMatch: allowedRoles.includes(profileRole),
+      finalResult: allowedRoles.includes(metadataRole) || allowedRoles.includes(profileRole)
+    })
+
     return allowedRoles.includes(metadataRole) || allowedRoles.includes(profileRole)
   }, [currentUser])
 
   useEffect(() => {
+    console.log('🎯 Profile page useEffect:', { authLoading, hasCurrentUser: !!currentUser, isAdmin, userEmail: currentUser?.email })
+
     if (!authLoading && (!currentUser || !isAdmin)) {
-      console.log('Admin profile access denied - user:', currentUser?.email, 'isAdmin:', isAdmin)
+      console.log('❌ Admin profile access denied - redirecting to dashboard')
       router.push('/dashboard')
     }
   }, [currentUser, isAdmin, authLoading, router])
