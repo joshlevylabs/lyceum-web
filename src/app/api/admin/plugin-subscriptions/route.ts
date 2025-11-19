@@ -33,15 +33,29 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user is admin
-    const { data: userProfile } = await supabase
+    const { data: userProfile, error: profileError } = await supabase
       .from('user_profiles')
       .select('role')
       .eq('id', user.id)
       .single()
 
+    console.log('Admin check (plugin-subscriptions):', {
+      userId: user.id,
+      email: user.email,
+      profileFound: !!userProfile,
+      profileError: profileError?.message,
+      role: userProfile?.role
+    })
+
     if (userProfile?.role !== 'admin' && userProfile?.role !== 'super_admin') {
+      console.error('Access denied (plugin-subscriptions):', {
+        userId: user.id,
+        email: user.email,
+        role: userProfile?.role,
+        required: ['admin', 'super_admin']
+      })
       return NextResponse.json(
-        { error: 'Unauthorized: Admin access required' },
+        { error: 'Unauthorized: Admin access required', userRole: userProfile?.role },
         { status: 403 }
       )
     }

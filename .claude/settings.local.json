@@ -42,7 +42,9 @@
       "Bash(wmic process:*)",
       "Bash(if exist \"src\\app\\admin\\subscriptions\\page.tsx\" del \"src\\app\\admin\\subscriptions\\page.tsx\")",
       "Bash(if not exist \"src\\app\\api\\subscriptions\\plugin\" mkdir \"src\\app\\api\\subscriptions\\plugin\")",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(git rm:*)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": []
