@@ -192,11 +192,13 @@ export default function UserProfilePage() {
 
   // Check admin permissions - memoized to prevent infinite loops
   const isAdmin = useMemo(() => {
-    return currentUser && (
-      (currentUser.user_metadata?.role === 'admin' || currentUser.user_metadata?.role === 'superadmin') ||
-      // Also check userProfile if available (from AuthContext)
-      (currentUser as any).userProfile?.role === 'admin' || (currentUser as any).userProfile?.role === 'superadmin'
-    )
+    if (!currentUser) return false
+
+    const allowedRoles = ['admin', 'super_admin', 'superadmin']
+    const metadataRole = currentUser.user_metadata?.role
+    const profileRole = (currentUser as any).userProfile?.role
+
+    return allowedRoles.includes(metadataRole) || allowedRoles.includes(profileRole)
   }, [currentUser])
 
   useEffect(() => {

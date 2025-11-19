@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
@@ -46,10 +46,15 @@ export default function AdminLayout({
   const { user, userProfile, loading, signOut } = useAuth()
 
   // Check if user has admin privileges
-  const isAdmin = user && (
-    (userProfile?.role === 'admin' || userProfile?.role === 'superadmin') ||
-    (user.user_metadata?.role === 'admin' || user.user_metadata?.role === 'superadmin')
-  )
+  const isAdmin = useMemo(() => {
+    if (!user) return false
+
+    const allowedRoles = ['admin', 'super_admin', 'superadmin']
+    const profileRole = userProfile?.role
+    const metadataRole = user.user_metadata?.role
+
+    return allowedRoles.includes(profileRole) || allowedRoles.includes(metadataRole)
+  }, [user, userProfile])
 
   const adminUser = isAdmin ? {
     id: user.id,

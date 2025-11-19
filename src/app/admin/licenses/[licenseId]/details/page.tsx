@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
@@ -218,10 +218,15 @@ export default function LicenseDetailsPage() {
   })
 
   // Check if user is admin
-  const isAdmin = currentUser && (
-    currentUser.user_metadata?.role === 'admin' || 
-    currentUser.user_metadata?.role === 'superadmin'
-  )
+  const isAdmin = useMemo(() => {
+    if (!currentUser) return false
+
+    const allowedRoles = ['admin', 'super_admin', 'superadmin']
+    const metadataRole = currentUser.user_metadata?.role
+    const profileRole = (currentUser as any).userProfile?.role
+
+    return allowedRoles.includes(metadataRole) || allowedRoles.includes(profileRole)
+  }, [currentUser])
 
   useEffect(() => {
     if (authLoading) return
