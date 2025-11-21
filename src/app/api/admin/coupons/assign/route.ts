@@ -1,26 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 // POST /api/admin/coupons/assign - Assign coupon to user
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient()
+    // Extract and verify Bearer token
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Missing or invalid authorization header' },
+        { status: 401 }
+      )
+    }
 
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const token = authHeader.substring(7)
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Invalid token or user not found' },
+        { status: 401 }
+      )
     }
 
     // Check admin role
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
       .select('role')
       .eq('id', user.id)
       .single()
 
-    if (!profile || !['admin', 'superadmin'].includes(profile.role)) {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
+    const allowedRoles = ['admin', 'super_admin', 'superadmin']
+    if (!profile?.role || !allowedRoles.includes(profile.role)) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Admin access required', userRole: profile?.role },
+        { status: 403 }
+      )
     }
 
     // Parse request body
