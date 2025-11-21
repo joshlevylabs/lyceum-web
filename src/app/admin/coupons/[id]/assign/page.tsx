@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import DashboardLayout from '@/components/DashboardLayout'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -141,29 +140,29 @@ export default function AssignCouponPage() {
 
   if (loading) {
     return (
-      <DashboardLayout>
+      
         <div className="flex items-center justify-center h-96">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
-      </DashboardLayout>
+      
     )
   }
 
   if (!coupon) {
     return (
-      <DashboardLayout>
+      
         <div className="text-center py-12">
-          <p className="text-gray-600 dark:text-gray-400">Coupon not found</p>
+          <p className="text-gray-600">Coupon not found</p>
           <Button onClick={() => router.push('/admin/coupons')} className="mt-4">
             Back to Coupons
           </Button>
         </div>
-      </DashboardLayout>
+      
     )
   }
 
   return (
-    <DashboardLayout>
+    
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -176,8 +175,8 @@ export default function AssignCouponPage() {
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Assign Coupon</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
+            <h1 className="text-3xl font-bold text-gray-900">Assign Coupon</h1>
+            <p className="text-gray-600 mt-1">
               Assign coupon to users
             </p>
           </div>
@@ -189,7 +188,7 @@ export default function AssignCouponPage() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-3">
-                  <code className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded font-mono text-lg">
+                  <code className="px-3 py-1 bg-blue-100 text-blue-800 rounded font-mono text-lg">
                     {coupon.code}
                   </code>
                   <Badge variant={coupon.active ? 'default' : 'secondary'}>
@@ -204,15 +203,15 @@ export default function AssignCouponPage() {
           </CardHeader>
           {coupon.description && (
             <CardContent>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{coupon.description}</p>
+              <p className="text-sm text-gray-600">{coupon.description}</p>
             </CardContent>
           )}
         </Card>
 
         {/* Error Alert */}
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-            <p className="text-red-800 dark:text-red-200">{error}</p>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-800">{error}</p>
           </div>
         )}
 
@@ -228,7 +227,7 @@ export default function AssignCouponPage() {
             <form onSubmit={handleAssign} className="space-y-4">
               {/* User Search */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Search Users
                 </label>
                 <div className="relative">
@@ -238,21 +237,21 @@ export default function AssignCouponPage() {
                     placeholder="Search by email, name, or username..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900"
                   />
                 </div>
               </div>
 
               {/* User Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Select User *
                 </label>
                 <select
                   required
                   value={selectedUserId}
                   onChange={(e) => setSelectedUserId(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900"
                 >
                   <option value="">-- Select a user --</option>
                   {filteredUsers.map(user => (
@@ -261,14 +260,14 @@ export default function AssignCouponPage() {
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-xs text-gray-600 mt-1">
                   {filteredUsers.length} available users
                 </p>
               </div>
 
               {/* Admin Notes */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Admin Notes (Optional)
                 </label>
                 <textarea
@@ -276,7 +275,7 @@ export default function AssignCouponPage() {
                   onChange={(e) => setAdminNotes(e.target.value)}
                   placeholder="Reason for assignment, special conditions, etc."
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900"
                 />
               </div>
 
@@ -312,7 +311,7 @@ export default function AssignCouponPage() {
           </CardHeader>
           <CardContent>
             {assignments.length === 0 ? (
-              <p className="text-center py-8 text-gray-600 dark:text-gray-400">
+              <p className="text-center py-8 text-gray-600">
                 No users assigned yet
               </p>
             ) : (
@@ -320,13 +319,13 @@ export default function AssignCouponPage() {
                 {assignments.map(assignment => (
                   <div
                     key={assignment.id}
-                    className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg"
+                    className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
                   >
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white">
+                      <p className="font-medium text-gray-900">
                         {assignment.user_email}
                       </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-sm text-gray-600">
                         Used {assignment.times_used} / {coupon.max_uses_per_user} times •
                         Assigned {new Date(assignment.assigned_at).toLocaleDateString()}
                       </p>
@@ -341,6 +340,6 @@ export default function AssignCouponPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    
   )
 }

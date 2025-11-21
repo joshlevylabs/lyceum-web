@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import DashboardLayout from '@/components/DashboardLayout'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Save } from 'lucide-react'
@@ -58,7 +57,7 @@ export default function CreateCouponPage() {
   }
 
   return (
-    <DashboardLayout>
+    
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
@@ -71,8 +70,8 @@ export default function CreateCouponPage() {
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Create Coupon</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
+            <h1 className="text-3xl font-bold text-gray-900">Create Coupon</h1>
+            <p className="text-gray-600 mt-1">
               Create a new discount coupon for users
             </p>
           </div>
@@ -80,8 +79,8 @@ export default function CreateCouponPage() {
 
         {/* Error Alert */}
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-            <p className="text-red-800 dark:text-red-200">{error}</p>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-800">{error}</p>
           </div>
         )}
 
@@ -97,7 +96,7 @@ export default function CreateCouponPage() {
             <CardContent className="space-y-6">
               {/* Coupon Code */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Coupon Code *
                 </label>
                 <input
@@ -106,17 +105,17 @@ export default function CreateCouponPage() {
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                   placeholder="SAVE20"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-mono uppercase"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900 font-mono uppercase"
                   maxLength={50}
                 />
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-xs text-gray-600 mt-1">
                   Unique code that users will enter (automatically converted to uppercase)
                 </p>
               </div>
 
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Display Name *
                 </label>
                 <input
@@ -125,13 +124,13 @@ export default function CreateCouponPage() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Welcome Discount"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900"
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Description
                 </label>
                 <textarea
@@ -139,37 +138,37 @@ export default function CreateCouponPage() {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="20% off for new customers"
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900"
                 />
               </div>
 
               {/* Discount Type & Value */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Discount Type *
                   </label>
                   <select
                     value={formData.discount_type}
                     onChange={(e) => setFormData({ ...formData, discount_type: e.target.value as 'percentage' | 'fixed_amount' })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900"
                   >
                     <option value="percentage">Percentage (%)</option>
                     <option value="fixed_amount">Fixed Amount ($)</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Discount Value *
                   </label>
                   <div className="relative">
                     {formData.discount_type === 'percentage' && (
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-400">
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600">
                         %
                       </span>
                     )}
                     {formData.discount_type === 'fixed_amount' && (
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-400">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600">
                         $
                       </span>
                     )}
@@ -182,7 +181,7 @@ export default function CreateCouponPage() {
                       value={formData.discount_value}
                       onChange={(e) => setFormData({ ...formData, discount_value: e.target.value })}
                       placeholder={formData.discount_type === 'percentage' ? '20' : '10.00'}
-                      className={`w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
+                      className={`w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900 ${
                         formData.discount_type === 'fixed_amount' ? 'pl-8' : 'pr-8'
                       }`}
                     />
@@ -193,7 +192,7 @@ export default function CreateCouponPage() {
               {/* Usage Limits */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Total Usage Limit
                   </label>
                   <input
@@ -202,14 +201,14 @@ export default function CreateCouponPage() {
                     value={formData.max_uses}
                     onChange={(e) => setFormData({ ...formData, max_uses: e.target.value })}
                     placeholder="Unlimited"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900"
                   />
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  <p className="text-xs text-gray-600 mt-1">
                     Leave empty for unlimited uses
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Uses Per User *
                   </label>
                   <input
@@ -218,7 +217,7 @@ export default function CreateCouponPage() {
                     min="1"
                     value={formData.max_uses_per_user}
                     onChange={(e) => setFormData({ ...formData, max_uses_per_user: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900"
                   />
                 </div>
               </div>
@@ -226,7 +225,7 @@ export default function CreateCouponPage() {
               {/* Validity Period */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Valid From *
                   </label>
                   <input
@@ -234,11 +233,11 @@ export default function CreateCouponPage() {
                     required
                     value={formData.valid_from}
                     onChange={(e) => setFormData({ ...formData, valid_from: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Valid Until
                   </label>
                   <input
@@ -246,9 +245,9 @@ export default function CreateCouponPage() {
                     value={formData.valid_until}
                     onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
                     min={formData.valid_from}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900"
                   />
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  <p className="text-xs text-gray-600 mt-1">
                     Leave empty for no expiration
                   </p>
                 </div>
@@ -263,13 +262,13 @@ export default function CreateCouponPage() {
                   onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
-                <label htmlFor="active" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label htmlFor="active" className="text-sm font-medium text-gray-700">
                   Active (coupon can be used immediately)
                 </label>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-4 pt-4 border-t border-gray-200">
                 <Button
                   type="submit"
                   disabled={loading}
@@ -300,6 +299,6 @@ export default function CreateCouponPage() {
           </Card>
         </form>
       </div>
-    </DashboardLayout>
+    
   )
 }
