@@ -45,7 +45,9 @@
       "Bash(npx tsc:*)",
       "Bash(git rm:*)",
       "Bash(git reset:*)",
-      "Bash(README.md)"
+      "Bash(README.md)",
+      "Bash(node -e:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

@@ -57,8 +57,7 @@ export default function CreateCouponPage() {
   }
 
   return (
-    
-      <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6 p-6">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button
@@ -299,6 +298,5 @@ export default function CreateCouponPage() {
           </Card>
         </form>
       </div>
-    
   )
 }

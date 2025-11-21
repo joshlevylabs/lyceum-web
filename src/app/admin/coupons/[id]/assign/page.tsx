@@ -140,30 +140,25 @@ export default function AssignCouponPage() {
 
   if (loading) {
     return (
-      
-        <div className="flex items-center justify-center h-96">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
     )
   }
 
   if (!coupon) {
     return (
-      
-        <div className="text-center py-12">
-          <p className="text-gray-600">Coupon not found</p>
-          <Button onClick={() => router.push('/admin/coupons')} className="mt-4">
-            Back to Coupons
-          </Button>
-        </div>
-      
+      <div className="text-center py-12">
+        <p className="text-gray-600">Coupon not found</p>
+        <Button onClick={() => router.push('/admin/coupons')} className="mt-4">
+          Back to Coupons
+        </Button>
+      </div>
     )
   }
 
   return (
-    
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 p-6">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button
@@ -340,6 +335,5 @@ export default function AssignCouponPage() {
           </CardContent>
         </Card>
       </div>
-    
   )
 }
