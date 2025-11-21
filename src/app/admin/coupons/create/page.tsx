@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Save } from 'lucide-react'
@@ -29,9 +30,18 @@ export default function CreateCouponPage() {
     setLoading(true)
 
     try {
+      // Get session token for API authentication
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        throw new Error('No session token available. Please sign in again.')
+      }
+
       const response = await fetch('/api/admin/coupons', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({
           ...formData,
           code: formData.code.toUpperCase(),
@@ -85,7 +95,7 @@ export default function CreateCouponPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-          <Card className="bg-white">
+          <Card className="!bg-white !border-gray-200">
             <CardHeader>
               <CardTitle>Coupon Details</CardTitle>
               <CardDescription>

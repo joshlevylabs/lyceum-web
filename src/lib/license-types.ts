@@ -56,6 +56,22 @@ export interface LicenseTypeConfig {
       integration_settings: boolean
       backup_restore: boolean
     }
+    local_cluster: {
+      enabled: boolean
+      registration_enabled: boolean
+      max_storage_gb: number
+      max_monthly_queries: number | null // null = unlimited
+      max_users: number | null
+      lifecycle_tiers_enabled: boolean
+      offline_grace_days: number
+    }
+    cloud_cluster?: {
+      enabled: boolean
+      discovery_enabled: boolean
+      max_connections: number | null // null = unlimited
+      auto_sync: boolean
+      shared_analytics: boolean
+    }
   }
   
   // General features
@@ -121,9 +137,18 @@ export const LICENSE_TYPES: Record<string, LicenseTypeConfig> = {
         user_management: false,
         integration_settings: false,
         backup_restore: false
+      },
+      local_cluster: {
+        enabled: true,
+        registration_enabled: true,
+        max_storage_gb: 1,
+        max_monthly_queries: 100000,
+        max_users: 1,
+        lifecycle_tiers_enabled: false,
+        offline_grace_days: 7
       }
     },
-    
+
     priority_support: false,
     sla_hours: null,
     concurrent_sessions: 1,
@@ -183,9 +208,18 @@ export const LICENSE_TYPES: Record<string, LicenseTypeConfig> = {
         user_management: false,
         integration_settings: true,
         backup_restore: false
+      },
+      local_cluster: {
+        enabled: true,
+        registration_enabled: true,
+        max_storage_gb: 25,
+        max_monthly_queries: 500000,
+        max_users: 10,
+        lifecycle_tiers_enabled: true,
+        offline_grace_days: 14
       }
     },
-    
+
     priority_support: false,
     sla_hours: null,
     concurrent_sessions: 3,
@@ -244,9 +278,25 @@ export const LICENSE_TYPES: Record<string, LicenseTypeConfig> = {
         user_management: true,
         integration_settings: true,
         backup_restore: true
+      },
+      local_cluster: {
+        enabled: true,
+        registration_enabled: true,
+        max_storage_gb: 100,
+        max_monthly_queries: 1000000,
+        max_users: 50,
+        lifecycle_tiers_enabled: true,
+        offline_grace_days: 30
+      },
+      cloud_cluster: {
+        enabled: true,
+        discovery_enabled: true,
+        max_connections: 10,
+        auto_sync: true,
+        shared_analytics: true
       }
     },
-    
+
     priority_support: true,
     sla_hours: 24,
     concurrent_sessions: 10,
@@ -305,9 +355,25 @@ export const LICENSE_TYPES: Record<string, LicenseTypeConfig> = {
         user_management: true,
         integration_settings: true,
         backup_restore: true
+      },
+      local_cluster: {
+        enabled: true,
+        registration_enabled: true,
+        max_storage_gb: -1, // unlimited
+        max_monthly_queries: null, // unlimited
+        max_users: null, // unlimited
+        lifecycle_tiers_enabled: true,
+        offline_grace_days: 90
+      },
+      cloud_cluster: {
+        enabled: true,
+        discovery_enabled: true,
+        max_connections: null, // unlimited
+        auto_sync: true,
+        shared_analytics: true
       }
     },
-    
+
     priority_support: true,
     sla_hours: 4,
     concurrent_sessions: -1, // unlimited
@@ -366,9 +432,18 @@ export const LICENSE_TYPES: Record<string, LicenseTypeConfig> = {
         user_management: false,
         integration_settings: false,
         backup_restore: false
+      },
+      local_cluster: {
+        enabled: true,
+        registration_enabled: true,
+        max_storage_gb: 5,
+        max_monthly_queries: 50000,
+        max_users: 5,
+        lifecycle_tiers_enabled: false,
+        offline_grace_days: 7
       }
     },
-    
+
     priority_support: false,
     sla_hours: null,
     concurrent_sessions: 2,

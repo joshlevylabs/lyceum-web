@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -45,6 +46,7 @@ export default function AssignCouponPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedUserId, setSelectedUserId] = useState('')
   const [adminNotes, setAdminNotes] = useState('')
@@ -56,15 +58,31 @@ export default function AssignCouponPage() {
 
   const fetchCouponAndAssignments = async () => {
     try {
+      // Get session token for API authentication
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        console.error('No session token available')
+        setLoading(false)
+        return
+      }
+
+      const authHeaders = {
+        'Authorization': `Bearer ${session.access_token}`
+      }
+
       // Fetch coupon details
-      const couponRes = await fetch(`/api/admin/coupons/${couponId}`)
+      const couponRes = await fetch(`/api/admin/coupons/${couponId}`, {
+        headers: authHeaders
+      })
       if (couponRes.ok) {
         const couponData = await couponRes.json()
         setCoupon(couponData.coupon)
       }
 
       // Fetch existing assignments
-      const assignmentsRes = await fetch(`/api/admin/coupons/${couponId}/assignments`)
+      const assignmentsRes = await fetch(`/api/admin/coupons/${couponId}/assignments`, {
+        headers: authHeaders
+      })
       if (assignmentsRes.ok) {
         const assignmentsData = await assignmentsRes.json()
         setAssignments(assignmentsData.assignments || [])
@@ -78,7 +96,18 @@ export default function AssignCouponPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/admin/users/list')
+      // Get session token for API authentication
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        console.error('No session token available')
+        return
+      }
+
+      const response = await fetch('/api/admin/users/list', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         setUsers(data.users || [])
@@ -91,12 +120,22 @@ export default function AssignCouponPage() {
   const handleAssign = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setSuccess('')
     setSubmitting(true)
 
     try {
+      // Get session token for API authentication
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        throw new Error('No session token available. Please sign in again.')
+      }
+
       const response = await fetch('/api/admin/coupons/assign', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({
           coupon_id: couponId,
           user_id: selectedUserId,
@@ -110,6 +149,10 @@ export default function AssignCouponPage() {
         throw new Error(data.error || 'Failed to assign coupon')
       }
 
+      // Show success message
+      const assignedUser = users.find(u => u.id === selectedUserId)
+      setSuccess(`Coupon successfully assigned to ${assignedUser?.email || 'user'}!`)
+
       // Refresh assignments list
       await fetchCouponAndAssignments()
 
@@ -117,6 +160,9 @@ export default function AssignCouponPage() {
       setSelectedUserId('')
       setAdminNotes('')
       setSearchTerm('')
+
+      // Clear success message after 5 seconds
+      setTimeout(() => setSuccess(''), 5000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to assign coupon')
     } finally {
@@ -178,7 +224,7 @@ export default function AssignCouponPage() {
         </div>
 
         {/* Coupon Info */}
-        <Card className="bg-white">
+        <Card className="!bg-white !border-gray-200">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -210,8 +256,15 @@ export default function AssignCouponPage() {
           </div>
         )}
 
+        {/* Success Alert */}
+        {success && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <p className="text-green-800">{success}</p>
+          </div>
+        )}
+
         {/* Assignment Form */}
-        <Card className="bg-white">
+        <Card className="!bg-white !border-gray-200">
           <CardHeader>
             <CardTitle>Assign to User</CardTitle>
             <CardDescription>
@@ -297,7 +350,7 @@ export default function AssignCouponPage() {
         </Card>
 
         {/* Current Assignments */}
-        <Card className="bg-white">
+        <Card className="!bg-white !border-gray-200">
           <CardHeader>
             <CardTitle>Current Assignments ({assignments.length})</CardTitle>
             <CardDescription>

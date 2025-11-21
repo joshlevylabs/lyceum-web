@@ -9,9 +9,12 @@ const supabase = createClient(
 // GET /api/admin/coupons/[id] - Get single coupon
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params in Next.js 15
+    const { id } = await params
+
     // Extract and verify Bearer token
     const authHeader = request.headers.get('authorization')
     if (!authHeader?.startsWith('Bearer ')) {
@@ -50,7 +53,7 @@ export async function GET(
     const { data: coupon, error: couponError } = await supabase
       .from('coupons')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     if (couponError || !coupon) {
@@ -71,9 +74,12 @@ export async function GET(
 // PATCH /api/admin/coupons/[id] - Update coupon
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params in Next.js 15
+    const { id } = await params
+
     // Extract and verify Bearer token
     const authHeader = request.headers.get('authorization')
     if (!authHeader?.startsWith('Bearer ')) {
@@ -121,7 +127,7 @@ export async function PATCH(
     const { data: coupon, error: updateError } = await supabase
       .from('coupons')
       .update(updates)
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single()
 

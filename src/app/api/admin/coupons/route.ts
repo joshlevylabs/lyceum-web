@@ -1,26 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 // GET /api/admin/coupons - List all coupons
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Missing or invalid authorization header' },
+        { status: 401 }
+      )
+    }
 
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const token = authHeader.substring(7)
+
+    // Verify the token and get user
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Invalid token or user not found' },
+        { status: 401 }
+      )
     }
 
     // Check admin role
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
       .select('role')
       .eq('id', user.id)
       .single()
 
-    if (!profile || !['admin', 'superadmin'].includes(profile.role)) {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
+    console.log('Admin check (coupons GET):', {
+      userId: user.id,
+      email: user.email,
+      profileFound: !!profile,
+      profileError: profileError?.message,
+      role: profile?.role
+    })
+
+    const allowedRoles = ['admin', 'super_admin', 'superadmin']
+    if (!profile?.role || !allowedRoles.includes(profile.role)) {
+      console.error('Access denied (coupons GET):', {
+        userId: user.id,
+        email: user.email,
+        role: profile?.role,
+        required: allowedRoles
+      })
+      return NextResponse.json(
+        { error: 'Unauthorized: Admin access required', userRole: profile?.role },
+        { status: 403 }
+      )
     }
 
     // Fetch all coupons
@@ -54,23 +89,53 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/coupons - Create new coupon
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Missing or invalid authorization header' },
+        { status: 401 }
+      )
+    }
 
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const token = authHeader.substring(7)
+
+    // Verify the token and get user
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Invalid token or user not found' },
+        { status: 401 }
+      )
     }
 
     // Check admin role
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
       .select('role')
       .eq('id', user.id)
       .single()
 
-    if (!profile || !['admin', 'superadmin'].includes(profile.role)) {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
+    console.log('Admin check (coupons POST):', {
+      userId: user.id,
+      email: user.email,
+      profileFound: !!profile,
+      profileError: profileError?.message,
+      role: profile?.role
+    })
+
+    const allowedRoles = ['admin', 'super_admin', 'superadmin']
+    if (!profile?.role || !allowedRoles.includes(profile.role)) {
+      console.error('Access denied (coupons POST):', {
+        userId: user.id,
+        email: user.email,
+        role: profile?.role,
+        required: allowedRoles
+      })
+      return NextResponse.json(
+        { error: 'Unauthorized: Admin access required', userRole: profile?.role },
+        { status: 403 }
+      )
     }
 
     // Parse request body
