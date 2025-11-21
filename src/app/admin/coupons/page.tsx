@@ -139,7 +139,7 @@ export default function AdminCouponsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="bg-white">
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-gray-900">
               {coupons.length}
@@ -147,7 +147,7 @@ export default function AdminCouponsPage() {
             <p className="text-xs text-gray-600 mt-1">Total Coupons</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-white">
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-green-600">
               {coupons.filter(c => c.active && (!c.valid_until || new Date(c.valid_until) >= new Date())).length}
@@ -155,7 +155,7 @@ export default function AdminCouponsPage() {
             <p className="text-xs text-gray-600 mt-1">Active</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-white">
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-gray-600">
               {coupons.filter(c => !c.active).length}
@@ -163,7 +163,7 @@ export default function AdminCouponsPage() {
             <p className="text-xs text-gray-600 mt-1">Inactive</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="bg-white">
           <CardContent className="pt-6">
             <div className="text-2xl font-bold text-red-600">
               {coupons.filter(c => c.valid_until && new Date(c.valid_until) < new Date()).length}
@@ -174,7 +174,7 @@ export default function AdminCouponsPage() {
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="bg-white">
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
@@ -218,7 +218,7 @@ export default function AdminCouponsPage() {
       </Card>
 
       {/* Coupons List */}
-      <Card>
+      <Card className="bg-white">
         <CardHeader>
           <CardTitle>Coupons ({filteredCoupons.length})</CardTitle>
           <CardDescription>

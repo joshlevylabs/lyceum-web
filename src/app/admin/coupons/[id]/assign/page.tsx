@@ -178,7 +178,7 @@ export default function AssignCouponPage() {
         </div>
 
         {/* Coupon Info */}
-        <Card>
+        <Card className="bg-white">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -211,7 +211,7 @@ export default function AssignCouponPage() {
         )}
 
         {/* Assignment Form */}
-        <Card>
+        <Card className="bg-white">
           <CardHeader>
             <CardTitle>Assign to User</CardTitle>
             <CardDescription>
@@ -297,7 +297,7 @@ export default function AssignCouponPage() {
         </Card>
 
         {/* Current Assignments */}
-        <Card>
+        <Card className="bg-white">
           <CardHeader>
             <CardTitle>Current Assignments ({assignments.length})</CardTitle>
             <CardDescription>

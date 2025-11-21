@@ -85,7 +85,7 @@ export default function CreateCouponPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-          <Card>
+          <Card className="bg-white">
             <CardHeader>
               <CardTitle>Coupon Details</CardTitle>
               <CardDescription>
