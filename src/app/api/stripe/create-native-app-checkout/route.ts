@@ -30,17 +30,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get monthly recurring price ID from environment
+    const monthlyPriceId = process.env.STRIPE_NATIVE_APP_MONTHLY_PRICE_ID;
+
+    if (!monthlyPriceId) {
+      console.error('❌ STRIPE_NATIVE_APP_MONTHLY_PRICE_ID not configured');
+      return NextResponse.json(
+        { error: 'Monthly subscription price not configured. Please contact support.' },
+        { status: 500 }
+      );
+    }
+
     console.log('Creating Stripe Checkout session for native app:', {
       userId: user.id,
       userEmail: user.email,
-      amount,
+      priceId: monthlyPriceId,
       subscription_type
     });
 
-    // Create Stripe Checkout session for one-time payment
+    // Create Stripe Checkout session for RECURRING monthly subscription
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      mode: 'payment', // One-time payment, not subscription
+      mode: 'subscription', // RECURRING subscription, not one-time payment
       customer_email: user.email,
       metadata: {
         userId: user.id,
@@ -49,21 +60,20 @@ export async function POST(request: NextRequest) {
       },
       line_items: [
         {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: 'Lyceum Native App - Lifetime License',
-              description: 'One-time payment for lifetime access to Lyceum Native desktop application',
-              images: [], // Add product image URL if available
-            },
-            unit_amount: amount, // Amount in cents
-          },
+          price: monthlyPriceId, // Use pre-created monthly recurring price
           quantity: 1,
         },
       ],
       success_url: `${request.headers.get('origin')}/native-app/checkout-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${request.headers.get('origin')}/native-app/subscribe?cancelled=true`,
       allow_promotion_codes: true,
+      subscription_data: {
+        metadata: {
+          userId: user.id,
+          subscription_type,
+          product_type: 'native_app_license',
+        },
+      },
     });
 
     console.log('✅ Stripe Checkout session created:', {

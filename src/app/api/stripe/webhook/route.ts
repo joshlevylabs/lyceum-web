@@ -61,10 +61,10 @@ export async function POST(request: NextRequest) {
 
 async function handleCheckoutCompleted(session: any) {
   console.log('Checkout completed:', session.id);
-  
+
   const userId = session.metadata.userId;
   const clusterId = session.metadata.clusterId;
-  
+
   if (userId) {
     // Update user payment status
     await dbOperations.supabaseAdmin
@@ -75,7 +75,76 @@ async function handleCheckoutCompleted(session: any) {
         updated_at: new Date().toISOString(),
       })
       .eq('id', userId);
-    
+
+    // Update user_subscriptions_native_app with Stripe data
+    await dbOperations.supabaseAdmin
+      .from('user_subscriptions_native_app')
+      .update({
+        stripe_customer_id: session.customer,
+        stripe_session_id: session.id,
+        stripe_payment_intent_id: session.payment_intent as string || null,
+        stripe_subscription_id: session.subscription as string || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', userId)
+      .eq('status', 'active');
+
+    // If payment method is available, save it
+    if (session.payment_intent) {
+      try {
+        const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent as string);
+        if (paymentIntent.payment_method) {
+          const paymentMethod = await stripe.paymentMethods.retrieve(paymentIntent.payment_method as string);
+
+          if (paymentMethod.card) {
+            // Save payment method to stored_payment_methods table
+            await dbOperations.supabaseAdmin
+              .from('stored_payment_methods')
+              .upsert({
+                user_id: userId,
+                card_last_four: paymentMethod.card.last4,
+                card_brand: paymentMethod.card.brand,
+                card_exp_month: paymentMethod.card.exp_month,
+                card_exp_year: paymentMethod.card.exp_year,
+                billing_zip: paymentMethod.billing_details?.address?.postal_code || '',
+                is_default: true,
+                updated_at: new Date().toISOString(),
+              }, {
+                onConflict: 'user_id,card_last_four,card_exp_month,card_exp_year',
+                ignoreDuplicates: false
+              });
+
+            console.log('✅ Payment method saved for user:', userId);
+          }
+        }
+      } catch (error) {
+        console.error('Error saving payment method:', error);
+        // Don't fail the whole webhook if payment method save fails
+      }
+    }
+
+    // Create payment transaction record
+    if (session.amount_total) {
+      try {
+        await dbOperations.supabaseAdmin
+          .from('payment_transactions')
+          .insert({
+            user_id: userId,
+            subscription_type: 'paid',
+            amount: session.amount_total / 100, // Convert cents to dollars
+            currency: session.currency?.toUpperCase() || 'USD',
+            status: 'completed',
+            transaction_id: session.id,
+            processed_at: new Date().toISOString(),
+          });
+
+        console.log('✅ Payment transaction recorded for user:', userId);
+      } catch (error) {
+        console.error('Error recording payment transaction:', error);
+        // Don't fail the whole webhook if transaction record fails
+      }
+    }
+
     // If cluster specified, update cluster billing
     if (clusterId) {
       await dbOperations.supabaseAdmin
@@ -125,16 +194,52 @@ async function handleSubscriptionUpdated(subscription: any) {
 
 async function handleSubscriptionDeleted(subscription: any) {
   console.log('Subscription deleted:', subscription.id);
-  
+
   const customer = await stripe.customers.retrieve(subscription.customer);
   if (customer && !customer.deleted && customer.metadata.userId) {
+    const userId = customer.metadata.userId;
+
+    // Update user subscription status
     await dbOperations.supabaseAdmin
       .from('user_profiles')
       .update({
         subscription_status: 'canceled',
         updated_at: new Date().toISOString(),
       })
-      .eq('id', customer.metadata.userId);
+      .eq('id', userId);
+
+    // Expire all active licenses for this user
+    const { data: licenses, error: licensesError } = await dbOperations.supabaseAdmin
+      .from('licenses')
+      .select('id, license_key')
+      .eq('user_id', userId)
+      .eq('status', 'active');
+
+    if (!licensesError && licenses && licenses.length > 0) {
+      // Set licenses to expired status
+      await dbOperations.supabaseAdmin
+        .from('licenses')
+        .update({
+          status: 'expired',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', userId)
+        .eq('status', 'active');
+
+      console.log(`✅ Expired ${licenses.length} license(s) for user:`, userId);
+    }
+
+    // Update native app subscription status
+    await dbOperations.supabaseAdmin
+      .from('user_subscriptions_native_app')
+      .update({
+        status: 'cancelled',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', userId)
+      .eq('stripe_subscription_id', subscription.id);
+
+    console.log('✅ Subscription cancelled and licenses expired for user:', userId);
   }
 }
 

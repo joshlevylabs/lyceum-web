@@ -9,9 +9,12 @@ import { createClient } from '@supabase/supabase-js'
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params in Next.js 15
+    const { id } = await params
+
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
@@ -49,7 +52,7 @@ export async function POST(
       )
     }
 
-    const versionId = params.id
+    const versionId = id
 
     // Get the version details
     const { data: version, error: versionError } = await supabase

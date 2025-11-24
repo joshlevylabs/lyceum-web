@@ -28,19 +28,23 @@ function SuccessPageContent() {
   const processSession = async () => {
     try {
       console.log('🔄 Processing session:', sessionId)
-      
-      // Get auth token 
-      const authData = JSON.parse(localStorage.getItem('sb-kffiaqsihldgqdwagook-auth-token') || '{}')
-      const accessToken = authData.access_token
-      
-      if (!accessToken) {
-        throw new Error('No access token found')
+
+      // Get fresh session token from Supabase (auto-refreshes if expired)
+      const { createClient } = await import('@/lib/supabase')
+      const supabase = createClient()
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+      if (sessionError || !session?.access_token) {
+        console.error('Session error:', sessionError)
+        throw new Error('Session expired. Please sign in again.')
       }
+
+      console.log('✅ Got fresh auth token')
 
       const response = await fetch('/api/stripe/process-session', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ sessionId })

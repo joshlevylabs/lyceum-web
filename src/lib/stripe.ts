@@ -97,6 +97,13 @@ export async function createCheckoutSession({
     tax_id_collection: {
       enabled: true,
     },
+    subscription_data: {
+      trial_period_days: 30,
+      metadata: {
+        userId,
+        clusterId: clusterId || '',
+      },
+    },
   });
 
   return session;

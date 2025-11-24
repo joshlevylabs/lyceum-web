@@ -3,9 +3,12 @@ import { createClient } from '@supabase/supabase-js'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { version: string; platform: string } }
+  { params }: { params: Promise<{ version: string; platform: string }> }
 ) {
   try {
+    // Await params in Next.js 15
+    const { version, platform } = await params
+
     const { searchParams } = new URL(req.url)
     const userId = searchParams.get('user_id')
     const installerType = searchParams.get('installer_type') || 'exe'
@@ -44,47 +47,47 @@ export async function GET(
     // Get version details - filter by installer_type AND brand_type
     console.log('🔍 Looking for version:', {
       app: 'centcom',
-      version: params.version,
-      platform: params.platform,
+      version: version,
+      platform: platform,
       installerType,
       brandType
     })
 
-    const { data: version, error } = await supabase
+    const { data: versionData, error } = await supabase
       .from('application_versions')
       .select('*')
       .eq('application_name', 'centcom')
-      .eq('version_number', params.version)
-      .eq('platform', params.platform)
+      .eq('version_number', version)
+      .eq('platform', platform)
       .eq('installer_type', installerType)
       .eq('brand_type', brandType)
       .single()
 
-    console.log('📦 Version query result:', { found: !!version, error: error?.message })
+    console.log('📦 Version query result:', { found: !!versionData, error: error?.message })
 
-    if (error || !version) {
-      console.error('❌ Version not found:', { error, params, installerType })
+    if (error || !versionData) {
+      console.error('❌ Version not found:', { error, version, platform, installerType })
       return NextResponse.json({
         success: false,
-        error: `Version not found for ${params.platform} ${installerType} installer`
+        error: `Version not found for ${platform} ${installerType} installer`
       }, { status: 404 })
     }
 
     console.log('✅ Version found:', {
-      version: version.version_number,
-      installer: version.installer_type,
-      url: version.download_url
+      version: versionData.version_number,
+      installer: versionData.installer_type,
+      url: versionData.download_url
     })
 
     // Get download URL - either from download_url (GitHub) or generate signed URL (Supabase Storage)
-    let downloadUrl = version.download_url
-    let fileName = version.download_url ? version.download_url.split('/').pop() : null
+    let downloadUrl = versionData.download_url
+    let fileName = versionData.download_url ? versionData.download_url.split('/').pop() : null
 
-    if (!downloadUrl && version.storage_path) {
+    if (!downloadUrl && versionData.storage_path) {
       // Fallback to Supabase Storage signed URL
       const { data: signedUrlData, error: urlError } = await supabase.storage
         .from('centcom-releases')
-        .createSignedUrl(version.storage_path, 7200)
+        .createSignedUrl(versionData.storage_path, 7200)
 
       if (urlError || !signedUrlData?.signedUrl) {
         return NextResponse.json({
@@ -94,7 +97,7 @@ export async function GET(
       }
 
       downloadUrl = signedUrlData.signedUrl
-      fileName = version.storage_path.split('/').pop()
+      fileName = versionData.storage_path.split('/').pop()
     }
 
     if (!downloadUrl) {
@@ -108,8 +111,8 @@ export async function GET(
     const downloadId = await trackDownload(supabase, {
       userId,
       applicationName: 'centcom',
-      version: params.version,
-      platform: params.platform,
+      version: version,
+      platform: platform,
       installerType,
       brandType,
       licenseType: userLicense,
@@ -122,9 +125,9 @@ export async function GET(
       download_id: downloadId,
       download_url: downloadUrl,
       file_name: fileName,
-      file_size_bytes: version.file_size_bytes,
-      sha256_hash: version.sha256_hash,
-      expires_in: version.download_url ? null : 7200 // GitHub URLs don't expire, Supabase URLs expire in 2 hours
+      file_size_bytes: versionData.file_size_bytes,
+      sha256_hash: versionData.sha256_hash,
+      expires_in: versionData.download_url ? null : 7200 // GitHub URLs don't expire, Supabase URLs expire in 2 hours
     })
 
   } catch (error: any) {

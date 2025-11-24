@@ -20,15 +20,13 @@ import {
   UserIcon,
   TicketIcon,
   WrenchScrewdriverIcon,
-  ComputerDesktopIcon,
-  TagIcon
+  ComputerDesktopIcon
 } from '@heroicons/react/24/outline'
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
   { name: 'Users', href: '/admin/users', icon: UsersIcon },
   { name: 'Subscriptions & Keys', href: '/admin/licenses', icon: KeyIcon },
-  { name: 'Coupons & Discounts', href: '/admin/coupons', icon: TagIcon },
   { name: 'Plugins', href: '/admin/plugins', icon: PuzzlePieceIcon },
   { name: 'Clusters', href: '/admin/clusters', icon: CircleStackIcon },
   { name: 'Tickets', href: '/admin/tickets', icon: TicketIcon },

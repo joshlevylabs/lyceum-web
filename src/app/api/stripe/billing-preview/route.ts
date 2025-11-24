@@ -39,6 +39,8 @@ export async function GET(request: NextRequest) {
 
     const billing = calculateFlexiblePricing(billingParams);
 
+    // NOTE: Coupon system removed - use Stripe Promotion Codes instead
+
     return NextResponse.json({
       success: true,
       preview: {
@@ -83,6 +85,8 @@ export async function POST(request: NextRequest) {
     };
 
     const billing = calculateFlexiblePricing(billingParams);
+
+    // NOTE: Coupon system removed - use Stripe Promotion Codes instead
 
     return NextResponse.json({
       success: true,

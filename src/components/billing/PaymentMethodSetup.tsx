@@ -526,27 +526,34 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              <div className="space-y-2">
+                {billingInfo.preview?.lineItems?.map((item, index) => {
+                  const isDiscount = item.name.includes('Discount');
+                  return (
+                    <div key={index} className={`flex justify-between items-center text-sm ${isDiscount ? 'bg-green-50 dark:bg-green-900/20 -mx-4 px-4 py-2 rounded' : ''}`}>
+                      <div>
+                        <span className={`font-medium ${isDiscount ? 'text-green-700 dark:text-green-300' : 'text-gray-900 dark:text-white'}`}>
+                          {item.name}
+                        </span>
+                        <p className={`text-xs ${isDiscount ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                          {item.description}
+                        </p>
+                      </div>
+                      <span className={`font-medium ${isDiscount ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'}`}>
+                        ${(item.totalPrice / 100).toFixed(2)}
+                      </span>
+                    </div>
+                  );
+                }) || <p className="text-gray-600 dark:text-gray-400 text-sm">No billing items found</p>}
+              </div>
+
+              <Separator />
+
               <div className="flex justify-between items-center">
                 <span className="font-medium text-gray-900 dark:text-white">Estimated Monthly Total:</span>
                 <span className="text-2xl font-bold text-green-600 dark:text-green-400">
                   ${billingInfo.preview?.totalAmount ? (billingInfo.preview.totalAmount / 100).toFixed(2) : '0.00'}
                 </span>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-2">
-                {billingInfo.preview?.lineItems?.map((item, index) => (
-                  <div key={index} className="flex justify-between items-center text-sm">
-                    <div>
-                      <span className="font-medium text-gray-900 dark:text-white">{item.name}</span>
-                      <p className="text-gray-600 dark:text-gray-400 text-xs">{item.description}</p>
-                    </div>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      ${(item.totalPrice / 100).toFixed(2)}
-                    </span>
-                  </div>
-                )) || <p className="text-gray-600 dark:text-gray-400 text-sm">No billing items found</p>}
               </div>
             </div>
           </CardContent>
