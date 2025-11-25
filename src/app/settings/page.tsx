@@ -860,48 +860,6 @@ export default function SettingsPage() {
 
           {/* Content Panels */}
           <div className="space-y-6">
-            {/* Subscription Status Panel */}
-            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                <h2 className="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                  <ShieldCheckIcon className="h-5 w-5 mr-2 text-emerald-500" />
-                  Subscription Status
-                </h2>
-              </div>
-              <div className="p-6">
-                {subscription ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Type</span>
-                      <span className="font-medium text-gray-800 dark:text-white capitalize">
-                        {subscription.subscription_type}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Status</span>
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        subscription.status === 'active'
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                          : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                      }`}>
-                        {subscription.status}
-                      </span>
-                    </div>
-                    {subscription.stripe_customer_id && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600 dark:text-gray-400">Customer ID</span>
-                        <span className="font-mono text-sm text-gray-800 dark:text-white">
-                          {subscription.stripe_customer_id}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-gray-600 dark:text-gray-400">No active subscription</p>
-                )}
-              </div>
-            </div>
-
             {/* Payment Method Panel */}
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -923,7 +881,7 @@ export default function SettingsPage() {
     )
   }
 
-  // Licenses & Keys View
+  // Subscriptions & Licenses View
   if (currentView === 'licenses') {
     return (
       <DashboardLayout>
@@ -937,7 +895,7 @@ export default function SettingsPage() {
               <ArrowLeftIcon className="h-5 w-5" />
             </button>
             <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
-              Licenses & Keys
+              Subscriptions & Licenses
             </h1>
             <button
               onClick={() => toggleQuickstart('licenses')}
@@ -950,7 +908,7 @@ export default function SettingsPage() {
           {/* Quickstart Tip */}
           {showQuickstart['licenses'] && (
             <QuickstartTip
-              title="Licenses & Keys"
+              title="Subscriptions & Licenses"
               description="View your subscriptions and associated license keys for Lyceum services."
               steps={[
                 "Check your main subscription status",

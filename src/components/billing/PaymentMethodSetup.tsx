@@ -262,73 +262,22 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
   const loadInvoices = async () => {
     try {
       setLoadingInvoices(true)
-      console.log('🧾 Loading invoices for user:', userId)
-      
-      const supabase = createClient()
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      
-      if (sessionError || !session?.access_token) {
-        console.error('No session for invoices:', sessionError)
-        return
-      }
+      console.log('🧾 Invoice system has been disabled - skipping invoice load')
 
-      // Use the proper billing invoices API
-      const response = await fetch(`/api/billing/invoices?user_id=${userId}`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('🧾 Invoices loaded:', data)
-        // Handle nested data structure: data.data.invoices
-        const invoicesArray = data.data?.invoices || data.invoices || []
-        console.log('🧾 Setting invoices array:', invoicesArray)
-        setInvoices(invoicesArray)
-      } else {
-        console.error('Error response from invoices API:', response.status)
-      }
+      // Invoice system has been removed - just set empty invoices array
+      setInvoices([])
     } catch (error) {
       console.error('Error loading invoices:', error)
+      setInvoices([])
     } finally {
       setLoadingInvoices(false)
     }
   }
 
   const loadInvoiceDetails = async (invoiceId: string) => {
-    try {
-      console.log('🔍 Loading details for invoice:', invoiceId)
-      
-      const supabase = createClient()
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      
-      if (sessionError || !session?.access_token) {
-        console.error('No session for invoice details:', sessionError)
-        return
-      }
-
-      const response = await fetch(`/api/billing/invoices/${invoiceId}`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('🔍 Invoice details loaded:', data.data.invoice)
-        setInvoiceDetails(prev => ({
-          ...prev,
-          [invoiceId]: data.data.invoice
-        }))
-      } else {
-        console.error('Error loading invoice details:', response.status)
-      }
-    } catch (error) {
-      console.error('Error loading invoice details:', error)
-    }
+    // Invoice system has been removed - no-op
+    console.log('🔍 Invoice system has been disabled - skipping invoice details load')
+    return
   }
 
   const toggleInvoiceExpansion = async (invoiceId: string) => {
