@@ -15,19 +15,10 @@ export async function GET(request: NextRequest) {
     const plugin_type = searchParams.get('plugin_type');
     const search = searchParams.get('search');
 
-    // Build query - use left join for user_profiles so users without profiles still show
+    // Build query - get subscriptions first
     let query = supabaseAdmin
       .from('subscriptions')
-      .select(`
-        *,
-        user:user_id (
-          id,
-          email,
-          user_profiles (
-            full_name
-          )
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
 
     // Apply filters
@@ -51,17 +42,49 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Error fetching subscriptions:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       return NextResponse.json(
-        { success: false, error: 'Failed to fetch subscriptions' },
+        { success: false, error: 'Failed to fetch subscriptions', details: error.message },
         { status: 500 }
       );
     }
 
-    // Format response with user email
+    // Get unique user IDs
+    const userIds = [...new Set(subscriptions?.map(sub => sub.user_id) || [])];
+
+    // Fetch user emails from auth.users (service role can access this)
+    const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+
+    if (authError) {
+      console.error('Error fetching auth users:', authError);
+    }
+
+    // Create a map of user_id -> email
+    const userEmailMap: Record<string, string> = {};
+    authUsers?.users.forEach(user => {
+      if (user.id && user.email) {
+        userEmailMap[user.id] = user.email;
+      }
+    });
+
+    // Get user profiles for names
+    const { data: profiles } = await supabaseAdmin
+      .from('user_profiles')
+      .select('id, full_name')
+      .in('id', userIds);
+
+    const userNameMap: Record<string, string> = {};
+    profiles?.forEach(profile => {
+      if (profile.id && profile.full_name) {
+        userNameMap[profile.id] = profile.full_name;
+      }
+    });
+
+    // Format response with user email and name
     const formattedSubscriptions = (subscriptions || []).map(sub => ({
       ...sub,
-      user_email: sub.user?.email || 'Unknown',
-      user_name: sub.user?.user_profiles?.[0]?.full_name || 'Unknown'
+      user_email: userEmailMap[sub.user_id] || 'Unknown',
+      user_name: userNameMap[sub.user_id] || 'Unknown'
     }));
 
     // Apply search filter (client-side since it's across multiple fields)

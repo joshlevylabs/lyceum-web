@@ -385,17 +385,6 @@ export default function LicenseManagement() {
             Subscriptions
           </button>
           <button
-            onClick={() => setActiveTab('plugin_subscriptions')}
-            className={`${
-              activeTab === 'plugin_subscriptions'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
-          >
-            <CreditCardIcon className="h-5 w-5 mr-2" />
-            Plugin Subscriptions
-          </button>
-          <button
             onClick={() => setActiveTab('licenses')}
             className={`${
               activeTab === 'licenses'
@@ -414,7 +403,7 @@ export default function LicenseManagement() {
         <>
           {/* Subscription Filters */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-            <div className="flex space-x-4">
+            <div className="flex flex-wrap gap-4">
               <select
                 value={subscriptionStatusFilter}
                 onChange={(e) => setSubscriptionStatusFilter(e.target.value as any)}
@@ -434,6 +423,26 @@ export default function LicenseManagement() {
                 <option value="all">All Types</option>
                 <option value="trial">Trial</option>
                 <option value="paid">Paid</option>
+              </select>
+
+              <select
+                value={subscriptionCategoryFilter}
+                onChange={(e) => setSubscriptionCategoryFilter(e.target.value as any)}
+                className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+              >
+                <option value="all">All Categories</option>
+                <option value="native_app">Native App</option>
+                <option value="plugin">Plugin</option>
+              </select>
+
+              <select
+                value={subscriptionPluginFilter}
+                onChange={(e) => setSubscriptionPluginFilter(e.target.value as any)}
+                className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+              >
+                <option value="all">All Plugins</option>
+                <option value="klippel_qc">Klippel QC</option>
+                <option value="apx500">APX500</option>
               </select>
             </div>
 
@@ -464,7 +473,13 @@ export default function LicenseManagement() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Key
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         User
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Category
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Type
@@ -490,12 +505,26 @@ export default function LicenseManagement() {
                     {subscriptions.map((subscription) => (
                       <tr key={subscription.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-mono font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded">
+                            {subscription.subscription_key}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">
                             {subscription.user_email || 'No email'}
                           </div>
                           <div className="text-xs text-gray-500 font-mono">
                             {subscription.user_id.substring(0, 8)}...
                           </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            subscription.subscription_category === 'native_app'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-purple-100 text-purple-800'
+                          }`}>
+                            {subscription.subscription_category === 'native_app' ? 'Native App' : subscription.plugin_type || 'Plugin'}
+                          </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -541,13 +570,6 @@ export default function LicenseManagement() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                           <div className="flex justify-center space-x-3">
-                            <button
-                              onClick={() => handleResetTrial(subscription.user_id, subscription.user_email || 'this user')}
-                              className="text-blue-600 hover:text-blue-900"
-                              title="Reset trial for user"
-                            >
-                              <ArrowPathIcon className="h-4 w-4" />
-                            </button>
                             <button
                               onClick={() => handleDeleteSubscription(subscription.id)}
                               className="text-red-600 hover:text-red-900"
@@ -575,193 +597,6 @@ export default function LicenseManagement() {
         </>
       )}
 
-      {/* Plugin Subscriptions Tab Content */}
-      {activeTab === 'plugin_subscriptions' && (
-        <>
-          {/* Plugin Subscription Filters */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-            <div className="flex space-x-4">
-              <select
-                value={pluginSubscriptionStatusFilter}
-                onChange={(e) => setPluginSubscriptionStatusFilter(e.target.value as any)}
-                className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-              >
-                <option value="all">All Statuses</option>
-                <option value="active">Active</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="expired">Expired</option>
-              </select>
-
-              <select
-                value={pluginSubscriptionTypeFilter}
-                onChange={(e) => setPluginSubscriptionTypeFilter(e.target.value as any)}
-                className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-              >
-                <option value="all">All Types</option>
-                <option value="trial">Trial</option>
-                <option value="paid">Paid</option>
-              </select>
-
-              <select
-                value={pluginSubscriptionPluginFilter}
-                onChange={(e) => setPluginSubscriptionPluginFilter(e.target.value as any)}
-                className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-              >
-                <option value="all">All Plugins</option>
-                <option value="klippel_qc">Klippel QC</option>
-                <option value="apx500">APX500</option>
-              </select>
-            </div>
-
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search by email or user ID..."
-                value={pluginSubscriptionSearchTerm}
-                onChange={(e) => setPluginSubscriptionSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              />
-            </div>
-          </div>
-
-          {/* Plugin Subscriptions Table */}
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-            {pluginSubscriptionsLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-2 text-gray-600">Loading plugin subscriptions...</span>
-              </div>
-            ) : pluginSubscriptions.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        User
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Plugin Type
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Subscription Type
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Amount
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Trial Period
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Created
-                      </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {pluginSubscriptions.map((subscription) => (
-                      <tr key={subscription.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {subscription.user_email || 'No email'}
-                          </div>
-                          <div className="text-xs text-gray-500 font-mono">
-                            {subscription.user_id.substring(0, 8)}...
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            subscription.plugin_type === 'klippel_qc'
-                              ? 'bg-purple-100 text-purple-800'
-                              : 'bg-indigo-100 text-indigo-800'
-                          }`}>
-                            {subscription.plugin_type === 'klippel_qc' ? 'Klippel QC' : 'APX500'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            subscription.subscription_type === 'trial'
-                              ? 'bg-gray-100 text-gray-800'
-                              : 'bg-blue-100 text-blue-800'
-                          }`}>
-                            {subscription.subscription_type}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            subscription.status === 'active'
-                              ? 'bg-green-100 text-green-800'
-                              : subscription.status === 'cancelled'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {subscription.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {subscription.amount_paid_cents
-                            ? `$${(subscription.amount_paid_cents / 100).toFixed(2)} ${subscription.currency?.toUpperCase()}`
-                            : '-'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {subscription.trial_start_date ? (
-                            <div>
-                              <div>{formatDate(subscription.trial_start_date)}</div>
-                              {subscription.trial_end_date && (
-                                <div className="text-xs text-gray-400">
-                                  to {formatDate(subscription.trial_end_date)}
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            '-'
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDate(subscription.created_at)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                          <div className="flex justify-center space-x-3">
-                            <button
-                              onClick={() => handleResetPluginTrial(subscription.user_id, subscription.user_email || 'this user')}
-                              className="text-blue-600 hover:text-blue-900"
-                              title="Reset plugin trial for user"
-                            >
-                              <ArrowPathIcon className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeletePluginSubscription(subscription.id)}
-                              className="text-red-600 hover:text-red-900"
-                              title="Delete plugin subscription"
-                            >
-                              <TrashIcon className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <CreditCardIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-semibold text-gray-900">No plugin subscriptions found</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  {pluginSubscriptionSearchTerm ? 'No plugin subscriptions match your search criteria.' : 'No plugin subscriptions have been created yet.'}
-                </p>
-              </div>
-            )}
-          </div>
-        </>
-      )}
 
       {/* License Keys Tab Content */}
       {activeTab === 'licenses' && (

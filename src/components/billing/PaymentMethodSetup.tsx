@@ -97,6 +97,14 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
   const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryItem[]>([])
   const [loadingPaymentHistory, setLoadingPaymentHistory] = useState(true)
 
+  // Stripe charges state
+  const [stripeCharges, setStripeCharges] = useState<any[]>([])
+  const [loadingCharges, setLoadingCharges] = useState(true)
+  const [refundingCharge, setRefundingCharge] = useState<string | null>(null)
+  const [refundDialogOpen, setRefundDialogOpen] = useState(false)
+  const [selectedCharge, setSelectedCharge] = useState<any>(null)
+  const [refundRequests, setRefundRequests] = useState<Record<string, any>>({}) // Map charge_id to refund request
+
   useEffect(() => {
     if (userId) {
       loadPaymentMethods()
@@ -104,6 +112,8 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
       loadBillingInfo()
       loadCurrentUser()
       loadPaymentHistory()
+      loadStripeCharges()
+      loadRefundRequests()
     }
   }, [userId])
 
@@ -362,12 +372,132 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
     }
   }
 
+  const loadStripeCharges = async () => {
+    try {
+      setLoadingCharges(true)
+      console.log('💳 Loading Stripe charges for user:', userId)
+
+      const supabase = createClient()
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+      if (sessionError || !session?.access_token) {
+        console.error('No session for charges:', sessionError)
+        return
+      }
+
+      const response = await fetch(`/api/stripe/charges`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        console.log('💳 Stripe charges loaded:', data)
+        setStripeCharges(data.charges || [])
+      } else {
+        console.error('Error response from charges API:', response.status)
+      }
+    } catch (error) {
+      console.error('Error loading Stripe charges:', error)
+    } finally {
+      setLoadingCharges(false)
+    }
+  }
+
+  const loadRefundRequests = async () => {
+    try {
+      console.log('💸 Loading refund requests for user:', userId)
+
+      const supabase = createClient()
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+      if (sessionError || !session?.access_token) {
+        console.error('No session for refund requests:', sessionError)
+        return
+      }
+
+      // Fetch refund requests from database
+      const { data: requests, error } = await supabase
+        .from('refund_requests')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Error loading refund requests:', error)
+        return
+      }
+
+      // Create a map of charge_id to refund request for quick lookup
+      const requestsMap: Record<string, any> = {}
+      requests?.forEach(request => {
+        requestsMap[request.charge_id] = request
+      })
+
+      console.log('💸 Refund requests loaded:', requestsMap)
+      setRefundRequests(requestsMap)
+    } catch (error) {
+      console.error('Error loading refund requests:', error)
+    }
+  }
+
+  const handleRequestRefund = (charge: any) => {
+    setSelectedCharge(charge)
+    setRefundDialogOpen(true)
+  }
+
+  const handleConfirmRefund = async () => {
+    if (!selectedCharge) return
+
+    try {
+      setRefundingCharge(selectedCharge.id)
+
+      const supabase = createClient()
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+      if (sessionError || !session?.access_token) {
+        alert('Authentication error. Please try again.')
+        return
+      }
+
+      const response = await fetch('/api/stripe/refund', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          charge_id: selectedCharge.id,
+          reason: 'requested_by_customer'
+        })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log('Refund request created:', result)
+        alert(result.message || '✅ Refund request submitted successfully! An administrator will review your request.')
+        await loadRefundRequests() // Reload refund requests to show new status
+        setRefundDialogOpen(false)
+      } else {
+        const error = await response.json()
+        alert(`❌ Refund request failed: ${error.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Error processing refund request:', error)
+      alert('❌ Refund request failed: Network error')
+    } finally {
+      setRefundingCharge(null)
+    }
+  }
+
   const handleTestBilling = async () => {
     if (!billingInfo) return
 
     try {
       setTestingBilling(true)
-      
+
       const response = await fetch('/api/billing/test-billing', {
         method: 'POST',
         headers: {
@@ -841,7 +971,192 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
         </CardContent>
       </Card>
 
-      {/* 6. Test Billing System (Admin Only) */}
+      {/* 6. Stripe Charges (Direct from Stripe API) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="w-5 h-5" />
+            Stripe Charges
+          </CardTitle>
+          <CardDescription>
+            All charges from Stripe with receipt URLs and refund options
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loadingCharges ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            </div>
+          ) : stripeCharges.length === 0 ? (
+            <div className="text-center py-8">
+              <CreditCard className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No charges yet</h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                Charges will appear here when payments are processed through Stripe
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {stripeCharges.map((charge) => {
+                const refundRequest = refundRequests[charge.id]
+                const hasPendingRequest = refundRequest?.status === 'pending'
+                const isApproved = refundRequest?.status === 'approved'
+                const isRejected = refundRequest?.status === 'rejected'
+
+                return (
+                  <div key={charge.id} className="border rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            {charge.description || 'Charge'}
+                          </span>
+                          <Badge
+                            variant={charge.paid ? 'default' : 'secondary'}
+                          >
+                            {charge.paid ? 'Paid' : charge.status}
+                          </Badge>
+
+                          {/* Refund Status Badges */}
+                          {hasPendingRequest && (
+                            <Badge className="bg-yellow-500 hover:bg-yellow-600 text-white">
+                              Request Pending
+                            </Badge>
+                          )}
+                          {(isApproved || charge.refunded) && (
+                            <Badge className="bg-green-600 hover:bg-green-700 text-white">
+                              Refunded
+                            </Badge>
+                          )}
+                          {isRejected && (
+                            <Badge className="bg-gray-500 hover:bg-gray-600 text-white">
+                              Refund Rejected
+                            </Badge>
+                          )}
+                        </div>
+
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                          {new Date(charge.created * 1000).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+
+                        {charge.payment_method_details?.card && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {charge.payment_method_details.card.brand.toUpperCase()} ••••{charge.payment_method_details.card.last4}
+                          </p>
+                        )}
+
+                        {/* Rejection Message */}
+                        {isRejected && (
+                          <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded text-sm text-gray-700 dark:text-gray-300">
+                            <p className="font-medium">Refund request was rejected.</p>
+                            {refundRequest.admin_notes && (
+                              <p className="text-xs mt-1">Reason: {refundRequest.admin_notes}</p>
+                            )}
+                            <p className="text-xs mt-1">Please contact your administrator for more details.</p>
+                          </div>
+                        )}
+
+                        {charge.receipt_url && (
+                          <a
+                            href={charge.receipt_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:text-blue-800 underline mt-2 inline-block"
+                          >
+                            View Receipt →
+                          </a>
+                        )}
+                      </div>
+                      <div className="text-right ml-4">
+                        <div className="font-semibold text-lg text-gray-900 dark:text-white">
+                          ${(charge.amount / 100).toFixed(2)}
+                        </div>
+                        {charge.amount_refunded > 0 && (
+                          <div className="text-sm text-red-600 dark:text-red-400">
+                            -${(charge.amount_refunded / 100).toFixed(2)} refunded
+                          </div>
+                        )}
+                        <div className="text-sm text-gray-600 dark:text-gray-400 uppercase">
+                          {charge.currency}
+                        </div>
+                        {!charge.refunded && !hasPendingRequest && !isApproved && charge.paid && (
+                          <Button
+                            onClick={() => handleRequestRefund(charge)}
+                            variant="outline"
+                            size="sm"
+                            className="mt-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            disabled={refundingCharge === charge.id}
+                          >
+                            {refundingCharge === charge.id ? 'Processing...' : 'Request Refund'}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Refund Confirmation Dialog */}
+      {refundDialogOpen && selectedCharge && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Confirm Refund Request
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
+              Are you sure you want to request a refund for this charge?
+            </p>
+            <div className="bg-gray-100 dark:bg-gray-700 rounded p-3 mb-4">
+              <div className="flex justify-between mb-2">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Amount:</span>
+                <span className="font-medium text-gray-900 dark:text-white">
+                  ${(selectedCharge.amount / 100).toFixed(2)} {selectedCharge.currency.toUpperCase()}
+                </span>
+              </div>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Date:</span>
+                <span className="text-gray-900 dark:text-white">
+                  {new Date(selectedCharge.created * 1000).toLocaleDateString()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Description:</span>
+                <span className="text-gray-900 dark:text-white">
+                  {selectedCharge.description || 'N/A'}
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setRefundDialogOpen(false)}
+                variant="outline"
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConfirmRefund}
+                disabled={refundingCharge !== null}
+                className="flex-1 bg-red-600 hover:bg-red-700"
+              >
+                {refundingCharge ? 'Processing...' : 'Confirm Refund'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 7. Test Billing System (Admin Only) */}
       {currentUser?.user_metadata?.role === 'admin' && billingInfo && paymentMethods.length > 0 && (
         <Card className="border-orange-200 bg-orange-50">
           <CardHeader>

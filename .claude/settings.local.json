@@ -1,9 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node debug_onboarding.js:*)",
-      "Bash(if not exist \"src\\app\\api\\admin\\subscriptions\" mkdir \"src\\app\\api\\admin\\subscriptions\")",
-      "Bash(\"src/app/api/admin/subscriptions/route.ts\")"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

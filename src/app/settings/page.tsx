@@ -349,7 +349,7 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Licenses & Keys Category */}
+            {/* Subscriptions & Licenses Category */}
             <div
               onClick={() => setCurrentView('licenses')}
               className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-green-300 dark:hover:border-green-600 transition-all cursor-pointer group"
@@ -363,13 +363,13 @@ export default function SettingsPage() {
                 </div>
               </div>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
-                Licenses & Keys
+                Subscriptions & Licenses
               </h3>
               <p className="text-gray-600 dark:text-gray-400 text-sm">
                 View and manage your subscriptions, licenses, and plugin access
               </p>
               <div className="mt-3 text-xs text-green-600 dark:text-green-400">
-                💡 Track your license status and subscription details
+                💡 Track your subscription status and license details
               </div>
             </div>
 
