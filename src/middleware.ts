@@ -65,6 +65,7 @@ export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/api/centcom/') ||
       request.nextUrl.pathname.startsWith('/api/user/') ||
       request.nextUrl.pathname.startsWith('/api/licenses/') ||
+      request.nextUrl.pathname.startsWith('/api/onboarding/') ||
       request.nextUrl.pathname.startsWith('/api/admin/sessions/')) {
 
     const origin = request.headers.get('origin')
