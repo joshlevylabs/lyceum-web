@@ -105,6 +105,10 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
   const [selectedCharge, setSelectedCharge] = useState<any>(null)
   const [refundRequests, setRefundRequests] = useState<Record<string, any>>({}) // Map charge_id to refund request
 
+  // Active subscriptions state
+  const [activeSubscriptions, setActiveSubscriptions] = useState<any[]>([])
+  const [loadingSubscriptions, setLoadingSubscriptions] = useState(true)
+
   useEffect(() => {
     if (userId) {
       loadPaymentMethods()
@@ -114,6 +118,7 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
       loadPaymentHistory()
       loadStripeCharges()
       loadRefundRequests()
+      loadActiveSubscriptions()
     }
   }, [userId])
 
@@ -426,6 +431,12 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
         .order('created_at', { ascending: false })
 
       if (error) {
+        // If table doesn't exist yet, just set empty and don't log error
+        if (error.message?.includes('relation "public.refund_requests" does not exist')) {
+          console.log('💸 Refund requests table not yet created - run migration first')
+          setRefundRequests({})
+          return
+        }
         console.error('Error loading refund requests:', error)
         return
       }
@@ -438,8 +449,47 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
 
       console.log('💸 Refund requests loaded:', requestsMap)
       setRefundRequests(requestsMap)
+    } catch (error: any) {
+      // Gracefully handle errors - just set empty state
+      console.log('💸 Unable to load refund requests (table may not exist yet):', error?.message || 'Unknown error')
+      setRefundRequests({})
+    }
+  }
+
+  const loadActiveSubscriptions = async () => {
+    try {
+      setLoadingSubscriptions(true)
+      console.log('📋 Loading active subscriptions for user:', userId)
+
+      const supabase = createClient()
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+      if (sessionError || !session?.access_token) {
+        console.error('No session for subscriptions:', sessionError)
+        return
+      }
+
+      const response = await fetch(`/api/stripe/subscriptions`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        console.log('📋 Active subscriptions loaded:', data)
+        setActiveSubscriptions(data.subscriptions || [])
+      } else {
+        console.error('Error response from subscriptions API:', response.status)
+        // If the endpoint doesn't exist yet, set empty array
+        setActiveSubscriptions([])
+      }
     } catch (error) {
-      console.error('Error loading refund requests:', error)
+      console.error('Error loading active subscriptions:', error)
+      setActiveSubscriptions([])
+    } finally {
+      setLoadingSubscriptions(false)
     }
   }
 
@@ -591,55 +641,78 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
         </div>
       )}
 
-      {/* Current Bill */}
-      {billingInfo && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5" />
-              Current Bill
-            </CardTitle>
-            <CardDescription>
-              Your estimated monthly charges based on current usage
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                {billingInfo.preview?.lineItems?.map((item, index) => {
-                  const isDiscount = item.name.includes('Discount');
-                  return (
-                    <div key={index} className={`flex justify-between items-center text-sm ${isDiscount ? 'bg-green-50 dark:bg-green-900/20 -mx-4 px-4 py-2 rounded' : ''}`}>
-                      <div>
-                        <span className={`font-medium ${isDiscount ? 'text-green-700 dark:text-green-300' : 'text-gray-900 dark:text-white'}`}>
-                          {item.name}
-                        </span>
-                        <p className={`text-xs ${isDiscount ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`}>
-                          {item.description}
-                        </p>
-                      </div>
-                      <span className={`font-medium ${isDiscount ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'}`}>
-                        ${(item.totalPrice / 100).toFixed(2)}
-                      </span>
-                    </div>
-                  );
-                }) || <p className="text-gray-600 dark:text-gray-400 text-sm">No billing items found</p>}
-              </div>
-
-              <Separator />
-
-              <div className="flex justify-between items-center">
-                <span className="font-medium text-gray-900 dark:text-white">Estimated Monthly Total:</span>
-                <span className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  ${billingInfo.preview?.totalAmount ? (billingInfo.preview.totalAmount / 100).toFixed(2) : '0.00'}
-                </span>
-              </div>
+      {/* Current Paid Products */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CheckCircle className="w-5 h-5" />
+            Current Paid Products
+          </CardTitle>
+          <CardDescription>
+            Your active subscriptions and next billing dates
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loadingSubscriptions ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          ) : activeSubscriptions.length === 0 ? (
+            <div className="text-center py-8">
+              <CheckCircle className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No active subscriptions</h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                You don't have any active paid subscriptions at the moment
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {activeSubscriptions.map((subscription: any) => (
+                <div key={subscription.id} className="border rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {subscription.description || subscription.product_name || 'Subscription'}
+                        </span>
+                        <Badge variant={subscription.status === 'active' ? 'default' : 'secondary'}>
+                          {subscription.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Started: {new Date(subscription.created * 1000 || subscription.start_date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                      {subscription.current_period_end && (
+                        <p className="text-sm font-medium text-green-600 dark:text-green-400 mt-1">
+                          Next billing: {new Date(subscription.current_period_end * 1000).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right ml-4">
+                      <div className="font-semibold text-lg text-gray-900 dark:text-white">
+                        ${((subscription.amount || subscription.plan?.amount || 0) / 100).toFixed(2)}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        per {subscription.interval || subscription.plan?.interval || 'month'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* 3. Payment Methods */}
+      {/* Payment Methods */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -725,261 +798,15 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
         </CardContent>
       </Card>
 
-      {/* 4. Payment History (Subscriptions and Plugins) */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle className="w-5 h-5" />
-            Payment History
-          </CardTitle>
-          <CardDescription>
-            All completed payments for subscriptions and plugins
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loadingPaymentHistory ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            </div>
-          ) : paymentHistory.length === 0 ? (
-            <div className="text-center py-8">
-              <CheckCircle className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No payment history</h3>
-              <p className="text-gray-600 dark:text-gray-300">
-                Payment history will appear here when you purchase subscriptions or plugins
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {paymentHistory.map((payment) => (
-                <div key={payment.id} className="border rounded-lg p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                        <span className="font-medium text-gray-900 dark:text-white">{payment.description}</span>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {new Date(payment.date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge
-                          variant={payment.status === 'active' || payment.status === 'cancelled' ? 'default' : 'secondary'}
-                        >
-                          {payment.status}
-                        </Badge>
-                        <Badge variant="secondary">
-                          {payment.type === 'subscription' ? 'Main App' : 'Plugin'}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="text-right ml-4">
-                      <div className="font-semibold text-lg text-green-600 dark:text-green-400">
-                        ${(payment.amount_cents / 100).toFixed(2)}
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 uppercase">
-                        {payment.currency}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* 5. Invoice History */}
+      {/* Past Charges (formerly Stripe Charges) */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="w-5 h-5" />
-            Invoice History
+            Past Charges
           </CardTitle>
           <CardDescription>
-            Past and current invoices with detailed payment confirmation
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loadingInvoices ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            </div>
-          ) : invoices.length === 0 ? (
-            <div className="text-center py-8">
-              <CreditCard className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No invoices yet</h3>
-              <p className="text-gray-600 dark:text-gray-300">
-                Invoices will appear here when billing periods are processed
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {invoices?.map((invoice) => (
-                <div key={invoice.id} className="border rounded-lg">
-                  <div
-                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
-                    onClick={() => toggleInvoiceExpansion(invoice.id)}
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-gray-900 dark:text-white">{invoice.invoice_number}</span>
-                        <Badge 
-                          variant={
-                            invoice.status === 'paid' ? 'default' : 
-                            invoice.status === 'overdue' ? 'destructive' : 
-                            'secondary'
-                          }
-                        >
-                          {invoice.status}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Invoice Date: {new Date(invoice.invoice_date).toLocaleDateString()}
-                      </p>
-                      {invoice.due_date && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Due Date: {new Date(invoice.due_date).toLocaleDateString()}
-                        </p>
-                      )}
-                      {invoice.paid_date && (
-                        <p className="text-sm text-green-600 dark:text-green-400">
-                          Paid Date: {new Date(invoice.paid_date).toLocaleDateString()}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <div className="font-semibold text-lg text-gray-900 dark:text-white">
-                          ${(invoice.total_cents / 100).toFixed(2)}
-                        </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 uppercase">
-                          {invoice.currency}
-                        </div>
-                      </div>
-                      {expandedInvoices.has(invoice.id) ? (
-                        <ChevronDown className="w-5 h-5 text-gray-400 dark:text-gray-500" />
-                      ) : (
-                        <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-500" />
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Expanded Invoice Details */}
-                  {expandedInvoices.has(invoice.id) && (
-                    <div className="border-t bg-gray-50 dark:bg-gray-900 p-4">
-                      {invoiceDetails[invoice.id] ? (
-                        <div className="space-y-4">
-                          {/* Payment Information */}
-                          {invoiceDetails[invoice.id].stripe_invoice_id && (
-                            <div>
-                              <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300 mb-2">Payment Information</h4>
-                              <div className="text-sm space-y-1">
-                                <p>Stripe Invoice ID: <span className="font-mono text-xs">{invoiceDetails[invoice.id].stripe_invoice_id}</span></p>
-                                
-                                {/* Payment Confirmation Details */}
-                                {invoiceDetails[invoice.id].stripe_payment_intent_id && (
-                                  <p>Payment Intent: <span className="font-mono text-xs">{invoiceDetails[invoice.id].stripe_payment_intent_id}</span></p>
-                                )}
-                                
-                                {invoiceDetails[invoice.id].stripe_charge_id && (
-                                  <p>Charge ID: <span className="font-mono text-xs">{invoiceDetails[invoice.id].stripe_charge_id}</span></p>
-                                )}
-                                
-                                {invoiceDetails[invoice.id].stripe_transaction_id && (
-                                  <p>Transaction ID: <span className="font-mono text-xs">{invoiceDetails[invoice.id].stripe_transaction_id}</span></p>
-                                )}
-                                
-                                {invoiceDetails[invoice.id].payment_method_last4 && (
-                                  <p>Payment Method: {invoiceDetails[invoice.id].payment_method_brand?.toUpperCase()} ••••{invoiceDetails[invoice.id].payment_method_last4}</p>
-                                )}
-                                
-                                {/* Stripe Receipt Link */}
-                                {invoiceDetails[invoice.id].stripe_receipt_url && (
-                                  <p>
-                                    <a 
-                                      href={invoiceDetails[invoice.id].stripe_receipt_url!} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer" 
-                                      className="text-blue-600 hover:text-blue-800 underline"
-                                    >
-                                      View Stripe Receipt →
-                                    </a>
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                          
-                          {/* Line Items */}
-                          {invoiceDetails[invoice.id].line_items && invoiceDetails[invoice.id].line_items!.length > 0 && (
-                            <div>
-                              <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300 mb-2">Invoice Details</h4>
-                              <div className="space-y-2">
-                                {invoiceDetails[invoice.id].line_items!.map((item, index) => (
-                                  <div key={index} className="flex justify-between items-center text-sm bg-white dark:bg-gray-700 p-2 rounded">
-                                    <div className="flex-1">
-                                      <div className="font-medium text-gray-900 dark:text-white">{item.name}</div>
-                                      <div className="text-gray-600 dark:text-gray-400 text-xs">{item.description}</div>
-                                      <div className="text-gray-600 dark:text-gray-400 text-xs">Qty: {item.quantity} × ${(item.unit_price_cents / 100).toFixed(2)}</div>
-                                    </div>
-                                    <div className="font-medium text-gray-900 dark:text-white">
-                                      ${(item.total_price_cents / 100).toFixed(2)}
-                                    </div>
-                                  </div>
-                                ))}
-                                
-                                {/* Invoice Totals */}
-                                <div className="border-t pt-2 mt-2">
-                                  <div className="flex justify-between text-sm">
-                                    <span>Subtotal:</span>
-                                    <span>${(invoiceDetails[invoice.id].subtotal_cents / 100).toFixed(2)}</span>
-                                  </div>
-                                  {invoiceDetails[invoice.id].tax_cents > 0 && (
-                                    <div className="flex justify-between text-sm">
-                                      <span>Tax:</span>
-                                      <span>${(invoiceDetails[invoice.id].tax_cents / 100).toFixed(2)}</span>
-                                    </div>
-                                  )}
-                                  <div className="flex justify-between font-medium text-base border-t pt-1 text-gray-900 dark:text-white">
-                                    <span>Total:</span>
-                                    <span>${(invoiceDetails[invoice.id].total_cents / 100).toFixed(2)}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center py-4">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                          Loading details...
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* 6. Stripe Charges (Direct from Stripe API) */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="w-5 h-5" />
-            Stripe Charges
-          </CardTitle>
-          <CardDescription>
-            All charges from Stripe with receipt URLs and refund options
+            All past charges with receipt URLs and refund request options
           </CardDescription>
         </CardHeader>
         <CardContent>

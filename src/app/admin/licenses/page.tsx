@@ -83,9 +83,39 @@ interface Subscription {
   updated_at: string
 }
 
+// License-Subscription Relationship interface
+interface LicenseSubscriptionRelationship {
+  id: string
+  license_id: string
+  subscription_id: string
+  relationship_type: 'standard' | 'trial_conversion' | 'upgrade' | 'addon'
+  notes?: string
+  created_at: string
+  updated_at: string
+  license?: {
+    id: string
+    license_key: string
+    key_code: string
+    license_type: string
+    status: string
+    user_id?: string
+    user_email?: string
+  }
+  subscription?: {
+    id: string
+    subscription_key: string
+    subscription_category: string
+    subscription_type: string
+    plugin_type?: string
+    status: string
+    user_id: string
+    user_email?: string
+  }
+}
+
 export default function LicenseManagement() {
   // Tab state - subscriptions are now unified
-  const [activeTab, setActiveTab] = useState<'subscriptions' | 'licenses'>('subscriptions')
+  const [activeTab, setActiveTab] = useState<'subscriptions' | 'licenses' | 'relationships'>('subscriptions')
 
   // License states
   const [licenses, setLicenses] = useState<LicenseKey[]>([])
@@ -105,6 +135,10 @@ export default function LicenseManagement() {
   const [subscriptionCategoryFilter, setSubscriptionCategoryFilter] = useState<'all' | 'native_app' | 'plugin'>('all')
   const [subscriptionPluginFilter, setSubscriptionPluginFilter] = useState<'all' | 'klippel_qc' | 'apx500'>('all')
 
+  // Relationship states
+  const [relationships, setRelationships] = useState<LicenseSubscriptionRelationship[]>([])
+  const [relationshipsLoading, setRelationshipsLoading] = useState(false)
+
   useEffect(() => {
     loadLicenses()
   }, [filterType, filterLicenseType, searchTerm])
@@ -112,6 +146,8 @@ export default function LicenseManagement() {
   useEffect(() => {
     if (activeTab === 'subscriptions') {
       loadSubscriptions()
+    } else if (activeTab === 'relationships') {
+      loadRelationships()
     }
   }, [activeTab, subscriptionSearchTerm, subscriptionStatusFilter, subscriptionTypeFilter, subscriptionCategoryFilter, subscriptionPluginFilter])
 
@@ -344,6 +380,64 @@ export default function LicenseManagement() {
     }
   }
 
+  // Relationship Management Functions
+  const loadRelationships = async () => {
+    try {
+      setRelationshipsLoading(true)
+
+      const response = await fetch('/api/admin/license-subscription-relationships', {
+        cache: 'no-store'
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch relationships')
+      }
+
+      const data = await response.json()
+      setRelationships(data.relationships || [])
+    } catch (error) {
+      console.error('Error loading relationships:', error)
+      setRelationships([])
+    } finally {
+      setRelationshipsLoading(false)
+    }
+  }
+
+  const handleDeleteRelationship = async (relationshipId: string) => {
+    if (!confirm('Are you sure you want to delete this relationship?')) return
+
+    try {
+      const response = await fetch('/api/admin/license-subscription-relationships', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ relationship_id: relationshipId })
+      })
+
+      if (response.ok) {
+        alert('Relationship deleted successfully')
+        loadRelationships()
+      } else {
+        const data = await response.json()
+        alert(`Failed to delete relationship: ${data.error}`)
+      }
+    } catch (error) {
+      console.error('Error deleting relationship:', error)
+      alert('Failed to delete relationship')
+    }
+  }
+
+  const getRelationshipTypeColor = (type: string) => {
+    switch (type) {
+      case 'standard': return 'bg-blue-100 text-blue-800'
+      case 'trial_conversion': return 'bg-green-100 text-green-800'
+      case 'upgrade': return 'bg-purple-100 text-purple-800'
+      case 'addon': return 'bg-yellow-100 text-yellow-800'
+      default: return 'bg-gray-100 text-gray-800'
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -394,6 +488,19 @@ export default function LicenseManagement() {
           >
             <KeyIcon className="h-5 w-5 mr-2" />
             License Keys
+          </button>
+          <button
+            onClick={() => setActiveTab('relationships')}
+            className={`${
+              activeTab === 'relationships'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+            Relationships
           </button>
         </nav>
       </div>
@@ -884,6 +991,154 @@ export default function LicenseManagement() {
           </div>
         )}
       </div>
+        </>
+      )}
+
+      {/* Relationships Tab Content */}
+      {activeTab === 'relationships' && (
+        <>
+          <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+            {relationshipsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-2 text-gray-600">Loading relationships...</span>
+              </div>
+            ) : relationships.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        License Key
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        License Details
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Subscription Key
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Subscription Details
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        User
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Relationship Type
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Created
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {relationships.map((rel) => (
+                      <tr key={rel.id} className="hover:bg-gray-50">
+                        {/* License Key */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-mono font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded">
+                            {rel.license?.license_key || 'N/A'}
+                          </span>
+                        </td>
+
+                        {/* License Details */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm">
+                            <div className="font-medium text-gray-900">
+                              {rel.license?.license_type || 'Unknown'}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Status: <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(rel.license?.status || 'unknown')}`}>
+                                {rel.license?.status || 'unknown'}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Arrow/Link Icon */}
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                          </svg>
+                        </td>
+
+                        {/* Subscription Key */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-mono font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                            {rel.subscription?.subscription_key || 'N/A'}
+                          </span>
+                        </td>
+
+                        {/* Subscription Details */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm">
+                            <div className="font-medium text-gray-900">
+                              {rel.subscription?.subscription_category === 'native_app' ? 'Native App' : rel.subscription?.plugin_type || 'Plugin'}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {rel.subscription?.subscription_type} - <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(rel.subscription?.status || 'unknown')}`}>
+                                {rel.subscription?.status || 'unknown'}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* User */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm">
+                            <div className="font-medium text-gray-900">
+                              {rel.license?.user_email || rel.subscription?.user_email || 'Unknown'}
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Relationship Type */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRelationshipTypeColor(rel.relationship_type)}`}>
+                            {rel.relationship_type.replace('_', ' ')}
+                          </span>
+                        </td>
+
+                        {/* Created Date */}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatDate(rel.created_at)}
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                          <button
+                            onClick={() => handleDeleteRelationship(rel.id)}
+                            className="text-red-600 hover:text-red-900"
+                            title="Delete relationship"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                <h3 className="mt-2 text-sm font-semibold text-gray-900">No relationships found</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  No license-subscription relationships have been created yet.
+                </p>
+              </div>
+            )}
+          </div>
         </>
       )}
 
