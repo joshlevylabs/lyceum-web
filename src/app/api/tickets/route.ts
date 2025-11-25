@@ -48,134 +48,130 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    // Check if this is an admin call (from admin panel)
-    const referer = request.headers.get('referer')
-    const isAdminCall = referer?.includes('/admin/') || origin?.includes('localhost:3594')
-
     let currentUserId = null
     let isAdmin = false
 
-    if (isAdminCall) {
-      // For admin panel calls, we assume admin privileges and use service role
-      // This follows the pattern of other admin endpoints
-      isAdmin = true
-    } else {
-      // For Centcom API calls, validate authentication
-      const authHeader = request.headers.get('authorization')
-      console.log('🎫 Ticket API: Authentication debug', {
-        hasAuthHeader: !!authHeader,
-        authHeaderPreview: authHeader ? authHeader.substring(0, 30) + '...' : 'NO_HEADER',
-        startsWithBearer: authHeader?.startsWith('Bearer ')
-      })
-      
-      if (!authHeader?.startsWith('Bearer ')) {
-        console.log('🎫 Ticket API: Missing or invalid authorization header')
-        return NextResponse.json({ error: 'Missing or invalid authorization header' }, { 
-          status: 401,
-          headers 
-        })
-      }
+    // Always validate authentication and check role - never assume admin privileges
+    const authHeader = request.headers.get('authorization')
+    console.log('🎫 Ticket API: Authentication debug', {
+      hasAuthHeader: !!authHeader,
+      authHeaderPreview: authHeader ? authHeader.substring(0, 30) + '...' : 'NO_HEADER',
+      startsWithBearer: authHeader?.startsWith('Bearer ')
+    })
 
-      const token = authHeader.replace('Bearer ', '')
-      console.log('🎫 Ticket API: Validating token', {
-        tokenLength: token.length,
-        tokenPreview: token.substring(0, 20) + '...'
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.log('🎫 Ticket API: Missing or invalid authorization header')
+      return NextResponse.json({ error: 'Missing or invalid authorization header' }, {
+        status: 401,
+        headers
       })
-      
-      // For Centcom integration, use service role to validate user
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co'
-      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4'
-      const serviceSupabase = createClient(supabaseUrl, serviceKey)
-      
-      let user = null
-      let authError = null
-      
-      // Try Supabase auth first
-      try {
-        const { data: authData, error: supabaseError } = await supabase.auth.getUser(token)
-        if (supabaseError) {
-          console.log('🎫 Ticket API: Supabase auth failed, trying alternative validation:', supabaseError.message)
-          
-          // If Supabase auth fails, try to decode the token to get user info
-          try {
-            // For legacy tokens, extract user email/ID and validate via service role
-            const tokenParts = token.split('.')
-            if (tokenParts.length === 3) {
-              const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString())
-              console.log('🎫 Ticket API: Decoded token payload', { 
-                hasEmail: !!payload.email, 
-                hasUserId: !!payload.sub,
-                email: payload.email 
-              })
-              
-              if (payload.email || payload.sub) {
-                // Look up user by email or ID using service role in user_profiles table
-                const { data: userData, error: lookupError } = await serviceSupabase
-                  .from('user_profiles')
-                  .select('id, email')
-                  .or(payload.email ? `email.eq.${payload.email}` : `id.eq.${payload.sub}`)
-                  .single()
-                
-                if (userData && !lookupError) {
-                  user = { id: userData.id, email: userData.email }
-                  console.log('🎫 Ticket API: User found via token lookup', { userId: user.id, email: user.email })
-                } else {
-                  console.log('🎫 Ticket API: User lookup failed', lookupError)
-                  // Also try looking up by the decoded user ID in case it's a Supabase auth user ID
-                  if (payload.sub) {
-                    const { data: authUserData, error: authLookupError } = await serviceSupabase
-                      .from('user_profiles')
-                      .select('id, email')
-                      .eq('id', payload.sub)
-                      .single()
-                    
-                    if (authUserData && !authLookupError) {
-                      user = { id: authUserData.id, email: authUserData.email }
-                      console.log('🎫 Ticket API: User found via auth ID lookup', { userId: user.id, email: user.email })
-                    } else {
-                      console.log('🎫 Ticket API: Auth ID lookup also failed', authLookupError)
-                    }
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+    console.log('🎫 Ticket API: Validating token', {
+      tokenLength: token.length,
+      tokenPreview: token.substring(0, 20) + '...'
+    })
+
+    // Use service role to validate user
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co'
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4'
+    const serviceSupabase = createClient(supabaseUrl, serviceKey)
+
+    let user = null
+    let authError = null
+
+    // Try Supabase auth first
+    try {
+      const { data: authData, error: supabaseError } = await supabase.auth.getUser(token)
+      if (supabaseError) {
+        console.log('🎫 Ticket API: Supabase auth failed, trying alternative validation:', supabaseError.message)
+
+        // If Supabase auth fails, try to decode the token to get user info
+        try {
+          // For legacy tokens, extract user email/ID and validate via service role
+          const tokenParts = token.split('.')
+          if (tokenParts.length === 3) {
+            const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString())
+            console.log('🎫 Ticket API: Decoded token payload', {
+              hasEmail: !!payload.email,
+              hasUserId: !!payload.sub,
+              email: payload.email
+            })
+
+            if (payload.email || payload.sub) {
+              // Look up user by email or ID using service role in user_profiles table
+              const { data: userData, error: lookupError } = await serviceSupabase
+                .from('user_profiles')
+                .select('id, email')
+                .or(payload.email ? `email.eq.${payload.email}` : `id.eq.${payload.sub}`)
+                .single()
+
+              if (userData && !lookupError) {
+                user = { id: userData.id, email: userData.email }
+                console.log('🎫 Ticket API: User found via token lookup', { userId: user.id, email: user.email })
+              } else {
+                console.log('🎫 Ticket API: User lookup failed', lookupError)
+                // Also try looking up by the decoded user ID in case it's a Supabase auth user ID
+                if (payload.sub) {
+                  const { data: authUserData, error: authLookupError } = await serviceSupabase
+                    .from('user_profiles')
+                    .select('id, email')
+                    .eq('id', payload.sub)
+                    .single()
+
+                  if (authUserData && !authLookupError) {
+                    user = { id: authUserData.id, email: authUserData.email }
+                    console.log('🎫 Ticket API: User found via auth ID lookup', { userId: user.id, email: user.email })
+                  } else {
+                    console.log('🎫 Ticket API: Auth ID lookup also failed', authLookupError)
                   }
                 }
               }
             }
-          } catch (decodeError) {
-            console.log('🎫 Ticket API: Token decode failed', decodeError)
           }
-        } else {
-          user = authData.user
+        } catch (decodeError) {
+          console.log('🎫 Ticket API: Token decode failed', decodeError)
         }
-      } catch (error) {
-        console.log('🎫 Ticket API: Auth validation error', error)
-        authError = error
+      } else {
+        user = authData.user
       }
-      
-      console.log('🎫 Ticket API: Final authentication result', {
-        hasUser: !!user,
-        hasError: !!authError,
-        userId: user?.id,
-        userEmail: user?.email
-      })
-      
-      if (!user) {
-        console.log('🎫 Ticket API: Authentication failed')
-        return NextResponse.json({ error: 'Invalid authentication token' }, { 
-          status: 401,
-          headers 
-        })
-      }
-
-      currentUserId = user.id
-
-      // Check if user is admin
-      const { data: userProfile } = await supabase
-        .from('user_profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
-      isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superadmin'
+    } catch (error) {
+      console.log('🎫 Ticket API: Auth validation error', error)
+      authError = error
     }
+
+    console.log('🎫 Ticket API: Final authentication result', {
+      hasUser: !!user,
+      hasError: !!authError,
+      userId: user?.id,
+      userEmail: user?.email
+    })
+
+    if (!user) {
+      console.log('🎫 Ticket API: Authentication failed')
+      return NextResponse.json({ error: 'Invalid authentication token' }, {
+        status: 401,
+        headers
+      })
+    }
+
+    currentUserId = user.id
+
+    // Check if user is admin - verify actual role from database
+    const { data: userProfile } = await supabase
+      .from('user_profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superadmin'
+
+    console.log('🎫 Ticket API: Role check', {
+      userId: user.id,
+      userRole: userProfile?.role,
+      isAdmin
+    })
 
     // Build query - start simple to debug
     let query = supabase
