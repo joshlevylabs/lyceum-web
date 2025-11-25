@@ -397,12 +397,6 @@ CREATE POLICY "Users can view own license-subscription relationships"
   FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM license_keys
-      WHERE license_keys.id = license_subscription_relationships.license_id
-      AND license_keys.user_id = auth.uid()
-    )
-    OR
-    EXISTS (
       SELECT 1 FROM subscriptions
       WHERE subscriptions.id = license_subscription_relationships.subscription_id
       AND subscriptions.user_id = auth.uid()
