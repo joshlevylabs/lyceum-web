@@ -336,7 +336,7 @@ BEGIN
         rec.trial_start_date,
         rec.trial_end_date,
         rec.cancelled_at,
-        rec.metadata,
+        '{}',  -- plugin_subscriptions doesn't have metadata column, use empty object
         rec.created_at,
         rec.updated_at
       ) ON CONFLICT (id) DO NOTHING;
