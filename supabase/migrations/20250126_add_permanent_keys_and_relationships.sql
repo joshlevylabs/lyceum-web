@@ -290,6 +290,9 @@ BEGIN
     END LOOP;
 
     RAISE NOTICE '✅ Migrated % native app subscriptions', counter - 1;
+
+    -- Set sequence to next available number after native app subscriptions
+    PERFORM setval('subscription_key_seq', counter);
   END IF;
 END $$;
 
@@ -346,8 +349,17 @@ BEGIN
   END IF;
 END $$;
 
--- Update subscription sequence to next available number
-SELECT setval('subscription_key_seq', (SELECT COUNT(*) FROM subscriptions) + 1);
+-- Ensure subscription sequence is set correctly (in case plugin_subscriptions table doesn't exist)
+DO $$
+DECLARE
+  sub_count INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO sub_count FROM subscriptions;
+  IF sub_count > 0 THEN
+    PERFORM setval('subscription_key_seq', sub_count + 1);
+    RAISE NOTICE '✅ Set subscription sequence to %', sub_count + 1;
+  END IF;
+END $$;
 
 -- ============================================
 -- PART 4: Create license-subscription relationship table
