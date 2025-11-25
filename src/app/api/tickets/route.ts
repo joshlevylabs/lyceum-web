@@ -178,11 +178,15 @@ export async function GET(request: NextRequest) {
       .from('support_tickets')
       .select('*')
 
-    // Apply filters based on user role
-    if (!isAdmin && currentUserId) {
-      query = query.eq('user_id', currentUserId)
-    } else if (user_id) {
+    // Apply filters based on user role and query parameters
+    // For dashboard personal view: always filter by current user (including admins)
+    // For admin panel: only admins can filter by user_id parameter to see all tickets
+    if (user_id && isAdmin) {
+      // Admin explicitly filtering by a specific user_id parameter
       query = query.eq('user_id', user_id)
+    } else if (currentUserId) {
+      // Default: show only current user's tickets (dashboard personal view)
+      query = query.eq('user_id', currentUserId)
     }
 
     // Apply additional filters
