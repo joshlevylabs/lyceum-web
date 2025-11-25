@@ -382,7 +382,7 @@ export default function UserManagement() {
         return (
           <td key="email" className="px-6 py-4 whitespace-nowrap">
             <div className="flex items-center">
-              <div className="text-sm text-gray-900 dark:text-white">{user.email}</div>
+              <div className="text-sm text-gray-900">{user.email}</div>
               {emailValidation.isDisposable && (
                 <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200">
                   <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
@@ -395,7 +395,7 @@ export default function UserManagement() {
       case 'company':
         return (
           <td key="company" className="px-6 py-4 whitespace-nowrap">
-            <div className="text-sm text-gray-500 dark:text-gray-400">{user.company || '-'}</div>
+            <div className="text-sm text-gray-500">{user.company || '-'}</div>
           </td>
         )
       case 'role':
@@ -408,13 +408,13 @@ export default function UserManagement() {
         )
       case 'joined':
         return (
-          <td key="joined" className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+          <td key="joined" className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
             {formatDate(user.created_at)}
           </td>
         )
       case 'last_login':
         return (
-          <td key="last_login" className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+          <td key="last_login" className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
             {user.last_login || 'Never'}
           </td>
         )
@@ -712,7 +712,7 @@ export default function UserManagement() {
       </div>
 
       {/* Users Table - Jira Style */}
-      <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
+      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -720,8 +720,8 @@ export default function UserManagement() {
           </div>
         ) : users.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
                   {columnOrder.map((column) => (
                     <th
@@ -731,22 +731,22 @@ export default function UserManagement() {
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, column.id)}
                       onDragEnd={handleDragEnd}
-                      className={`px-6 py-3 text-${column.align || 'left'} text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-move hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${
+                      className={`px-6 py-3 text-${column.align || 'left'} text-xs font-medium text-gray-500 uppercase tracking-wider cursor-move hover:bg-gray-100 transition-colors ${
                         draggedColumn === column.id ? 'opacity-50' : ''
                       }`}
                       title="Drag to reorder columns"
                     >
                       <div className="flex items-center gap-1">
                         <span>{column.name}</span>
-                        <FunnelIcon className="h-3 w-3 text-gray-400 dark:text-gray-400" />
+                        <FunnelIcon className="h-3 w-3 text-gray-400" />
                       </div>
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="bg-white divide-y divide-gray-200">
                 {users.map((user) => (
-                  <tr key={`user-row-${user.id}`} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <tr key={`user-row-${user.id}`} className="hover:bg-gray-50">
                     {columnOrder.map((column) => renderCellContent(column, user))}
                   </tr>
                 ))}
