@@ -436,11 +436,21 @@ export async function POST(request: NextRequest) {
     const { data: ticket, error: createError } = await supabase
       .from('support_tickets')
       .insert([ticketData])
-      .select(`
-        *,
-        assigned_admin:user_profiles!assigned_to_admin_id(id, username, full_name)
-      `)
+      .select('*')
       .single()
+
+    // Manually fetch assigned admin if needed (avoids foreign key relationship cache issues)
+    if (ticket && ticket.assigned_to_admin_id) {
+      const { data: adminProfile } = await supabase
+        .from('user_profiles')
+        .select('id, username, full_name')
+        .eq('id', ticket.assigned_to_admin_id)
+        .single()
+
+      if (adminProfile) {
+        ticket.assigned_admin = adminProfile
+      }
+    }
 
     if (createError) {
       console.error('Error creating ticket:', createError)
