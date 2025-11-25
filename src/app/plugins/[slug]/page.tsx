@@ -29,6 +29,7 @@ interface Plugin {
   short_description: string
   full_description?: string
   category: string
+  principle?: string
   current_version: string
   base_price: number
   currency: string
@@ -348,10 +349,38 @@ export default function PluginDetailsPage() {
     }
   }
 
-  const handleStartTrial = () => {
-    // Show confirmation modal
-    setModalData({ licenseType: 'trial' })
-    setShowConfirmModal(true)
+  const handleStartTrial = async () => {
+    try {
+      // Create Stripe checkout session for plugin trial
+      const headers = await getAuthHeaders()
+      const response = await fetch('/api/stripe/create-plugin-trial-checkout', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          plugin_slug: slug,
+          plugin_type: slug === 'klippel-qc' ? 'klippel_qc' : slug
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session')
+      }
+
+      // Redirect directly to Stripe
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl
+      } else {
+        throw new Error('No checkout URL returned')
+      }
+    } catch (err: any) {
+      console.error('Error starting trial:', err)
+      setModalData({
+        errorMessage: err.message || 'Failed to start trial'
+      })
+      setShowErrorModal(true)
+    }
   }
 
   const handleRequestLicense = () => {
@@ -547,53 +576,69 @@ export default function PluginDetailsPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Header */}
             <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-              <div className="flex items-start space-x-4">
-                {plugin.screenshots && plugin.screenshots.length > 0 && (
-                  <img
-                    src={plugin.screenshots[0].url}
-                    alt={plugin.display_name}
-                    className="w-20 h-20 rounded-lg object-cover"
-                  />
-                )}
+              <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
                     {plugin.display_name}
                   </h1>
-                  <p className="text-lg text-gray-600 dark:text-gray-400 mb-3">
+                  <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">
                     {plugin.short_description}
                   </p>
 
                   {/* Subscription Badge */}
-                  {renderSubscriptionBadge()}
-
-                  <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 mt-3">
-                    <div className="flex items-center">
-                      {renderRatingStars(plugin.average_rating)}
-                      <span className="ml-2">
-                        {plugin.average_rating.toFixed(1)} ({plugin.total_reviews} reviews)
-                      </span>
-                    </div>
-                    <span>•</span>
-                    <div className="flex items-center">
-                      <CloudArrowDownIcon className="h-4 w-4 mr-1" />
-                      {plugin.total_downloads.toLocaleString()} downloads
-                    </div>
-                    <span>•</span>
-                    <span className="capitalize">{plugin.category}</span>
+                  <div className="mb-4">
+                    {renderSubscriptionBadge()}
                   </div>
 
-                  {plugin.publisher_name && (
-                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                      by {plugin.publisher_name}
-                    </p>
-                  )}
-                </div>
+                  {/* Metadata with Icons */}
+                  <div className="flex flex-wrap items-center gap-4 text-sm">
+                    {/* Rating */}
+                    <div className="flex items-center text-gray-700 dark:text-gray-300">
+                      <div className="flex items-center">
+                        {renderRatingStars(plugin.average_rating)}
+                      </div>
+                      <span className="ml-2 font-medium">
+                        {plugin.average_rating.toFixed(1)}
+                      </span>
+                    </div>
 
-                {plugin.is_featured && (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-                    Featured
-                  </span>
-                )}
+                    {/* Reviews */}
+                    <div className="flex items-center text-gray-700 dark:text-gray-300">
+                      <ChartBarIcon className="h-4 w-4 mr-1.5" />
+                      <span className="font-medium">{reviews.length} reviews</span>
+                    </div>
+
+                    {/* Downloads */}
+                    <div className="flex items-center text-gray-700 dark:text-gray-300">
+                      <CloudArrowDownIcon className="h-4 w-4 mr-1.5" />
+                      <span className="font-medium">{plugin.total_downloads.toLocaleString()} downloads</span>
+                    </div>
+
+                    {/* Category Badge */}
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 capitalize">
+                      {plugin.category}
+                    </span>
+
+                    {/* Principle Badge */}
+                    {plugin.principle && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 capitalize">
+                        {plugin.principle}
+                      </span>
+                    )}
+
+                    {/* Featured Badge */}
+                    {plugin.is_featured && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                        Featured
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Publisher */}
+                  <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                    by Lyceum Audio Labs
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -625,34 +670,6 @@ export default function PluginDetailsPage() {
                     </li>
                   ))}
                 </ul>
-              </div>
-            )}
-
-            {/* License Tiers */}
-            {plugin.installation_config?.license_tiers && (
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                  License Tiers
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {Object.entries(plugin.installation_config.license_tiers).map(([tier, config]: [string, any]) => (
-                    <div key={tier} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white capitalize mb-3">
-                        {tier}
-                      </h3>
-                      <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                        {Object.entries(config).map(([key, value]) => (
-                          <li key={key}>
-                            <span className="font-medium">
-                              {key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}:
-                            </span>{' '}
-                            {value === null ? 'Unlimited' : Array.isArray(value) ? value.join(', ') : String(value)}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
               </div>
             )}
 
@@ -866,12 +883,16 @@ export default function PluginDetailsPage() {
                   <span className="text-gray-500 dark:text-gray-400">Category</span>
                   <span className="text-gray-900 dark:text-white font-medium capitalize">{plugin.category}</span>
                 </div>
-                {plugin.publisher_name && (
+                {plugin.principle && (
                   <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Publisher</span>
-                    <span className="text-gray-900 dark:text-white font-medium">{plugin.publisher_name}</span>
+                    <span className="text-gray-500 dark:text-gray-400">Principle</span>
+                    <span className="text-gray-900 dark:text-white font-medium capitalize">{plugin.principle}</span>
                   </div>
                 )}
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Publisher</span>
+                  <span className="text-gray-900 dark:text-white font-medium">Lyceum Audio Labs</span>
+                </div>
               </div>
             </div>
           </div>

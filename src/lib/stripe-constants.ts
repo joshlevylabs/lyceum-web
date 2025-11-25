@@ -4,7 +4,7 @@
 export const SUBSCRIPTION_PLANS = {
   starter: {
     name: 'Starter',
-    price: 29,
+    price: 49,
     priceId: process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID || 'price_1SB0X8LXAQw5VHo2mY43cSL7',
     features: [
       'Up to 5 users',
@@ -19,7 +19,7 @@ export const SUBSCRIPTION_PLANS = {
   },
   professional: {
     name: 'Professional',
-    price: 99,
+    price: 149,
     priceId: process.env.NEXT_PUBLIC_STRIPE_PROFESSIONAL_PRICE_ID || 'price_1SB0XPLXAQw5VHo2RWq504Wb',
     features: [
       'Up to 25 users',
@@ -35,7 +35,7 @@ export const SUBSCRIPTION_PLANS = {
   },
   enterprise: {
     name: 'Enterprise',
-    price: 299,
+    price: 399,
     priceId: process.env.NEXT_PUBLIC_STRIPE_ENTERPRISE_PRICE_ID || 'price_1SB0XlLXAQw5VHo2HdexQDmi',
     features: [
       'Unlimited users',
@@ -69,21 +69,21 @@ export const SUBSCRIPTION_PLANS = {
 export const STRIPE_PLANS_INFO = {
   starter: {
     name: 'Starter',
-    price: '$29',
+    price: '$49',
     period: 'month',
     description: 'Perfect for small teams and testing',
     popular: false,
   },
   professional: {
     name: 'Professional',
-    price: '$99',
+    price: '$149',
     period: 'month',
     description: 'For growing teams and production workloads',
     popular: true,
   },
   enterprise: {
     name: 'Enterprise',
-    price: '$299',
+    price: '$399',
     period: 'month',
     description: 'For large organizations',
     popular: false,

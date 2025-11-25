@@ -25,16 +25,8 @@ function getLicenseCategory(license: LicenseKey): 'main_application' | 'plugin' 
   return license.license_category || license.license_config?.license_category || 'main_application'
 }
 
-// Helper function to generate stable license keys
-async function generateStableLicenseKeys(licenses: LicenseKey[]): Promise<LicenseKey[]> {
-  // Sort licenses by creation date to ensure consistent ordering
-  const sortedLicenses = licenses.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-  
-  return sortedLicenses.map((license, index) => ({
-    ...license,
-    license_key: `LIC-${index + 1}`
-  }))
-}
+// License keys are now permanent and stored in the database
+// The license_key field (LIC-1, LIC-2, etc.) is set once on creation and never changes
 
 interface LicenseKey {
   id: string
@@ -69,31 +61,19 @@ interface LicenseKey {
   }
 }
 
+// Unified Subscription interface (combines native app and plugin subscriptions)
 interface Subscription {
   id: string
+  subscription_key: string // SUB-1, SUB-2, etc.
   user_id: string
   user_email?: string
+  subscription_category: 'native_app' | 'plugin'
   subscription_type: 'trial' | 'paid'
+  plugin_type?: 'klippel_qc' | 'apx500' | null
   status: 'active' | 'expired' | 'cancelled'
   stripe_session_id?: string
   stripe_customer_id?: string
-  amount_paid_cents?: number
-  currency?: string
-  trial_start_date?: string
-  trial_end_date?: string
-  cancelled_at?: string
-  created_at: string
-  updated_at: string
-}
-
-interface PluginSubscription {
-  id: string
-  user_id: string
-  user_email?: string
-  plugin_type: 'klippel_qc' | 'apx500'
-  subscription_type: 'trial' | 'paid'
-  status: 'active' | 'expired' | 'cancelled'
-  stripe_session_id?: string
+  stripe_subscription_id?: string
   amount_paid_cents?: number
   currency?: string
   trial_start_date?: string
@@ -104,8 +84,8 @@ interface PluginSubscription {
 }
 
 export default function LicenseManagement() {
-  // Tab state
-  const [activeTab, setActiveTab] = useState<'subscriptions' | 'plugin_subscriptions' | 'licenses'>('subscriptions')
+  // Tab state - subscriptions are now unified
+  const [activeTab, setActiveTab] = useState<'subscriptions' | 'licenses'>('subscriptions')
 
   // License states
   const [licenses, setLicenses] = useState<LicenseKey[]>([])
@@ -116,20 +96,14 @@ export default function LicenseManagement() {
   const [showAssignModal, setShowAssignModal] = useState<string | null>(null)
   const [showRevokeModal, setShowRevokeModal] = useState<string | null>(null)
 
-  // Subscription states
+  // Unified Subscription states (includes both native app and plugin subscriptions)
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(false)
   const [subscriptionSearchTerm, setSubscriptionSearchTerm] = useState('')
   const [subscriptionStatusFilter, setSubscriptionStatusFilter] = useState<'all' | 'active' | 'cancelled' | 'expired'>('all')
   const [subscriptionTypeFilter, setSubscriptionTypeFilter] = useState<'all' | 'trial' | 'paid'>('all')
-
-  // Plugin Subscription states
-  const [pluginSubscriptions, setPluginSubscriptions] = useState<PluginSubscription[]>([])
-  const [pluginSubscriptionsLoading, setPluginSubscriptionsLoading] = useState(false)
-  const [pluginSubscriptionSearchTerm, setPluginSubscriptionSearchTerm] = useState('')
-  const [pluginSubscriptionStatusFilter, setPluginSubscriptionStatusFilter] = useState<'all' | 'active' | 'cancelled' | 'expired'>('all')
-  const [pluginSubscriptionTypeFilter, setPluginSubscriptionTypeFilter] = useState<'all' | 'trial' | 'paid'>('all')
-  const [pluginSubscriptionPluginFilter, setPluginSubscriptionPluginFilter] = useState<'all' | 'klippel_qc' | 'apx500'>('all')
+  const [subscriptionCategoryFilter, setSubscriptionCategoryFilter] = useState<'all' | 'native_app' | 'plugin'>('all')
+  const [subscriptionPluginFilter, setSubscriptionPluginFilter] = useState<'all' | 'klippel_qc' | 'apx500'>('all')
 
   useEffect(() => {
     loadLicenses()
@@ -139,13 +113,7 @@ export default function LicenseManagement() {
     if (activeTab === 'subscriptions') {
       loadSubscriptions()
     }
-  }, [activeTab, subscriptionSearchTerm, subscriptionStatusFilter, subscriptionTypeFilter])
-
-  useEffect(() => {
-    if (activeTab === 'plugin_subscriptions') {
-      loadPluginSubscriptions()
-    }
-  }, [activeTab, pluginSubscriptionSearchTerm, pluginSubscriptionStatusFilter, pluginSubscriptionTypeFilter, pluginSubscriptionPluginFilter])
+  }, [activeTab, subscriptionSearchTerm, subscriptionStatusFilter, subscriptionTypeFilter, subscriptionCategoryFilter, subscriptionPluginFilter])
 
   const loadLicenses = async () => {
     try {
@@ -160,8 +128,8 @@ export default function LicenseManagement() {
 
       let data: LicenseKey[] = result.licenses || []
 
-      // Generate stable license keys based on creation order
-      data = await generateStableLicenseKeys(data)
+      // License keys are now permanent and come from the database
+      // No need to generate them dynamically
 
       // Apply filters
       if (filterType !== 'all') {
@@ -320,21 +288,21 @@ export default function LicenseManagement() {
     }
   }
 
-  // Subscription Management Functions
+  // Unified Subscription Management Functions
   const loadSubscriptions = async () => {
     try {
       setSubscriptionsLoading(true)
-      const { data: { session } } = await supabase.auth.getSession()
 
-      if (!session?.access_token) {
-        console.error('No auth session')
-        return
-      }
+      // Build query parameters with all filters
+      const params = new URLSearchParams()
+      if (subscriptionStatusFilter !== 'all') params.append('status', subscriptionStatusFilter)
+      if (subscriptionTypeFilter !== 'all') params.append('subscription_type', subscriptionTypeFilter)
+      if (subscriptionCategoryFilter !== 'all') params.append('subscription_category', subscriptionCategoryFilter)
+      if (subscriptionPluginFilter !== 'all') params.append('plugin_type', subscriptionPluginFilter)
+      if (subscriptionSearchTerm) params.append('search', subscriptionSearchTerm)
 
-      const response = await fetch('/api/admin/subscriptions', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
+      const response = await fetch(`/api/admin/subscriptions?${params.toString()}`, {
+        cache: 'no-store'
       })
 
       if (!response.ok) {
@@ -342,24 +310,7 @@ export default function LicenseManagement() {
       }
 
       const data = await response.json()
-      let subs = data.subscriptions || []
-
-      // Apply filters
-      if (subscriptionStatusFilter !== 'all') {
-        subs = subs.filter((s: Subscription) => s.status === subscriptionStatusFilter)
-      }
-      if (subscriptionTypeFilter !== 'all') {
-        subs = subs.filter((s: Subscription) => s.subscription_type === subscriptionTypeFilter)
-      }
-      if (subscriptionSearchTerm) {
-        const term = subscriptionSearchTerm.toLowerCase()
-        subs = subs.filter((s: Subscription) =>
-          s.user_email?.toLowerCase().includes(term) ||
-          s.user_id.toLowerCase().includes(term)
-        )
-      }
-
-      setSubscriptions(subs)
+      setSubscriptions(data.subscriptions || [])
     } catch (error) {
       console.error('Error loading subscriptions:', error)
       setSubscriptions([])
@@ -372,17 +323,9 @@ export default function LicenseManagement() {
     if (!confirm('Are you sure you want to delete this subscription? This will allow the user to use the trial again.')) return
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-
-      if (!session?.access_token) {
-        alert('Authentication required')
-        return
-      }
-
-      const response = await fetch('/api/admin/subscriptions/delete', {
+      const response = await fetch('/api/admin/subscriptions', {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ subscription_id: subscriptionId })
@@ -398,158 +341,6 @@ export default function LicenseManagement() {
     } catch (error) {
       console.error('Error deleting subscription:', error)
       alert('Failed to delete subscription')
-    }
-  }
-
-  const handleResetTrial = async (userId: string, userEmail: string) => {
-    if (!confirm(`Are you sure you want to reset the trial for ${userEmail}? This will delete all their trial subscriptions.`)) return
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-
-      if (!session?.access_token) {
-        alert('Authentication required')
-        return
-      }
-
-      const response = await fetch('/api/admin/subscriptions/reset-trial', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ user_id: userId })
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        alert(`Trial reset successfully. Deleted ${data.deleted_subscriptions} subscription(s).`)
-        loadSubscriptions()
-      } else {
-        const data = await response.json()
-        alert(`Failed to reset trial: ${data.error}`)
-      }
-    } catch (error) {
-      console.error('Error resetting trial:', error)
-      alert('Failed to reset trial')
-    }
-  }
-
-  // Plugin Subscription Management Functions
-  const loadPluginSubscriptions = async () => {
-    try {
-      setPluginSubscriptionsLoading(true)
-      const { data: { session } } = await supabase.auth.getSession()
-
-      if (!session?.access_token) {
-        console.error('No auth session')
-        return
-      }
-
-      const response = await fetch('/api/admin/plugin-subscriptions', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch plugin subscriptions')
-      }
-
-      const data = await response.json()
-      let subs = data.subscriptions || []
-
-      // Apply filters
-      if (pluginSubscriptionStatusFilter !== 'all') {
-        subs = subs.filter((s: PluginSubscription) => s.status === pluginSubscriptionStatusFilter)
-      }
-      if (pluginSubscriptionTypeFilter !== 'all') {
-        subs = subs.filter((s: PluginSubscription) => s.subscription_type === pluginSubscriptionTypeFilter)
-      }
-      if (pluginSubscriptionPluginFilter !== 'all') {
-        subs = subs.filter((s: PluginSubscription) => s.plugin_type === pluginSubscriptionPluginFilter)
-      }
-      if (pluginSubscriptionSearchTerm) {
-        const term = pluginSubscriptionSearchTerm.toLowerCase()
-        subs = subs.filter((s: PluginSubscription) =>
-          s.user_email?.toLowerCase().includes(term) ||
-          s.user_id.toLowerCase().includes(term)
-        )
-      }
-
-      setPluginSubscriptions(subs)
-    } catch (error) {
-      console.error('Error loading plugin subscriptions:', error)
-      setPluginSubscriptions([])
-    } finally {
-      setPluginSubscriptionsLoading(false)
-    }
-  }
-
-  const handleDeletePluginSubscription = async (subscriptionId: string) => {
-    if (!confirm('Are you sure you want to delete this plugin subscription? This will allow the user to use the trial again.')) return
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-
-      if (!session?.access_token) {
-        alert('Authentication required')
-        return
-      }
-
-      const response = await fetch('/api/admin/plugin-subscriptions/delete', {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ subscription_id: subscriptionId })
-      })
-
-      if (response.ok) {
-        alert('Plugin subscription deleted successfully')
-        loadPluginSubscriptions()
-      } else {
-        const data = await response.json()
-        alert(`Failed to delete plugin subscription: ${data.error}`)
-      }
-    } catch (error) {
-      console.error('Error deleting plugin subscription:', error)
-      alert('Failed to delete plugin subscription')
-    }
-  }
-
-  const handleResetPluginTrial = async (userId: string, userEmail: string) => {
-    if (!confirm(`Are you sure you want to reset the plugin trial for ${userEmail}? This will delete all their plugin trial subscriptions.`)) return
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-
-      if (!session?.access_token) {
-        alert('Authentication required')
-        return
-      }
-
-      const response = await fetch('/api/admin/plugin-subscriptions/reset-trial', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ user_id: userId })
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        alert(`Plugin trial reset successfully. Deleted ${data.deleted_subscriptions} subscription(s).`)
-        loadPluginSubscriptions()
-      } else {
-        const data = await response.json()
-        alert(`Failed to reset plugin trial: ${data.error}`)
-      }
-    } catch (error) {
-      console.error('Error resetting plugin trial:', error)
-      alert('Failed to reset plugin trial')
     }
   }
 

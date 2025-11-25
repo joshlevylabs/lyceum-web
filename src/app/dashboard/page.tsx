@@ -20,7 +20,12 @@ import {
   PlusIcon,
   TicketIcon,
   ChatBubbleLeftRightIcon,
-  NewspaperIcon
+  NewspaperIcon,
+  UserIcon,
+  MapPinIcon,
+  ArrowRightIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline'
 
 interface DashboardStats {
@@ -89,6 +94,7 @@ export default function Dashboard() {
   })
   const [onboardingSessions, setOnboardingSessions] = useState<OnboardingSession[]>([])
   const [schedulingBookings, setSchedulingBookings] = useState<any[]>([])
+  const [suggestedBookings, setSuggestedBookings] = useState<any[]>([])
   const [requiresActionBookings, setRequiresActionBookings] = useState<any[]>([])
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [posts, setPosts] = useState<Post[]>([])
@@ -110,6 +116,14 @@ export default function Dashboard() {
     scheduled_at: '',
     duration_minutes: 60
   })
+  // Booking scheduler state
+  const [availableSlots, setAvailableSlots] = useState<{ [date: string]: any[] }>({})
+  const [bookingSlot, setBookingSlot] = useState<any | null>(null)
+  const [showBookingModal, setShowBookingModal] = useState(false)
+  const [selectedLicense, setSelectedLicense] = useState<string>('')
+  const [calendarCurrentDate, setCalendarCurrentDate] = useState(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [showSlotsModal, setShowSlotsModal] = useState(false)
   const [ticketForm, setTicketForm] = useState({
     title: '',
     description: '',
@@ -319,13 +333,204 @@ export default function Dashboard() {
       if (response.ok) {
         const data = await response.json()
         setSchedulingBookings(data.upcoming || [])
+        setSuggestedBookings(data.suggested || [])
         setRequiresActionBookings(data.requiresAction || [])
+
+        // Set the first suggested booking's license as default for booking
+        if (data.suggested?.[0]?.license?.id) {
+          setSelectedLicense(data.suggested[0].license.id)
+        }
       }
     } catch (error) {
       console.warn('Could not fetch scheduling bookings:', error)
     } finally {
       setLoadingSchedulingBookings(false)
     }
+  }
+
+  // Fetch available time slots
+  const fetchAvailableSlots = async () => {
+    try {
+      const endDate = new Date()
+      endDate.setDate(endDate.getDate() + 30)
+      const response = await fetch(`/api/onboarding/available-slots?end_date=${endDate.toISOString()}`)
+
+      if (response.ok) {
+        const data = await response.json()
+        setAvailableSlots(data.slotsByDate || {})
+      }
+    } catch (error) {
+      console.error('Error fetching available slots:', error)
+    }
+  }
+
+  // Book a session
+  const handleBookSession = async () => {
+    if (!bookingSlot) return
+
+    try {
+      const response = await fetch('/api/onboarding/book', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          availability_slot_id: bookingSlot.original_slot_id || bookingSlot.id,
+          scheduled_start_time: bookingSlot.segment_start || bookingSlot.start_time,
+          scheduled_end_time: bookingSlot.segment_end || bookingSlot.end_time,
+          license_key_id: selectedLicense || undefined,
+          title: `Onboarding Session with ${bookingSlot.admin.full_name || bookingSlot.admin.email}`
+        })
+      })
+
+      if (response.ok) {
+        await fetchSchedulingBookings()
+        await fetchAvailableSlots()
+        setShowBookingModal(false)
+        setBookingSlot(null)
+        alert('Session booked successfully!')
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error booking session:', error)
+      alert('Failed to book session')
+    }
+  }
+
+  // Cancel a booking
+  const handleCancelBooking = async (bookingId: string) => {
+    if (!confirm('Are you sure you want to cancel this booking?')) return
+
+    try {
+      const response = await fetch(`/api/onboarding/${bookingId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cancellation_reason: 'Cancelled by user'
+        })
+      })
+
+      if (response.ok) {
+        await fetchSchedulingBookings()
+        await fetchAvailableSlots()
+        alert('Booking cancelled successfully')
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error cancelling booking:', error)
+      alert('Failed to cancel booking')
+    }
+  }
+
+  // Helper functions for formatting
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString)
+    const timeStr = date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+    const tzStr = date.toLocaleTimeString('en-US', {
+      timeZoneName: 'short'
+    }).split(' ').pop() // Gets timezone abbreviation (e.g., "PST", "EST")
+    return `${timeStr} ${tzStr}`
+  }
+
+  const openBookingModal = (slot: any) => {
+    setBookingSlot(slot)
+    setShowBookingModal(true)
+  }
+
+  // Generate 1-hour segments from a time slot
+  const generateHourlySegments = (slot: any) => {
+    const startTime = new Date(slot.start_time)
+    const endTime = new Date(slot.end_time)
+    const segments = []
+
+    let currentStart = new Date(startTime)
+    while (currentStart < endTime) {
+      const currentEnd = new Date(currentStart)
+      currentEnd.setHours(currentEnd.getHours() + 1)
+
+      // Don't create a segment that goes beyond the slot's end time
+      if (currentEnd <= endTime) {
+        segments.push({
+          ...slot,
+          segment_start: currentStart.toISOString(),
+          segment_end: currentEnd.toISOString(),
+          original_slot_id: slot.id
+        })
+      }
+
+      currentStart = currentEnd
+    }
+
+    return segments
+  }
+
+  // Calendar helper functions
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear()
+    const month = date.getMonth()
+    const firstDay = new Date(year, month, 1)
+    const lastDay = new Date(year, month + 1, 0)
+    const daysInMonth = lastDay.getDate()
+    const startingDayOfWeek = firstDay.getDay()
+
+    const days: (Date | null)[] = []
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null)
+    }
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(new Date(year, month, day))
+    }
+    return days
+  }
+
+  const getSlotsForDate = (date: Date | null) => {
+    if (!date) return []
+    const dateStr = date.toISOString().split('T')[0]
+    return availableSlots[dateStr] || []
+  }
+
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    setCalendarCurrentDate(prevDate => {
+      const newDate = new Date(prevDate)
+      if (direction === 'prev') {
+        newDate.setMonth(newDate.getMonth() - 1)
+      } else {
+        newDate.setMonth(newDate.getMonth() + 1)
+      }
+      return newDate
+    })
+  }
+
+  const isToday = (date: Date | null) => {
+    if (!date) return false
+    const today = new Date()
+    return date.toDateString() === today.toDateString()
+  }
+
+  const isPastDate = (date: Date | null) => {
+    if (!date) return false
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return date < today
+  }
+
+  const openSlotsModal = (date: Date) => {
+    setSelectedDate(date)
+    setShowSlotsModal(true)
   }
 
   // Schedule or reschedule session
@@ -534,6 +739,7 @@ export default function Dashboard() {
       fetchOnboardingSessions()
       fetchTickets()
       fetchSchedulingBookings()
+      fetchAvailableSlots()
       fetchDesktopAppInfo()
 
       // Retry after a delay if first attempt fails
@@ -547,8 +753,9 @@ export default function Dashboard() {
         if (tickets.length === 0) {
           fetchTickets()
         }
-        if (schedulingBookings.length === 0) {
+        if (schedulingBookings.length === 0 && Object.keys(availableSlots).length === 0) {
           fetchSchedulingBookings()
+          fetchAvailableSlots()
         }
       }, 2000)
 
@@ -885,7 +1092,7 @@ export default function Dashboard() {
                 } flex whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium items-center`}
               >
                 <AcademicCapIcon className="h-5 w-5 mr-2" />
-                Onboarding Sessions
+                Onboarding
               </button>
               <button
                 onClick={() => setActiveTab('posts')}
@@ -913,100 +1120,276 @@ export default function Dashboard() {
           </div>
 
           <div className="px-6 py-6">
-            {/* Tab 1: Upcoming Onboarding Sessions */}
+            {/* Tab 1: Onboarding Scheduler */}
             {activeTab === 'onboarding' && (
               <div className="space-y-6">
-                {loadingSessions ? (
+                {loadingSchedulingBookings ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                   </div>
-                ) : onboardingSessions.length > 0 ? (
+                ) : (
                   <>
-                    {/* Calendar View */}
-                    <OnboardingCalendar 
-                      sessions={onboardingSessions}
-                      onSessionClick={openSessionDetails}
-                    />
+                    {/* My Sessions Section */}
+                    {(schedulingBookings.length > 0 || suggestedBookings.length > 0) && (
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                          My Sessions
+                        </h2>
 
-                    {/* List View */}
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                        Upcoming Sessions List
-                      </h3>
-                      <div className="space-y-3">
-                    {onboardingSessions.slice(0, 5).map((session) => (
-                      <div 
-                        key={session.id} 
-                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700 transition-all"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center">
-                              <h5 className="text-sm font-medium text-gray-900 dark:text-white">
-                                {session.title}
-                              </h5>
-                              <span 
-                                className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                  session.is_mandatory 
-                                    ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
-                                    : 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
-                                }`}
-                              >
-                                {session.is_mandatory ? 'Required' : 'Optional'}
-                              </span>
+                        {/* Suggested Sessions (Need to book) */}
+                        {suggestedBookings.map((booking: any) => (
+                          <div key={booking.id} className="border-2 border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-6 mb-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    Suggested - Not Yet Scheduled
+                                  </span>
+                                </div>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                  {booking.title}
+                                </h3>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                  Please select a time slot below to schedule this session
+                                </p>
+                                {booking.is_trial_required && booking.trial_deadline && (
+                                  <p className="text-sm text-red-600 dark:text-red-400 mt-2 font-medium">
+                                    <strong>Must be scheduled by:</strong> {formatDate(booking.trial_deadline)}
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              {session.plugin_id} • {session.duration_minutes} minutes
-                            </p>
-                            {session.description && (
-                              <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
-                                {session.description}
-                              </p>
-                            )}
-                            {session.scheduled_at && (
-                              <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                                Scheduled: {new Date(session.scheduled_at).toLocaleString()}
-                              </p>
-                            )}
                           </div>
-                          <div className="flex flex-col space-y-2 ml-4">
-                            <button
-                              onClick={() => openScheduleModal(session)}
-                              className="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 shadow-sm text-xs font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
-                            >
-                              <CalendarIcon className="h-3 w-3 mr-1" />
-                              {session.scheduled_at ? 'Reschedule' : 'Schedule'}
-                            </button>
-                            <button
-                              onClick={() => openSessionDetails(session)}
-                              className="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 shadow-sm text-xs font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
-                            >
-                              View Details
-                            </button>
-                            {session.meeting_link && (
+                        ))}
+
+                        {/* Upcoming Scheduled Sessions */}
+                        {schedulingBookings.map((booking: any) => (
+                          <div key={booking.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-4 bg-white dark:bg-gray-800">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <CheckCircleIcon className="h-5 w-5 text-green-600" />
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Scheduled
+                                  </span>
+                                </div>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                  {booking.title}
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                  <div>
+                                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                                      <CalendarIcon className="h-4 w-4" />
+                                      <span className="text-sm">
+                                        {formatDate(booking.scheduled_start_time)}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mt-2">
+                                      <ClockIcon className="h-4 w-4" />
+                                      <span className="text-sm">
+                                        {formatTime(booking.scheduled_start_time)} - {formatTime(booking.scheduled_end_time)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                                      <UserIcon className="h-4 w-4" />
+                                      <span className="text-sm">
+                                        {booking.admin?.full_name || booking.admin?.email}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mt-2">
+                                      <VideoCameraIcon className="h-4 w-4" />
+                                      <span className="text-sm capitalize">
+                                        {booking.meeting_platform}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                                {booking.meeting_link && (
+                                  <div className="mt-4">
+                                    <a
+                                      href={booking.meeting_link}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 hover:underline text-sm inline-flex items-center"
+                                    >
+                                      Join Meeting <ArrowRightIcon className="h-4 w-4 ml-1" />
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
                               <button
-                                onClick={() => window.open(session.meeting_link, '_blank')}
-                                className="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                                onClick={() => handleCancelBooking(booking.id)}
+                                className="ml-4 px-3 py-1.5 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 text-sm rounded-md hover:bg-red-50 dark:hover:bg-red-900/20"
                               >
-                                <VideoCameraIcon className="h-3 w-3 mr-1" />
-                                Join
+                                Cancel
                               </button>
-                            )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Onboarding Statistics */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Required Sessions</p>
+                            <p className="text-3xl font-bold text-red-600 dark:text-red-400">
+                              {suggestedBookings.filter((b: any) => b.is_mandatory).length}
+                            </p>
+                          </div>
+                          <ExclamationTriangleIcon className="h-10 w-10 text-red-600 dark:text-red-400" />
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          Must be scheduled
+                        </p>
+                      </div>
+
+                      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Scheduled</p>
+                            <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                              {schedulingBookings.length}
+                            </p>
+                          </div>
+                          <CheckCircleIcon className="h-10 w-10 text-green-600 dark:text-green-400" />
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          Upcoming sessions
+                        </p>
+                      </div>
+
+                      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Optional</p>
+                            <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                              {suggestedBookings.filter((b: any) => !b.is_mandatory).length}
+                            </p>
+                          </div>
+                          <AcademicCapIcon className="h-10 w-10 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          Recommended sessions
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Available Time Slots Calendar */}
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                          Available Time Slots
+                        </h2>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => navigateMonth('prev')}
+                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+                          >
+                            <ChevronLeftIcon className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => setCalendarCurrentDate(new Date())}
+                            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-sm"
+                          >
+                            Today
+                          </button>
+                          <button
+                            onClick={() => navigateMonth('next')}
+                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+                          >
+                            <ChevronRightIcon className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
+                          {calendarCurrentDate.toLocaleString('en-US', { month: 'long', year: 'numeric' })}
+                        </h3>
+
+                        {/* Days of Week */}
+                        <div className="grid grid-cols-7 gap-2 mb-2">
+                          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                            <div key={day} className="text-center text-sm font-semibold text-gray-700 dark:text-gray-300 py-2">
+                              {day}
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Calendar Grid */}
+                        <div className="grid grid-cols-7 gap-2">
+                          {getDaysInMonth(calendarCurrentDate).map((date, index) => {
+                            const daySlots = getSlotsForDate(date)
+                            const todayCheck = isToday(date)
+                            const isPast = isPastDate(date)
+
+                            return (
+                              <div
+                                key={index}
+                                className={`min-h-[100px] border rounded-lg p-2 transition-all
+                                  ${date ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-900 border-transparent'}
+                                  ${todayCheck ? 'ring-2 ring-blue-500' : ''}
+                                  ${date && !isPast && daySlots.length > 0 ? 'hover:shadow-md cursor-pointer hover:border-blue-300 dark:hover:border-blue-700' : ''}
+                                  ${isPast && date ? 'opacity-50' : ''}`}
+                                onClick={() => date && !isPast && daySlots.length > 0 && openSlotsModal(date)}
+                              >
+                                {date && (
+                                  <>
+                                    <div className={`text-sm font-semibold mb-2 ${todayCheck ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>
+                                      {date.getDate()}
+                                    </div>
+
+                                    {daySlots.length > 0 && (
+                                      <div className="space-y-1">
+                                        {daySlots.slice(0, 2).map((slot: any) => (
+                                          <div
+                                            key={slot.id}
+                                            className="text-xs px-2 py-1 rounded bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 truncate"
+                                            title={`${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}`}
+                                          >
+                                            {formatTime(slot.start_time)}
+                                          </div>
+                                        ))}
+                                        {daySlots.length > 2 && (
+                                          <div className="text-xs text-center text-blue-600 dark:text-blue-400 font-medium">
+                                            +{daySlots.length - 2} more
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    {daySlots.length === 0 && !isPast && (
+                                      <div className="text-xs text-gray-400 dark:text-gray-600 text-center mt-4">
+                                        No slots
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+
+                        {/* Legend */}
+                        <div className="mt-6 flex gap-4 text-sm justify-center">
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-blue-100 dark:bg-blue-900 rounded"></div>
+                            <span className="text-gray-700 dark:text-gray-300">Available slots</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 ring-2 ring-blue-500 rounded"></div>
+                            <span className="text-gray-700 dark:text-gray-300">Today</span>
                           </div>
                         </div>
                       </div>
-                    ))}
-                      </div>
                     </div>
                   </>
-                ) : (
-                  <div className="text-center py-12">
-                    <AcademicCapIcon className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No upcoming sessions</h3>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                      Your onboarding sessions will appear here once they are assigned.
-                    </p>
-                  </div>
                 )}
               </div>
             )}
@@ -1747,6 +2130,139 @@ export default function Dashboard() {
                       )}
                     </ul>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Available Slots Modal */}
+        {showSlotsModal && selectedDate && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="max-w-3xl w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl max-h-[80vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    Available Slots - {formatDate(selectedDate.toISOString())}
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowSlotsModal(false)
+                      setSelectedDate(null)
+                    }}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <XMarkIcon className="h-6 w-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {getSlotsForDate(selectedDate).map((slot: any) => {
+                    const segments = generateHourlySegments(slot)
+                    return (
+                      <div key={slot.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                        <div className="mb-3">
+                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-2">
+                            <UserIcon className="h-4 w-4" />
+                            <span>{slot.admin.full_name || slot.admin.email}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <VideoCameraIcon className="h-4 w-4" />
+                            <span className="capitalize">{slot.meeting_platform}</span>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Available 1-Hour Sessions:</p>
+                          {segments.map((segment: any, index: number) => (
+                            <div key={index} className="flex items-center justify-between bg-gray-50 dark:bg-gray-900 rounded p-3 border border-gray-200 dark:border-gray-700">
+                              <div className="flex items-center gap-2">
+                                <ClockIcon className="h-4 w-4 text-blue-600" />
+                                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {formatTime(segment.segment_start)}
+                                </span>
+                                <span className="text-sm text-gray-500 dark:text-gray-400">-</span>
+                                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {formatTime(segment.segment_end)}
+                                </span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">(60 min)</span>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  setShowSlotsModal(false)
+                                  openBookingModal(segment)
+                                }}
+                                className="px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 inline-flex items-center"
+                              >
+                                Book
+                                <ArrowRightIcon className="h-3 w-3 ml-1" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Booking Confirmation Modal */}
+        {showBookingModal && bookingSlot && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="max-w-lg w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl">
+              <div className="p-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                  Confirm Booking
+                </h2>
+
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Date & Time</div>
+                    <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {formatDate(bookingSlot.segment_start || bookingSlot.start_time)}
+                    </div>
+                    <div className="text-gray-700 dark:text-gray-300">
+                      {formatTime(bookingSlot.segment_start || bookingSlot.start_time)} - {formatTime(bookingSlot.segment_end || bookingSlot.end_time)}
+                    </div>
+                    <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                      60 minute session
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Admin</div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      {bookingSlot.admin.full_name || bookingSlot.admin.email}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Platform</div>
+                    <div className="font-medium text-gray-900 dark:text-white capitalize">
+                      {bookingSlot.meeting_platform}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleBookSession}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700"
+                  >
+                    Confirm Booking
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowBookingModal(false)
+                      setBookingSlot(null)
+                    }}
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
             </div>

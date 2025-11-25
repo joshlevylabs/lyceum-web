@@ -198,6 +198,26 @@ export default function AdminOnboardingManagement() {
   const [selectedUserLicenses, setSelectedUserLicenses] = useState<any[]>([])
   const [selectedUserName, setSelectedUserName] = useState('')
 
+  // Availability management state
+  const [availabilitySlots, setAvailabilitySlots] = useState<any[]>([])
+  const [loadingAvailability, setLoadingAvailability] = useState(false)
+  const [showAvailabilityModal, setShowAvailabilityModal] = useState(false)
+  const [editingAvailabilitySlot, setEditingAvailabilitySlot] = useState<any | null>(null)
+  const [availabilityViewMode, setAvailabilityViewMode] = useState<'calendar' | 'list'>('calendar')
+  const [availabilityCurrentDate, setAvailabilityCurrentDate] = useState(new Date())
+  const [availabilityFormData, setAvailabilityFormData] = useState({
+    start_time: '',
+    end_time: '',
+    slot_type: 'onboarding',
+    max_concurrent_sessions: 1,
+    is_recurring: false,
+    recurrence_pattern: '',
+    recurrence_end_date: '',
+    notes: '',
+    location: '',
+    meeting_platform: 'zoom'
+  })
+
   // Session scheduling state
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [selectedScheduleSession, setSelectedScheduleSession] = useState<any>(null)
@@ -212,6 +232,13 @@ export default function AdminOnboardingManagement() {
   useEffect(() => {
     fetchData()
   }, [])
+
+  // Load availability when tab changes
+  useEffect(() => {
+    if (activeTab === 'availability' && availabilitySlots.length === 0) {
+      fetchAvailabilitySlots()
+    }
+  }, [activeTab])
 
   const fetchData = async () => {
     try {
@@ -364,7 +391,9 @@ export default function AdminOnboardingManagement() {
   const tabs = [
     { id: 'calendar', name: 'Calendar', icon: CalendarIcon },
     { id: 'sessions', name: 'Sessions', icon: ChartBarIcon },
-    { id: 'users', name: 'User Progress', icon: UserGroupIcon }
+    { id: 'users', name: 'User Progress', icon: UserGroupIcon },
+    { id: 'availability', name: 'My Availability', icon: ClockIcon },
+    { id: 'bookings', name: 'Bookings', icon: CalendarIcon }
   ]
 
   // Calendar helper functions
@@ -729,6 +758,171 @@ export default function AdminOnboardingManagement() {
     )
   }
 
+  // Availability calendar helper functions
+  const fetchAvailabilitySlots = async () => {
+    try {
+      setLoadingAvailability(true)
+      const response = await fetch('/api/admin/availability')
+      if (response.ok) {
+        const data = await response.json()
+        setAvailabilitySlots(data.slots || [])
+      }
+    } catch (error) {
+      console.error('Error fetching availability slots:', error)
+    } finally {
+      setLoadingAvailability(false)
+    }
+  }
+
+  const handleCreateAvailabilitySlot = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const response = await fetch('/api/admin/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(availabilityFormData)
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        await fetchAvailabilitySlots()
+        setShowAvailabilityModal(false)
+        resetAvailabilityForm()
+        if (result.count && result.count > 1) {
+          alert(`✅ Success! Created ${result.count} recurring availability slots.`)
+        } else {
+          alert('✅ Availability slot created successfully!')
+        }
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error creating availability slot:', error)
+      alert('Failed to create availability slot')
+    }
+  }
+
+  const handleDeleteAvailabilitySlot = async (slotId: string) => {
+    if (!confirm('Are you sure you want to delete this availability slot?')) return
+
+    try {
+      const response = await fetch(`/api/admin/availability/${slotId}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        await fetchAvailabilitySlots()
+      } else {
+        const error = await response.json()
+        alert(`Error: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error deleting availability slot:', error)
+      alert('Failed to delete availability slot')
+    }
+  }
+
+  const resetAvailabilityForm = () => {
+    setAvailabilityFormData({
+      start_time: '',
+      end_time: '',
+      slot_type: 'onboarding',
+      max_concurrent_sessions: 1,
+      is_recurring: false,
+      recurrence_pattern: '',
+      recurrence_end_date: '',
+      notes: '',
+      location: '',
+      meeting_platform: 'zoom'
+    })
+  }
+
+  const openQuickCreateAvailability = (date: Date) => {
+    const startDate = new Date(date)
+    startDate.setHours(9, 0, 0, 0)
+    const endDate = new Date(startDate)
+    endDate.setHours(10, 0, 0, 0)
+
+    setAvailabilityFormData({
+      start_time: startDate.toISOString().slice(0, 16),
+      end_time: endDate.toISOString().slice(0, 16),
+      slot_type: 'onboarding',
+      max_concurrent_sessions: 1,
+      is_recurring: false,
+      recurrence_pattern: '',
+      recurrence_end_date: '',
+      notes: '',
+      location: '',
+      meeting_platform: 'zoom'
+    })
+    setShowAvailabilityModal(true)
+  }
+
+  const getAvailabilityDaysInMonth = (date: Date) => {
+    const year = date.getFullYear()
+    const month = date.getMonth()
+    const firstDay = new Date(year, month, 1)
+    const lastDay = new Date(year, month + 1, 0)
+    const daysInMonth = lastDay.getDate()
+    const startingDayOfWeek = firstDay.getDay()
+
+    const days: (Date | null)[] = []
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null)
+    }
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(new Date(year, month, day))
+    }
+    return days
+  }
+
+  const getAvailabilitySlotsForDate = (date: Date | null) => {
+    if (!date) return []
+    const dateStr = date.toISOString().split('T')[0]
+    return availabilitySlots.filter(slot => {
+      const slotDate = new Date(slot.start_time).toISOString().split('T')[0]
+      return slotDate === dateStr
+    }).sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+  }
+
+  const navigateAvailabilityMonth = (direction: 'prev' | 'next') => {
+    setAvailabilityCurrentDate(prevDate => {
+      const newDate = new Date(prevDate)
+      if (direction === 'prev') {
+        newDate.setMonth(newDate.getMonth() - 1)
+      } else {
+        newDate.setMonth(newDate.getMonth() + 1)
+      }
+      return newDate
+    })
+  }
+
+  const formatAvailabilityTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const timeStr = date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    const tzStr = date.toLocaleTimeString('en-US', {
+      timeZoneName: 'short'
+    }).split(' ').pop(); // Gets timezone abbreviation (e.g., "PST", "EST")
+    return `${timeStr} ${tzStr}`;
+  }
+
+  const isAvailabilityToday = (date: Date | null) => {
+    if (!date) return false
+    const today = new Date()
+    return date.toDateString() === today.toDateString()
+  }
+
+  const isAvailabilityPastDate = (date: Date | null) => {
+    if (!date) return false
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return date < today
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -816,7 +1010,7 @@ export default function AdminOnboardingManagement() {
                   activeTab === tab.id
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center`}
+                } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center cursor-pointer`}
               >
                 <tab.icon className="h-5 w-5 mr-2" />
                 {tab.name}
@@ -1549,6 +1743,145 @@ export default function AdminOnboardingManagement() {
                   </p>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Availability Tab */}
+          {activeTab === 'availability' && (
+            <div className="bg-white rounded-lg shadow p-6">
+              {/* Calendar Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {availabilityCurrentDate.toLocaleString('en-US', { month: 'long', year: 'numeric' })}
+                </h2>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => navigateAvailabilityMonth('prev')}
+                    className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                  >
+                    <ChevronLeftIcon className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => setAvailabilityCurrentDate(new Date())}
+                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                  >
+                    Today
+                  </button>
+                  <button
+                    onClick={() => navigateAvailabilityMonth('next')}
+                    className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                  >
+                    <ChevronRightIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Days of Week */}
+              <div className="grid grid-cols-7 gap-2 mb-2">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                  <div key={day} className="text-center text-sm font-semibold text-gray-700 py-2">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              {/* Calendar Grid */}
+              <div className="grid grid-cols-7 gap-2">
+                {getAvailabilityDaysInMonth(availabilityCurrentDate).map((date, index) => {
+                  const daySlots = getAvailabilitySlotsForDate(date)
+                  const isToday = isAvailabilityToday(date)
+                  const isPast = isAvailabilityPastDate(date)
+
+                  return (
+                    <div
+                      key={index}
+                      className={`
+                        min-h-[120px] border rounded-lg p-2 transition-all
+                        ${date ? 'bg-white border-gray-200' : 'bg-gray-50 border-transparent'}
+                        ${isToday ? 'ring-2 ring-blue-500' : ''}
+                        ${date && !isPast ? 'hover:shadow-md cursor-pointer' : ''}
+                        ${isPast && date ? 'opacity-50' : ''}
+                      `}
+                      onClick={() => date && !isPast && openQuickCreateAvailability(date)}
+                    >
+                      {date && (
+                        <>
+                          <div className={`text-sm font-semibold mb-2 ${isToday ? 'text-blue-600' : 'text-gray-900'}`}>
+                            {date.getDate()}
+                          </div>
+
+                          {daySlots.length > 0 && (
+                            <div className="space-y-1">
+                              {daySlots.slice(0, 3).map((slot) => (
+                                <div
+                                  key={slot.id}
+                                  className={`text-xs p-1 rounded truncate ${
+                                    slot.is_available
+                                      ? 'bg-green-100 text-green-800'
+                                      : 'bg-red-100 text-red-800'
+                                  } hover:opacity-80`}
+                                  title={`${formatAvailabilityTime(slot.start_time)} - ${formatAvailabilityTime(slot.end_time)}`}
+                                >
+                                  {formatAvailabilityTime(slot.start_time)}
+                                </div>
+                              ))}
+                              {daySlots.length > 3 && (
+                                <div className="text-xs text-gray-600 text-center">
+                                  +{daySlots.length - 3} more
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {daySlots.length === 0 && !isPast && (
+                            <div className="text-xs text-gray-400 text-center mt-4">
+                              Click to add
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Legend */}
+              <div className="mt-6 flex gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-100 rounded"></div>
+                  <span className="text-gray-700">Available</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-red-100 rounded"></div>
+                  <span className="text-gray-700">Full</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 ring-2 ring-blue-500 rounded"></div>
+                  <span className="text-gray-700">Today</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Bookings Tab */}
+          {activeTab === 'bookings' && (
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="text-center py-8">
+                <CalendarIcon className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Bookings Management
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  View and manage all onboarding session bookings
+                </p>
+                <a
+                  href="/admin/onboarding/bookings"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <CalendarIcon className="h-5 w-5 mr-2" />
+                  Open Bookings Page
+                </a>
+              </div>
             </div>
           )}
         </div>
@@ -2448,6 +2781,130 @@ Examples:
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Availability Modal */}
+      {showAvailabilityModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Create Availability Slot</h2>
+            <form onSubmit={handleCreateAvailabilitySlot}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Start Time *</label>
+                  <input
+                    type="datetime-local"
+                    required
+                    value={availabilityFormData.start_time}
+                    onChange={(e) => setAvailabilityFormData({ ...availabilityFormData, start_time: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">End Time *</label>
+                  <input
+                    type="datetime-local"
+                    required
+                    value={availabilityFormData.end_time}
+                    onChange={(e) => setAvailabilityFormData({ ...availabilityFormData, end_time: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Max Concurrent Sessions</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={availabilityFormData.max_concurrent_sessions}
+                    onChange={(e) => setAvailabilityFormData({ ...availabilityFormData, max_concurrent_sessions: parseInt(e.target.value) })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Meeting Platform</label>
+                  <select
+                    value={availabilityFormData.meeting_platform}
+                    onChange={(e) => setAvailabilityFormData({ ...availabilityFormData, meeting_platform: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="zoom">Zoom</option>
+                    <option value="google_meet">Google Meet</option>
+                    <option value="teams">Microsoft Teams</option>
+                    <option value="phone">Phone</option>
+                    <option value="in_person">In Person</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Meeting Link/Location</label>
+                  <input
+                    type="text"
+                    value={availabilityFormData.location}
+                    onChange={(e) => setAvailabilityFormData({ ...availabilityFormData, location: e.target.value })}
+                    placeholder="e.g., https://zoom.us/j/123456789"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+                <div className="border-t border-gray-200 pt-4">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="is_recurring"
+                      checked={availabilityFormData.is_recurring}
+                      onChange={(e) => {
+                        const isChecked = e.target.checked
+                        setAvailabilityFormData({
+                          ...availabilityFormData,
+                          is_recurring: isChecked,
+                          recurrence_end_date: isChecked && !availabilityFormData.recurrence_end_date
+                            ? new Date(new Date(availabilityFormData.start_time).getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+                            : availabilityFormData.recurrence_end_date
+                        })
+                      }}
+                      className="rounded"
+                    />
+                    <label htmlFor="is_recurring" className="text-sm font-medium text-gray-700">Recurring Availability</label>
+                  </div>
+                </div>
+                {availabilityFormData.is_recurring && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Recurrence Pattern *</label>
+                      <select
+                        required={availabilityFormData.is_recurring}
+                        value={availabilityFormData.recurrence_pattern}
+                        onChange={(e) => setAvailabilityFormData({ ...availabilityFormData, recurrence_pattern: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      >
+                        <option value="">Select pattern</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">End Date *</label>
+                      <input
+                        type="datetime-local"
+                        required={availabilityFormData.is_recurring}
+                        value={availabilityFormData.recurrence_end_date}
+                        onChange={(e) => setAvailabilityFormData({ ...availabilityFormData, recurrence_end_date: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button type="submit" className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Create Slot</button>
+                <button
+                  type="button"
+                  onClick={() => { setShowAvailabilityModal(false); resetAvailabilityForm() }}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                >Cancel</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

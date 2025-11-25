@@ -159,6 +159,25 @@ export default function TestData() {
           </div>
         </div>
 
+        {/* Coming Soon Banner */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-l-4 border-blue-500 p-6 rounded-lg shadow-sm">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="ml-4 flex-1">
+              <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">
+                Coming Soon
+              </h3>
+              <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                Advanced test data management features are currently under development. Stay tuned for updates!
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-utils';
 import { stripe } from '@/lib/stripe';
+import * as dbOperations from '@/lib/supabase-direct';
 
 /**
  * Create a Stripe Checkout session for native app purchase
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { amount, subscription_type } = body;
+    const { amount, subscription_type, priceId } = body;
 
     if (!amount || amount <= 0) {
       return NextResponse.json(
@@ -30,8 +31,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get monthly recurring price ID from environment
-    const monthlyPriceId = process.env.STRIPE_NATIVE_APP_MONTHLY_PRICE_ID;
+    // Check if user has already had a trial for this product (prevent duplicate trials)
+    const { data: previousTrials, error: trialCheckError } = await dbOperations.supabaseAdmin
+      .from('user_subscriptions_native_app')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('subscription_type', 'trial');
+
+    if (trialCheckError) {
+      console.error('Error checking for previous trials:', trialCheckError);
+    }
+
+    // If user has ANY previous trial (started, completed, or cancelled), they cannot start another
+    if (previousTrials && previousTrials.length > 0) {
+      console.log('❌ User has already used their trial:', {
+        userId: user.id,
+        previousTrials: previousTrials.length
+      });
+      return NextResponse.json(
+        {
+          error: 'You have already used your free trial for this product. Please subscribe to continue.',
+          can_use_trial: false,
+          previous_trial_count: previousTrials.length
+        },
+        { status: 400 }
+      );
+    }
+
+    // Get monthly recurring price ID from environment or use provided priceId
+    const monthlyPriceId = priceId || process.env.STRIPE_NATIVE_APP_MONTHLY_PRICE_ID;
 
     if (!monthlyPriceId) {
       console.error('❌ STRIPE_NATIVE_APP_MONTHLY_PRICE_ID not configured');

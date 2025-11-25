@@ -1,115 +1,134 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase-direct';
 
 /**
  * GET /api/admin/subscriptions
- * Fetch all subscriptions with user emails (admin only)
+ * Get all subscriptions (unified native app and plugin subscriptions)
  */
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Missing or invalid authorization header' },
-        { status: 401 }
-      )
-    }
+    // Get query parameters for filtering
+    const searchParams = request.nextUrl.searchParams;
+    const status = searchParams.get('status');
+    const subscription_type = searchParams.get('subscription_type');
+    const subscription_category = searchParams.get('subscription_category');
+    const plugin_type = searchParams.get('plugin_type');
+    const search = searchParams.get('search');
 
-    const token = authHeader.substring(7)
-
-    // Verify the token and get user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Invalid token or user not found' },
-        { status: 401 }
-      )
-    }
-
-    // Check if user is admin
-    const { data: userProfile, error: profileError } = await supabase
-      .from('user_profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    console.log('Admin check:', {
-      userId: user.id,
-      email: user.email,
-      profileFound: !!userProfile,
-      profileError: profileError?.message,
-      role: userProfile?.role
-    })
-
-    const allowedRoles = ['admin', 'super_admin', 'superadmin']
-    if (!userProfile?.role || !allowedRoles.includes(userProfile.role)) {
-      console.error('Access denied:', {
-        userId: user.id,
-        email: user.email,
-        role: userProfile?.role,
-        required: allowedRoles
-      })
-      return NextResponse.json(
-        { error: 'Unauthorized: Admin access required', userRole: userProfile?.role },
-        { status: 403 }
-      )
-    }
-
-    // Fetch all subscriptions with user emails
-    const { data: subscriptions, error: subsError } = await supabase
-      .from('user_subscriptions_native_app')
+    // Build query
+    let query = supabaseAdmin
+      .from('subscriptions')
       .select(`
-        id,
-        user_id,
-        subscription_type,
-        status,
-        stripe_session_id,
-        amount_paid_cents,
-        currency,
-        trial_start_date,
-        trial_end_date,
-        cancelled_at,
-        created_at,
-        updated_at
+        *,
+        user:user_id (
+          id,
+          email,
+          user_profiles!inner (
+            full_name
+          )
+        )
       `)
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: false });
 
-    if (subsError) {
-      console.error('Error fetching subscriptions:', subsError)
-      return NextResponse.json(
-        { error: 'Failed to fetch subscriptions' },
-        { status: 500 }
-      )
+    // Apply filters
+    if (status && status !== 'all') {
+      query = query.eq('status', status);
     }
 
-    // Fetch user emails for each subscription
-    const subscriptionsWithEmails = await Promise.all(
-      (subscriptions || []).map(async (sub) => {
-        const { data: userData } = await supabase.auth.admin.getUserById(sub.user_id)
-        return {
-          ...sub,
-          user_email: userData?.user?.email || null
-        }
-      })
-    )
+    if (subscription_type && subscription_type !== 'all') {
+      query = query.eq('subscription_type', subscription_type);
+    }
+
+    if (subscription_category && subscription_category !== 'all') {
+      query = query.eq('subscription_category', subscription_category);
+    }
+
+    if (plugin_type && plugin_type !== 'all') {
+      query = query.eq('plugin_type', plugin_type);
+    }
+
+    const { data: subscriptions, error } = await query;
+
+    if (error) {
+      console.error('Error fetching subscriptions:', error);
+      return NextResponse.json(
+        { success: false, error: 'Failed to fetch subscriptions' },
+        { status: 500 }
+      );
+    }
+
+    // Format response with user email
+    const formattedSubscriptions = (subscriptions || []).map(sub => ({
+      ...sub,
+      user_email: sub.user?.email || 'Unknown',
+      user_name: sub.user?.user_profiles?.[0]?.full_name || 'Unknown'
+    }));
+
+    // Apply search filter (client-side since it's across multiple fields)
+    let filteredSubscriptions = formattedSubscriptions;
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filteredSubscriptions = formattedSubscriptions.filter(sub =>
+        sub.subscription_key?.toLowerCase().includes(searchLower) ||
+        sub.user_email?.toLowerCase().includes(searchLower) ||
+        sub.user_name?.toLowerCase().includes(searchLower) ||
+        sub.plugin_type?.toLowerCase().includes(searchLower)
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      subscriptions: subscriptionsWithEmails,
-      total: subscriptionsWithEmails.length
-    })
+      subscriptions: filteredSubscriptions,
+      count: filteredSubscriptions.length
+    });
 
   } catch (error) {
-    console.error('Error in admin subscriptions fetch:', error)
+    console.error('Unexpected error in GET /api/admin/subscriptions:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
-    )
+    );
+  }
+}
+
+/**
+ * DELETE /api/admin/subscriptions
+ * Delete a subscription
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    const { subscription_id } = await request.json();
+
+    if (!subscription_id) {
+      return NextResponse.json(
+        { success: false, error: 'subscription_id is required' },
+        { status: 400 }
+      );
+    }
+
+    const { error } = await supabaseAdmin
+      .from('subscriptions')
+      .delete()
+      .eq('id', subscription_id);
+
+    if (error) {
+      console.error('Error deleting subscription:', error);
+      return NextResponse.json(
+        { success: false, error: 'Failed to delete subscription' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Subscription deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Unexpected error in DELETE /api/admin/subscriptions:', error);
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

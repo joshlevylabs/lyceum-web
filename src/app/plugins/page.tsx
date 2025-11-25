@@ -25,6 +25,7 @@ interface Plugin {
   short_description: string
   full_description?: string
   category: string
+  principle?: string
   current_version: string
   base_price: number
   currency: string
@@ -61,6 +62,7 @@ export default function PluginsStorePage() {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterCategory, setFilterCategory] = useState<string>('all')
+  const [filterPrinciple, setFilterPrinciple] = useState<string>('all')
   const [filterPricing, setFilterPricing] = useState<string>('all')
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false)
   const [hasPaymentMethod, setHasPaymentMethod] = useState(false)
@@ -146,31 +148,33 @@ export default function PluginsStorePage() {
   }
 
   const handleActivateTrial = async (plugin: Plugin) => {
-    if (plugin.trial_requires_payment && !hasPaymentMethod) {
-      alert('Please add a payment method to your profile before starting a free trial.')
-      router.push('/settings?tab=billing')
-      return
-    }
-
     try {
+      // Create Stripe checkout session for plugin trial
       const headers = await getAuthHeaders()
-      const response = await fetch('/api/plugins/trial', {
+      const response = await fetch('/api/stripe/create-plugin-trial-checkout', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ pluginId: plugin.id })
+        body: JSON.stringify({
+          plugin_slug: plugin.slug,
+          plugin_type: plugin.slug === 'klippel-qc' ? 'klippel_qc' : plugin.slug
+        })
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || data.message || 'Failed to activate trial')
+        throw new Error(data.error || 'Failed to create checkout session')
       }
 
-      alert(`Successfully activated ${plugin.trial_duration_days}-day free trial for ${plugin.display_name}!`)
-      loadUserLicenses()
+      // Redirect directly to Stripe
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl
+      } else {
+        throw new Error('No checkout URL returned')
+      }
     } catch (err: any) {
-      console.error('Error activating trial:', err)
-      alert(err.message || 'Failed to activate trial')
+      console.error('Error starting trial:', err)
+      alert(err.message || 'Failed to start trial')
     }
   }
 
@@ -193,14 +197,17 @@ export default function PluginsStorePage() {
 
     const matchesCategory = filterCategory === 'all' || plugin.category === filterCategory
 
+    const matchesPrinciple = filterPrinciple === 'all' || plugin.principle === filterPrinciple
+
     const matchesPricing = filterPricing === 'all' || plugin.pricing_model === filterPricing
 
     const matchesFeatured = !showFeaturedOnly || plugin.is_featured
 
-    return matchesSearch && matchesCategory && matchesPricing && matchesFeatured
+    return matchesSearch && matchesCategory && matchesPrinciple && matchesPricing && matchesFeatured
   })
 
   const categories = Array.from(new Set(plugins.map(p => p.category)))
+  const principles = Array.from(new Set(plugins.map(p => p.principle).filter(Boolean)))
 
   const formatPrice = (price: number, currency: string = 'USD') => {
     return new Intl.NumberFormat('en-US', {
@@ -289,9 +296,9 @@ export default function PluginsStorePage() {
 
       {/* Filters */}
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {/* Search */}
-          <div className="relative">
+          <div className="relative md:col-span-2">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
               type="text"
@@ -314,18 +321,16 @@ export default function PluginsStorePage() {
             ))}
           </select>
 
-          {/* Pricing Filter */}
+          {/* Principle Filter */}
           <select
-            value={filterPricing}
-            onChange={(e) => setFilterPricing(e.target.value)}
+            value={filterPrinciple}
+            onChange={(e) => setFilterPrinciple(e.target.value)}
             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
           >
-            <option value="all">All Pricing</option>
-            <option value="free">Free</option>
-            <option value="one_time">One-time Purchase</option>
-            <option value="subscription_monthly">Monthly Subscription</option>
-            <option value="subscription_annual">Annual Subscription</option>
-            <option value="enterprise">Enterprise</option>
+            <option value="all">All Principles</option>
+            {principles.map(principle => (
+              <option key={principle} value={principle} className="capitalize">{principle}</option>
+            ))}
           </select>
 
           {/* Featured Toggle */}
@@ -432,31 +437,17 @@ export default function PluginsStorePage() {
                   )}
 
                   {/* Publisher */}
-                  {plugin.publisher_name && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                      by {plugin.publisher_name}
-                    </p>
-                  )}
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                    by Lyceum Audio Labs
+                  </p>
 
                   {/* Downloads */}
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
                     {plugin.total_downloads.toLocaleString()} downloads
                   </p>
 
-                  {/* Pricing and Actions */}
+                  {/* Actions */}
                   <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                          {getPricingLabel(plugin)}
-                        </div>
-                        {plugin.pricing_model === 'subscription_annual' && plugin.monthly_price && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            or {formatPrice(plugin.monthly_price)}/mo
-                          </div>
-                        )}
-                      </div>
-                    </div>
 
                     {hasLicense ? (
                       <div className="flex items-center justify-center p-3 bg-green-50 dark:bg-green-900 rounded-md">
@@ -475,7 +466,6 @@ export default function PluginsStorePage() {
                             }}
                             className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
                           >
-                            <ShoppingCartIcon className="h-5 w-5 mr-2" />
                             View Details
                           </button>
                         )}

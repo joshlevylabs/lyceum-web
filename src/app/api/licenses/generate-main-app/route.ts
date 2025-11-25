@@ -163,6 +163,31 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Check if user has already had a trial (prevent duplicate trials)
+    if (requestedLicenseType === 'trial') {
+      const { data: previousTrials } = await supabase
+        .from('user_subscriptions_native_app')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('subscription_type', 'trial')
+
+      // If user has ANY previous trial (started, completed, or cancelled), they cannot get another trial license
+      if (previousTrials && previousTrials.length > 0) {
+        console.log('❌ User attempted to generate duplicate trial license:', {
+          userId: user.id,
+          previousTrialCount: previousTrials.length
+        })
+        return NextResponse.json(
+          {
+            error: 'You have already used your free trial for this product. Please subscribe to a paid plan to get a license.',
+            can_use_trial: false,
+            previous_trial_count: previousTrials.length
+          },
+          { status: 400 }
+        )
+      }
+    }
+
     // Check if user already has a main-application license
     // Use limit(1) to handle race conditions where multiple licenses might exist
     const { data: existingLicense, error: checkError } = await supabase

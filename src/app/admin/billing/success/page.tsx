@@ -15,6 +15,7 @@ function SuccessPageContent() {
   const [loading, setLoading] = useState(true)
   const [processedSuccessfully, setProcessedSuccessfully] = useState(false)
   const [processingError, setProcessingError] = useState<string | null>(null)
+  const [productType, setProductType] = useState<string>('unknown')
 
   useEffect(() => {
     if (sessionId) {
@@ -54,6 +55,15 @@ function SuccessPageContent() {
         const result = await response.json()
         console.log('✅ Session processed successfully:', result)
         setProcessedSuccessfully(true)
+        setProductType(result.productType || 'unknown')
+
+        // If this is a desktop app subscription, redirect to download page
+        if (result.productType === 'desktop_app') {
+          console.log('🖥️ Desktop app subscription detected, redirecting to download page...')
+          setTimeout(() => {
+            router.push('/download-app')
+          }, 2000) // Give them 2 seconds to see the success message
+        }
       } else {
         const error = await response.json()
         console.error('❌ Session processing failed:', error)
@@ -112,53 +122,87 @@ function SuccessPageContent() {
             {processedSuccessfully ? 'Subscription Activated Successfully! 🎉' : 'Payment Completed! 🎉'}
           </CardTitle>
           <CardDescription className="text-lg">
-            {processedSuccessfully 
-              ? 'Your subscription is now active and payment method is saved' 
+            {processedSuccessfully
+              ? 'Your subscription is now active and payment method is saved'
               : 'Your payment was successful'}
           </CardDescription>
         </CardHeader>
-        
-        <CardContent className="space-y-6">
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <h3 className="font-semibold text-green-800 mb-2">What's Next?</h3>
-            <ul className="space-y-2 text-sm text-green-700">
-              <li className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                Your payment method has been securely saved
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                Your payment has been processed successfully
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                Your cluster access has been activated
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                You can now create and manage database clusters
-              </li>
-            </ul>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Button 
-              onClick={() => router.push('/admin/clusters')}
-              className="flex items-center gap-2"
-            >
-              Go to Clusters
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-            
-            <Button 
-              onClick={() => router.push('/admin/billing')}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <CreditCard className="w-4 h-4" />
-              Manage Billing
-            </Button>
-          </div>
+        <CardContent className="space-y-6">
+          {productType === 'desktop_app' ? (
+            <>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="font-semibold text-blue-800 mb-2">Desktop App Subscription Active!</h3>
+                <ul className="space-y-2 text-sm text-blue-700">
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    Your 30-day free trial has started
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    Payment method saved for future billing
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    Redirecting to download page in a moment...
+                  </li>
+                </ul>
+              </div>
+
+              <div className="text-center">
+                <Button
+                  onClick={() => router.push('/download-app')}
+                  className="flex items-center gap-2 mx-auto"
+                >
+                  Go to Download Page
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 className="font-semibold text-green-800 mb-2">What's Next?</h3>
+                <ul className="space-y-2 text-sm text-green-700">
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    Your payment method has been securely saved
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    Your payment has been processed successfully
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    Your cluster access has been activated
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    You can now create and manage database clusters
+                  </li>
+                </ul>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Button
+                  onClick={() => router.push('/admin/clusters')}
+                  className="flex items-center gap-2"
+                >
+                  Go to Clusters
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+
+                <Button
+                  onClick={() => router.push('/admin/billing')}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <CreditCard className="w-4 h-4" />
+                  Manage Billing
+                </Button>
+              </div>
+            </>
+          )}
 
           {sessionId && (
             <div className="text-center">
