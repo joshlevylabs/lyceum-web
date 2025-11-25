@@ -147,6 +147,55 @@ export async function POST(request: NextRequest) {
 }
 
 /**
+ * PUT /api/admin/license-subscription-relationships
+ * Update a license-subscription relationship
+ */
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { relationship_id, relationship_type, notes } = body;
+
+    if (!relationship_id) {
+      return NextResponse.json(
+        { success: false, error: 'relationship_id is required' },
+        { status: 400 }
+      );
+    }
+
+    const updateData: any = {};
+    if (relationship_type) updateData.relationship_type = relationship_type;
+    if (notes !== undefined) updateData.notes = notes;
+
+    const { data, error } = await supabaseAdmin
+      .from('license_subscription_relationships')
+      .update(updateData)
+      .eq('id', relationship_id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating relationship:', error);
+      return NextResponse.json(
+        { success: false, error: 'Failed to update relationship' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      relationship: data
+    });
+
+  } catch (error) {
+    console.error('Unexpected error in PUT /api/admin/license-subscription-relationships:', error);
+    return NextResponse.json(
+      { success: false, error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * DELETE /api/admin/license-subscription-relationships
  * Delete a license-subscription relationship
  */

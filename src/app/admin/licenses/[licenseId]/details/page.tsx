@@ -15,7 +15,8 @@ import {
   XCircleIcon,
   ExclamationTriangleIcon,
   PencilIcon,
-  CurrencyDollarIcon
+  CurrencyDollarIcon,
+  CreditCardIcon
 } from '@heroicons/react/24/outline'
 import UserAssignmentManager from '@/components/admin/UserAssignmentManager'
 import LicenseStatusManager from '@/components/admin/LicenseStatusManager'
@@ -138,6 +139,8 @@ export default function LicenseDetailsPage() {
   const [error, setError] = useState<string | null>(null)
   const [isEditMode, setIsEditMode] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [relationships, setRelationships] = useState<any[]>([])
+  const [relationshipsLoading, setRelationshipsLoading] = useState(false)
   const [editFormData, setEditFormData] = useState({
     license_category: 'main_application' as 'main_application' | 'plugin',
     license_type: '',
@@ -235,6 +238,7 @@ export default function LicenseDetailsPage() {
       return
     }
     fetchLicenseDetails()
+    fetchRelationships()
   }, [authLoading, isAdmin, licenseId])
 
   useEffect(() => {
@@ -328,7 +332,7 @@ export default function LicenseDetailsPage() {
         throw new Error('Failed to fetch license details')
       }
       const result = await response.json()
-      
+
       if (result.success) {
         setLicense(result.license)
       } else {
@@ -339,6 +343,33 @@ export default function LicenseDetailsPage() {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchRelationships = async () => {
+    try {
+      setRelationshipsLoading(true)
+      const response = await fetch('/api/admin/license-subscription-relationships', {
+        cache: 'no-store'
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch relationships')
+      }
+
+      const result = await response.json()
+
+      // Filter to only show relationships for this license
+      const licenseRelationships = (result.relationships || []).filter(
+        (rel: any) => rel.license_id === licenseId
+      )
+
+      setRelationships(licenseRelationships)
+    } catch (err) {
+      console.error('Error fetching relationships:', err)
+      // Don't set error state for relationships, just log it
+    } finally {
+      setRelationshipsLoading(false)
     }
   }
 
@@ -1384,7 +1415,7 @@ export default function LicenseDetailsPage() {
         <div className="mt-6 bg-white dark:bg-gray-800 shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Timeline</h3>
-            
+
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <CalendarIcon className="h-5 w-5 text-blue-500" />
@@ -1395,7 +1426,7 @@ export default function LicenseDetailsPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-3">
                 <CalendarIcon className="h-5 w-5 text-gray-500" />
                 <div>
@@ -1405,7 +1436,7 @@ export default function LicenseDetailsPage() {
                   </div>
                 </div>
               </div>
-              
+
               {license.expires_at && (
                 <div className="flex items-center space-x-3">
                   <ClockIcon className="h-5 w-5 text-orange-500" />
@@ -1418,6 +1449,89 @@ export default function LicenseDetailsPage() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Related Subscriptions */}
+        <div className="mt-6 bg-white dark:bg-gray-800 shadow rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Associated Subscriptions</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Subscriptions linked to this license
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                  {relationships.length} {relationships.length === 1 ? 'subscription' : 'subscriptions'}
+                </span>
+              </div>
+            </div>
+
+            {relationshipsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                <span className="ml-2 text-gray-600 dark:text-gray-400">Loading subscriptions...</span>
+              </div>
+            ) : relationships.length > 0 ? (
+              <div className="space-y-3">
+                {relationships.map((rel: any) => (
+                  <div
+                    key={rel.id}
+                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <CreditCardIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      <div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {rel.subscription?.subscription_key || 'N/A'}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {rel.subscription?.subscription_category === 'native_app'
+                            ? 'Native App'
+                            : rel.subscription?.plugin_type || 'Plugin'
+                          } • {rel.subscription?.subscription_type} • {' '}
+                          <span className={`font-medium ${
+                            rel.subscription?.status === 'active' ? 'text-green-600 dark:text-green-400' :
+                            rel.subscription?.status === 'cancelled' ? 'text-yellow-600 dark:text-yellow-400' :
+                            'text-red-600 dark:text-red-400'
+                          }`}>
+                            {rel.subscription?.status}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                          Relationship: <span className="font-medium capitalize">{rel.relationship_type.replace('_', ' ')}</span>
+                          {rel.notes && ` • ${rel.notes}`}
+                        </div>
+                      </div>
+                    </div>
+                    <Link
+                      href={`/admin/subscriptions/${rel.subscription_id}/details`}
+                      className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      View Details →
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <CreditCardIcon className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
+                <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No associated subscriptions</h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  This license has not been linked to any subscriptions yet.
+                </p>
+                <div className="mt-4">
+                  <Link
+                    href="/admin/licenses"
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Go to Relationships Tab
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

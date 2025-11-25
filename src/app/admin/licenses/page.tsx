@@ -17,7 +17,8 @@ import {
   ExclamationTriangleIcon,
   EyeIcon,
   CreditCardIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  PencilIcon
 } from '@heroicons/react/24/outline'
 
 // Helper function to extract license category from either direct field or license_config
@@ -138,6 +139,8 @@ export default function LicenseManagement() {
   // Relationship states
   const [relationships, setRelationships] = useState<LicenseSubscriptionRelationship[]>([])
   const [relationshipsLoading, setRelationshipsLoading] = useState(false)
+  const [showCreateRelationshipModal, setShowCreateRelationshipModal] = useState(false)
+  const [editRelationship, setEditRelationship] = useState<LicenseSubscriptionRelationship | null>(null)
 
   useEffect(() => {
     loadLicenses()
@@ -604,6 +607,9 @@ export default function LicenseManagement() {
                         Created
                       </th>
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        View
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -674,6 +680,15 @@ export default function LicenseManagement() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {formatDate(subscription.created_at)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <Link
+                            href={`/admin/subscriptions/${subscription.id}/details`}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="View subscription details"
+                          >
+                            <EyeIcon className="h-5 w-5 inline" />
+                          </Link>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                           <div className="flex justify-center space-x-3">
@@ -997,6 +1012,17 @@ export default function LicenseManagement() {
       {/* Relationships Tab Content */}
       {activeTab === 'relationships' && (
         <>
+          {/* Create Relationship Button */}
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={() => setShowCreateRelationshipModal(true)}
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+            >
+              <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+              Create Relationship
+            </button>
+          </div>
+
           <div className="bg-white shadow overflow-hidden sm:rounded-lg">
             {relationshipsLoading ? (
               <div className="flex items-center justify-center py-12">
@@ -1114,13 +1140,22 @@ export default function LicenseManagement() {
 
                         {/* Actions */}
                         <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                          <button
-                            onClick={() => handleDeleteRelationship(rel.id)}
-                            className="text-red-600 hover:text-red-900"
-                            title="Delete relationship"
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
+                          <div className="flex justify-center space-x-3">
+                            <button
+                              onClick={() => setEditRelationship(rel)}
+                              className="text-blue-600 hover:text-blue-900"
+                              title="Edit relationship"
+                            >
+                              <PencilIcon className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteRelationship(rel.id)}
+                              className="text-red-600 hover:text-red-900"
+                              title="Delete relationship"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1144,12 +1179,35 @@ export default function LicenseManagement() {
 
       {/* Assign Modal */}
       {showAssignModal && (
-        <AssignLicenseModal 
+        <AssignLicenseModal
           licenseId={showAssignModal}
           onClose={() => setShowAssignModal(null)}
           onAssign={() => {
             setShowAssignModal(null)
             loadLicenses()
+          }}
+        />
+      )}
+
+      {/* Create Relationship Modal */}
+      {showCreateRelationshipModal && (
+        <CreateRelationshipModal
+          onClose={() => setShowCreateRelationshipModal(false)}
+          onCreated={() => {
+            setShowCreateRelationshipModal(false)
+            loadRelationships()
+          }}
+        />
+      )}
+
+      {/* Edit Relationship Modal */}
+      {editRelationship && (
+        <EditRelationshipModal
+          relationship={editRelationship}
+          onClose={() => setEditRelationship(null)}
+          onUpdated={() => {
+            setEditRelationship(null)
+            loadRelationships()
           }}
         />
       )}
@@ -1631,6 +1689,326 @@ function EditLicenseModal({ license, onClose, onSave }: EditLicenseModalProps) {
             >
               Save Changes
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Create Relationship Modal Component
+interface CreateRelationshipModalProps {
+  onClose: () => void
+  onCreated: () => void
+}
+
+function CreateRelationshipModal({ onClose, onCreated }: CreateRelationshipModalProps) {
+  const [loading, setLoading] = useState(false)
+  const [licenses, setLicenses] = useState<LicenseKey[]>([])
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
+  const [formData, setFormData] = useState({
+    license_id: '',
+    subscription_id: '',
+    relationship_type: 'standard' as 'standard' | 'trial_conversion' | 'upgrade' | 'addon',
+    notes: ''
+  })
+
+  useEffect(() => {
+    loadLicensesAndSubscriptions()
+  }, [])
+
+  const loadLicensesAndSubscriptions = async () => {
+    try {
+      setLoading(true)
+
+      // Fetch all licenses
+      const licensesRes = await fetch('/api/admin/licenses/list', { cache: 'no-store' })
+      const licensesData = await licensesRes.json()
+      if (licensesData.success) {
+        setLicenses(licensesData.licenses || [])
+      }
+
+      // Fetch all subscriptions
+      const subscriptionsRes = await fetch('/api/admin/subscriptions', { cache: 'no-store' })
+      const subscriptionsData = await subscriptionsRes.json()
+      if (subscriptionsData.success) {
+        setSubscriptions(subscriptionsData.subscriptions || [])
+      }
+    } catch (error) {
+      console.error('Error loading data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCreate = async () => {
+    if (!formData.license_id || !formData.subscription_id) {
+      alert('Please select both a license and a subscription')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/admin/license-subscription-relationships', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      })
+
+      if (response.ok) {
+        alert('Relationship created successfully')
+        onCreated()
+      } else {
+        const data = await response.json()
+        alert(`Failed to create relationship: ${data.error}`)
+      }
+    } catch (error) {
+      console.error('Error creating relationship:', error)
+      alert('Failed to create relationship')
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div className="relative top-10 mx-auto p-6 border w-[600px] shadow-lg rounded-md bg-white">
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-gray-900">Create License-Subscription Relationship</h3>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2 text-gray-600">Loading...</span>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* License Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  License <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.license_id}
+                  onChange={(e) => setFormData({ ...formData, license_id: e.target.value })}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select a license...</option>
+                  {licenses.map((license) => (
+                    <option key={license.id} value={license.id}>
+                      {license.license_key} - {license.key_code.substring(0, 20)}... ({license.license_type}) - {license.status}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Subscription Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Subscription <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.subscription_id}
+                  onChange={(e) => setFormData({ ...formData, subscription_id: e.target.value })}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select a subscription...</option>
+                  {subscriptions.map((subscription) => (
+                    <option key={subscription.id} value={subscription.id}>
+                      {subscription.subscription_key} - {subscription.user_email} - {subscription.subscription_category === 'native_app' ? 'Native App' : subscription.plugin_type} ({subscription.subscription_type}) - {subscription.status}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Relationship Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Relationship Type
+                </label>
+                <select
+                  value={formData.relationship_type}
+                  onChange={(e) => setFormData({ ...formData, relationship_type: e.target.value as any })}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="standard">Standard</option>
+                  <option value="trial_conversion">Trial Conversion</option>
+                  <option value="upgrade">Upgrade</option>
+                  <option value="addon">Add-on</option>
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Standard: Regular subscription-license pairing | Trial Conversion: User converted from trial to paid | Upgrade: Subscription tier upgrade | Add-on: Additional plugin or feature
+                </p>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Notes (Optional)
+                </label>
+                <textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  rows={3}
+                  placeholder="Add any notes about this relationship..."
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreate}
+                  disabled={!formData.license_id || !formData.subscription_id}
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  Create Relationship
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Edit Relationship Modal Component
+interface EditRelationshipModalProps {
+  relationship: LicenseSubscriptionRelationship
+  onClose: () => void
+  onUpdated: () => void
+}
+
+function EditRelationshipModal({ relationship, onClose, onUpdated }: EditRelationshipModalProps) {
+  const [formData, setFormData] = useState({
+    relationship_type: relationship.relationship_type,
+    notes: relationship.notes || ''
+  })
+
+  const handleUpdate = async () => {
+    try {
+      const response = await fetch('/api/admin/license-subscription-relationships', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          relationship_id: relationship.id,
+          relationship_type: formData.relationship_type,
+          notes: formData.notes
+        })
+      })
+
+      if (response.ok) {
+        alert('Relationship updated successfully')
+        onUpdated()
+      } else {
+        const data = await response.json()
+        alert(`Failed to update relationship: ${data.error}`)
+      }
+    } catch (error) {
+      console.error('Error updating relationship:', error)
+      alert('Failed to update relationship')
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div className="relative top-10 mx-auto p-6 border w-[600px] shadow-lg rounded-md bg-white">
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-gray-900">Edit Relationship</h3>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="bg-gray-50 p-3 rounded-md mb-4">
+            <div className="text-sm">
+              <div className="flex items-center space-x-2 mb-2">
+                <span className="font-mono font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded">
+                  {relationship.license?.license_key || 'N/A'}
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+                <span className="font-mono font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                  {relationship.subscription?.subscription_key || 'N/A'}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">
+                License: {relationship.license?.license_type} | Subscription: {relationship.subscription?.subscription_category === 'native_app' ? 'Native App' : relationship.subscription?.plugin_type}
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {/* Relationship Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Relationship Type
+              </label>
+              <select
+                value={formData.relationship_type}
+                onChange={(e) => setFormData({ ...formData, relationship_type: e.target.value as any })}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="standard">Standard</option>
+                <option value="trial_conversion">Trial Conversion</option>
+                <option value="upgrade">Upgrade</option>
+                <option value="addon">Add-on</option>
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                Standard: Regular subscription-license pairing | Trial Conversion: User converted from trial to paid | Upgrade: Subscription tier upgrade | Add-on: Additional plugin or feature
+              </p>
+            </div>
+
+            {/* Notes */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Notes
+              </label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                rows={3}
+                placeholder="Add any notes about this relationship..."
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-3 pt-4">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdate}
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              >
+                Update Relationship
+              </button>
+            </div>
           </div>
         </div>
       </div>
