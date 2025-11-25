@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const plugin_type = searchParams.get('plugin_type');
     const search = searchParams.get('search');
 
-    // Build query
+    // Build query - use left join for user_profiles so users without profiles still show
     let query = supabaseAdmin
       .from('subscriptions')
       .select(`
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
         user:user_id (
           id,
           email,
-          user_profiles!inner (
+          user_profiles (
             full_name
           )
         )
