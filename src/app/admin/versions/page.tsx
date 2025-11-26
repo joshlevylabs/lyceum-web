@@ -51,14 +51,14 @@ export default function AdminVersionsPage() {
 
   // Check if user is admin
   useEffect(() => {
-    if (!loading && (!user || userProfile?.role !== 'superadmin')) {
+    if (!loading && (!user || (userProfile?.role !== 'admin' && userProfile?.role !== 'superadmin'))) {
       router.push('/dashboard')
     }
   }, [user, userProfile, loading, router])
 
   // Load versions
   useEffect(() => {
-    if (!user || userProfile?.role !== 'superadmin') return
+    if (!user || (userProfile?.role !== 'admin' && userProfile?.role !== 'superadmin')) return
 
     loadVersions()
   }, [user, userProfile])

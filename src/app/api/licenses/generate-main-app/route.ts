@@ -30,13 +30,13 @@ export async function GET(request: NextRequest) {
       }, { status: 401 })
     }
 
-    // Check if user has a main-application license
+    // Check if user has a main-application license (active or trial)
     const { data: existingLicense, error: checkError } = await supabase
       .from('license_keys')
       .select('*')
       .eq('assigned_to', user.id)
       .eq('license_type', 'main-application')
-      .eq('status', 'active')
+      .in('status', ['active', 'trial'])
       .maybeSingle()
 
     if (checkError) {

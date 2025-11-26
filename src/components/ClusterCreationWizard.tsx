@@ -256,122 +256,122 @@ export default function ClusterCreationWizard({ onComplete, onCancel }: {
   const renderStep0 = () => (
     <div className="space-y-8">
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
           Choose Your Cluster Type
         </h2>
-        <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+        <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
           Select the deployment model that best fits your analytics needs and budget
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Traditional Cluster */}
-        <Card 
-          className={`cursor-pointer transition-all duration-200 ${
-            deploymentType === 'traditional' 
-              ? 'ring-2 ring-blue-500 shadow-lg' 
+        <Card
+          className={`cursor-pointer transition-all duration-200 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 ${
+            deploymentType === 'traditional'
+              ? 'ring-2 ring-blue-500 shadow-lg'
               : 'hover:shadow-md'
           }`}
           onClick={() => setDeploymentType('traditional')}
         >
           <CardHeader className="text-center pb-4">
-            <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-              <Server className="w-8 h-8 text-blue-600" />
+            <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4">
+              <Server className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             </div>
-            <CardTitle className="text-2xl">Traditional Cluster</CardTitle>
-            <CardDescription className="text-base">
+            <CardTitle className="text-2xl text-gray-900 dark:text-white">Traditional Cluster</CardTitle>
+            <CardDescription className="text-base text-gray-600 dark:text-gray-400">
               Full-featured, always-on dedicated infrastructure
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                <span className="text-sm">Dedicated compute resources</span>
+                <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Dedicated compute resources</span>
               </div>
               <div className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                <span className="text-sm">Full configuration control</span>
+                <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Full configuration control</span>
               </div>
               <div className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                <span className="text-sm">Persistent storage tiers</span>
+                <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Persistent storage tiers</span>
               </div>
               <div className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                <span className="text-sm">Advanced networking</span>
+                <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Advanced networking</span>
               </div>
             </div>
-            
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="text-sm text-gray-600 mb-2">Starting at:</div>
-              <div className="text-2xl font-bold text-gray-900">$500-2000/month</div>
-              <div className="text-sm text-gray-600">Always-on infrastructure</div>
+
+            <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Starting at:</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">$500-2000/month</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Always-on infrastructure</div>
             </div>
           </CardContent>
         </Card>
 
         {/* Optimized Cluster */}
-        <Card 
-          className={`cursor-pointer transition-all duration-200 relative ${
-            deploymentType === 'optimized' 
-              ? 'ring-2 ring-green-500 shadow-lg' 
+        <Card
+          className={`cursor-pointer transition-all duration-200 relative bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 ${
+            deploymentType === 'optimized'
+              ? 'ring-2 ring-green-500 shadow-lg'
               : 'hover:shadow-md'
           }`}
           onClick={() => setDeploymentType('optimized')}
         >
           <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-            <Badge className="bg-green-500 text-white px-3 py-1">
+            <Badge className="bg-green-500 dark:bg-green-600 text-white px-3 py-1">
               <Sparkles className="w-3 h-3 mr-1" />
               Recommended
             </Badge>
           </div>
-          
+
           <CardHeader className="text-center pb-4">
-            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <Zap className="w-8 h-8 text-green-600" />
+            <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4">
+              <Zap className="w-8 h-8 text-green-600 dark:text-green-400" />
             </div>
-            <CardTitle className="text-2xl text-green-800">Optimized Cluster</CardTitle>
-            <CardDescription className="text-base">
+            <CardTitle className="text-2xl text-green-800 dark:text-green-400">Optimized Cluster</CardTitle>
+            <CardDescription className="text-base text-gray-600 dark:text-gray-400">
               Cost-optimized serverless analytics processing
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                <span className="text-sm">Serverless processing</span>
+                <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Serverless processing</span>
               </div>
               <div className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                <span className="text-sm">Auto-scaling from zero</span>
+                <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Auto-scaling from zero</span>
               </div>
               <div className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                <span className="text-sm">Intelligent storage lifecycle</span>
+                <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Intelligent storage lifecycle</span>
               </div>
               <div className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                <span className="text-sm">5-minute setup</span>
+                <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />
+                <span className="text-sm text-gray-700 dark:text-gray-300">5-minute setup</span>
               </div>
             </div>
-            
-            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <div className="text-sm text-green-600 mb-2">Starting at:</div>
-              <div className="text-2xl font-bold text-green-800">$10-449/month</div>
-              <div className="text-sm text-green-600 font-medium">85% cost savings vs traditional</div>
+
+            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+              <div className="text-sm text-green-600 dark:text-green-400 mb-2">Starting at:</div>
+              <div className="text-2xl font-bold text-green-800 dark:text-green-400">$10-449/month</div>
+              <div className="text-sm text-green-600 dark:text-green-400 font-medium">85% cost savings vs traditional</div>
             </div>
 
             <div className="flex items-center justify-center space-x-4 pt-2">
-              <div className="flex items-center space-x-1 text-orange-600">
+              <div className="flex items-center space-x-1 text-orange-600 dark:text-orange-400">
                 <Clock className="w-4 h-4" />
                 <span className="text-xs font-medium">5min setup</span>
               </div>
-              <div className="flex items-center space-x-1 text-blue-600">
+              <div className="flex items-center space-x-1 text-blue-600 dark:text-blue-400">
                 <Brain className="w-4 h-4" />
                 <span className="text-xs font-medium">AI optimized</span>
               </div>
-              <div className="flex items-center space-x-1 text-purple-600">
+              <div className="flex items-center space-x-1 text-purple-600 dark:text-purple-400">
                 <DollarSign className="w-4 h-4" />
                 <span className="text-xs font-medium">Pay per use</span>
               </div>
@@ -1055,8 +1055,8 @@ export default function ClusterCreationWizard({ onComplete, onCancel }: {
       {/* Progress Bar */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-2xl font-bold">Create New Cluster</h1>
-          <span className="text-sm text-gray-600">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create New Cluster</h1>
+          <span className="text-sm text-gray-600 dark:text-gray-400">
             {currentStep === 0 ? 'Choose Type' : `Step ${currentStep} of 4`}
           </span>
         </div>
@@ -1064,7 +1064,7 @@ export default function ClusterCreationWizard({ onComplete, onCancel }: {
       </div>
 
       {/* Step Content */}
-      <Card className="min-h-[600px]">
+      <Card className="min-h-[600px] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
         <CardContent className="p-8">
           {currentStep === 0 && renderStep0()}
           {currentStep === 1 && renderStep1()}

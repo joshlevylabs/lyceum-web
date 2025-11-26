@@ -2309,8 +2309,8 @@ export default function SettingsPage() {
 
           {/* Create Cluster Wizard */}
           {showCreateModal && (
-            <div className="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50 overflow-y-auto">
-              <div className="w-full min-h-screen py-8">
+            <div className="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50 overflow-y-auto">
+              <div className="w-full min-h-screen py-8 bg-white dark:bg-gray-900">
                 <ClusterCreationWizard
                   onComplete={(cluster) => {
                     setShowCreateModal(false)

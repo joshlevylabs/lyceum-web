@@ -32,16 +32,16 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Verify user is superadmin
+    // Verify user is admin or superadmin
     const { data: userProfile, error: profileError } = await supabase
       .from('user_profiles')
       .select('role')
       .eq('id', user.id)
       .single()
 
-    if (profileError || userProfile?.role !== 'superadmin') {
+    if (profileError || (userProfile?.role !== 'admin' && userProfile?.role !== 'superadmin')) {
       return NextResponse.json(
-        { error: 'Unauthorized: Superadmin access required' },
+        { error: 'Unauthorized: Admin access required' },
         { status: 403 }
       )
     }
