@@ -9,7 +9,11 @@
       "Bash(psql:*)",
       "Bash(where:*)",
       "Bash(npx supabase db push:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(node check-templates.mjs:*)",
+      "Bash(node fix-templates.mjs:*)",
+      "Bash(node:*)",
+      "Bash(del check-templates.mjs check-license-details.mjs check-schema.mjs fix-templates.mjs fix-existing-license.mjs test-onboarding-api.mjs check-template-details.mjs)"
     ],
     "deny": [],
     "ask": []

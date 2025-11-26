@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/DashboardLayout'
+import ClusterCreationWizard from '@/components/ClusterCreationWizard'
 import {
   CircleStackIcon,
   PlusIcon,
@@ -453,40 +454,18 @@ export default function ClustersPage() {
           </div>
         )}
 
-        {/* Create Cluster Modal */}
+        {/* Create Cluster Wizard */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                Add New Cluster
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Connect a new local or cloud cluster to your Lyceum account.
-              </p>
-              <div className="space-y-3">
-                <button
-                  className="w-full flex items-center justify-center px-4 py-3 border-2 border-blue-500 rounded-md text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-gray-700"
-                  onClick={() => {/* TODO: Add local cluster */}}
-                >
-                  <ComputerDesktopIcon className="h-5 w-5 mr-2" />
-                  Add Local Cluster
-                </button>
-                <button
-                  className="w-full flex items-center justify-center px-4 py-3 border-2 border-purple-500 rounded-md text-purple-600 hover:bg-purple-50 dark:border-purple-400 dark:text-purple-400 dark:hover:bg-gray-700"
-                  onClick={() => {/* TODO: Add cloud cluster */}}
-                >
-                  <CloudIcon className="h-5 w-5 mr-2" />
-                  Add Cloud Cluster
-                </button>
-              </div>
-              <div className="mt-4 flex justify-end">
-                <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                >
-                  Cancel
-                </button>
-              </div>
+          <div className="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50 overflow-y-auto">
+            <div className="w-full min-h-screen py-8">
+              <ClusterCreationWizard
+                onComplete={(cluster) => {
+                  setShowCreateModal(false)
+                  loadClusters() // Refresh the clusters list
+                  router.push(`/clusters/${cluster.slug || cluster.cluster_key}`)
+                }}
+                onCancel={() => setShowCreateModal(false)}
+              />
             </div>
           </div>
         )}

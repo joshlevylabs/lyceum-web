@@ -31,35 +31,8 @@ export async function POST(request: NextRequest) {
 
     console.log('Auto-creating sessions for:', { user_id, license_key_id, trigger_type })
 
-    // Check if user already has completed onboarding in the past
-    const { data: existingProgress, error: progressError } = await supabase
-      .from('onboarding_progress')
-      .select('overall_status, completed_at')
-      .eq('user_id', user_id)
-      .neq('overall_status', 'pending') // Has some progress
-
-    if (progressError && progressError.code !== 'PGRST116') {
-      console.error('Error checking existing progress:', progressError)
-      return NextResponse.json({
-        error: `Failed to check existing progress: ${progressError.message}`,
-        details: progressError
-      }, { status: 500 })
-    }
-
-    // If user has completed onboarding before, don't auto-create sessions
-    if (existingProgress && existingProgress.length > 0) {
-      const completedOnboarding = existingProgress.some(p => p.overall_status === 'completed')
-      
-      if (completedOnboarding) {
-        console.log('User has completed onboarding before, skipping auto-creation')
-        return NextResponse.json({
-          message: 'User has completed onboarding before',
-          sessions_created: 0,
-          session_ids: [],
-          existing_progress: existingProgress
-        })
-      }
-    }
+    // Skip progress check - onboarding_progress table not implemented yet
+    // Just proceed with creating sessions
 
     // Get license information to determine plugins and license type
     const { data: licenseInfo, error: licenseError } = await supabase
@@ -86,9 +59,19 @@ export async function POST(request: NextRequest) {
 
     // Get applicable templates based on license type and enabled plugins
     const enabledPlugins = licenseInfo.enabled_plugins || ['centcom']
-    const licenseType = licenseInfo.license_type || 'trial'
 
-    console.log('Looking for templates for plugins:', enabledPlugins, 'license type:', licenseType)
+    // For plugin licenses, license_type contains the plugin name (e.g., 'klippel_qc')
+    // Use the status field to determine if it's trial, or derive from tier/license_type
+    let subscriptionTier = 'trial' // default
+    if (licenseInfo.status === 'trial') {
+      subscriptionTier = 'trial'
+    } else if (licenseInfo.tier) {
+      subscriptionTier = licenseInfo.tier // 'basic', 'professional', 'enterprise'
+    } else if (licenseInfo.license_type && ['trial', 'basic', 'professional', 'enterprise'].includes(licenseInfo.license_type)) {
+      subscriptionTier = licenseInfo.license_type
+    }
+
+    console.log('Looking for templates for plugins:', enabledPlugins, 'subscription tier:', subscriptionTier)
 
     const { data: applicableTemplates, error: templatesError } = await supabase
       .from('onboarding_session_templates')
@@ -96,7 +79,7 @@ export async function POST(request: NextRequest) {
       .eq('is_active', true)
       .eq('auto_create_on_license', true)
       .in('plugin_id', enabledPlugins)
-      .contains('license_types', [licenseType])
+      .contains('license_types', [subscriptionTier])
       .order('priority_order', { ascending: true })
 
     if (templatesError) {
@@ -131,32 +114,62 @@ export async function POST(request: NextRequest) {
         console.log('Creating session from template:', template.template_name)
 
         // Calculate scheduled date (spread sessions over time)
-        const scheduledDate = new Date()
-        scheduledDate.setDate(scheduledDate.getDate() + (i * 7)) // Space sessions 1 week apart
-        scheduledDate.setHours(10, 0, 0, 0) // Default to 10 AM
+        const scheduledStartDate = new Date()
+        scheduledStartDate.setDate(scheduledStartDate.getDate() + (i * 7)) // Space sessions 1 week apart
+        scheduledStartDate.setHours(10, 0, 0, 0) // Default to 10 AM
+
+        const scheduledEndDate = new Date(scheduledStartDate)
+        scheduledEndDate.setMinutes(scheduledEndDate.getMinutes() + (template.duration_minutes || 60))
+
+        // Get an admin user (preferably one with availability)
+        const { data: adminUser } = await supabase
+          .from('admin_availability_slots')
+          .select('admin_user_id')
+          .eq('is_available', true)
+          .gte('start_time', new Date().toISOString())
+          .limit(1)
+          .single()
+
+        // Fallback to any superadmin if no availability slots
+        let adminUserId = adminUser?.admin_user_id
+        if (!adminUserId) {
+          const { data: superadmin } = await supabase
+            .from('user_profiles')
+            .select('id')
+            .eq('role', 'superadmin')
+            .limit(1)
+            .single()
+          adminUserId = superadmin?.id
+        }
+
+        // Map template session types to valid database values
+        // Database allows: 'initial_onboarding', 'follow_up', 'technical_support', 'training', 'other'
+        const sessionTypeMapping = {
+          'plugin_specific': 'training',
+          'product_specific': 'training',
+          'centcom_specific': 'initial_onboarding'
+        }
+        const mappedSessionType = sessionTypeMapping[template.session_type] || template.session_type || 'initial_onboarding'
 
         const sessionData = {
           user_id: user_id,
           license_key_id: license_key_id,
-          template_id: template.id,
-          plugin_id: template.plugin_id,
-          session_type: template.session_type,
-          session_number: i + 1,
-          title: template.title,
-          description: template.description,
-          duration_minutes: template.duration_minutes,
-          is_mandatory: template.is_mandatory,
-          session_objectives: template.objectives || [],
-          session_materials: template.preparation_materials || [],
-          scheduled_at: scheduledDate.toISOString(),
+          admin_user_id: adminUserId, // Required field
+          scheduled_start_time: scheduledStartDate.toISOString(),
+          scheduled_end_time: scheduledEndDate.toISOString(),
+          duration_minutes: template.duration_minutes || 60,
+          session_type: mappedSessionType,
           status: 'scheduled',
-          notes: `Auto-created from template: ${template.template_name} (${trigger_type})`
+          is_mandatory: template.is_mandatory || false,
+          title: template.title,
+          description: template.description + `\n\nAuto-created from template: ${template.template_name}`,
+          admin_notes: `Auto-created via ${trigger_type}`
         }
 
         const { data: sessionResult, error: sessionError } = await supabase
-          .from('onboarding_sessions')
+          .from('onboarding_session_bookings')
           .insert(sessionData)
-          .select('id, title, scheduled_at')
+          .select('id, title, scheduled_start_time')
           .single()
 
         if (sessionError) {
@@ -195,7 +208,7 @@ export async function POST(request: NextRequest) {
         error_message: errors.length > 0 ? JSON.stringify(errors) : null,
         triggered_by: triggered_by || null,
         processing_details: {
-          license_type: licenseType,
+          license_type: subscriptionTier,
           enabled_plugins: enabledPlugins,
           templates_found: applicableTemplates.length,
           errors: errors
@@ -212,13 +225,8 @@ export async function POST(request: NextRequest) {
       // Don't fail the entire request for logging issues
     }
 
-    // Update onboarding progress
-    try {
-      await updateOnboardingProgress(user_id, license_key_id, licenseInfo)
-    } catch (progressError) {
-      console.warn('Failed to update onboarding progress:', progressError)
-      // Don't fail the entire request for this
-    }
+    // Skip onboarding progress tracking - onboarding_progress table not implemented yet
+    // Progress can be tracked via onboarding_session_bookings status field
 
     const result = {
       message: `Successfully auto-created ${createdSessions.length} onboarding sessions`,
@@ -227,7 +235,7 @@ export async function POST(request: NextRequest) {
       created_sessions: createdSessions,
       templates_used: applicableTemplates.map(t => ({ id: t.id, name: t.template_name })),
       license_info: {
-        type: licenseType,
+        type: subscriptionTier,
         plugins: enabledPlugins
       }
     }

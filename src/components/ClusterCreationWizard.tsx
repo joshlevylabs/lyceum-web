@@ -167,27 +167,13 @@ const MEMORY_OPTIONS = ['16GB', '32GB', '64GB', '128GB', '256GB']
 const STORAGE_OPTIONS = ['250GB', '500GB', '1TB', '2TB', '4TB']
 const TIER_SIZE_OPTIONS = ['100GB', '500GB', '1TB', '2TB', '5TB', '10TB']
 
-export default function ClusterCreationWizard({ onComplete, onCancel }: { 
+export default function ClusterCreationWizard({ onComplete, onCancel }: {
   onComplete: (cluster: any) => void
-  onCancel: () => void 
+  onCancel: () => void
 }) {
   const [currentStep, setCurrentStep] = useState(0) // Start with deployment type selection
   const [deploymentType, setDeploymentType] = useState<'traditional' | 'optimized' | null>(null)
   const [isCreating, setIsCreating] = useState(false)
-  
-  // Show optimized cluster wizard if selected
-  if (deploymentType === 'optimized') {
-    return (
-      <OptimizedClusterWizard
-        onComplete={onComplete}
-        onCancel={() => {
-          setDeploymentType(null)
-          setCurrentStep(0)
-        }}
-      />
-    )
-  }
-  
   const [formData, setFormData] = useState<ClusterConfiguration>({
     name: '',
     description: '',
@@ -251,6 +237,19 @@ export default function ClusterCreationWizard({ onComplete, onCancel }: {
       setDeploymentType(null)
       setCurrentStep(0)
     }
+  }
+
+  // Show optimized cluster wizard if selected
+  if (deploymentType === 'optimized') {
+    return (
+      <OptimizedClusterWizard
+        onComplete={onComplete}
+        onCancel={() => {
+          setDeploymentType(null)
+          setCurrentStep(0)
+        }}
+      />
+    )
   }
 
   // Step 0: Deployment Type Selection

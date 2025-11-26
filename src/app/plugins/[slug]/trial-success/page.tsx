@@ -24,10 +24,36 @@ function TrialSuccessContent({ params }: { params: Promise<{ slug: string }> }) 
 
   useEffect(() => {
     if (sessionId) {
-      // Just mark as successful - the webhook will handle license creation
-      setTimeout(() => {
-        setLoading(false)
-      }, 1500)
+      // Process the session to ensure subscription and license are created
+      // This acts as a fallback in case the webhook doesn't fire
+      const processSession = async () => {
+        try {
+          console.log('🔄 Processing plugin trial session:', sessionId)
+
+          // Wait 3 seconds to give webhook a chance to process first
+          await new Promise(resolve => setTimeout(resolve, 3000))
+
+          const response = await fetch('/api/stripe/process-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId })
+          })
+
+          if (response.ok) {
+            const data = await response.json()
+            console.log('✅ Plugin trial session processed successfully:', data)
+          } else {
+            const errorData = await response.json()
+            console.log('⏳ Manual processing skipped (webhook likely processed already):', errorData.error)
+          }
+        } catch (error) {
+          console.log('⏳ Session processing attempt completed (webhook may have processed already)')
+        } finally {
+          setLoading(false)
+        }
+      }
+
+      processSession()
     } else {
       setLoading(false)
       setError('No session ID provided')

@@ -420,7 +420,7 @@ export async function POST(request: NextRequest) {
                   created_by: user.id,
                   time_limit_type: timeLimitType,
                   custom_trial_days: isTrialLicense ? 30 : null,
-                  enabled_plugins: [],
+                  enabled_plugins: [pluginType], // ✅ Set plugin as enabled
                   plugin_permissions: {},
                   allowed_user_types: ['engineer', 'operator', 'admin'],
                   access_level: 'standard',
@@ -449,6 +449,34 @@ export async function POST(request: NextRequest) {
               }
 
               console.log('✅ Plugin license generated:', license.key_code);
+
+              // Auto-create onboarding sessions for the plugin
+              try {
+                console.log('🎓 Creating onboarding sessions for plugin:', pluginType);
+                const onboardingResponse = await fetch(`${request.headers.get('origin') || 'http://localhost:3594'}/api/admin/onboarding/auto-create-sessions`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    user_id: user.id,
+                    license_key_id: license.id,
+                    trigger_type: 'license_assigned',
+                    triggered_by: 'stripe_checkout_manual'
+                  })
+                });
+
+                if (onboardingResponse.ok) {
+                  const onboardingData = await onboardingResponse.json();
+                  console.log('✅ Onboarding sessions created:', onboardingData.sessions_created);
+                } else {
+                  const errorData = await onboardingResponse.json();
+                  console.warn('⚠️ Failed to create onboarding sessions:', errorData.error);
+                }
+              } catch (onboardingError) {
+                console.warn('⚠️ Failed to create onboarding sessions:', onboardingError);
+                // Don't fail the whole process if onboarding creation fails
+              }
 
               // Create relationship between license and subscription
               const { error: relationshipError } = await dbOperations.supabaseAdmin

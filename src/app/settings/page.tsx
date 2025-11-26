@@ -6,6 +6,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import PaymentMethodSetup from '@/components/billing/PaymentMethodSetup'
+import ClusterCreationWizard from '@/components/ClusterCreationWizard'
 import { createClient } from '@/lib/supabase'
 import {
   UserIcon,
@@ -25,10 +26,38 @@ import {
   XCircleIcon,
   ClockIcon,
   ExclamationTriangleIcon,
-  CircleStackIcon
+  CircleStackIcon,
+  PlusIcon,
+  CloudIcon,
+  CheckCircleIcon,
+  EyeIcon
 } from '@heroicons/react/24/outline'
 
 type ViewType = 'home' | 'profile' | 'appearance' | 'payment' | 'licenses' | 'sessions' | 'groups' | 'clusters'
+
+interface Cluster {
+  id: string
+  cluster_key?: string
+  name: string
+  slug: string
+  description?: string
+  cluster_type: 'local' | 'cloud'
+  architecture?: string
+  status: 'active' | 'inactive' | 'configuring' | 'error' | 'maintenance' | 'offline'
+  health_status: 'healthy' | 'degraded' | 'unhealthy' | 'unknown' | 'offline'
+  is_connected?: boolean
+  last_heartbeat_at?: string
+  provider?: string
+  region?: string
+  connection_config: Record<string, any>
+  current_project_count: number
+  max_projects: number
+  storage_used_gb: number
+  storage_quota_gb?: number
+  last_health_check_at?: string
+  created_at: string
+  updated_at: string
+}
 
 interface QuickstartTipProps {
   title: string
@@ -105,6 +134,17 @@ export default function SettingsPage() {
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [successMessage, setSuccessMessage] = useState<string>('')
   const [revokingSessionId, setRevokingSessionId] = useState<string | null>(null)
+
+  // Clusters state
+  const [clusters, setClusters] = useState<Cluster[]>([])
+  const [clustersLoading, setClustersLoading] = useState(false)
+  const [clustersError, setClustersError] = useState<string | null>(null)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+
+  // Subscription cancellation state
+  const [cancellingSubId, setCancellingSubId] = useState<string | null>(null)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [subToCancel, setSubToCancel] = useState<any>(null)
 
   const toggleQuickstart = (view: string) => {
     setShowQuickstart(prev => ({ ...prev, [view]: !prev[view] }))
@@ -240,6 +280,70 @@ export default function SettingsPage() {
     }
   }
 
+  // Fetch clusters
+  const fetchClusters = async () => {
+    try {
+      setClustersLoading(true)
+      setClustersError(null)
+
+      const supabase = createClient()
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+      if (sessionError || !session?.access_token) {
+        console.error('No session for clusters:', sessionError)
+        return
+      }
+
+      const response = await fetch('/api/clusters', {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load clusters')
+      }
+
+      if (data.success || data.clusters) {
+        const transformedClusters = (data.clusters || []).map((c: any) => ({
+          id: c.id,
+          cluster_key: c.cluster_key || c.slug,
+          name: c.name,
+          slug: c.cluster_key || c.slug,
+          description: c.description,
+          cluster_type: c.architecture === 'centcom' ? 'local' : c.cluster_type || 'cloud',
+          architecture: c.architecture,
+          status: c.status || 'active',
+          health_status: c.health_status || 'unknown',
+          provider: c.provider,
+          region: c.region || 'Unknown',
+          connection_config: {},
+          current_project_count: c.current_project_count || 0,
+          max_projects: c.max_projects || 100,
+          storage_used_gb: c.storage_used_gb || 0,
+          storage_quota_gb: c.storage_quota_gb,
+          last_health_check_at: c.last_health_check_at || c.updated_at,
+          created_at: c.created_at,
+          updated_at: c.updated_at,
+          is_connected: c.is_connected
+        }))
+
+        setClusters(transformedClusters)
+      } else {
+        throw new Error(data.error || 'Failed to load clusters')
+      }
+    } catch (err: any) {
+      console.error('Error loading clusters:', err)
+      setClustersError(err.message || 'Failed to load clusters')
+      setClusters([])
+    } finally {
+      setClustersLoading(false)
+    }
+  }
+
   // Revoke a session
   const revokeSession = async (sessionId: string) => {
     if (!confirm('Are you sure you want to revoke this session? The device will be logged out.')) {
@@ -339,6 +443,64 @@ export default function SettingsPage() {
     setIsEditingProfile(false)
   }
 
+  // Handle subscription cancellation
+  const handleCancelSubscription = async (subscriptionId: string) => {
+    setCancellingSubId(subscriptionId)
+    setErrorMessage('')
+    setSuccessMessage('')
+
+    try {
+      const response = await fetch('/api/subscriptions/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription_id: subscriptionId })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Update local state to reflect cancellation
+        // Handle both plugin subscriptions and native app subscription
+        setPluginSubscriptions(prev =>
+          prev.map(sub =>
+            sub.id === subscriptionId
+              ? { ...sub, status: 'cancelled', cancelled_at: data.subscription.cancelled_at }
+              : sub
+          )
+        )
+
+        // Update native app subscription if it's the one being cancelled
+        if (subscription?.id === subscriptionId) {
+          setSubscription(prev =>
+            prev ? { ...prev, status: 'cancelled', cancelled_at: data.subscription.cancelled_at } : null
+          )
+        }
+
+        setSuccessMessage('Subscription cancelled successfully. Your license will remain active until expiration.')
+        setTimeout(() => setSuccessMessage(''), 5000)
+      } else {
+        setErrorMessage(data.error || 'Failed to cancel subscription')
+      }
+    } catch (error) {
+      console.error('Failed to cancel subscription:', error)
+      setErrorMessage('An unexpected error occurred while cancelling subscription')
+    } finally {
+      setCancellingSubId(null)
+      setShowCancelConfirm(false)
+      setSubToCancel(null)
+    }
+  }
+
+  const confirmCancelSubscription = (subscription: any) => {
+    setSubToCancel(subscription)
+    setShowCancelConfirm(true)
+  }
+
+  const closeCancelConfirm = () => {
+    setShowCancelConfirm(false)
+    setSubToCancel(null)
+  }
+
   const handleSignOut = async () => {
     if (confirm('Are you sure you want to sign out?')) {
       await signOut()
@@ -358,6 +520,8 @@ export default function SettingsPage() {
       fetchLicenses()
     } else if (currentView === 'sessions') {
       fetchSessions()
+    } else if (currentView === 'clusters') {
+      fetchClusters()
     }
   }, [currentView])
 
@@ -1174,6 +1338,26 @@ export default function SettingsPage() {
                           ))}
                       </>
                     )}
+
+                    {/* Cancel Subscription Button for Desktop App */}
+                    {subscription.status === 'active' && (
+                      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <button
+                          onClick={() => confirmCancelSubscription(subscription)}
+                          disabled={cancellingSubId === subscription.id}
+                          className="w-full px-4 py-2 text-sm font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {cancellingSubId === subscription.id ? 'Cancelling...' : 'Cancel Subscription'}
+                        </button>
+                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
+                          Your license will remain active until {
+                            licenses.find((lic: any) => lic.license_type === 'main-application')?.expires_at
+                              ? new Date(licenses.find((lic: any) => lic.license_type === 'main-application').expires_at).toLocaleDateString()
+                              : 'expiration'
+                          }
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <p className="text-gray-600 dark:text-gray-400">No active subscription</p>
@@ -1195,8 +1379,8 @@ export default function SettingsPage() {
                     {pluginSubscriptions.map((sub: any) => {
                       // Find matching plugin licenses
                       const pluginLicenses = licenses.filter((lic: any) =>
-                        lic.license_type === 'plugin' &&
-                        lic.plugin_type === sub.plugin_type
+                        lic.license_category === 'plugin' &&
+                        lic.license_type === sub.plugin_type
                       )
 
                       return (
@@ -1257,6 +1441,22 @@ export default function SettingsPage() {
                               </div>
                             </div>
                           )}
+
+                          {/* Cancel Subscription Button */}
+                          {sub.status === 'active' && (
+                            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                              <button
+                                onClick={() => confirmCancelSubscription(sub)}
+                                disabled={cancellingSubId === sub.id}
+                                className="w-full px-4 py-2 text-sm font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              >
+                                {cancellingSubId === sub.id ? 'Cancelling...' : 'Cancel Subscription'}
+                              </button>
+                              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
+                                Your license will remain active until {pluginLicenses[0]?.expires_at ? new Date(pluginLicenses[0].expires_at).toLocaleDateString() : 'expiration'}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       )
                     })}
@@ -1267,6 +1467,56 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
+
+          {/* Cancellation Confirmation Modal */}
+          {showCancelConfirm && subToCancel && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 shadow-xl">
+                <div className="flex items-start mb-4">
+                  <ExclamationTriangleIcon className="h-6 w-6 text-orange-500 mr-3 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      Cancel Subscription?
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                      Are you sure you want to cancel your <strong>
+                        {subToCancel.subscription_category === 'native_app' || subToCancel.subscription_category === undefined
+                          ? 'Desktop Application'
+                          : subToCancel.plugin_type?.replace('_', ' ')}
+                      </strong> subscription?
+                    </p>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-3">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        <strong>Important:</strong>
+                      </p>
+                      <ul className="text-sm text-blue-700 dark:text-blue-300 mt-2 space-y-1 list-disc list-inside">
+                        <li>Your subscription will be cancelled immediately</li>
+                        <li>You will NOT be refunded for remaining time</li>
+                        <li>Your license will remain active until the expiration date</li>
+                        <li>You can continue using the plugin until your license expires</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={closeCancelConfirm}
+                    disabled={cancellingSubId !== null}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Keep Subscription
+                  </button>
+                  <button
+                    onClick={() => handleCancelSubscription(subToCancel.id)}
+                    disabled={cancellingSubId !== null}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {cancellingSubId ? 'Cancelling...' : 'Yes, Cancel Subscription'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </DashboardLayout>
     )
@@ -1713,46 +1963,365 @@ export default function SettingsPage() {
 
   // Clusters View
   if (currentView === 'clusters') {
+    const getStatusBadge = (status: string) => {
+      const statusColors = {
+        active: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+        inactive: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+        offline: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+        configuring: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+        error: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+        maintenance: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+      }
+
+      return (
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status as keyof typeof statusColors] || statusColors.inactive}`}>
+          {status}
+        </span>
+      )
+    }
+
+    const getHealthBadge = (health: string) => {
+      const healthColors = {
+        healthy: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+        degraded: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+        unhealthy: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+        unknown: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+        offline: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+      }
+
+      return (
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${healthColors[health as keyof typeof healthColors] || healthColors.unknown}`}>
+          {health}
+        </span>
+      )
+    }
+
+    const formatDate = (dateString: string) => {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
+    }
+
+    const formatStorage = (gb: number) => {
+      if (gb < 1) {
+        return `${(gb * 1024).toFixed(0)} MB`
+      }
+      return `${gb.toFixed(2)} GB`
+    }
+
+    const handleViewCluster = (clusterKey: string) => {
+      router.push(`/clusters/${clusterKey}`)
+    }
+
     return (
       <DashboardLayout>
         <div className="max-w-6xl mx-auto">
           {/* Navigation Header */}
-          <div className="flex items-center mb-6">
-            <button
-              onClick={() => setCurrentView('home')}
-              className="mr-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              <ArrowLeftIcon className="h-5 w-5" />
-            </button>
-            <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
-              Clusters
-            </h1>
-          </div>
-
-          {/* Clusters Content */}
-          <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <div className="text-center py-12">
-              <CircleStackIcon className="mx-auto h-16 w-16 text-gray-400 dark:text-gray-600" />
-              <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">
-                Cluster Management
-              </h3>
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                Manage your local and cloud clusters, connections, and storage infrastructure. Configure cluster settings and monitor their health and status.
-              </p>
-              <div className="mt-6">
-                <a
-                  href="/clusters"
-                  className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 transition-colors"
-                >
-                  <CircleStackIcon className="h-5 w-5 mr-2" />
-                  Go to Clusters Page
-                </a>
-              </div>
-              <p className="mt-4 text-xs text-gray-500 dark:text-gray-500">
-                Full cluster management features are available on the dedicated Clusters page
-              </p>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center">
+              <button
+                onClick={() => setCurrentView('home')}
+                className="mr-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                <ArrowLeftIcon className="h-5 w-5" />
+              </button>
+              <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
+                Clusters
+              </h1>
+              <button
+                onClick={() => toggleQuickstart('clusters')}
+                className="ml-4 p-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              >
+                <InformationCircleIcon className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={fetchClusters}
+                className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              >
+                Refresh
+              </button>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="inline-flex items-center px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+              >
+                <PlusIcon className="h-4 w-4 mr-1" />
+                Add Cluster
+              </button>
             </div>
           </div>
+
+          {/* Quickstart Tip */}
+          {showQuickstart['clusters'] && (
+            <QuickstartTip
+              title="Cluster Management"
+              description="Manage your local and cloud clusters, connections, and storage infrastructure."
+              steps={[
+                "View all your connected clusters and their status",
+                "Check cluster health and connection status",
+                "Click on a cluster to view detailed information"
+              ]}
+              onClose={() => toggleQuickstart('clusters')}
+            />
+          )}
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+            <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <CircleStackIcon className="h-6 w-6 text-gray-400" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                        Total Clusters
+                      </dt>
+                      <dd className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {clusters.length}
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <ComputerDesktopIcon className="h-6 w-6 text-blue-500" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                        Local Clusters
+                      </dt>
+                      <dd className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {clusters.filter(c => c.cluster_type === 'local').length}
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <CloudIcon className="h-6 w-6 text-purple-500" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                        Cloud Clusters
+                      </dt>
+                      <dd className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {clusters.filter(c => c.cluster_type === 'cloud').length}
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <CheckCircleIcon className="h-6 w-6 text-green-500" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                        Active Clusters
+                      </dt>
+                      <dd className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {clusters.filter(c => c.status === 'active').length}
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Clusters Table */}
+          {clustersLoading ? (
+            <div className="flex items-center justify-center py-12 bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2 text-gray-600 dark:text-gray-400">Loading clusters...</span>
+            </div>
+          ) : clustersError ? (
+            <div className="text-center py-12 bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
+              <XCircleIcon className="mx-auto h-12 w-12 text-red-400" />
+              <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">Error loading clusters</h3>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{clustersError}</p>
+              <div className="mt-6">
+                <button
+                  onClick={fetchClusters}
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          ) : clusters.length === 0 ? (
+            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+              <CircleStackIcon className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No clusters</h3>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Get started by connecting your first cluster.
+              </p>
+              <div className="mt-6">
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
+                >
+                  <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+                  Add Cluster
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-900">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Cluster
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Type
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Region
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Health
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Storage
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Last Updated
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {clusters.map((cluster) => (
+                      <tr
+                        key={cluster.id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 relative">
+                              {cluster.cluster_type === 'local' ? (
+                                <ComputerDesktopIcon className="h-6 w-6 text-blue-500" />
+                              ) : (
+                                <CloudIcon className="h-6 w-6 text-purple-500" />
+                              )}
+                              {cluster.cluster_type === 'local' && (
+                                <span
+                                  className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border border-white dark:border-gray-800 ${
+                                    cluster.is_connected
+                                      ? 'bg-green-500 animate-pulse'
+                                      : 'bg-gray-400'
+                                  }`}
+                                  title={cluster.is_connected ? 'Connected' : 'Offline'}
+                                />
+                              )}
+                            </div>
+                            <div className="ml-4">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {cluster.name}
+                                </span>
+                                {cluster.cluster_type === 'local' && (
+                                  <span
+                                    className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                      cluster.is_connected
+                                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                                    }`}
+                                  >
+                                    {cluster.is_connected ? 'Connected' : 'Offline'}
+                                  </span>
+                                )}
+                              </div>
+                              {cluster.cluster_key && (
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  {cluster.cluster_key}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 capitalize">
+                            {cluster.cluster_type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                          {cluster.region}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {getStatusBadge(cluster.status)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {getHealthBadge(cluster.health_status)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                          {formatStorage(cluster.storage_used_gb)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {formatDate(cluster.updated_at)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button
+                            onClick={() => handleViewCluster(cluster.slug)}
+                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 inline-flex items-center"
+                            title="View cluster details"
+                          >
+                            <EyeIcon className="h-5 w-5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Create Cluster Wizard */}
+          {showCreateModal && (
+            <div className="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50 overflow-y-auto">
+              <div className="w-full min-h-screen py-8">
+                <ClusterCreationWizard
+                  onComplete={(cluster) => {
+                    setShowCreateModal(false)
+                    fetchClusters() // Refresh the clusters list
+                    router.push(`/clusters/${cluster.slug || cluster.cluster_key}`)
+                  }}
+                  onCancel={() => setShowCreateModal(false)}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </DashboardLayout>
     )

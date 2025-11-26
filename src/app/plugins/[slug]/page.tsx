@@ -84,6 +84,7 @@ export default function PluginDetailsPage() {
   const [hasValidLicense, setHasValidLicense] = useState(false)
   const [subscription, setSubscription] = useState<any>(null)
   const [generatingLicense, setGeneratingLicense] = useState(false)
+  const [hasUsedTrial, setHasUsedTrial] = useState(false)
 
   // Modal states
   const [showConfirmModal, setShowConfirmModal] = useState(false)
@@ -173,14 +174,18 @@ export default function PluginDetailsPage() {
         if (data.hasValidLicense) {
           setHasValidLicense(true)
           setSubscription(data.subscription)
+          setHasUsedTrial(true) // If they have a valid license, they've used their trial
         } else {
           setHasValidLicense(false)
           setSubscription(data.subscription)
+          // Check if they have any previous subscription (including expired trials)
+          setHasUsedTrial(!!data.subscription)
           // Don't redirect - let the user see the plugin details page with subscribe buttons
         }
       } else {
         // No subscription found - show the plugin details page with subscribe options
         setHasValidLicense(false)
+        setHasUsedTrial(false)
       }
     } catch (err) {
       console.error('Error checking plugin subscription:', err)
@@ -383,6 +388,36 @@ export default function PluginDetailsPage() {
     }
   }
 
+  const handleSubscribeNow = async () => {
+    try {
+      // Redirect to Stripe Customer Portal for subscription management
+      const headers = await getAuthHeaders()
+      const response = await fetch('/api/stripe/create-billing-portal-session', {
+        method: 'POST',
+        headers
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create billing portal session')
+      }
+
+      // Redirect to Stripe portal
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        throw new Error('No portal URL returned')
+      }
+    } catch (err: any) {
+      console.error('Error redirecting to billing portal:', err)
+      setModalData({
+        errorMessage: err.message || 'Failed to open billing portal'
+      })
+      setShowErrorModal(true)
+    }
+  }
+
   const handleRequestLicense = () => {
     // For enterprise plugins, open email to contact sales
     if (plugin?.pricing_model === 'enterprise') {
@@ -390,9 +425,8 @@ export default function PluginDetailsPage() {
       const body = encodeURIComponent(`Hello,\n\nI would like to request a license for ${plugin.display_name}.\n\nUser Email: ${user?.email}\nPlugin: ${plugin.display_name} (${plugin.slug})\nVersion: ${plugin.current_version}\n\nPlease provide pricing and licensing information.\n\nThank you!`)
       window.location.href = `mailto:sales@lyceum.com?subject=${subject}&body=${body}`
     } else if (slug === 'klippel-qc' || slug === 'apx500') {
-      // Show confirmation modal for paid license
-      setModalData({ licenseType: 'paid' })
-      setShowConfirmModal(true)
+      // Redirect to Stripe portal for subscription management
+      handleSubscribeNow()
     } else {
       // For other subscription-based plugins, go to subscribe page
       router.push(`/plugins/${slug}/subscribe`)
@@ -828,32 +862,36 @@ export default function PluginDetailsPage() {
                   </div>
                 ) : (
                   <>
-                    <button
-                      onClick={handleRequestLicense}
-                      disabled={generatingLicense}
-                      className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {generatingLicense ? (
-                        'Generating License...'
-                      ) : plugin.pricing_model === 'enterprise' ? (
-                        <>
-                          <EnvelopeIcon className="h-5 w-5 mr-2" />
-                          Contact Sales
-                        </>
-                      ) : plugin.pricing_model === 'subscription_monthly' || plugin.pricing_model === 'subscription_annual' ? (
-                        <>
-                          <ShoppingCartIcon className="h-5 w-5 mr-2" />
-                          Subscribe Now
-                        </>
-                      ) : (
-                        <>
-                          <ShoppingCartIcon className="h-5 w-5 mr-2" />
-                          Purchase License
-                        </>
-                      )}
-                    </button>
+                    {/* Show "Subscribe Now" ONLY if user has already used their trial */}
+                    {hasUsedTrial && (
+                      <button
+                        onClick={handleRequestLicense}
+                        disabled={generatingLicense}
+                        className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {generatingLicense ? (
+                          'Generating License...'
+                        ) : plugin.pricing_model === 'enterprise' ? (
+                          <>
+                            <EnvelopeIcon className="h-5 w-5 mr-2" />
+                            Contact Sales
+                          </>
+                        ) : plugin.pricing_model === 'subscription_monthly' || plugin.pricing_model === 'subscription_annual' ? (
+                          <>
+                            <ShoppingCartIcon className="h-5 w-5 mr-2" />
+                            Subscribe Now
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingCartIcon className="h-5 w-5 mr-2" />
+                            Purchase License
+                          </>
+                        )}
+                      </button>
+                    )}
 
-                    {plugin.has_free_trial && plugin.trial_duration_days > 0 && (
+                    {/* Show trial button ONLY if user has NOT used their trial yet */}
+                    {!hasUsedTrial && plugin.has_free_trial && plugin.trial_duration_days > 0 && (
                       <button
                         onClick={handleStartTrial}
                         disabled={generatingLicense}
@@ -864,7 +902,7 @@ export default function PluginDetailsPage() {
                         ) : (
                           <>
                             <ClockIcon className="h-5 w-5 mr-2" />
-                            {plugin.trial_duration_days}-Day Free Trial
+                            Start {plugin.trial_duration_days}-Day Free Trial
                           </>
                         )}
                       </button>

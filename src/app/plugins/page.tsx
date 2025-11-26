@@ -272,28 +272,6 @@ export default function PluginsStorePage() {
         </div>
       </div>
 
-      {/* Warning banner if no payment method */}
-      {!hasPaymentMethod && (
-        <div className="bg-yellow-50 dark:bg-yellow-900 border-l-4 border-yellow-400 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <CreditCardIcon className="h-5 w-5 text-yellow-400" />
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-yellow-700 dark:text-yellow-200">
-                Add a payment method to your profile to purchase plugins or start free trials.{' '}
-                <button
-                  onClick={() => router.push('/settings?tab=billing')}
-                  className="font-medium underline hover:text-yellow-600"
-                >
-                  Add payment method
-                </button>
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Filters */}
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
