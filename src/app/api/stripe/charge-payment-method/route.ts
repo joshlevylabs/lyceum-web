@@ -94,6 +94,8 @@ export async function POST(request: NextRequest) {
     // Create subscription record in database
     const subscriptionData = {
       user_id: user.id,
+      subscription_category: 'native_app',
+      plugin_type: null,
       subscription_type: subscription_type || 'paid',
       status: 'active',
       amount_paid_cents: amount,
@@ -104,20 +106,146 @@ export async function POST(request: NextRequest) {
       updated_at: new Date().toISOString()
     }
 
-    const { error: subError } = await supabase
-      .from('user_subscriptions_native_app')
+    const { data: subscription, error: subError } = await supabase
+      .from('subscriptions')
       .insert([subscriptionData])
+      .select()
+      .single()
 
     if (subError) {
       console.error('Error creating subscription record:', subError)
       // Don't fail the whole operation - payment was successful
     }
 
+    // Auto-create license for the subscription
+    let createdLicense = null
+    if (subscription) {
+      try {
+        // Get user's company to determine brand type
+        const { data: userProfile } = await supabase
+          .from('user_profiles')
+          .select('company')
+          .eq('id', user.id)
+          .single()
+
+        const centcomCompanies = [
+          'centcom',
+          'sonance',
+          'blaze',
+          'iport',
+          'danainnovations',
+          'dana innovations',
+          'james',
+          'trufig'
+        ]
+
+        const companyLower = userProfile?.company?.toLowerCase() || ''
+        const isCentcom = centcomCompanies.some(name => companyLower.includes(name))
+        const brandType = isCentcom ? 'centcom' : 'lyceum'
+
+        // Generate license key
+        const generateKeyCode = () => {
+          const prefix = `LYC-APP-${new Date().getFullYear()}`
+          const random = Math.random().toString(36).substr(2, 8).toUpperCase()
+          return `${prefix}-${random}`
+        }
+
+        const keyCode = generateKeyCode()
+        const subType = subscription_type || 'paid'
+        const isTrialLicense = subType === 'trial'
+        const expiresAt = isTrialLicense
+          ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+          : null
+
+        const timeLimitType = isTrialLicense ? 'trial_30' : 'unlimited'
+        const customTrialDays = isTrialLicense ? 30 : null
+
+        // Create license
+        const licenseData = {
+          key_code: keyCode,
+          license_type: 'main-application',
+          status: isTrialLicense ? 'trial' : 'active',
+          max_users: 1,
+          max_projects: 100,
+          max_storage_gb: 50,
+          features: [
+            'desktop_app_access',
+            'local_cluster_support',
+            'data_sync',
+            'offline_mode',
+            'auto_updates',
+            brandType === 'centcom' ? 'centcom_branding' : 'lyceum_branding',
+            ...(isTrialLicense ? ['trial_license'] : ['paid_license'])
+          ],
+          expires_at: expiresAt,
+          assigned_to: user.id,
+          assigned_at: new Date().toISOString(),
+          created_by: user.id,
+          time_limit_type: timeLimitType,
+          custom_trial_days: customTrialDays,
+          trial_extension_reason: null,
+          enabled_plugins: [],
+          plugin_permissions: {},
+          allowed_user_types: ['engineer', 'operator', 'admin'],
+          access_level: 'standard',
+          restrictions: {},
+          license_config: {
+            brand_type: brandType,
+            auto_generated: true,
+            generated_via: 'charge_payment_method',
+            subscription_type: subType,
+            version: '2.0',
+            created_at: new Date().toISOString()
+          },
+          usage_stats: {
+            generated_at: new Date().toISOString(),
+            user_email: user.email
+          }
+        }
+
+        const { data: license, error: licenseError } = await supabase
+          .from('license_keys')
+          .insert([licenseData])
+          .select()
+          .single()
+
+        if (licenseError) {
+          console.error('⚠️ Failed to auto-create license:', licenseError)
+        } else {
+          createdLicense = license
+
+          // Create relationship between license and subscription
+          await supabase
+            .from('license_subscription_relationships')
+            .insert({
+              license_id: license.id,
+              subscription_id: subscription.id,
+              relationship_type: subType === 'trial' ? 'trial_conversion' : 'standard',
+              notes: 'Auto-created on payment charge'
+            })
+
+          console.log('✅ Auto-created license via charge-payment-method:', {
+            license_id: license.id,
+            key_code: license.key_code,
+            subscription_id: subscription.id
+          })
+        }
+      } catch (licenseError) {
+        console.error('⚠️ Failed to auto-create license:', licenseError)
+      }
+    }
+
     return NextResponse.json({
       success: true,
       payment_intent_id: paymentIntent.id,
       status: paymentIntent.status,
-      amount: paymentIntent.amount
+      amount: paymentIntent.amount,
+      license: createdLicense ? {
+        key_code: createdLicense.key_code,
+        license_type: createdLicense.license_type,
+        status: createdLicense.status,
+        expires_at: createdLicense.expires_at
+      } : null
     })
 
   } catch (error: any) {

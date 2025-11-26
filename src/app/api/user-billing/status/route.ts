@@ -10,10 +10,10 @@ export async function GET(request: NextRequest) {
       return response || NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    // Get user profile from database
+    // Get user profile from database (only stripe_customer_id is stored here now)
     const { data: profile, error: profileError } = await dbOperations.supabaseAdmin
       .from('user_profiles')
-      .select('stripe_customer_id, subscription_id, subscription_status, plan_name')
+      .select('stripe_customer_id')
       .eq('id', user.id)
       .single();
 
@@ -21,6 +21,15 @@ export async function GET(request: NextRequest) {
       console.error('Error fetching user profile:', profileError);
       return NextResponse.json({ error: 'Failed to fetch user profile' }, { status: 500 });
     }
+
+    // Get subscription data from database
+    const { data: dbSubscription } = await dbOperations.supabaseAdmin
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('subscription_category', 'native_app')
+      .eq('status', 'active')
+      .maybeSingle();
 
     // If we have Stripe customer ID, get latest info from Stripe
     let stripeInfo = null;
@@ -43,12 +52,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Return combined data (Stripe data takes precedence if available)
+    // Return combined data (Stripe data takes precedence if available, then database subscription)
     const billingData = {
       stripe_customer_id: profile?.stripe_customer_id,
-      subscription_id: stripeInfo?.subscription_id || profile?.subscription_id,
-      subscription_status: stripeInfo?.subscription_status || profile?.subscription_status,
-      plan_name: stripeInfo?.plan_name || profile?.plan_name,
+      subscription_id: stripeInfo?.subscription_id || dbSubscription?.stripe_subscription_id,
+      subscription_status: stripeInfo?.subscription_status || dbSubscription?.status,
+      plan_name: stripeInfo?.plan_name || dbSubscription?.subscription_type,
       current_period_end: stripeInfo?.current_period_end,
       cancel_at_period_end: stripeInfo?.cancel_at_period_end,
     };

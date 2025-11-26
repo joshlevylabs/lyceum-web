@@ -80,7 +80,7 @@ function SuccessPageContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <Card className="w-full max-w-md mx-4">
+        <Card className="w-full max-w-md mx-4 bg-white shadow-lg">
           <CardContent className="text-center p-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Processing your subscription...</h2>
@@ -94,12 +94,12 @@ function SuccessPageContent() {
   if (processingError) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <Card className="w-full max-w-md mx-4">
+        <Card className="w-full max-w-md mx-4 bg-white shadow-lg">
           <CardContent className="text-center p-8">
             <AlertTriangle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Processing Issue</h2>
             <p className="text-gray-600 mb-4">{processingError}</p>
-            <Button 
+            <Button
               onClick={() => window.location.reload()}
               variant="outline"
             >
@@ -113,7 +113,7 @@ function SuccessPageContent() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <Card className="w-full max-w-2xl mx-4">
+      <Card className="w-full max-w-2xl mx-4 bg-white shadow-lg">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4">
             <CheckCircle className="w-16 h-16 text-green-500" />

@@ -49,9 +49,10 @@ export async function GET(request: NextRequest) {
     if (existingLicense) {
       // Check if subscription record exists, create if missing (backfill)
       const { data: existingSubscription } = await supabase
-        .from('user_subscriptions_native_app')
+        .from('subscriptions')
         .select('*')
         .eq('user_id', user.id)
+        .eq('subscription_category', 'native_app')
         .eq('status', 'active')
         .maybeSingle()
 
@@ -61,6 +62,8 @@ export async function GET(request: NextRequest) {
         const isExistingTrial = !!existingLicense.expires_at
         const subscriptionData = {
           user_id: user.id,
+          subscription_category: 'native_app',
+          plugin_type: null,
           subscription_type: isExistingTrial ? 'trial' : 'paid',
           status: 'active',
           amount_paid_cents: isExistingTrial ? 0 : 4900,
@@ -72,7 +75,7 @@ export async function GET(request: NextRequest) {
         }
 
         await supabase
-          .from('user_subscriptions_native_app')
+          .from('subscriptions')
           .insert([subscriptionData])
       }
 
@@ -141,9 +144,10 @@ export async function POST(request: NextRequest) {
     if (!requestedLicenseType) {
       console.log('No license_type provided, checking user subscription...')
       const { data: subscription, error: subError } = await supabase
-        .from('user_subscriptions_native_app')
+        .from('subscriptions')
         .select('subscription_type, status')
         .eq('user_id', user.id)
+        .eq('subscription_category', 'native_app')
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(1)
@@ -163,42 +167,54 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check if user has already had a trial (prevent duplicate trials)
-    if (requestedLicenseType === 'trial') {
-      const { data: previousTrials } = await supabase
-        .from('user_subscriptions_native_app')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('subscription_type', 'trial')
-
-      // If user has ANY previous trial (started, completed, or cancelled), they cannot get another trial license
-      if (previousTrials && previousTrials.length > 0) {
-        console.log('❌ User attempted to generate duplicate trial license:', {
-          userId: user.id,
-          previousTrialCount: previousTrials.length
-        })
-        return NextResponse.json(
-          {
-            error: 'You have already used your free trial for this product. Please subscribe to a paid plan to get a license.',
-            can_use_trial: false,
-            previous_trial_count: previousTrials.length
-          },
-          { status: 400 }
-        )
-      }
-    }
-
-    // Check if user already has a main-application license
-    // Use limit(1) to handle race conditions where multiple licenses might exist
+    // Check if user already has a main-application license (active or trial)
+    // Do this BEFORE checking for previous trials to handle subscription-without-license case
     const { data: existingLicense, error: checkError } = await supabase
       .from('license_keys')
       .select('*')
       .eq('assigned_to', user.id)
       .eq('license_type', 'main-application')
-      .eq('status', 'active')
+      .in('status', ['active', 'trial'])
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle()
+
+    // Check if user already had a trial (prevent duplicate trials)
+    // BUT allow license creation if they have a trial subscription with NO license
+    // (this handles the case where subscription was created but license creation failed)
+    if (requestedLicenseType === 'trial') {
+      const { data: previousTrials } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('subscription_category', 'native_app')
+        .eq('subscription_type', 'trial')
+
+      if (previousTrials && previousTrials.length > 0) {
+        // Check if they already have a trial or active license
+        if (existingLicense) {
+          console.log('❌ User attempted to generate duplicate trial license:', {
+            userId: user.id,
+            previousTrialCount: previousTrials.length,
+            existingLicenseStatus: existingLicense.status
+          })
+          return NextResponse.json(
+            {
+              error: 'You have already used your free trial for this product. Please subscribe to a paid plan to get a license.',
+              can_use_trial: false,
+              previous_trial_count: previousTrials.length
+            },
+            { status: 400 }
+          )
+        } else {
+          // They have a trial subscription but NO license - allow license creation
+          console.log('✅ User has trial subscription but no license, creating missing license:', {
+            userId: user.id,
+            previousTrialCount: previousTrials.length
+          })
+        }
+      }
+    }
 
     if (checkError) {
       console.error('Error checking existing license:', checkError)
@@ -210,9 +226,10 @@ export async function POST(request: NextRequest) {
 
       // Check if subscription record exists, create if missing
       const { data: existingSubscription } = await supabase
-        .from('user_subscriptions_native_app')
+        .from('subscriptions')
         .select('*')
         .eq('user_id', user.id)
+        .eq('subscription_category', 'native_app')
         .eq('status', 'active')
         .maybeSingle()
 
@@ -222,6 +239,8 @@ export async function POST(request: NextRequest) {
         const isExistingTrial = !!existingLicense.expires_at
         const subscriptionData = {
           user_id: user.id,
+          subscription_category: 'native_app',
+          plugin_type: null,
           subscription_type: isExistingTrial ? 'trial' : 'paid',
           status: 'active',
           amount_paid_cents: isExistingTrial ? 0 : 4900,
@@ -233,7 +252,7 @@ export async function POST(request: NextRequest) {
         }
 
         await supabase
-          .from('user_subscriptions_native_app')
+          .from('subscriptions')
           .insert([subscriptionData])
       }
 
@@ -345,23 +364,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert the license
-    const { data: license, error: insertError } = await supabase
+    const { data: licenseArray, error: insertError } = await supabase
       .from('license_keys')
       .insert([licenseData])
-      .select()
-      .single()
+      .select('id, key_code, license_type, status, assigned_to, expires_at, tier, max_users, max_projects, max_storage_gb, features')
 
-    if (insertError) {
+    const license = licenseArray?.[0]
+
+    if (insertError || !license) {
       console.error('License creation error:', insertError)
       return NextResponse.json({
         error: 'Failed to create license',
-        details: insertError.message
+        details: insertError?.message || 'No license returned'
       }, { status: 400 })
     }
 
     // Also create a subscription record for tracking
     const subscriptionData = {
       user_id: user.id,
+      subscription_category: 'native_app',
+      plugin_type: null,
       subscription_type: requestedLicenseType, // 'trial' or 'paid'
       status: 'active',
       amount_paid_cents: isTrialLicense ? 0 : 4900, // $49.00 for paid, $0 for trial
@@ -373,7 +395,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { error: subscriptionError } = await supabase
-      .from('user_subscriptions_native_app')
+      .from('subscriptions')
       .insert([subscriptionData])
 
     if (subscriptionError) {

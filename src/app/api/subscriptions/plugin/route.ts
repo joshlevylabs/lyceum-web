@@ -47,9 +47,10 @@ export async function GET(request: NextRequest) {
 
     // Get the most recent subscription for this plugin (regardless of status)
     const { data: subscription, error: subError } = await supabase
-      .from('plugin_subscriptions')
+      .from('subscriptions')
       .select('*')
       .eq('user_id', user.id)
+      .eq('subscription_category', 'plugin')
       .eq('plugin_type', pluginType)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -107,7 +108,7 @@ export async function GET(request: NextRequest) {
           .eq('id', license.id)
 
         await supabase
-          .from('plugin_subscriptions')
+          .from('subscriptions')
           .update({ status: 'expired' })
           .eq('id', subscription.id)
       }
@@ -178,9 +179,10 @@ export async function POST(request: NextRequest) {
 
     // Check if user already has an active subscription for this plugin
     const { data: existingSubscription } = await supabase
-      .from('plugin_subscriptions')
+      .from('subscriptions')
       .select('*')
       .eq('user_id', user.id)
+      .eq('subscription_category', 'plugin')
       .eq('plugin_type', plugin_type)
       .eq('status', 'active')
       .single()
@@ -198,9 +200,10 @@ export async function POST(request: NextRequest) {
     // Check if user already had a trial for this plugin
     if (subscription_type === 'trial') {
       const { data: previousTrial } = await supabase
-        .from('plugin_subscriptions')
+        .from('subscriptions')
         .select('*')
         .eq('user_id', user.id)
+        .eq('subscription_category', 'plugin')
         .eq('plugin_type', plugin_type)
         .eq('subscription_type', 'trial')
         .single()
@@ -225,9 +228,10 @@ export async function POST(request: NextRequest) {
 
     // Create subscription
     const { data: subscription, error: createError } = await supabase
-      .from('plugin_subscriptions')
+      .from('subscriptions')
       .insert({
         user_id: user.id,
+        subscription_category: 'plugin',
         plugin_type,
         subscription_type,
         status: 'active',
@@ -246,9 +250,137 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Auto-create plugin license for this subscription
+    let createdLicense = null
+    try {
+      // Generate license key
+      const generateKeyCode = () => {
+        const prefix = plugin_type === 'klippel_qc' ? 'LYC-KLIPPEL' : 'LYC-APX500'
+        const year = new Date().getFullYear()
+        const random = Math.random().toString(36).substr(2, 8).toUpperCase()
+        return `${prefix}-${year}-${random}`
+      }
+
+      const keyCode = generateKeyCode()
+
+      // Determine license expiration based on subscription type
+      const isTrialLicense = subscription_type === 'trial'
+      const expiresAt = isTrialLicense
+        ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
+        : null // No expiration for paid
+
+      const timeLimitType = isTrialLicense ? 'trial_30' : 'unlimited'
+      const customTrialDays = isTrialLicense ? 30 : null
+
+      // Get plugin-specific features
+      const getPluginFeatures = (pluginType: PluginType) => {
+        const baseFeatures = [
+          'plugin_access',
+          'data_integration',
+          ...(isTrialLicense ? ['trial_license'] : ['paid_license'])
+        ]
+
+        if (pluginType === 'klippel_qc') {
+          return [
+            ...baseFeatures,
+            'klippel_qc_analysis',
+            'klippel_qc_reporting',
+            'klippel_qc_export'
+          ]
+        } else if (pluginType === 'apx500') {
+          return [
+            ...baseFeatures,
+            'apx500_measurements',
+            'apx500_analysis',
+            'apx500_export'
+          ]
+        }
+
+        return baseFeatures
+      }
+
+      // Create plugin license
+      const licenseData = {
+        key_code: keyCode,
+        license_type: plugin_type,
+        status: isTrialLicense ? 'trial' : 'active',
+        license_category: 'plugin',
+        tier: 'basic',
+        max_users: 1,
+        max_projects: 100,
+        max_storage_gb: 50,
+        features: getPluginFeatures(plugin_type),
+        expires_at: expiresAt,
+        assigned_to: user.id,
+        assigned_at: new Date().toISOString(),
+        created_by: user.id,
+        time_limit_type: timeLimitType,
+        custom_trial_days: customTrialDays,
+        trial_extension_reason: null,
+        enabled_plugins: [],
+        plugin_permissions: {},
+        allowed_user_types: ['engineer', 'operator', 'admin'],
+        access_level: 'standard',
+        restrictions: {},
+        license_config: {
+          plugin_type: plugin_type,
+          license_category: 'plugin',
+          auto_generated: true,
+          generated_via: 'subscription_creation',
+          subscription_type: subscription_type,
+          version: '2.0',
+          created_at: new Date().toISOString()
+        },
+        usage_stats: {
+          generated_at: new Date().toISOString(),
+          user_email: user.email
+        }
+      }
+
+      const { data: license, error: licenseError } = await supabase
+        .from('license_keys')
+        .insert([licenseData])
+        .select()
+        .single()
+
+      if (licenseError) {
+        console.error('⚠️ Failed to auto-create plugin license:', licenseError)
+      } else {
+        createdLicense = license
+
+        // Create relationship between license and subscription
+        await supabase
+          .from('license_subscription_relationships')
+          .insert({
+            license_id: license.id,
+            subscription_id: subscription.id,
+            relationship_type: subscription_type === 'trial' ? 'trial_conversion' : 'standard',
+            notes: `Auto-created on ${plugin_type} subscription creation`
+          })
+
+        console.log('✅ Auto-created plugin license and relationship:', {
+          license_id: license.id,
+          key_code: license.key_code,
+          subscription_id: subscription.id,
+          plugin_type,
+          type: subscription_type
+        })
+      }
+    } catch (licenseError) {
+      // Don't fail the subscription creation if license creation fails
+      console.error('⚠️ Failed to auto-create plugin license:', licenseError)
+    }
+
     return NextResponse.json({
       success: true,
       subscription,
+      license: createdLicense ? {
+        key_code: createdLicense.key_code,
+        license_type: createdLicense.license_type,
+        status: createdLicense.status,
+        expires_at: createdLicense.expires_at,
+        features: createdLicense.features
+      } : null,
       message: subscription_type === 'trial'
         ? `Trial subscription for ${plugin_type} activated! Valid for 30 days.`
         : `Paid subscription for ${plugin_type} activated!`

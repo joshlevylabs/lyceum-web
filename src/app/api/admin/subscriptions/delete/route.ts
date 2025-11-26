@@ -59,9 +59,10 @@ export async function DELETE(request: NextRequest) {
 
     // Delete the subscription
     const { error: deleteError } = await supabase
-      .from('user_subscriptions_native_app')
+      .from('subscriptions')
       .delete()
       .eq('id', subscription_id)
+      .eq('subscription_category', 'native_app')
 
     if (deleteError) {
       console.error('Error deleting subscription:', deleteError)

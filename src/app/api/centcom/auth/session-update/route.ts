@@ -12,12 +12,34 @@ export async function POST(request: NextRequest) {
   try {
     // Parse request body
     const body = await request.json();
-    const { session_id, version, instance_id, user_agent, platform, build, timestamp } = body;
+    const {
+      session_id,
+      version,
+      instance_id,
+      user_agent,
+      platform,
+      build,
+      timestamp,
+      // New fields
+      device_name,
+      location,
+      license_type,
+      mfa_verified,
+      ip_address,
+      browser,
+      os,
+      session_type = 'desktop', // Default to desktop for Centcom
+      session_metadata
+    } = body;
 
     console.log('Session update request received:', {
       session_id: session_id ? `${session_id.substring(0, 20)}...` : 'missing',
       version,
       platform,
+      device_name,
+      location,
+      license_type,
+      session_type,
       instance_id
     });
 
@@ -33,22 +55,110 @@ export async function POST(request: NextRequest) {
 
     const token = authHeader.substring(7);
 
-    // Decode Lyceum JWT token to get user ID
-    const userId = getUserIdFromToken(token);
-    if (!userId) {
-      console.warn('Session update: Invalid or expired token');
-      return NextResponse.json(
-        { success: false, error: 'Invalid token' },
-        { status: 401 }
-      );
-    }
+    console.log('🔐 Session update: Token received:', {
+      tokenLength: token.length,
+      tokenPreview: token.substring(0, 20) + '...',
+      sessionType: session_type || 'desktop'
+    });
 
-    console.log('Session update for user:', userId);
-
-    // Create Supabase client with service role
+    // Create Supabase client with service role (needed for both auth and DB operations)
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
     const supabase = createClient(supabaseUrl, serviceKey);
+
+    // Try to decode as Lyceum JWT token first (for desktop sessions)
+    let userId = getUserIdFromToken(token);
+    let tokenType: 'lyceum' | 'supabase' = 'lyceum';
+
+    console.log('🔍 Lyceum JWT decode result:', { userId, success: !!userId });
+
+    // If Lyceum JWT decode fails, try Supabase token (for web sessions)
+    if (!userId) {
+      tokenType = 'supabase';
+      console.log('⚠️ Lyceum token decode failed, trying Supabase token...');
+
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+      console.log('🔍 Supabase token verification:', {
+        success: !!user,
+        userId: user?.id,
+        error: authError?.message
+      });
+
+      if (authError || !user) {
+        console.warn('❌ Session update: Invalid token (neither Lyceum nor Supabase)', {
+          authError: authError?.message,
+          hasUser: !!user
+        });
+        return NextResponse.json(
+          { success: false, error: 'Invalid token', details: authError?.message },
+          { status: 401 }
+        );
+      }
+
+      userId = user.id;
+    }
+
+    console.log('✅ Session update for user:', userId, 'via', tokenType, 'token');
+
+    // Get client IP address (for risk score calculation)
+    const clientIp = ip_address ||
+      request.headers.get('x-forwarded-for')?.split(',')[0] ||
+      request.headers.get('x-real-ip') ||
+      'unknown';
+
+    // Check if session exists and is revoked
+    const { data: existingSession } = await supabase
+      .from('user_sessions')
+      .select('revoked_at, ip_address')
+      .eq('session_id', session_id)
+      .single();
+
+    if (existingSession?.revoked_at) {
+      console.warn('Session update rejected: Session has been revoked');
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'session_revoked',
+          message: 'This session has been revoked. Please log in again.'
+        },
+        { status: 403 }
+      );
+    }
+
+    // Check session limits based on license type
+    const effectiveLicenseType = license_type || 'basic';
+    const { data: limitCheck } = await supabase
+      .rpc('check_session_limit', {
+        p_user_id: userId,
+        p_license_type: effectiveLicenseType
+      })
+      .single();
+
+    // If over limit and this is a new session, auto-revoke oldest
+    if (limitCheck && !limitCheck.within_limit && !existingSession) {
+      console.log(`Session limit exceeded for ${effectiveLicenseType} license. Auto-revoking oldest session.`);
+      await supabase.rpc('auto_revoke_oldest_session', {
+        p_user_id: userId,
+        p_license_type: effectiveLicenseType
+      });
+    }
+
+    // Detect IP address change
+    const ipChanged = existingSession?.ip_address && existingSession.ip_address !== clientIp;
+    const lastIpChange = ipChanged ? new Date().toISOString() : undefined;
+
+    // Calculate risk score
+    const { data: riskScoreData } = await supabase
+      .rpc('calculate_session_risk_score', {
+        p_user_id: userId,
+        p_session_id: session_id,
+        p_ip_address: clientIp,
+        p_mfa_verified: mfa_verified || false,
+        p_location: location || 'unknown'
+      });
+
+    const calculatedRiskScore = riskScoreData || 0;
 
     // Update session metadata in database
     const { error: updateError } = await supabase
@@ -61,6 +171,17 @@ export async function POST(request: NextRequest) {
         user_agent,
         platform,
         build,
+        session_type,
+        device_name,
+        location,
+        license_type: effectiveLicenseType,
+        mfa_verified: mfa_verified || false,
+        risk_score: calculatedRiskScore,
+        ip_address: clientIp,
+        browser,
+        os,
+        session_metadata: session_metadata || {},
+        last_ip_change: lastIpChange,
         last_updated: timestamp || new Date().toISOString(),
         updated_at: new Date().toISOString()
       }, {
@@ -94,11 +215,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Also update session_activity for status tracking
+    await supabase
+      .from('session_activity')
+      .upsert({
+        session_id,
+        user_id: userId,
+        status: 'active',
+        last_activity: timestamp || new Date().toISOString(),
+        platform,
+        version,
+        synced_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'session_id'
+      });
+
     console.log('✅ Session updated successfully for user:', userId);
 
     return NextResponse.json({
       success: true,
-      message: 'Session updated successfully'
+      message: 'Session updated successfully',
+      risk_score: calculatedRiskScore,
+      session_limit: limitCheck
     });
 
   } catch (error: any) {

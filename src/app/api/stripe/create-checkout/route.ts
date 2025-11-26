@@ -27,13 +27,32 @@ export async function POST(request: NextRequest) {
     }
 
     // Create checkout session
+    const origin = request.headers.get('origin');
+    const successUrl = `${origin}/native-app/checkout-success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${origin}/native-app/subscribe?cancelled=true`;
+
+    console.log('🔧 Creating Stripe checkout session:', {
+      userId: user.id,
+      priceId,
+      plan,
+      origin,
+      successUrl,
+      cancelUrl
+    });
+
     const session = await createCheckoutSession({
       priceId,
       userId: user.id,
       userEmail: user.email,
       clusterId,
-      successUrl: `${request.headers.get('origin')}/admin/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${request.headers.get('origin')}/admin/billing/canceled`,
+      successUrl,
+      cancelUrl,
+    });
+
+    console.log('✅ Stripe checkout session created:', {
+      sessionId: session.id,
+      checkoutUrl: session.url,
+      actualSuccessUrl: session.success_url
     });
 
     return NextResponse.json({

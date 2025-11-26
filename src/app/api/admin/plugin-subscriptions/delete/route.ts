@@ -59,9 +59,10 @@ export async function DELETE(request: NextRequest) {
 
     // Delete the plugin subscription
     const { error: deleteError } = await supabase
-      .from('plugin_subscriptions')
+      .from('subscriptions')
       .delete()
       .eq('id', subscription_id)
+      .eq('subscription_category', 'plugin')
 
     if (deleteError) {
       console.error('Error deleting plugin subscription:', deleteError)

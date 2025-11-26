@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
     // Fetch subscription/payment information from native app subscriptions
     // Fetch the most recent subscription (active, cancelled, or expired)
     const { data: nativeAppSubscription, error: subscriptionError } = await supabase
-      .from('user_subscriptions_native_app')
+      .from('subscriptions')
       .select(`
         id,
         subscription_type,
@@ -120,6 +120,7 @@ export async function GET(request: NextRequest) {
         updated_at
       `)
       .eq('user_id', userId)
+      .eq('subscription_category', 'native_app')
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle()

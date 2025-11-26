@@ -33,9 +33,10 @@ export async function POST(request: NextRequest) {
 
     // Check if user has already had a trial for this product (prevent duplicate trials)
     const { data: previousTrials, error: trialCheckError } = await dbOperations.supabaseAdmin
-      .from('user_subscriptions_native_app')
+      .from('subscriptions')
       .select('*')
       .eq('user_id', user.id)
+      .eq('subscription_category', 'native_app')
       .eq('subscription_type', 'trial');
 
     if (trialCheckError) {

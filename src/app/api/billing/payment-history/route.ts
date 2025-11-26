@@ -66,9 +66,10 @@ export async function GET(request: NextRequest) {
 
     // Fetch main app subscriptions with payments (fallback)
     const { data: mainSubscriptions, error: mainError } = await supabase
-      .from('user_subscriptions_native_app')
+      .from('subscriptions')
       .select('*')
       .eq('user_id', userId)
+      .eq('subscription_category', 'native_app')
       .eq('subscription_type', 'paid')
       .order('created_at', { ascending: false })
 
@@ -78,9 +79,10 @@ export async function GET(request: NextRequest) {
 
     // Fetch plugin subscriptions
     const { data: pluginSubscriptions, error: pluginError } = await supabase
-      .from('plugin_subscriptions')
+      .from('subscriptions')
       .select('*')
       .eq('user_id', userId)
+      .eq('subscription_category', 'plugin')
       .order('created_at', { ascending: false })
 
     if (pluginError) {

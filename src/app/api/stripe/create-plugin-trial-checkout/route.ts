@@ -33,9 +33,10 @@ export async function POST(request: NextRequest) {
 
     // Check if user already has a trial for this plugin (prevent duplicate trials)
     const { data: previousTrials, error: trialCheckError } = await dbOperations.supabaseAdmin
-      .from('plugin_subscriptions')
+      .from('subscriptions')
       .select('*')
       .eq('user_id', user.id)
+      .eq('subscription_category', 'plugin')
       .eq('plugin_type', plugin_type)
       .eq('subscription_type', 'trial');
 

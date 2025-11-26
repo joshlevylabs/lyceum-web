@@ -82,6 +82,8 @@ export async function createCheckoutSession({
     metadata: {
       userId,
       clusterId: clusterId || '',
+      subscription_type: 'trial', // Mark as trial since trial_period_days is set
+      product_type: 'native_app_license',
     },
     line_items: [
       {
@@ -94,6 +96,7 @@ export async function createCheckoutSession({
     cancel_url: cancelUrl,
     allow_promotion_codes: true,
     billing_address_collection: 'required',
+    payment_method_collection: 'always', // Collect payment method even for trials
     tax_id_collection: {
       enabled: true,
     },
@@ -102,6 +105,8 @@ export async function createCheckoutSession({
       metadata: {
         userId,
         clusterId: clusterId || '',
+        subscription_type: 'trial', // Mark as trial since trial_period_days is set
+        product_type: 'native_app_license',
       },
     },
   });

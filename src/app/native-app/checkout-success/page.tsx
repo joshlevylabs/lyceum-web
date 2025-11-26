@@ -15,6 +15,7 @@ function CheckoutSuccessContent() {
   const [processing, setProcessing] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [subscriptionDetails, setSubscriptionDetails] = useState<any>(null)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -28,7 +29,7 @@ function CheckoutSuccessContent() {
       return
     }
 
-    const processCheckout = async () => {
+    const checkSubscriptionStatus = async () => {
       try {
         const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession()
         if (!session?.access_token) {
@@ -37,80 +38,103 @@ function CheckoutSuccessContent() {
           return
         }
 
-        console.log('✅ Payment successful! Processing checkout:', sessionId)
+        console.log('✅ Payment successful! Processing subscription:', sessionId)
 
-        // Step 1: Verify the Stripe Checkout session
-        const verifyResponse = await fetch('/api/stripe/verify-checkout-session', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ session_id: sessionId })
-        })
+        // Poll for subscription creation (webhook should create it)
+        // After 5 seconds with no webhook, manually trigger processing
+        let attempts = 0
+        const maxAttempts = 30 // 30 attempts = 30 seconds total
+        const pollInterval = 1000 // 1 second
+        const manualProcessThreshold = 5 // After 5 seconds, try manual processing
+        let manualProcessingTriggered = false
 
-        if (!verifyResponse.ok) {
-          const errorData = await verifyResponse.json()
-          throw new Error(errorData.error || 'Failed to verify payment')
-        }
+        const checkInterval = setInterval(async () => {
+          attempts++
 
-        const verifyData = await verifyResponse.json()
-        console.log('Payment verified:', verifyData)
+          try {
+            // Check if subscription exists
+            const { createClient } = await import('@/lib/supabase')
+            const supabase = createClient()
 
-        // Step 2: Create paid subscription
-        const subscriptionResponse = await fetch('/api/subscriptions/native-app', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            subscription_type: 'paid',
-            stripe_session_id: sessionId
-          })
-        })
+            const { data: subscription, error: subError } = await supabase
+              .from('subscriptions')
+              .select('*, license_subscription_relationships(license_id, license_keys(key_code, status, expires_at))')
+              .eq('user_id', user!.id)
+              .eq('subscription_category', 'native_app')
+              .eq('status', 'active')
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle()
 
-        if (!subscriptionResponse.ok) {
-          const errorData = await subscriptionResponse.json()
-          throw new Error(errorData.error || 'Failed to create subscription')
-        }
+            if (subError && subError.code !== 'PGRST116') {
+              console.error('Error checking subscription:', subError)
+            }
 
-        console.log('✅ Subscription created')
+            if (subscription) {
+              console.log('✅ Subscription found:', subscription)
+              clearInterval(checkInterval)
+              setSubscriptionDetails(subscription)
+              setSuccess(true)
+              setProcessing(false)
 
-        // Step 3: Generate paid license
-        const licenseResponse = await fetch('/api/licenses/generate-main-app', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ license_type: 'paid' })
-        })
+              // Redirect to download page after 2 seconds
+              setTimeout(() => {
+                router.push('/download-app')
+              }, 2000)
+            } else if (attempts >= manualProcessThreshold && !manualProcessingTriggered) {
+              // Webhook hasn't fired yet, manually trigger processing
+              manualProcessingTriggered = true
+              console.log('⚠️ Webhook delay detected, manually processing subscription...')
 
-        if (!licenseResponse.ok) {
-          const errorData = await licenseResponse.json()
-          throw new Error(errorData.error || 'Failed to generate license')
-        }
+              try {
+                const processResponse = await fetch('/api/stripe/process-session', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ sessionId })
+                })
 
-        console.log('✅ License generated successfully')
+                if (processResponse.ok) {
+                  console.log('✅ Manual processing successful, checking for subscription...')
+                } else {
+                  // Silently ignore - webhook usually processes first
+                  console.log('⏳ Manual processing skipped (webhook likely processed already)')
+                }
+              } catch (processErr) {
+                // Silently ignore - webhook usually processes first
+                console.log('⏳ Manual processing not needed (webhook likely processed already)')
+              }
+            } else if (attempts >= maxAttempts) {
+              clearInterval(checkInterval)
+              setError('Subscription creation is taking longer than expected. Please check your account or contact support.')
+              setProcessing(false)
+            } else {
+              console.log(`⏳ Waiting for subscription... (attempt ${attempts}/${maxAttempts})`)
+            }
+          } catch (err) {
+            console.error('Error polling subscription:', err)
+            if (attempts >= maxAttempts) {
+              clearInterval(checkInterval)
+              setError('Failed to verify subscription creation')
+              setProcessing(false)
+            }
+          }
+        }, pollInterval)
 
-        setSuccess(true)
-        setProcessing(false)
-
-        // Redirect to download page after 2 seconds
-        setTimeout(() => {
-          router.push('/download-app')
-        }, 2000)
+        // Cleanup interval on unmount
+        return () => clearInterval(checkInterval)
 
       } catch (err) {
-        console.error('Error processing checkout:', err)
+        console.error('Error checking subscription status:', err)
         setError(err instanceof Error ? err.message : 'Failed to process checkout')
         setProcessing(false)
       }
     }
 
     if (user && sessionId) {
-      processCheckout()
+      checkSubscriptionStatus()
     }
   }, [user, loading, sessionId, router])
 
@@ -118,13 +142,16 @@ function CheckoutSuccessContent() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
+          <div className="text-center max-w-md">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-6"></div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               Processing Your Payment
             </h2>
             <p className="text-gray-600 dark:text-gray-400">
-              Please wait while we set up your license...
+              Please wait while we set up your subscription and generate your license...
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-500 mt-4">
+              This usually takes 5-10 seconds
             </p>
           </div>
         </div>
@@ -139,16 +166,16 @@ function CheckoutSuccessContent() {
           <div className="max-w-md w-full bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-8 text-center">
             <XMarkIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Payment Processing Failed
+              Payment Processing Issue
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               {error}
             </p>
             <button
-              onClick={() => router.push('/native-app/subscribe')}
+              onClick={() => router.push('/dashboard')}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Try Again
+              Go to Dashboard
             </button>
           </div>
         </div>
@@ -165,8 +192,19 @@ function CheckoutSuccessContent() {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               Payment Successful!
             </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Your subscription has been activated and your license has been generated.
+            </p>
+            {subscriptionDetails?.license_subscription_relationships?.[0]?.license_keys?.key_code && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">License Key:</p>
+                <p className="font-mono text-lg font-bold text-gray-900 dark:text-white">
+                  {subscriptionDetails.license_subscription_relationships[0].license_keys.key_code}
+                </p>
+              </div>
+            )}
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Your license has been generated. Redirecting to download page...
+              Redirecting to download page...
             </p>
             <div className="animate-pulse text-blue-600 dark:text-blue-400">
               Redirecting...

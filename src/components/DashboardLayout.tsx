@@ -23,7 +23,7 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'Test Data', href: '/test-data', icon: TableCellsIcon },
   // { name: 'Data Visualizer', href: '/data-visualizer', icon: ChartBarIcon }, // TODO: Create route to fix 404 errors
-  { name: 'Clusters', href: '/clusters', icon: CircleStackIcon },
+  // { name: 'Clusters', href: '/clusters', icon: CircleStackIcon }, // Moved to Settings page
   { name: 'Plugins Store', href: '/plugins', icon: PuzzlePieceIcon },
   // { name: 'Centcom Assets', href: '/assets', icon: CubeIcon }, // TODO: Create route to fix 404 errors
   // { name: 'Sequencer', href: '/sequencer', icon: PlayIcon }, // TODO: Create route to fix 404 errors

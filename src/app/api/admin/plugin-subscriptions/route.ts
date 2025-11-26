@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch all plugin subscriptions
     const { data: subscriptions, error: subsError } = await supabase
-      .from('plugin_subscriptions')
+      .from('subscriptions')
       .select(`
         id,
         user_id,
@@ -79,6 +79,7 @@ export async function GET(request: NextRequest) {
         created_at,
         updated_at
       `)
+      .eq('subscription_category', 'plugin')
       .order('created_at', { ascending: false })
 
     if (subsError) {

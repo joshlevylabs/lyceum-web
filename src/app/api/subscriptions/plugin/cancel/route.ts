@@ -44,9 +44,10 @@ export async function POST(request: NextRequest) {
 
     // Get the active subscription for this plugin
     const { data: subscription, error: fetchError } = await supabase
-      .from('plugin_subscriptions')
+      .from('subscriptions')
       .select('*')
       .eq('user_id', user.id)
+      .eq('subscription_category', 'plugin')
       .eq('plugin_type', plugin_type)
       .eq('status', 'active')
       .single()
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     // Mark subscription as cancelled
     const { error: updateError } = await supabase
-      .from('plugin_subscriptions')
+      .from('subscriptions')
       .update({
         status: 'cancelled',
         cancelled_at: new Date().toISOString(),

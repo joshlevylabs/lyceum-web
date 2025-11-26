@@ -34,9 +34,10 @@ export async function GET(request: NextRequest) {
 
     // Fetch user's plugin subscriptions
     const { data: subscriptions, error: fetchError } = await supabase
-      .from('plugin_subscriptions')
+      .from('subscriptions')
       .select('*')
       .eq('user_id', user.id)
+      .eq('subscription_category', 'plugin')
       .order('created_at', { ascending: false })
 
     if (fetchError) {

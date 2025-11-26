@@ -1,9 +1,10 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { User } from '@supabase/auth-helpers-nextjs'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { WebSessionSync } from '@/services/webSessionSync'
 
 interface AuthContextType {
   user: User | null
@@ -23,6 +24,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [signingOut, setSigningOut] = useState(false)
   const router = useRouter()
+
+  // Web session sync instance
+  const webSessionSyncRef = useRef<WebSessionSync | null>(null)
+
   // Use singleton supabase client to avoid multiple instances
 
   useEffect(() => {
@@ -50,6 +55,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             if (response.ok && result.profile) {
               setUserProfile(result.profile)
+
+              // Start web session tracking
+              await startWebSessionTracking(user, result.profile)
             } else {
               console.error('AuthContext: Profile fetch error:', result.error)
               setUserProfile(null)
@@ -133,6 +141,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  // Start web session tracking
+  const startWebSessionTracking = async (authUser: User, profile: any) => {
+    try {
+      // Stop any existing session
+      if (webSessionSyncRef.current) {
+        await webSessionSyncRef.current.stopSync()
+      }
+
+      // Get access token
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        console.warn('No access token for web session tracking')
+        return
+      }
+
+      // Determine license type (default to enterprise for web)
+      const licenseType = profile.license_type || 'enterprise'
+
+      // Create new session sync instance
+      const apiUrl = process.env.NEXT_PUBLIC_LYCEUM_API_BASE_URL || 'http://localhost:3594/api'
+      webSessionSyncRef.current = new WebSessionSync(
+        session.access_token,
+        authUser.id,
+        apiUrl,
+        session.access_token,
+        licenseType,
+        false // MFA status - can be enhanced later
+      )
+
+      // Start tracking
+      await webSessionSyncRef.current.startSync()
+      console.log('✅ Web session tracking started')
+
+      // Listen for session revoked events
+      window.addEventListener('session-revoked', handleSessionRevoked)
+    } catch (error) {
+      console.error('Failed to start web session tracking:', error)
+    }
+  }
+
+  // Stop web session tracking
+  const stopWebSessionTracking = async () => {
+    if (webSessionSyncRef.current) {
+      try {
+        await webSessionSyncRef.current.stopSync()
+        webSessionSyncRef.current = null
+        console.log('Web session tracking stopped')
+      } catch (error) {
+        console.error('Error stopping web session tracking:', error)
+      }
+    }
+
+    // Remove event listener
+    window.removeEventListener('session-revoked', handleSessionRevoked)
+  }
+
+  // Handle session revoked event
+  const handleSessionRevoked = () => {
+    console.warn('Session revoked event received, forcing logout')
+    signOut()
+  }
+
   const signIn = async (email: string, password: string) => {
     console.log('AuthContext signIn called with:', { email, hasPassword: !!password })
     try {
@@ -140,10 +210,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         password,
       })
-      console.log('AuthContext signIn result:', { 
-        success: !error, 
+      console.log('AuthContext signIn result:', {
+        success: !error,
         error: error?.message,
-        hasUser: !!data?.user 
+        hasUser: !!data?.user
       })
       return { data, error }
     } catch (err) {
@@ -232,6 +302,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setSigningOut(true)
       console.log('AuthContext: Signing out...')
+
+      // Stop web session tracking
+      await stopWebSessionTracking()
 
       // Clear state first
       setUser(null)

@@ -64,9 +64,21 @@ export default function AdminLayout({
     role: userProfile?.role || user.user_metadata?.role || 'admin'
   } : null
 
-  // Redirect non-admin users
+  // Check if current path is a public billing page (accessible to non-admins)
+  const isPublicBillingPage = typeof window !== 'undefined' && (
+    window.location.pathname.startsWith('/admin/billing/success') ||
+    window.location.pathname.startsWith('/admin/billing/canceled')
+  )
+
+  // Redirect non-admin users (except for public billing pages)
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
+      // Allow access to billing success/canceled pages for regular users
+      if (isPublicBillingPage) {
+        console.log('Allowing non-admin access to billing page:', window.location.pathname)
+        return
+      }
+
       console.log('Admin access denied - redirecting to dashboard', {
         hasUser: !!user,
         userEmail: user?.email,
@@ -83,7 +95,7 @@ export default function AdminLayout({
         isAdmin
       })
     }
-  }, [user, userProfile, isAdmin, loading, router])
+  }, [user, userProfile, isAdmin, loading, router, isPublicBillingPage])
 
   const handleSignOut = async () => {
     try {
@@ -103,6 +115,11 @@ export default function AdminLayout({
   }
 
   if (!user || !isAdmin) {
+    // Allow billing pages to render without admin layout
+    if (isPublicBillingPage) {
+      return <div className="min-h-screen bg-gray-50">{children}</div>
+    }
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="text-center">

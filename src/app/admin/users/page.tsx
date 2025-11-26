@@ -44,6 +44,7 @@ interface User {
   last_sign_in?: string
   last_login?: string
   license_count?: number
+  downloads_count?: number
   licenses?: {
     id: string
     key_code: string
@@ -166,6 +167,7 @@ export default function UserManagement() {
     { id: 'subscription', name: 'Subscription', align: 'left' },
     { id: 'status', name: 'Status', align: 'center' },
     { id: 'licenses', name: 'Licenses', align: 'center' },
+    { id: 'downloads', name: 'App Downloads', align: 'center' },
     { id: 'clusters', name: 'Clusters', align: 'center' },
     { id: 'invoices', name: 'Invoices', align: 'center' },
     { id: 'edit', name: 'Edit Profile', align: 'center' },
@@ -468,6 +470,15 @@ export default function UserManagement() {
               <KeyIcon className="h-4 w-4 mr-1" />
               {user.license_count || 0}
             </button>
+          </td>
+        )
+      case 'downloads':
+        return (
+          <td key="downloads" className="px-6 py-4 whitespace-nowrap text-center">
+            <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800" title="Total desktop app downloads">
+              <ChartBarIcon className="h-4 w-4 mr-1" />
+              {user.downloads_count || 0}
+            </div>
           </td>
         )
       case 'clusters':

@@ -176,6 +176,11 @@ export default function UserProfilePage() {
     all: CentComSession[]
     total_count: number
   }>({ latest: null, all: [], total_count: 0 })
+  const [downloadStats, setDownloadStats] = useState<{
+    totalDownloads: number
+    platformBreakdown: Record<string, number>
+    mostRecentDownload: any | null
+  } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   
@@ -450,7 +455,7 @@ export default function UserProfilePage() {
       console.log('Fetching CentCom sessions...')
       const centcomResponse = await fetch(`/api/admin/users/${resolvedUserId}/centcom-sessions`)
       console.log('CentCom sessions response status:', centcomResponse.status)
-      
+
       if (centcomResponse.ok) {
         const centcomData = await centcomResponse.json()
         console.log('CentCom sessions data received:', centcomData.total_count || 0, 'sessions')
@@ -462,6 +467,29 @@ export default function UserProfilePage() {
       } else {
         console.warn('Failed to fetch CentCom sessions:', centcomResponse.status)
         // Not critical - user might not have CentCom sessions
+      }
+
+      // Fetch download statistics
+      console.log('Fetching download statistics...')
+      const downloadsResponse = await fetch(`/api/admin/user-downloads?userId=${resolvedUserId}`)
+      console.log('Downloads response status:', downloadsResponse.status)
+
+      if (downloadsResponse.ok) {
+        const downloadsData = await downloadsResponse.json()
+        console.log('Download stats received:', downloadsData.totalDownloads || 0, 'total downloads')
+        setDownloadStats({
+          totalDownloads: downloadsData.totalDownloads || 0,
+          platformBreakdown: downloadsData.platformBreakdown || {},
+          mostRecentDownload: downloadsData.mostRecentDownload || null
+        })
+      } else {
+        console.warn('Failed to fetch download statistics:', downloadsResponse.status)
+        // Not critical - set default values
+        setDownloadStats({
+          totalDownloads: 0,
+          platformBreakdown: {},
+          mostRecentDownload: null
+        })
       }
 
       console.log('All user data fetched successfully')
@@ -912,8 +940,8 @@ export default function UserProfilePage() {
 
                 {/* Resource Usage */}
                 <div className="mt-8">
-                  <h4 className="text-md font-medium text-gray-900 dark:text-white mb-4">Resource Usage</h4>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <h4 className="text-md font-medium text-gray-900 dark:text-white mb-4">Resource Usage & Activity</h4>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
                       <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Storage</div>
                       <div className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -930,6 +958,20 @@ export default function UserProfilePage() {
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
                         of {enhancedProfile.resource_usage.api_calls_limit.toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
+                      <div className="text-sm font-medium text-blue-700 dark:text-blue-300 flex items-center">
+                        <ComputerDesktopIcon className="h-4 w-4 mr-1" />
+                        App Downloads
+                      </div>
+                      <div className="text-lg font-semibold text-blue-900 dark:text-blue-100">
+                        {downloadStats?.totalDownloads || 0}
+                      </div>
+                      <div className="text-xs text-blue-600 dark:text-blue-400">
+                        {downloadStats?.mostRecentDownload
+                          ? `Last: ${new Date(downloadStats.mostRecentDownload.createdAt).toLocaleDateString()}`
+                          : 'No downloads yet'}
                       </div>
                     </div>
                   </div>

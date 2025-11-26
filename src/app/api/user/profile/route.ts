@@ -53,17 +53,46 @@ export async function PATCH(request: NextRequest) {
 
     // Parse the request body
     const body = await request.json();
-    const { full_name, company } = body;
+    const { full_name, company, username } = body;
 
     // Validate input
-    if (!full_name && !company) {
+    if (!full_name && !company && !username) {
       return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+    }
+
+    // Validate username format if provided
+    if (username !== undefined) {
+      // Username must be 3-30 characters, alphanumeric and underscores only
+      const usernameRegex = /^[a-zA-Z0-9_]{3,30}$/;
+      if (!usernameRegex.test(username)) {
+        return NextResponse.json({
+          error: 'Username must be 3-30 characters long and contain only letters, numbers, and underscores'
+        }, { status: 400 });
+      }
+
+      // Check if username is already taken by another user
+      const { data: existingUser, error: checkError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('username', username)
+        .neq('id', user.id)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Error checking username uniqueness:', checkError);
+        return NextResponse.json({ error: 'Failed to validate username' }, { status: 500 });
+      }
+
+      if (existingUser) {
+        return NextResponse.json({ error: 'Username is already taken' }, { status: 400 });
+      }
     }
 
     // Build the update object with only provided fields
     const updateData: any = {};
     if (full_name !== undefined) updateData.full_name = full_name;
     if (company !== undefined) updateData.company = company;
+    if (username !== undefined) updateData.username = username;
 
     // Update the user profile
     const { data: updatedProfile, error: updateError } = await supabase

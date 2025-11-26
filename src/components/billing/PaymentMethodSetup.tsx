@@ -65,18 +65,6 @@ interface BillingInfo {
   usage: any
 }
 
-interface PaymentHistoryItem {
-  id: string
-  date: string
-  description: string
-  amount_cents: number
-  currency: string
-  type: 'subscription' | 'plugin_subscription'
-  status: string
-  payment_method?: string
-  stripe_session_id?: string
-}
-
 interface PaymentMethodSetupProps {
   userId: string
   onPaymentMethodAdded?: () => void
@@ -94,8 +82,6 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [expandedInvoices, setExpandedInvoices] = useState<Set<string>>(new Set())
   const [invoiceDetails, setInvoiceDetails] = useState<Record<string, Invoice>>({})
-  const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryItem[]>([])
-  const [loadingPaymentHistory, setLoadingPaymentHistory] = useState(true)
 
   // Stripe charges state
   const [stripeCharges, setStripeCharges] = useState<any[]>([])
@@ -115,7 +101,6 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
       loadInvoices()
       loadBillingInfo()
       loadCurrentUser()
-      loadPaymentHistory()
       loadStripeCharges()
       loadRefundRequests()
       loadActiveSubscriptions()
@@ -309,40 +294,6 @@ export default function PaymentMethodSetup({ userId, onPaymentMethodAdded }: Pay
     }
 
     setExpandedInvoices(newExpanded)
-  }
-
-  const loadPaymentHistory = async () => {
-    try {
-      setLoadingPaymentHistory(true)
-      console.log('💰 Loading payment history for user:', userId)
-
-      const supabase = createClient()
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-
-      if (sessionError || !session?.access_token) {
-        console.error('No session for payment history:', sessionError)
-        return
-      }
-
-      const response = await fetch(`/api/billing/payment-history?user_id=${userId}`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log('💰 Payment history loaded:', data)
-        setPaymentHistory(data.payments || [])
-      } else {
-        console.error('Error response from payment history API:', response.status)
-      }
-    } catch (error) {
-      console.error('Error loading payment history:', error)
-    } finally {
-      setLoadingPaymentHistory(false)
-    }
   }
 
   const loadBillingInfo = async () => {

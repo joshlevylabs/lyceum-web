@@ -155,6 +155,23 @@ export default function DownloadAppPage() {
     setError(null)
 
     try {
+      // Check if user already has a license from their subscription
+      if (subscriptionLicense) {
+        console.log('✅ Using existing license from subscription:', subscriptionLicense.key_code)
+        setLicense({
+          key_code: subscriptionLicense.key_code,
+          license_type: 'main-application',
+          status: subscriptionLicense.status,
+          created_at: new Date().toISOString(),
+          expires_at: subscriptionLicense.expires_at,
+          features: [],
+          brand_type: getUserBrandType()
+        })
+        setGeneratingLicense(false)
+        return
+      }
+
+      // No existing license, generate a new one
       const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession()
       if (!session?.access_token) {
         setError('Authentication required')

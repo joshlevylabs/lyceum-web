@@ -14,10 +14,17 @@ export async function GET(request: NextRequest) {
     const clusterId = searchParams.get('cluster_id')
     const syncStatus = searchParams.get('sync_status')
 
-    // Use the view we created for efficient querying with all the computed fields
+    // Query cluster_projects table directly with related cluster information
     let query = supabaseAdmin
-      .from('test_data_projects_summary')
-      .select('*')
+      .from('cluster_projects')
+      .select(`
+        *,
+        clusters:cluster_id (
+          name,
+          cluster_type,
+          architecture
+        )
+      `)
       .eq('owner_id', user.id)
 
     // Apply filters
@@ -36,33 +43,42 @@ export async function GET(request: NextRequest) {
     // Order by most recently synced
     query = query.order('last_synced_at', { ascending: false, nullsFirst: false })
 
-    const { data: projects, error } = await query
+    const { data: rawProjects, error } = await query
 
     if (error) {
       console.error('Error fetching cluster projects:', error)
       return NextResponse.json({ error: 'Failed to fetch cluster projects' }, { status: 500 })
     }
 
+    // Transform the data to flatten the cluster information
+    const projects = rawProjects?.map((project: any) => ({
+      ...project,
+      cluster_name: project.clusters?.name || 'Unknown',
+      cluster_type: project.clusters?.cluster_type || project.clusters?.architecture === 'centcom' ? 'local' : 'cloud',
+      measurement_count: project.metadata?.measurement_count || 0,
+      file_count: project.metadata?.file_count || 0
+    })) || []
+
     // Get summary statistics
     const stats = {
-      total_projects: projects?.length || 0,
-      total_measurements: projects?.reduce((sum, p) => sum + (p.measurement_count || 0), 0) || 0,
-      total_files: projects?.reduce((sum, p) => sum + (p.file_count || 0), 0) || 0,
+      total_projects: projects.length,
+      total_measurements: projects.reduce((sum: number, p: any) => sum + (p.measurement_count || 0), 0),
+      total_files: projects.reduce((sum: number, p: any) => sum + (p.file_count || 0), 0),
       by_cluster_type: {
-        local: projects?.filter(p => p.cluster_type === 'local').length || 0,
-        cloud: projects?.filter(p => p.cluster_type === 'cloud').length || 0
+        local: projects.filter((p: any) => p.cluster_type === 'local').length,
+        cloud: projects.filter((p: any) => p.cluster_type === 'cloud').length
       },
       by_sync_status: {
-        synced: projects?.filter(p => p.sync_status === 'synced').length || 0,
-        pending: projects?.filter(p => p.sync_status === 'pending').length || 0,
-        error: projects?.filter(p => p.sync_status === 'error').length || 0,
-        disabled: projects?.filter(p => p.sync_status === 'disabled').length || 0
+        synced: projects.filter((p: any) => p.sync_status === 'synced').length,
+        pending: projects.filter((p: any) => p.sync_status === 'pending').length,
+        error: projects.filter((p: any) => p.sync_status === 'error').length,
+        disabled: projects.filter((p: any) => p.sync_status === 'disabled').length
       }
     }
 
     return NextResponse.json({
       success: true,
-      projects: projects || [],
+      projects,
       stats
     })
 

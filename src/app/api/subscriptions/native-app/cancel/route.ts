@@ -42,10 +42,11 @@ export async function POST(request: NextRequest) {
     if (subscription_id) {
       // Get specific subscription
       const { data: subscription, error: fetchError } = await supabase
-        .from('user_subscriptions_native_app')
+        .from('subscriptions')
         .select('*')
         .eq('id', subscription_id)
         .eq('user_id', user.id) // Ensure user owns this subscription
+        .eq('subscription_category', 'native_app')
         .single()
 
       if (fetchError || !subscription) {
@@ -59,9 +60,10 @@ export async function POST(request: NextRequest) {
     } else {
       // Get user's active subscription
       const { data: subscription, error: fetchError } = await supabase
-        .from('user_subscriptions_native_app')
+        .from('subscriptions')
         .select('*')
         .eq('user_id', user.id)
+        .eq('subscription_category', 'native_app')
         .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(1)
@@ -88,7 +90,7 @@ export async function POST(request: NextRequest) {
     // Update subscription status to cancelled
     const now = new Date().toISOString()
     const { data: updatedSubscription, error: updateError } = await supabase
-      .from('user_subscriptions_native_app')
+      .from('subscriptions')
       .update({
         status: 'cancelled',
         cancelled_at: now,

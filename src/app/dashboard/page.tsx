@@ -54,6 +54,8 @@ interface OnboardingSession {
   is_mandatory: boolean
   meeting_link?: string
   session_notes?: string
+  product_category?: string
+  product_name?: string
   license_keys?: {
     id: string
     key_code: string
@@ -155,6 +157,39 @@ export default function Dashboard() {
   }
 
   const brandName = getUserBrandType() === 'centcom' ? 'Centcom' : 'Lyceum Native'
+
+  // Helper: Get product badge color based on category and product name
+  const getProductBadgeStyle = (category?: string, productName?: string) => {
+    if (category === 'native_app') {
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+    }
+
+    if (category === 'plugin') {
+      // Differentiate plugins by name
+      if (productName?.toLowerCase().includes('klippel')) {
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+      }
+      if (productName?.toLowerCase().includes('apx')) {
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+      }
+      // Default plugin color
+      return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+    }
+
+    // Fallback for other or unknown categories
+    return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
+  }
+
+  // Helper: Format description with line breaks
+  const formatDescription = (description?: string) => {
+    if (!description) return null
+    return description.split('\n').map((line, i) => (
+      <span key={i}>
+        {line}
+        {i < description.split('\n').length - 1 && <br />}
+      </span>
+    ))
+  }
 
   useEffect(() => {
     if (user && user.user_metadata?.invited_by_admin && !user.user_metadata?.password_set) {
@@ -1071,7 +1106,7 @@ export default function Dashboard() {
                     <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                     </svg>
-                    {desktopAppInfo.hasApp ? 'Manage Subscription' : `Get ${brandName}`}
+                    {desktopAppInfo.hasApp ? 'Manage Subscription' : 'Click To Download'}
                   </button>
                 </div>
               </div>
@@ -1141,16 +1176,28 @@ export default function Dashboard() {
                           <div key={booking.id} className="border-2 border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-6 mb-4">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
+                                <div className="flex items-center gap-2 mb-3 flex-wrap">
                                   <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300">
                                     Suggested - Not Yet Scheduled
                                   </span>
+                                  {booking.product_name && (
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getProductBadgeStyle(booking.product_category, booking.product_name)}`}>
+                                      {booking.product_name}
+                                    </span>
+                                  )}
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                                   {booking.title}
                                 </h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                {booking.description && (
+                                  <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-4 mb-3">
+                                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                                      {formatDescription(booking.description)}
+                                    </p>
+                                  </div>
+                                )}
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                                   Please select a time slot below to schedule this session
                                 </p>
                                 {booking.is_trial_required && booking.trial_deadline && (
@@ -1168,15 +1215,27 @@ export default function Dashboard() {
                           <div key={booking.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-4 bg-white dark:bg-gray-800">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
+                                <div className="flex items-center gap-2 mb-3 flex-wrap">
                                   <CheckCircleIcon className="h-5 w-5 text-green-600" />
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
                                     Scheduled
                                   </span>
+                                  {booking.product_name && (
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getProductBadgeStyle(booking.product_category, booking.product_name)}`}>
+                                      {booking.product_name}
+                                    </span>
+                                  )}
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                                   {booking.title}
                                 </h3>
+                                {booking.description && (
+                                  <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-md p-4 mb-4">
+                                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                                      {formatDescription(booking.description)}
+                                    </p>
+                                  </div>
+                                )}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                                   <div>
                                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">

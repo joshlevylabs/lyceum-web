@@ -132,9 +132,10 @@ export async function POST(request: NextRequest) {
     if (!requestedLicenseType) {
       console.log('No license_type provided, checking plugin subscription...')
       const { data: subscription, error: subError } = await supabase
-        .from('plugin_subscriptions')
+        .from('subscriptions')
         .select('subscription_type, status')
         .eq('user_id', user.id)
+        .eq('subscription_category', 'plugin')
         .eq('plugin_type', plugin_type)
         .eq('status', 'active')
         .order('created_at', { ascending: false })
@@ -176,9 +177,10 @@ export async function POST(request: NextRequest) {
 
       // Check if subscription record exists, create if missing
       const { data: existingSubscription } = await supabase
-        .from('plugin_subscriptions')
+        .from('subscriptions')
         .select('*')
         .eq('user_id', user.id)
+        .eq('subscription_category', 'plugin')
         .eq('plugin_type', plugin_type)
         .eq('status', 'active')
         .maybeSingle()
@@ -189,6 +191,7 @@ export async function POST(request: NextRequest) {
         const isExistingTrial = !!existingLicense.expires_at
         const subscriptionData = {
           user_id: user.id,
+          subscription_category: 'plugin',
           plugin_type: plugin_type,
           subscription_type: isExistingTrial ? 'trial' : 'paid',
           status: 'active',
@@ -199,7 +202,7 @@ export async function POST(request: NextRequest) {
         }
 
         await supabase
-          .from('plugin_subscriptions')
+          .from('subscriptions')
           .insert([subscriptionData])
       }
 
@@ -330,6 +333,7 @@ export async function POST(request: NextRequest) {
     // Also create a plugin subscription record
     const subscriptionData = {
       user_id: user.id,
+      subscription_category: 'plugin',
       plugin_type: plugin_type,
       subscription_type: requestedLicenseType,
       status: 'active',
@@ -340,7 +344,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { error: subscriptionError } = await supabase
-      .from('plugin_subscriptions')
+      .from('subscriptions')
       .insert([subscriptionData])
       .select()
       .single()

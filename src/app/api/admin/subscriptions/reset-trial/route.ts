@@ -59,9 +59,10 @@ export async function POST(request: NextRequest) {
 
     // Delete all trial subscriptions for this user
     const { data: deletedSubs, error: deleteError } = await supabase
-      .from('user_subscriptions_native_app')
+      .from('subscriptions')
       .delete()
       .eq('user_id', user_id)
+      .eq('subscription_category', 'native_app')
       .eq('subscription_type', 'trial')
       .select()
 

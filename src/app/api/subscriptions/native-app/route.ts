@@ -31,9 +31,10 @@ export async function GET(request: NextRequest) {
 
     // Get the most recent subscription (regardless of status)
     const { data: subscription, error: subError } = await supabase
-      .from('user_subscriptions_native_app')
+      .from('subscriptions')
       .select('*')
       .eq('user_id', user.id)
+      .eq('subscription_category', 'native_app')
       .order('created_at', { ascending: false })
       .limit(1)
       .single()
@@ -46,8 +47,17 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    console.log('🔍 Native app subscription check:', {
+      userId: user.id,
+      email: user.email,
+      hasSubscription: !!subscription,
+      subscriptionStatus: subscription?.status,
+      subscriptionId: subscription?.id
+    })
+
     // If no subscription exists at all
     if (!subscription) {
+      console.log('❌ No subscription found for user')
       return NextResponse.json({
         hasSubscription: false,
         subscription: null,
@@ -69,6 +79,14 @@ export async function GET(request: NextRequest) {
       console.error('Error checking license:', licenseError)
     }
 
+    console.log('🔑 License check:', {
+      hasLicense: !!license,
+      licenseStatus: license?.status,
+      licenseKeyCode: license?.key_code,
+      expiresAt: license?.expires_at,
+      timeLimitType: license?.time_limit_type
+    })
+
     // Check if license is valid (not expired and status is active)
     let hasValidLicense = false
     let licenseExpired = false
@@ -81,6 +99,14 @@ export async function GET(request: NextRequest) {
       hasValidLicense = license.status === 'active' && (!expiresAt || now < expiresAt)
       licenseExpired = expiresAt && now >= expiresAt
 
+      console.log('✅ License validation:', {
+        status: license.status,
+        hasValidLicense,
+        licenseExpired,
+        now: now.toISOString(),
+        expiresAt: expiresAt?.toISOString()
+      })
+
       // If license has expired, update both license and subscription status
       if (licenseExpired && license.status === 'active') {
         await supabase
@@ -89,7 +115,7 @@ export async function GET(request: NextRequest) {
           .eq('id', license.id)
 
         await supabase
-          .from('user_subscriptions_native_app')
+          .from('subscriptions')
           .update({ status: 'expired' })
           .eq('id', subscription.id)
       }
@@ -147,9 +173,10 @@ export async function POST(request: NextRequest) {
 
     // Check if user already has an active subscription
     const { data: existingSubscription } = await supabase
-      .from('user_subscriptions_native_app')
+      .from('subscriptions')
       .select('*')
       .eq('user_id', user.id)
+      .eq('subscription_category', 'native_app')
       .eq('status', 'active')
       .single()
 
@@ -166,9 +193,10 @@ export async function POST(request: NextRequest) {
     // Check if user already had a trial (prevent duplicate trials)
     if (subscription_type === 'trial') {
       const { data: previousTrials } = await supabase
-        .from('user_subscriptions_native_app')
+        .from('subscriptions')
         .select('*')
         .eq('user_id', user.id)
+        .eq('subscription_category', 'native_app')
         .eq('subscription_type', 'trial')
 
       // If user has ANY previous trial (started, completed, or cancelled), they cannot start another
@@ -198,13 +226,15 @@ export async function POST(request: NextRequest) {
 
     // Create subscription
     const { data: subscription, error: createError } = await supabase
-      .from('user_subscriptions_native_app')
+      .from('subscriptions')
       .insert({
         user_id: user.id,
+        subscription_category: 'native_app',
         subscription_type,
         status: 'active',
         trial_start_date: trialStartDate,
-        trial_end_date: trialEndDate
+        trial_end_date: trialEndDate,
+        plugin_type: null
       })
       .select()
       .single()
@@ -217,9 +247,136 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Auto-create license for this subscription
+    let createdLicense = null
+    try {
+      // Get user's company to determine brand type
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('company')
+        .eq('id', user.id)
+        .single()
+
+      const centcomCompanies = [
+        'centcom',
+        'sonance',
+        'blaze',
+        'iport',
+        'danainnovations',
+        'dana innovations',
+        'james',
+        'trufig'
+      ]
+
+      const companyLower = userProfile?.company?.toLowerCase() || ''
+      const isCentcom = centcomCompanies.some(name => companyLower.includes(name))
+      const brandType = isCentcom ? 'centcom' : 'lyceum'
+
+      // Generate license key
+      const generateKeyCode = () => {
+        const prefix = `LYC-APP-${new Date().getFullYear()}`
+        const random = Math.random().toString(36).substr(2, 8).toUpperCase()
+        return `${prefix}-${random}`
+      }
+
+      const keyCode = generateKeyCode()
+
+      // Determine license expiration based on subscription type
+      const isTrialLicense = subscription_type === 'trial'
+      const expiresAt = isTrialLicense
+        ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
+        : null // No expiration for paid
+
+      const timeLimitType = isTrialLicense ? 'trial_30' : 'unlimited'
+      const customTrialDays = isTrialLicense ? 30 : null
+
+      // Create license
+      const licenseData = {
+        key_code: keyCode,
+        license_type: 'main-application',
+        status: isTrialLicense ? 'trial' : 'active',
+        max_users: 1,
+        max_projects: 100,
+        max_storage_gb: 50,
+        features: [
+          'desktop_app_access',
+          'local_cluster_support',
+          'data_sync',
+          'offline_mode',
+          'auto_updates',
+          brandType === 'centcom' ? 'centcom_branding' : 'lyceum_branding',
+          ...(isTrialLicense ? ['trial_license'] : ['paid_license'])
+        ],
+        expires_at: expiresAt,
+        assigned_to: user.id,
+        assigned_at: new Date().toISOString(),
+        created_by: user.id,
+        time_limit_type: timeLimitType,
+        custom_trial_days: customTrialDays,
+        trial_extension_reason: null,
+        enabled_plugins: [],
+        plugin_permissions: {},
+        allowed_user_types: ['engineer', 'operator', 'admin'],
+        access_level: 'standard',
+        restrictions: {},
+        license_config: {
+          brand_type: brandType,
+          auto_generated: true,
+          generated_via: 'subscription_creation',
+          subscription_type: subscription_type,
+          version: '2.0',
+          created_at: new Date().toISOString()
+        },
+        usage_stats: {
+          generated_at: new Date().toISOString(),
+          user_email: user.email
+        }
+      }
+
+      const { data: licenseArray, error: licenseError } = await supabase
+        .from('license_keys')
+        .insert([licenseData])
+        .select('id, key_code, license_type, status, assigned_to, expires_at')
+
+      const license = licenseArray?.[0]
+
+      if (licenseError || !license) {
+        console.error('⚠️ Failed to auto-create license:', licenseError)
+      } else {
+        createdLicense = license
+
+        // Create relationship between license and subscription
+        await supabase
+          .from('license_subscription_relationships')
+          .insert({
+            license_id: license.id,
+            subscription_id: subscription.id,
+            relationship_type: subscription_type === 'trial' ? 'trial_conversion' : 'standard',
+            notes: 'Auto-created on subscription creation'
+          })
+
+        console.log('✅ Auto-created license and relationship:', {
+          license_id: license.id,
+          key_code: license.key_code,
+          subscription_id: subscription.id,
+          type: subscription_type,
+          brand_type: brandType
+        })
+      }
+    } catch (licenseError) {
+      // Don't fail the subscription creation if license creation fails
+      console.error('⚠️ Failed to auto-create license:', licenseError)
+    }
+
     return NextResponse.json({
       success: true,
       subscription,
+      license: createdLicense ? {
+        key_code: createdLicense.key_code,
+        license_type: createdLicense.license_type,
+        status: createdLicense.status,
+        expires_at: createdLicense.expires_at
+      } : null,
       message: subscription_type === 'trial'
         ? 'Trial subscription activated! Valid for 30 days.'
         : 'Paid subscription activated!'
