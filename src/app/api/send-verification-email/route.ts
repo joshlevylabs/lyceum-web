@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
     const { data: emailData, error: emailError } = await resend.emails.send({
       from: 'Lyceum <noreply@thelyceum.io>',
       to: [email],
+      reply_to: 'josh@thelyceum.io', // Allows recipients to reply, improves deliverability
       subject: 'Verify your email address - Lyceum',
       html: emailVerificationTemplate(verificationLink, displayName)
     })

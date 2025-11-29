@@ -1,19 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)",
-      "Bash(dir:*)",
-      "Bash(nul)",
-      "Bash(psql:*)",
-      "Bash(where:*)",
-      "Bash(npx supabase db push:*)",
-      "Bash(cat:*)",
-      "Bash(node check-templates.mjs:*)",
-      "Bash(node fix-templates.mjs:*)",
-      "Bash(node:*)",
-      "Bash(del check-templates.mjs check-license-details.mjs check-schema.mjs fix-templates.mjs fix-existing-license.mjs test-onboarding-api.mjs check-template-details.mjs)"
+      "Bash(Stop-Process -Force)",
+      "Bash(taskkill:*)",
+      "Bash(timeout 5 npm run dev)"
     ],
     "deny": [],
     "ask": []

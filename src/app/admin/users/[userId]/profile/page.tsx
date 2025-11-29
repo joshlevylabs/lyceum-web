@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { supabase } from '@/lib/supabase'
 import PaymentMethodSetup from '@/components/billing/PaymentMethodSetup'
 import {
   UserIcon,
@@ -574,6 +575,91 @@ export default function UserProfilePage() {
       setError(error.message || 'Failed to update profile')
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleBanUser = async (userId: string, userEmail: string) => {
+    try {
+      const reason = prompt('Enter ban reason (optional):')
+
+      // Get access token for Authorization header
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        throw new Error('No active session. Please sign in again.')
+      }
+
+      const response = await fetch('/api/admin/users/ban', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          reason: reason || 'Banned by admin'
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to ban user')
+      }
+
+      alert(`✅ User ${userEmail} has been banned successfully.\n\nActions taken:\n• Auth account disabled\n• Profile marked as banned\n• Licenses revoked\n• Subscriptions cancelled\n• Clusters deleted\n• Onboarding sessions deleted`)
+
+      // Refresh data
+      await fetchUserData()
+    } catch (error: any) {
+      console.error('Error banning user:', error)
+      alert(`❌ Failed to ban user: ${error.message}`)
+    }
+  }
+
+  const handleDeleteUser = async (userId: string, userEmail: string) => {
+    try {
+      // Get access token for Authorization header
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        throw new Error('No active session. Please sign in again.')
+      }
+
+      const response = await fetch('/api/admin/users/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          confirm: true
+        })
+      })
+
+      let data
+      try {
+        data = await response.json()
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError)
+        if (response.ok) {
+          // If response is ok but can't parse, assume success
+          data = { success: true }
+        } else {
+          throw new Error(`Server returned ${response.status} but response could not be parsed`)
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error(data?.error || data?.details || `Failed to delete user (${response.status})`)
+      }
+
+      alert(`✅ User ${userEmail} has been permanently deleted.\n\nAll data removed:\n• User profile\n• Licenses\n• Subscriptions\n• Clusters\n• Onboarding sessions\n• Payment data\n• Auth account`)
+
+      // Redirect to users list immediately
+      window.location.href = '/admin/users'
+    } catch (error: any) {
+      console.error('Error deleting user:', error)
+      alert(`❌ Failed to delete user: ${error.message}`)
     }
   }
 
@@ -2256,42 +2342,130 @@ export default function UserProfilePage() {
           )}
 
           {activeTab === 'account' && enhancedProfile && (
-            <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">Account Information</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Created</label>
-                    <div className="mt-1 text-sm text-gray-900 dark:text-white">
-                      {new Date(enhancedProfile.created_at).toLocaleDateString()}
+            <div className="space-y-6">
+              {/* Account Information */}
+              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">Account Information</h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Created</label>
+                      <div className="mt-1 text-sm text-gray-900 dark:text-white">
+                        {new Date(enhancedProfile.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Last Updated</label>
+                      <div className="mt-1 text-sm text-gray-900 dark:text-white">
+                        {new Date(enhancedProfile.updated_at).toLocaleDateString()}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">MFA Status</label>
+                      <div className="mt-1">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          enhancedProfile.mfa_enabled
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
+                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200'
+                        }`}>
+                          {enhancedProfile.mfa_enabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Total Sessions</label>
+                      <div className="mt-1 text-sm text-gray-900 dark:text-white">
+                        {sessions.active.length + sessions.inactive.length}
+                      </div>
                     </div>
                   </div>
+                </div>
+              </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Last Updated</label>
-                    <div className="mt-1 text-sm text-gray-900 dark:text-white">
-                      {new Date(enhancedProfile.updated_at).toLocaleDateString()}
+              {/* Danger Zone */}
+              <div className="bg-white dark:bg-gray-800 shadow rounded-lg border-2 border-red-200 dark:border-red-900">
+                <div className="px-4 py-5 sm:p-6">
+                  <h3 className="text-lg font-medium text-red-600 dark:text-red-400 mb-2">Danger Zone</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                    Irreversible actions that will affect this user account.
+                  </p>
+
+                  <div className="space-y-4">
+                    {/* BAN User Button */}
+                    <div className="flex items-start justify-between p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">Ban User Account</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          Freeze account, revoke licenses/subscriptions, delete clusters and onboarding sessions. User cannot log in.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (window.confirm(
+                            `⚠️ BAN USER ACCOUNT?\n\n` +
+                            `User: ${enhancedProfile.email}\n\n` +
+                            `This will:\n` +
+                            `• Ban user from logging in\n` +
+                            `• Revoke all licenses\n` +
+                            `• Cancel all subscriptions\n` +
+                            `• Delete all clusters\n` +
+                            `• Delete onboarding sessions\n` +
+                            `• Add email to banned list\n\n` +
+                            `Type the user's email to confirm.`
+                          )) {
+                            const confirmEmail = prompt(`Type "${enhancedProfile.email}" to confirm ban:`)
+                            if (confirmEmail === enhancedProfile.email) {
+                              handleBanUser(enhancedProfile.id, enhancedProfile.email)
+                            } else {
+                              alert('Email did not match. Ban cancelled.')
+                            }
+                          }
+                        }}
+                        className="ml-4 px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 whitespace-nowrap"
+                      >
+                        Ban User
+                      </button>
                     </div>
-                  </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">MFA Status</label>
-                    <div className="mt-1">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        enhancedProfile.mfa_enabled
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200' 
-                          : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200'
-                      }`}>
-                        {enhancedProfile.mfa_enabled ? 'Enabled' : 'Disabled'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Total Sessions</label>
-                    <div className="mt-1 text-sm text-gray-900 dark:text-white">
-                      {sessions.active.length + sessions.inactive.length}
+                    {/* DELETE User Button */}
+                    <div className="flex items-start justify-between p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">Delete User Account</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          Permanently delete user profile, licenses, subscriptions, clusters, onboarding sessions, and all data. Cannot be undone.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (window.confirm(
+                            `🚨 PERMANENTLY DELETE USER?\n\n` +
+                            `User: ${enhancedProfile.email}\n\n` +
+                            `This will PERMANENTLY DELETE:\n` +
+                            `• User profile and auth account\n` +
+                            `• All licenses\n` +
+                            `• All subscriptions\n` +
+                            `• All clusters\n` +
+                            `• All onboarding sessions\n` +
+                            `• All payment data\n\n` +
+                            `THIS CANNOT BE UNDONE!\n\n` +
+                            `Type the user's email to confirm.`
+                          )) {
+                            const confirmEmail = prompt(`Type "${enhancedProfile.email}" to confirm deletion:`)
+                            if (confirmEmail === enhancedProfile.email) {
+                              handleDeleteUser(enhancedProfile.id, enhancedProfile.email)
+                            } else {
+                              alert('Email did not match. Deletion cancelled.')
+                            }
+                          }
+                        }}
+                        className="ml-4 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 whitespace-nowrap"
+                      >
+                        Delete User
+                      </button>
                     </div>
                   </div>
                 </div>

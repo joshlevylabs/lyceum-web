@@ -1,49 +1,74 @@
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { emailVerificationTemplate } from '@/lib/email-templates'
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
+    // Try to get email from request body first (for users without valid session)
+    let email: string | null = null
+    let userName: string | null = null
 
-    // Regular Supabase client to get current user
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
+    try {
+      const body = await request.json()
+      email = body.email
+      userName = body.userName
+    } catch {
+      // No body provided, will try to get from session
+    }
+
+    // If no email in body, try to get from session
+    if (!email) {
+      const cookieStore = await cookies()
+
+      // Regular Supabase client to get current user
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            getAll() {
+              return cookieStore.getAll()
+            },
+            setAll(cookiesToSet) {
+              cookiesToSet.forEach(({ name, value, options }) => {
+                cookieStore.set(name, value, options)
+              })
+            },
           },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options)
-            })
-          },
-        },
+        }
+      )
+
+      // Get the current user from session
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+      console.log('API: Getting user from session:', {
+        hasUser: !!user,
+        email: user?.email,
+        userError: userError?.message
+      })
+
+      if (userError || !user) {
+        return NextResponse.json(
+          { error: 'Not authenticated. Please provide email in request body or sign in again.' },
+          { status: 401 }
+        )
       }
-    )
 
-    // Get the current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+      email = user.email!
+      userName = user.user_metadata?.full_name || user.user_metadata?.user_name || user.email?.split('@')[0] || 'there'
+    }
 
-    console.log('API: Getting user:', {
-      hasUser: !!user,
-      email: user?.email,
-      userError: userError?.message
-    })
-
-    if (userError || !user) {
+    if (!email) {
       return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
+        { error: 'Email is required' },
+        { status: 400 }
       )
     }
 
-    console.log('API: Generating verification link for existing user:', user.email)
+    console.log('API: Generating verification link for user:', email)
 
     // Create admin client with service role key
     const supabaseAdmin = createClient(
@@ -61,7 +86,7 @@ export async function POST() {
     // This will sign them in and we'll mark them as verified on callback
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'magiclink',
-      email: user.email!,
+      email: email,
       options: {
         redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thelyceum.io'}/auth/callback`,
       }
@@ -91,14 +116,15 @@ export async function POST() {
     // Send email via Resend with magic link and beautiful template
     const verificationLink = linkData.properties.action_link
 
-    // Get user's name from user metadata if available
-    const userName = user.user_metadata?.full_name || user.user_metadata?.user_name || user.email?.split('@')[0] || 'there'
+    // Use userName from parameter or derive from email
+    const displayName = userName || email.split('@')[0] || 'there'
 
     const { data: emailData, error: emailError } = await resend.emails.send({
       from: 'Lyceum <noreply@thelyceum.io>',
-      to: [user.email!],
+      to: [email],
+      reply_to: 'josh@thelyceum.io', // Allows recipients to reply, improves deliverability
       subject: 'Verify your email address - Lyceum',
-      html: emailVerificationTemplate(verificationLink, userName)
+      html: emailVerificationTemplate(verificationLink, displayName)
     })
 
     if (emailError) {
@@ -111,7 +137,7 @@ export async function POST() {
 
     console.log('API: Verification email sent successfully via Resend:', {
       emailId: emailData?.id,
-      to: user.email
+      to: email
     })
 
     return NextResponse.json({

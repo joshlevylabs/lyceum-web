@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest } from 'next/server'
+import { supabaseAdmin } from './supabase-direct'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4OTU0MTYsImV4cCI6MjA2ODQ3MTQxNn0.5Wzzoat1TsoLLbsqjuoUEKyawJgYmvrMYbJ-uvosdu0'
@@ -146,18 +147,37 @@ export async function requireAdmin(request: NextRequest): Promise<
   | { success: false; user: null; error: string | null; response: Response }
 > {
   const { success, user, error, response } = await requireAuth(request)
-  
+
   if (!success) return { success: false, user: null, error, response }
-  
+
+  // If role is not in token or is 'user', fetch from database
+  if (!user.role || user.role === 'user') {
+    try {
+      const { data: profile, error: profileError } = await supabaseAdmin
+        .from('user_profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (!profileError && profile?.role) {
+        user.role = profile.role
+        console.log('Fetched role from database:', user.role, 'for user:', user.email)
+      }
+    } catch (err) {
+      console.warn('Failed to fetch role from database:', err)
+    }
+  }
+
   if (!isAdmin(user)) {
+    console.log('User is not admin. Role:', user.role, 'Email:', user.email)
     return {
       success: false,
       user: null,
       error: 'Admin privileges required',
       response: new Response(
         JSON.stringify({ error: 'Admin privileges required' }),
-        { 
-          status: 403, 
+        {
+          status: 403,
           headers: { 'Content-Type': 'application/json' }
         }
       )

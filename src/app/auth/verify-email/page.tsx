@@ -13,16 +13,14 @@ export default function VerifyEmail() {
   const router = useRouter()
   const { user, userProfile, loading, signOut } = useAuth()
 
-  // Redirect if not authenticated or if already verified
+  // Redirect only if user is authenticated AND already verified
   useEffect(() => {
     if (!loading) {
-      if (!user) {
-        console.log('Not authenticated, redirecting to signin')
-        router.push('/auth/signin')
-      } else if (userProfile?.email_verified) {
+      if (user && userProfile?.email_verified) {
         console.log('Already verified, redirecting to dashboard')
         router.push('/dashboard')
       }
+      // Allow unauthenticated users to stay on this page (they just signed up)
     }
   }, [user, userProfile, loading, router])
 
@@ -35,12 +33,28 @@ export default function VerifyEmail() {
     try {
       console.log('Calling API route to resend verification email...')
 
-      // Use API route instead of broken browser Supabase client
+      // Prepare request body with email and userName
+      const requestBody: { email?: string; userName?: string } = {}
+
+      // Try to include email and userName from user/profile if available
+      if (user?.email) {
+        requestBody.email = user.email
+        if (userProfile?.full_name) {
+          requestBody.userName = userProfile.full_name
+        } else if (userProfile?.username) {
+          requestBody.userName = userProfile.username
+        }
+      }
+
+      console.log('Request body:', requestBody)
+
+      // Use API route with email in body for users without valid session
       const response = await fetch('/api/resend-verification', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify(requestBody),
       })
 
       const result = await response.json()

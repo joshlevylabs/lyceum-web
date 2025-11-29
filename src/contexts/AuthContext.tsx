@@ -223,6 +223,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, userData: any) => {
+    // Check if email already exists before attempting signup
+    try {
+      const { data: existingUser, error: checkError } = await supabase.rpc('check_email_exists', {
+        check_email: email
+      })
+
+      // If RPC doesn't exist, we'll catch it and proceed with signup (constraint will handle it)
+      if (!checkError && existingUser) {
+        return {
+          data: null,
+          error: {
+            message: 'An account with this email already exists. Please sign in instead.',
+            status: 409
+          }
+        }
+      }
+    } catch (rpcError) {
+      console.log('Email check RPC not available, proceeding with signup')
+    }
+
     // Sign up WITHOUT automatic email confirmation (we'll send via Resend)
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -239,6 +259,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     if (error) {
+      // Handle duplicate email error from Supabase auth
+      if (error.message.includes('already registered') || error.message.includes('already exists')) {
+        return {
+          data: null,
+          error: {
+            ...error,
+            message: 'An account with this email already exists. Please sign in instead.'
+          }
+        }
+      }
       return { data, error }
     }
 

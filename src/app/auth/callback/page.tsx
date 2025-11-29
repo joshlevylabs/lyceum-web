@@ -11,6 +11,7 @@ function AuthCallbackContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('')
   const [userInfo, setUserInfo] = useState<any>(null)
+  const [callbackType, setCallbackType] = useState<'email_verification' | 'password_reset' | 'other'>('other')
   const processedRef = useRef(false)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -40,6 +41,7 @@ function AuthCallbackContent() {
       const code = searchParams.get('code')
       if (code) {
         console.log('Email verification code detected')
+        setCallbackType('email_verification')
         setMessage('Verifying your email address...')
 
         // Exchange the code for a session
@@ -87,6 +89,7 @@ function AuthCallbackContent() {
       
       if (isRecovery) {
         // Handle password recovery
+        setCallbackType('password_reset')
         setMessage('Processing password reset...')
         
         console.log('Recovery hash:', hash)
@@ -390,33 +393,45 @@ function AuthCallbackContent() {
               </div>
             )}
             
-            <div className="space-y-3">
-              <button
-                onClick={handleSetPassword}
-                className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                Set Your Password
-              </button>
-              
-              <button
-                onClick={handleGoToDashboard}
-                className="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
-              >
-                Go to Dashboard
-              </button>
-              
-              {/* Debug: Manual redirect for password reset */}
-              <button
-                onClick={() => router.push('/auth/set-password')}
-                className="w-full bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-              >
-                Manual: Go to Set Password
-              </button>
-            </div>
-            
-            <p className="text-xs text-gray-500 mt-4">
-              Redirecting automatically in a few seconds...
-            </p>
+            {/* Show different UI based on callback type */}
+            {callbackType === 'password_reset' ? (
+              <div className="space-y-3">
+                <button
+                  onClick={handleSetPassword}
+                  className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  Set Your Password
+                </button>
+
+                <button
+                  onClick={handleGoToDashboard}
+                  className="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                >
+                  Skip - Go to Dashboard
+                </button>
+              </div>
+            ) : callbackType === 'email_verification' ? (
+              <div className="text-center">
+                <div className="animate-pulse text-blue-600 mb-4">
+                  <svg className="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">
+                  Redirecting you to your dashboard...
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <button
+                  onClick={handleGoToDashboard}
+                  className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  Go to Dashboard
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
