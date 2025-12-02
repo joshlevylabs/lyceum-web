@@ -31,11 +31,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user has a main-application license (active or trial)
+    // Note: license_category identifies the type (main_application, plugin)
+    // license_type identifies the tier (standard, professional, enterprise)
     const { data: existingLicense, error: checkError } = await supabase
       .from('license_keys')
       .select('*')
       .eq('assigned_to', user.id)
-      .eq('license_type', 'main-application')
+      .eq('license_category', 'main_application')
       .in('status', ['active', 'trial'])
       .maybeSingle()
 

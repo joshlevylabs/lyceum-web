@@ -138,6 +138,7 @@ export default function LicenseManagement() {
 
   // Relationship states
   const [relationships, setRelationships] = useState<LicenseSubscriptionRelationship[]>([])
+  const [standaloneLicenses, setStandaloneLicenses] = useState<LicenseKey[]>([])
   const [relationshipsLoading, setRelationshipsLoading] = useState(false)
   const [showCreateRelationshipModal, setShowCreateRelationshipModal] = useState(false)
   const [editRelationship, setEditRelationship] = useState<LicenseSubscriptionRelationship | null>(null)
@@ -388,6 +389,7 @@ export default function LicenseManagement() {
     try {
       setRelationshipsLoading(true)
 
+      // Fetch relationships
       const response = await fetch('/api/admin/license-subscription-relationships', {
         cache: 'no-store'
       })
@@ -398,9 +400,25 @@ export default function LicenseManagement() {
 
       const data = await response.json()
       setRelationships(data.relationships || [])
+
+      // Fetch standalone licenses (licenses without relationships)
+      const licensesResponse = await fetch('/api/admin/licenses/list', { cache: 'no-store' })
+      const licensesResult = await licensesResponse.json()
+
+      if (licensesResponse.ok && licensesResult.success) {
+        const allLicenses = licensesResult.licenses || []
+        const relationshipLicenseIds = new Set((data.relationships || []).map((r: LicenseSubscriptionRelationship) => r.license_id))
+
+        // Filter licenses that don't have any relationships
+        const standalone = allLicenses.filter((lic: LicenseKey) => !relationshipLicenseIds.has(lic.id))
+        setStandaloneLicenses(standalone)
+      } else {
+        setStandaloneLicenses([])
+      }
     } catch (error) {
       console.error('Error loading relationships:', error)
       setRelationships([])
+      setStandaloneLicenses([])
     } finally {
       setRelationshipsLoading(false)
     }
@@ -1174,6 +1192,93 @@ export default function LicenseManagement() {
               </div>
             )}
           </div>
+
+          {/* Standalone Licenses Section */}
+          {!relationshipsLoading && standaloneLicenses.length > 0 && (
+            <div className="bg-white shadow overflow-hidden sm:rounded-lg mt-6">
+              <div className="px-6 py-4 border-b border-gray-200 bg-amber-50">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <KeyIcon className="h-5 w-5 mr-2 text-amber-500" />
+                  Standalone Licenses ({standaloneLicenses.length})
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Licenses that are not currently associated with any subscription
+                </p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        License Key
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Type
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Assigned To
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Created
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Expires
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {standaloneLicenses.map((license) => (
+                      <tr key={license.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Link
+                            href={`/admin/licenses/${license.id}/details`}
+                            className="text-sm font-mono font-medium text-amber-600 hover:text-amber-800 bg-amber-50 px-2 py-1 rounded"
+                          >
+                            {license.key_code || license.license_key || 'N/A'}
+                          </Link>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm font-medium text-gray-900">
+                            {license.license_type || 'Unknown'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(license.status)}`}>
+                            {license.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {license.assigned_to ? (
+                            <div className="text-sm">
+                              <div className="font-medium text-gray-900">{license.assigned_to.full_name || license.assigned_to.email}</div>
+                              <div className="text-gray-500">{license.assigned_to.email}</div>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-gray-400">Unassigned</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatDate(license.created_at)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {license.expires_at ? (
+                            <span className={isExpiringSoon(license.expires_at) ? 'text-orange-600 font-semibold' : ''}>
+                              {formatDate(license.expires_at)}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400">Never</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </>
       )}
 

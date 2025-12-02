@@ -55,22 +55,15 @@ export async function GET(request: NextRequest) {
       subscriptionId: subscription?.id
     })
 
-    // If no subscription exists at all
-    if (!subscription) {
-      console.log('❌ No subscription found for user')
-      return NextResponse.json({
-        hasSubscription: false,
-        subscription: null,
-        hasValidLicense: false
-      })
-    }
-
     // Check if there's a valid license for this user (licenses are linked by user_id, not subscription_id)
+    // Check licenses BEFORE returning early for no subscription - user might have a standalone license!
+    // Note: license_category identifies the type (main_application, plugin)
+    // license_type identifies the tier (standard, professional, enterprise)
     const { data: license, error: licenseError } = await supabase
       .from('license_keys')
       .select('*')
       .eq('assigned_to', user.id)
-      .eq('license_type', 'main-application')
+      .eq('license_category', 'main_application')
       .order('created_at', { ascending: false })
       .limit(1)
       .single()
@@ -107,23 +100,26 @@ export async function GET(request: NextRequest) {
         expiresAt: expiresAt?.toISOString()
       })
 
-      // If license has expired, update both license and subscription status
+      // If license has expired, update license status
       if (licenseExpired && license.status === 'active') {
         await supabase
           .from('license_keys')
           .update({ status: 'expired' })
           .eq('id', license.id)
 
-        await supabase
-          .from('subscriptions')
-          .update({ status: 'expired' })
-          .eq('id', subscription.id)
+        // Also update subscription status if one exists
+        if (subscription) {
+          await supabase
+            .from('subscriptions')
+            .update({ status: 'expired' })
+            .eq('id', subscription.id)
+        }
       }
     }
 
     return NextResponse.json({
-      hasSubscription: subscription.status === 'active',
-      subscription: subscription,
+      hasSubscription: subscription ? subscription.status === 'active' : false,
+      subscription: subscription || null,
       hasValidLicense: hasValidLicense,
       license: license || null,
       licenseExpired: licenseExpired

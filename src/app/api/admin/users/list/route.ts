@@ -92,12 +92,10 @@ export async function GET(request: NextRequest) {
         const expiredLicenses = userLicenses.filter(l => l.status === 'expired')
 
         // Fetch download count for this user
-        const { data: downloads, error: downloadsError } = await supabase
+        const { count: downloadsCount, error: downloadsError } = await supabase
           .from('application_downloads')
-          .select('id', { count: 'exact', head: true })
+          .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id)
-
-        const downloadsCount = downloadsError ? 0 : (downloads || 0)
 
         return {
           id: user.id,
@@ -111,7 +109,7 @@ export async function GET(request: NextRequest) {
           company: user.company,
           license_count: userLicenses.length,
           licenses: userLicenses,
-          downloads_count: downloadsCount,
+          downloads_count: downloadsCount || 0,
           license_summary: {
             total: userLicenses.length,
             centcom: centcomLicenses.length,

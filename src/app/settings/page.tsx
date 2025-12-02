@@ -1466,6 +1466,133 @@ export default function SettingsPage() {
                 )}
               </div>
             </div>
+
+            {/* Standalone Licenses Panel */}
+            {(() => {
+              // First, let's see what licenses we have
+              if (licenses.length > 0) {
+                console.log('🔍 All licenses data:', licenses.map(l => ({
+                  id: l.id,
+                  license_type: l.license_type,
+                  license_category: l.license_category,
+                  status: l.status,
+                  key_code: l.key_code
+                })))
+              }
+
+              // Filter for standalone licenses
+              // 1. Main-application licenses when there's no active subscription
+              // 2. Licenses that aren't shown in subscription panels
+              const standaloneLicenses = licenses.filter((lic: any) => {
+                // Check license_category (main_application, plugin) rather than license_type (standard, professional, etc.)
+                // If it's a main-application license and there's no active subscription, it's standalone
+                if (lic.license_category === 'main_application' || lic.license_type === 'main-application') {
+                  const hasActiveSubscription = subscription && subscription.status === 'active'
+                  return !hasActiveSubscription
+                }
+                // If it's a plugin license and not associated with any plugin subscription, it's standalone
+                if (lic.license_category === 'plugin' || lic.license_type?.includes('plugin')) {
+                  const hasPluginSub = pluginSubscriptions.some((sub: any) =>
+                    sub.plugin_type === lic.license_type && sub.status === 'active'
+                  )
+                  return !hasPluginSub
+                }
+                return false
+              })
+
+              console.log('🔍 Standalone licenses debug:', {
+                totalLicenses: licenses.length,
+                hasSubscription: !!subscription,
+                subscriptionStatus: subscription?.status,
+                pluginSubscriptions: pluginSubscriptions.length,
+                standaloneLicenses: standaloneLicenses.length,
+                standaloneDetails: standaloneLicenses.map(l => ({
+                  type: l.license_type,
+                  status: l.status,
+                  key: l.key_code
+                }))
+              })
+
+              if (standaloneLicenses.length === 0) return null
+
+              return (
+                <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h2 className="text-lg font-medium text-gray-800 dark:text-white flex items-center">
+                      <KeyIcon className="h-5 w-5 mr-2 text-amber-500" />
+                      Standalone Licenses
+                    </h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Licenses created directly without an associated subscription
+                    </p>
+                  </div>
+                  <div className="p-6">
+                    <div className="space-y-4">
+                      {standaloneLicenses.map((license: any) => (
+                        <div key={license.id} className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="font-medium text-gray-800 dark:text-white capitalize">
+                              {license.license_type === 'main-application'
+                                ? 'Desktop Application'
+                                : license.license_type.replace('_', ' ')}
+                            </span>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              license.status === 'active'
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                : license.status === 'trial'
+                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                                : license.status === 'expired'
+                                ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'
+                            }`}>
+                              {license.status}
+                            </span>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div>
+                              <span className="text-xs text-gray-600 dark:text-gray-400 block mb-1">License Key</span>
+                              <div className="font-mono text-sm text-gray-800 dark:text-white font-bold bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700">
+                                {license.key_code}
+                              </div>
+                            </div>
+
+                            {license.expires_at && (
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-600 dark:text-gray-400">Expires:</span>
+                                <span className="text-gray-800 dark:text-white">
+                                  {new Date(license.expires_at).toLocaleDateString()}
+                                </span>
+                              </div>
+                            )}
+
+                            {license.time_limit_type && (
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-600 dark:text-gray-400">Type:</span>
+                                <span className="text-gray-800 dark:text-white capitalize">
+                                  {license.time_limit_type === 'unlimited'
+                                    ? 'Unlimited'
+                                    : license.time_limit_type.replace('_', ' ')}
+                                </span>
+                              </div>
+                            )}
+
+                            {license.created_at && (
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-600 dark:text-gray-400">Created:</span>
+                                <span className="text-gray-800 dark:text-white">
+                                  {new Date(license.created_at).toLocaleDateString()}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
           </div>
 
           {/* Cancellation Confirmation Modal */}

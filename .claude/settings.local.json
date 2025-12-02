@@ -3,7 +3,10 @@
     "allow": [
       "Bash(Stop-Process -Force)",
       "Bash(taskkill:*)",
-      "Bash(timeout 5 npm run dev)"
+      "Bash(timeout 5 npm run dev)",
+      "Bash(timeout:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

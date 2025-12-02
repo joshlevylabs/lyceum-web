@@ -181,6 +181,7 @@ export default function UserProfilePage() {
     totalDownloads: number
     platformBreakdown: Record<string, number>
     mostRecentDownload: any | null
+    downloads: any[]
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -472,7 +473,17 @@ export default function UserProfilePage() {
 
       // Fetch download statistics
       console.log('Fetching download statistics...')
-      const downloadsResponse = await fetch(`/api/admin/user-downloads?userId=${resolvedUserId}`)
+
+      // Get auth token for API request
+      const { data: { session } } = await supabase.auth.getSession()
+      const authHeaders: HeadersInit = {}
+      if (session?.access_token) {
+        authHeaders['Authorization'] = `Bearer ${session.access_token}`
+      }
+
+      const downloadsResponse = await fetch(`/api/admin/user-downloads?userId=${resolvedUserId}`, {
+        headers: authHeaders
+      })
       console.log('Downloads response status:', downloadsResponse.status)
 
       if (downloadsResponse.ok) {
@@ -481,7 +492,8 @@ export default function UserProfilePage() {
         setDownloadStats({
           totalDownloads: downloadsData.totalDownloads || 0,
           platformBreakdown: downloadsData.platformBreakdown || {},
-          mostRecentDownload: downloadsData.mostRecentDownload || null
+          mostRecentDownload: downloadsData.mostRecentDownload || null,
+          downloads: downloadsData.downloads || []
         })
       } else {
         console.warn('Failed to fetch download statistics:', downloadsResponse.status)
@@ -489,7 +501,8 @@ export default function UserProfilePage() {
         setDownloadStats({
           totalDownloads: 0,
           platformBreakdown: {},
-          mostRecentDownload: null
+          mostRecentDownload: null,
+          downloads: []
         })
       }
 
@@ -1063,6 +1076,86 @@ export default function UserProfilePage() {
                   </div>
                 </div>
               </div>
+
+              {/* Downloads History */}
+              {downloadStats && downloadStats.downloads && downloadStats.downloads.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                  <div className="px-4 py-5 sm:p-6">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
+                      <ComputerDesktopIcon className="h-5 w-5 mr-2" />
+                      Download History (Last 10)
+                    </h3>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-900">
+                          <tr>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Date
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Version
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Brand
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Platform
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Type
+                            </th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Status
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                          {downloadStats.downloads.map((download: any) => (
+                            <tr key={download.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                              <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                {new Date(download.createdAt).toLocaleDateString()}
+                              </td>
+                              <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {download.version}
+                              </td>
+                              <td className="px-3 py-4 whitespace-nowrap text-sm">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                  download.brandType === 'centcom'
+                                    ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                                    : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                }`}>
+                                  {download.brandType === 'centcom' ? 'Centcom' : 'Lyceum'}
+                                </span>
+                              </td>
+                              <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 capitalize">
+                                {download.platform}
+                              </td>
+                              <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 capitalize">
+                                {download.installerType}
+                              </td>
+                              <td className="px-3 py-4 whitespace-nowrap text-sm">
+                                {download.wasSuccessful ? (
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                    Completed
+                                  </span>
+                                ) : download.downloadCompletedAt ? (
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                    Failed
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                    In Progress
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

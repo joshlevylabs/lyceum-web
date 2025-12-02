@@ -274,6 +274,9 @@ export class WebSessionSync {
           statusText: response.statusText,
           error: errorData
         })
+      } else if (response.status === 404) {
+        // Silently handle 404 - endpoint might not be available in development
+        console.warn('⚠️ Web session heartbeat endpoint not found (this is non-critical)')
       } else {
         console.error('Web session heartbeat failed:', response.statusText)
       }

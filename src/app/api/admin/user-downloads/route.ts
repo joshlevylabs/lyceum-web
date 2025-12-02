@@ -64,9 +64,20 @@ export async function GET(request: NextRequest) {
         version: mostRecentDownload.version,
         platform: mostRecentDownload.platform,
         createdAt: mostRecentDownload.created_at,
-        installerType: mostRecentDownload.installer_type
+        installerType: mostRecentDownload.installer_type,
+        brandType: mostRecentDownload.brand_type
       } : null,
-      downloads: downloads?.slice(0, 10) // Return last 10 downloads
+      downloads: downloads?.slice(0, 10).map((d: any) => ({
+        id: d.id,
+        version: d.version,
+        platform: d.platform,
+        installerType: d.installer_type,
+        brandType: d.brand_type,
+        licenseType: d.license_type,
+        createdAt: d.created_at,
+        wasSuccessful: d.was_successful,
+        downloadCompletedAt: d.download_completed_at
+      })) // Return last 10 downloads with brand info
     })
 
   } catch (error: any) {
