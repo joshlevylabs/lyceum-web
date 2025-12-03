@@ -268,12 +268,8 @@ export class WebSessionSync {
           window.dispatchEvent(new CustomEvent('session-revoked'))
         }
       } else if (response.status === 401) {
-        const errorData = await response.json().catch(() => ({}))
-        console.error('❌ Web session heartbeat unauthorized:', {
-          status: response.status,
-          statusText: response.statusText,
-          error: errorData
-        })
+        // Silently handle 401 - token may have expired, non-critical
+        console.warn('⚠️ Web session heartbeat unauthorized (token may be expired - this is non-critical)')
       } else if (response.status === 404) {
         // Silently handle 404 - endpoint might not be available in development
         console.warn('⚠️ Web session heartbeat endpoint not found (this is non-critical)')
