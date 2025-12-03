@@ -49,37 +49,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (existingLicense) {
-      // Check if subscription record exists, create if missing (backfill)
-      const { data: existingSubscription } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('subscription_category', 'native_app')
-        .eq('status', 'active')
-        .maybeSingle()
-
-      if (!existingSubscription) {
-        console.log('GET: Creating missing subscription record for existing license')
-        // Determine subscription type from license expiration
-        const isExistingTrial = !!existingLicense.expires_at
-        const subscriptionData = {
-          user_id: user.id,
-          subscription_category: 'native_app',
-          plugin_type: null,
-          subscription_type: isExistingTrial ? 'trial' : 'paid',
-          status: 'active',
-          amount_paid_cents: isExistingTrial ? 0 : 4900,
-          currency: 'usd',
-          trial_start_date: isExistingTrial ? existingLicense.created_at : null,
-          trial_end_date: isExistingTrial ? existingLicense.expires_at : null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-
-        await supabase
-          .from('subscriptions')
-          .insert([subscriptionData])
-      }
+      // NOTE: Backfill logic removed - standalone licenses should remain standalone
+      // Don't auto-create subscriptions for manually-generated licenses
 
       return NextResponse.json({
         hasLicense: true,
@@ -226,37 +197,8 @@ export async function POST(request: NextRequest) {
     if (existingLicense) {
       console.log('User already has main-application license:', existingLicense.key_code)
 
-      // Check if subscription record exists, create if missing
-      const { data: existingSubscription } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('subscription_category', 'native_app')
-        .eq('status', 'active')
-        .maybeSingle()
-
-      if (!existingSubscription) {
-        console.log('Creating missing subscription record for existing license')
-        // Determine subscription type from license expiration
-        const isExistingTrial = !!existingLicense.expires_at
-        const subscriptionData = {
-          user_id: user.id,
-          subscription_category: 'native_app',
-          plugin_type: null,
-          subscription_type: isExistingTrial ? 'trial' : 'paid',
-          status: 'active',
-          amount_paid_cents: isExistingTrial ? 0 : 4900,
-          currency: 'usd',
-          trial_start_date: isExistingTrial ? existingLicense.created_at : null,
-          trial_end_date: isExistingTrial ? existingLicense.expires_at : null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-
-        await supabase
-          .from('subscriptions')
-          .insert([subscriptionData])
-      }
+      // NOTE: Backfill logic removed - standalone licenses should remain standalone
+      // Don't auto-create subscriptions for manually-generated licenses
 
       return NextResponse.json({
         success: true,
