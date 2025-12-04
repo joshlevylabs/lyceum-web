@@ -33,13 +33,15 @@ export async function GET(request: NextRequest) {
     // Check if user has a main-application license (active or trial)
     // Note: license_category identifies the type (main_application, plugin)
     // license_type identifies the tier (standard, professional, enterprise)
-    const { data: existingLicense, error: checkError } = await supabase
+    // Use limit(1) instead of maybeSingle() to handle cases where user might have multiple licenses
+    const { data: licenses, error: checkError } = await supabase
       .from('license_keys')
       .select('*')
       .eq('assigned_to', user.id)
       .eq('license_category', 'main_application')
       .in('status', ['active', 'trial'])
-      .maybeSingle()
+      .order('created_at', { ascending: false })
+      .limit(1)
 
     if (checkError) {
       console.error('Error checking existing license:', checkError)
@@ -47,6 +49,8 @@ export async function GET(request: NextRequest) {
         error: 'Failed to check license'
       }, { status: 500 })
     }
+
+    const existingLicense = licenses?.[0] || null
 
     if (existingLicense) {
       // NOTE: Backfill logic removed - standalone licenses should remain standalone
@@ -142,15 +146,18 @@ export async function POST(request: NextRequest) {
 
     // Check if user already has a main-application license (active or trial)
     // Do this BEFORE checking for previous trials to handle subscription-without-license case
-    const { data: existingLicense, error: checkError } = await supabase
+    // Note: license_category identifies the type (main_application, plugin)
+    // license_type identifies the tier (standard, professional, enterprise)
+    const { data: existingLicenses, error: checkError } = await supabase
       .from('license_keys')
       .select('*')
       .eq('assigned_to', user.id)
-      .eq('license_type', 'main-application')
+      .eq('license_category', 'main_application')
       .in('status', ['active', 'trial'])
       .order('created_at', { ascending: false })
       .limit(1)
-      .maybeSingle()
+
+    const existingLicense = existingLicenses?.[0] || null
 
     // Check if user already had a trial (prevent duplicate trials)
     // BUT allow license creation if they have a trial subscription with NO license
@@ -263,9 +270,12 @@ export async function POST(request: NextRequest) {
     })
 
     // Prepare license data for main application
+    // Note: license_category identifies the type (main_application, plugin)
+    // license_type identifies the tier (standard, professional, enterprise)
     const licenseData = {
       key_code: keyCode,
-      license_type: 'main-application',
+      license_category: 'main_application',
+      license_type: 'standard',
       status: isTrialLicense ? 'trial' : 'active',
       max_users: 1, // Personal license
       max_projects: 100,

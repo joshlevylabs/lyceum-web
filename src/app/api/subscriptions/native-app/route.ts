@@ -59,16 +59,18 @@ export async function GET(request: NextRequest) {
     // Check licenses BEFORE returning early for no subscription - user might have a standalone license!
     // Note: license_category identifies the type (main_application, plugin)
     // license_type identifies the tier (standard, professional, enterprise)
-    const { data: license, error: licenseError } = await supabase
+    // Use limit(1) instead of single() to avoid errors when user has 0 or multiple licenses
+    const { data: licenses, error: licenseError } = await supabase
       .from('license_keys')
       .select('*')
       .eq('assigned_to', user.id)
       .eq('license_category', 'main_application')
       .order('created_at', { ascending: false })
       .limit(1)
-      .single()
 
-    if (licenseError && licenseError.code !== 'PGRST116') {
+    const license = licenses?.[0] || null
+
+    if (licenseError) {
       console.error('Error checking license:', licenseError)
     }
 
