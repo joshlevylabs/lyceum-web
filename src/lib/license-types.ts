@@ -533,3 +533,61 @@ export function getLicenseTypeDescription(licenseType: string): string {
   }
   return descriptions[licenseType as keyof typeof descriptions] || 'Unknown license type'
 }
+
+/**
+ * Plugin feature configurations for license validation
+ * These features are required by the desktop app for plugin access
+ */
+export const PLUGIN_REQUIRED_FEATURES: Record<string, { required: string[], optional: string[] }> = {
+  'klippel_qc': {
+    required: ['plugin_access', 'klippel_qc_analysis'],
+    optional: ['klippel_qc_reporting', 'klippel_qc_export', 'data_integration']
+  },
+  'apx500': {
+    required: ['plugin_access', 'apx500_measurements'],
+    optional: ['apx500_analysis', 'apx500_export', 'data_integration']
+  },
+  'ssj-blue': {
+    required: ['plugin_access', 'data_integration'],
+    optional: ['ssj_blue_analysis', 'ssj_blue_export']
+  }
+}
+
+/**
+ * Get features array for a plugin license
+ * @param pluginType - The plugin type identifier (klippel_qc, apx500, ssj-blue)
+ * @param licenseTier - The license tier (trial, standard, professional, enterprise)
+ * @param isTrialLicense - Whether this is a trial license
+ * @returns Array of feature strings for the license
+ */
+export function getPluginFeatures(
+  pluginType: string,
+  licenseTier: string = 'standard',
+  isTrialLicense: boolean = false
+): string[] {
+  const pluginConfig = PLUGIN_REQUIRED_FEATURES[pluginType]
+  if (!pluginConfig) {
+    // Return base features for unknown plugins
+    return [
+      'plugin_access',
+      'data_integration',
+      ...(isTrialLicense ? ['trial_license'] : ['paid_license'])
+    ]
+  }
+
+  const baseFeatures = [
+    ...pluginConfig.required,
+    ...(isTrialLicense ? ['trial_license'] : ['paid_license'])
+  ]
+
+  // Add optional features based on license tier
+  if (licenseTier === 'professional' || licenseTier === 'enterprise') {
+    return [...baseFeatures, ...pluginConfig.optional]
+  } else if (licenseTier === 'standard') {
+    // Standard tier gets required + some optional features
+    return [...baseFeatures, 'data_integration']
+  }
+
+  // Trial/basic tier gets just required features + data_integration
+  return [...baseFeatures, 'data_integration']
+}

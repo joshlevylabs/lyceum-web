@@ -8,14 +8,20 @@ import { supabaseAdmin } from '@/lib/supabase-direct'
  * Body: { user_id: string, duration?: string, reason?: string }
  */
 export async function POST(request: NextRequest) {
+  console.log('=== BAN USER API CALLED ===')
   try {
+    console.log('Step 1: Checking admin access...')
     const { success, user, response } = await requireAdmin(request)
     if (!success) {
+      console.log('Admin check failed:', { success, hasUser: !!user })
       return response || NextResponse.json({ error: 'Admin access required' }, { status: 403 })
     }
+    console.log('Step 2: Admin verified, parsing body...')
 
     const body = await request.json()
-    const { user_id, duration = '876000h', reason } = body // Default: 100 years (permanent)
+    console.log('Step 3: Body parsed:', { user_id: body.user_id, hasDuration: !!body.duration, hasReason: !!body.reason })
+    // Default: ~10 years (87600h) - permanent enough but within safe limits
+    const { user_id, duration = '87600h', reason } = body
 
     if (!user_id) {
       return NextResponse.json({ error: 'user_id is required' }, { status: 400 })
@@ -37,13 +43,66 @@ export async function POST(request: NextRequest) {
 
     const userEmail = existingUser.user?.email
 
-    // 1. Ban the user at auth level using banned_until
-    const bannedUntil = new Date()
-    bannedUntil.setFullYear(bannedUntil.getFullYear() + 100) // Ban for 100 years (permanent)
+    // 1. Ban the user at auth level
+    // Try multiple methods to ensure the ban works
+    console.log('Attempting to ban user with duration:', duration)
 
-    const { data: updatedUser, error: banError } = await supabaseAdmin.auth.admin.updateUserById(user_id, {
-      banned_until: bannedUntil.toISOString()
-    })
+    let updatedUser
+    let banError
+
+    try {
+      // Method 1: Try ban_duration first (newer Supabase versions)
+      const result = await supabaseAdmin.auth.admin.updateUserById(user_id, {
+        ban_duration: duration,
+        // Also set app_metadata to mark as banned (fallback)
+        app_metadata: {
+          banned: true,
+          banned_at: new Date().toISOString(),
+          banned_reason: reason || 'Banned by admin'
+        }
+      })
+      updatedUser = result.data
+      banError = result.error
+
+      // If ban_duration failed but user was updated, try alternative approach
+      if (banError && banError.message?.includes('ban_duration')) {
+        console.log('ban_duration not supported, trying alternative method...')
+        // Method 2: Just use app_metadata and disable email confirmation
+        const altResult = await supabaseAdmin.auth.admin.updateUserById(user_id, {
+          app_metadata: {
+            banned: true,
+            banned_at: new Date().toISOString(),
+            banned_reason: reason || 'Banned by admin'
+          },
+          email_confirm: false
+        })
+        updatedUser = altResult.data
+        banError = altResult.error
+      }
+
+      console.log('Ban API result:', { hasData: !!updatedUser, error: banError?.message })
+    } catch (err: any) {
+      console.error('Ban API exception:', err)
+      // Try one more fallback - just update app_metadata
+      try {
+        const fallbackResult = await supabaseAdmin.auth.admin.updateUserById(user_id, {
+          app_metadata: {
+            banned: true,
+            banned_at: new Date().toISOString(),
+            banned_reason: reason || 'Banned by admin'
+          }
+        })
+        updatedUser = fallbackResult.data
+        banError = fallbackResult.error
+        console.log('Fallback ban result:', { hasData: !!updatedUser, error: banError?.message })
+      } catch (fallbackErr: any) {
+        console.error('Fallback ban also failed:', fallbackErr)
+        return NextResponse.json({
+          error: 'Failed to ban user',
+          details: err.message || 'Exception during ban operation'
+        }, { status: 500 })
+      }
+    }
 
     if (banError) {
       console.error('Error banning user:', banError)
@@ -53,14 +112,14 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
-    console.log('✓ Auth account banned')
+    console.log('✓ Auth account banned/marked')
 
     // 2. Mark as banned and inactive in user_profiles
+    // Note: account_status column may not exist, only update is_active
     const { error: profileError } = await supabaseAdmin
       .from('user_profiles')
       .update({
         is_active: false,
-        account_status: 'banned',
         updated_at: new Date().toISOString()
       })
       .eq('id', user_id)
@@ -92,13 +151,14 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Revoke all licenses (set status to 'revoked')
+    // Note: Licenses are stored in 'license_keys' table, linked by 'assigned_to'
     const { error: licensesError } = await supabaseAdmin
-      .from('licenses')
+      .from('license_keys')
       .update({
         status: 'revoked',
         updated_at: new Date().toISOString()
       })
-      .eq('user_id', user_id)
+      .eq('assigned_to', user_id)
       .neq('status', 'revoked')
 
     if (licensesError) {
@@ -125,7 +185,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Also try cancelling from legacy tables (if they exist)
-    await supabaseAdmin
+    const { error: pluginSubError } = await supabaseAdmin
       .from('plugin_subscriptions')
       .update({
         status: 'cancelled',
@@ -134,10 +194,12 @@ export async function POST(request: NextRequest) {
       })
       .eq('user_id', user_id)
       .in('status', ['active', 'trialing'])
-      .then(() => console.log('✓ Legacy plugin subscriptions cancelled'))
-      .catch(() => {}) // Ignore errors if table doesn't exist
 
-    await supabaseAdmin
+    if (!pluginSubError) {
+      console.log('✓ Legacy plugin subscriptions cancelled')
+    }
+
+    const { error: nativeSubError } = await supabaseAdmin
       .from('native_app_subscriptions')
       .update({
         status: 'cancelled',
@@ -146,8 +208,10 @@ export async function POST(request: NextRequest) {
       })
       .eq('user_id', user_id)
       .in('status', ['active', 'trialing'])
-      .then(() => console.log('✓ Legacy native app subscriptions cancelled'))
-      .catch(() => {}) // Ignore errors if table doesn't exist
+
+    if (!nativeSubError) {
+      console.log('✓ Legacy native app subscriptions cancelled')
+    }
 
     // 7. Delete onboarding sessions
     const { error: onboardingError } = await supabaseAdmin
@@ -162,10 +226,11 @@ export async function POST(request: NextRequest) {
     }
 
     // 8. Delete clusters (they're responsible for payment)
+    // Note: Table might be 'data_clusters' or 'database_clusters'
     const { error: clustersError } = await supabaseAdmin
-      .from('clusters')
+      .from('database_clusters')
       .delete()
-      .eq('user_id', user_id)
+      .eq('created_by', user_id)
 
     if (clustersError) {
       console.warn('Error deleting clusters:', clustersError)
@@ -173,8 +238,8 @@ export async function POST(request: NextRequest) {
       console.log('✓ Clusters deleted')
     }
 
-    // Log the action
-    await supabaseAdmin
+    // Log the action (table may not exist)
+    const { error: auditError } = await supabaseAdmin
       .from('admin_audit_log')
       .insert({
         admin_id: user.id,
@@ -182,7 +247,10 @@ export async function POST(request: NextRequest) {
         target_user_id: user_id,
         details: { duration, reason }
       })
-      .catch(err => console.warn('Failed to log admin action:', err))
+
+    if (auditError) {
+      console.warn('Failed to log admin action:', auditError)
+    }
 
     console.log('User banned successfully:', updatedUser.user?.email)
 

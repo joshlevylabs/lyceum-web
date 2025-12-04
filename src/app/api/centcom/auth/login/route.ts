@@ -793,12 +793,21 @@ async function getUserLicenses(supabase: any, userId: string) {
         !!license_config.feature_configurations?.local_cluster?.enabled
       )
 
+      // For plugin licenses, use license_type as plugin_id (e.g., 'klippel_qc')
+      // This allows the desktop app to validate plugin access correctly
+      const isPluginLicense = license.license_category === 'plugin' ||
+        ['klippel_qc', 'apx500', 'ssj-blue'].includes(license.license_type)
+
       return {
         id: license.id,
         key_code: license.key_code || 'UNKNOWN',
         license_category: license.license_category || 'main_application',
         license_type: license.license_type || 'trial',
+        // Add plugin_id field for plugin licenses (desktop app validates against this)
+        plugin_id: isPluginLicense ? license.license_type : undefined,
         status: license.status || 'active',
+        // Include features array - critical for plugin access validation!
+        features: license.features || [],
         license_config,
         expires_at: license.expires_at
       }

@@ -54,6 +54,7 @@ const DISPOSABLE_DOMAINS = new Set([
   'rhyta.com',
   'superrito.com',
   'teleworm.us',
+  'bialode.com',
   // Add more as needed
 ])
 

@@ -160,7 +160,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const licenseType = profile.license_type || 'enterprise'
 
       // Create new session sync instance
-      const apiUrl = process.env.NEXT_PUBLIC_LYCEUM_API_BASE_URL || 'http://localhost:3594/api'
+      // Use relative URL in production (same origin), only use localhost in development
+      const apiUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/api`
+        : (process.env.NEXT_PUBLIC_LYCEUM_API_BASE_URL || 'http://localhost:3594/api')
       webSessionSyncRef.current = new WebSessionSync(
         session.access_token,
         authUser.id,

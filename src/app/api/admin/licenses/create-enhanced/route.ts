@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getLicenseTypeConfig } from '@/lib/license-types'
+import { getLicenseTypeConfig, getPluginFeatures } from '@/lib/license-types'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co'
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4'
@@ -43,8 +43,15 @@ export async function POST(request: NextRequest) {
       max_storage_gb: body.max_storage_gb || (licenseTypeConfig.max_storage_gb === -1 ? 999999 : licenseTypeConfig.max_storage_gb),
       
       // Convert features to JSONB array for license_keys compatibility
+      // For plugin licenses, auto-populate required features if not explicitly provided
       features: body.license_category === 'plugin' ? (
-        body.plugin_features ? Object.keys(body.plugin_features).filter(key => body.plugin_features[key]) : []
+        body.plugin_features && Object.keys(body.plugin_features).length > 0
+          ? Object.keys(body.plugin_features).filter(key => body.plugin_features[key])
+          : getPluginFeatures(
+              body.plugin_id || body.license_type || '',
+              body.license_type || 'standard',
+              licenseTypeConfig.trial_duration_days ? true : false
+            )
       ) : Object.keys(body.main_app_permissions || licenseTypeConfig.default_main_app_permissions).filter(
         key => (body.main_app_permissions || licenseTypeConfig.default_main_app_permissions)[key]
       ),
