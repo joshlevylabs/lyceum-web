@@ -41,9 +41,21 @@ export async function GET(req: NextRequest) {
       success: !licenseKeysError,
       error: licenseKeysError?.message || null,
       count: licenseKeys?.length || 0,
-      licenses: licenseKeys || []
+      licenses: (licenseKeys || []).map(l => ({
+        id: l.id,
+        key_code: l.key_code,
+        license_type: l.license_type,
+        license_category: l.license_category,
+        status: l.status,
+        features: l.features,  // IMPORTANT: Show features for debugging
+        assigned_to: l.assigned_to,
+        expires_at: l.expires_at
+      }))
     }
     console.log('✅ Test 0 result:', test0Result.count, 'licenses from license_keys')
+    if (licenseKeys?.length) {
+      console.log('🔍 First license features:', licenseKeys[0].features)
+    }
 
     // Test 1: Direct licenses table query (ALTERNATIVE TABLE)
     console.log('📊 Test 1: Querying licenses table with user_id')

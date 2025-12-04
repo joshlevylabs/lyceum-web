@@ -19,26 +19,46 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
     
+    // Determine if this is a plugin license
+    // Normalize plugin ID: convert hyphens to underscores (klippel-qc -> klippel_qc)
+    const normalizedPluginId = body.plugin_id?.replace(/-/g, '_') || null
+    const isPluginLicense = body.license_category === 'plugin' ||
+      ['klippel_qc', 'apx500', 'ssj-blue', 'ssj_blue'].includes(body.license_type) ||
+      ['klippel_qc', 'apx500', 'ssj_blue'].includes(normalizedPluginId || '')
+
     // Generate license key if needed
-    const generateKeyCode = (licenseType: string) => {
-      const prefix = `LYC-${licenseType.toUpperCase().slice(0, 3)}-${new Date().getFullYear()}`
-      const random = Math.random().toString(36).substr(2, 6).toUpperCase()
-      return `${prefix}-${random}`
+    // Format: LYC-{TYPE}-{YEAR}-{RANDOM}
+    // Plugin examples: LYC-KLIPPEL-2025-KKNJ93DP, LYC-APX500-2025-OI3I5JS
+    // Desktop example: LYC-DESKTOP-2025-KJFS843
+    const generateKeyCode = () => {
+      const year = new Date().getFullYear()
+      const random = Math.random().toString(36).substr(2, 8).toUpperCase()
+
+      if (isPluginLicense) {
+        // Map plugin IDs to key prefixes
+        const pluginPrefixMap: Record<string, string> = {
+          'klippel_qc': 'KLIPPEL',
+          'apx500': 'APX500',
+          'ssj_blue': 'SSJBLUE'
+        }
+        const pluginId = normalizedPluginId || body.license_type?.replace(/-/g, '_')
+        const pluginPrefix = pluginPrefixMap[pluginId] || pluginId?.toUpperCase().replace(/_/g, '') || 'PLUGIN'
+        return `LYC-${pluginPrefix}-${year}-${random}`
+      } else {
+        // Main application / desktop license
+        return `LYC-DESKTOP-${year}-${random}`
+      }
     }
-    
-    const keyCode = body.auto_generate_key !== false ? 
-      generateKeyCode(body.license_type) : 
+
+    const keyCode = body.auto_generate_key !== false ?
+      generateKeyCode() :
       body.custom_key
-    
+
     if (!keyCode) {
-      return NextResponse.json({ 
-        error: 'License key is required' 
+      return NextResponse.json({
+        error: 'License key is required'
       }, { status: 400 })
     }
-    
-    // Determine if this is a plugin license
-    const isPluginLicense = body.license_category === 'plugin' ||
-      ['klippel_qc', 'apx500', 'ssj-blue'].includes(body.license_type)
 
     // Auto-populate features for plugin licenses if not provided
     const resolvedFeatures = body.features && body.features.length > 0
