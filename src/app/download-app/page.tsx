@@ -791,15 +791,15 @@ export default function DownloadAppPage() {
             <div className="px-6 pb-6 border-t border-gray-200 dark:border-gray-700">
               <div className="mt-4 space-y-4">
                 <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Why does {brandName} need WSL?</h4>
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Why does the desktop application need WSL?</h4>
                   <p className="text-sm text-gray-700 dark:text-gray-300">
-                    WSL (Windows Subsystem for Linux) enables the ClickHouse analytics engine, which powers real-time dashboards and data visualization in Analytics Studio.
+                    WSL (Windows Subsystem for Linux) is required to run the database, cluster storage, and analytics engines that power the application. These components rely on Linux-based services that run within WSL.
                   </p>
                 </div>
                 <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Can I use {brandName} without WSL?</h4>
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Can I use the desktop application without WSL?</h4>
                   <p className="text-sm text-gray-700 dark:text-gray-300">
-                    Yes, but Analytics Studio features will be unavailable. Core functionality like APx500 control and Klippel QC still work.
+                    No, WSL is required to run the application. The database and analytics engines depend on WSL to function, so the application cannot operate without it installed.
                   </p>
                 </div>
                 <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
@@ -809,7 +809,7 @@ export default function DownloadAppPage() {
                   </p>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">My Windows version is older than 2004. Can I still use {brandName}?</h4>
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">My Windows version is older than 2004. Can I still use the desktop application?</h4>
                   <p className="text-sm text-gray-700 dark:text-gray-300">
                     Unfortunately, no. WSL 2 requires Windows 10 version 2004 or newer. Please update Windows via Settings → Windows Update.
                   </p>
