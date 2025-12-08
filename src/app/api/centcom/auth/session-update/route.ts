@@ -90,9 +90,22 @@ export async function POST(request: NextRequest) {
           authError: authError?.message,
           hasUser: !!user
         });
+        // Return 401 with clear signal to stop retrying
         return NextResponse.json(
-          { success: false, error: 'Invalid token', details: authError?.message },
-          { status: 401 }
+          {
+            success: false,
+            error: 'token_expired',
+            details: authError?.message,
+            action: 'logout', // Tell client to log out, not retry
+            retry: false // Explicitly tell client NOT to retry
+          },
+          {
+            status: 401,
+            headers: {
+              'X-Auth-Action': 'logout', // Header signal to stop retrying
+              'Retry-After': '86400' // Don't retry for 24 hours (effectively: re-login required)
+            }
+          }
         );
       }
 
