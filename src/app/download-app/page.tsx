@@ -531,49 +531,26 @@ export default function DownloadAppPage() {
 
               <div className="space-y-3">
                 {platform === 'windows' && (
-                  <>
-                    <button
-                      onClick={() => handleDownload('exe')}
-                      disabled={downloadingApp}
-                      className="w-full flex items-center justify-between px-4 py-4 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
-                    >
-                      <div className="flex items-center">
-                        <svg className="h-10 w-10 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" />
-                        </svg>
-                        <div className="ml-4 text-left">
-                          <p className="text-base font-medium text-gray-900 dark:text-white">
-                            Setup.exe (Recommended)
-                          </p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Standard Windows installer
-                          </p>
-                        </div>
+                  <button
+                    onClick={() => handleDownload('exe')}
+                    disabled={downloadingApp}
+                    className="w-full flex items-center justify-between px-4 py-4 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                  >
+                    <div className="flex items-center">
+                      <svg className="h-10 w-10 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" />
+                      </svg>
+                      <div className="ml-4 text-left">
+                        <p className="text-base font-medium text-gray-900 dark:text-white">
+                          Download for Windows
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Windows installer (.exe)
+                        </p>
                       </div>
-                      <ArrowDownTrayIcon className="h-6 w-6 text-gray-400" />
-                    </button>
-
-                    <button
-                      onClick={() => handleDownload('msi')}
-                      disabled={downloadingApp}
-                      className="w-full flex items-center justify-between px-4 py-4 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
-                    >
-                      <div className="flex items-center">
-                        <svg className="h-10 w-10 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" />
-                        </svg>
-                        <div className="ml-4 text-left">
-                          <p className="text-base font-medium text-gray-900 dark:text-white">
-                            Setup.msi
-                          </p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            For enterprise deployment
-                          </p>
-                        </div>
-                      </div>
-                      <ArrowDownTrayIcon className="h-6 w-6 text-gray-400" />
-                    </button>
-                  </>
+                    </div>
+                    <ArrowDownTrayIcon className="h-6 w-6 text-gray-400" />
+                  </button>
                 )}
 
                 {downloadingApp && (

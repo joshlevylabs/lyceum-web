@@ -456,12 +456,13 @@ export const PLUGIN_CONFIGURATIONS: Record<string, any> = {
     name: 'Klippel QC',
     description: 'Quality control plugin for audio testing',
     default_version: '2.1.0',
+    // Features must match PLUGIN_REQUIRED_FEATURES for desktop app compatibility
     features: {
-      automated_testing: true,
-      custom_test_protocols: true,
-      batch_processing: true,
-      reporting: true,
-      integration_apis: true
+      plugin_access: true,          // REQUIRED by desktop app
+      klippel_qc_analysis: true,    // REQUIRED by desktop app
+      klippel_qc_reporting: true,
+      klippel_qc_export: true,
+      data_integration: true
     },
     license_tiers: {
       standard: {
@@ -486,12 +487,13 @@ export const PLUGIN_CONFIGURATIONS: Record<string, any> = {
     name: 'APx500',
     description: 'Audio analyzer integration plugin',
     default_version: '1.5.0',
+    // Features must match PLUGIN_REQUIRED_FEATURES for desktop app compatibility
     features: {
-      audio_analysis: true,
-      measurement_automation: true,
-      data_export: true,
-      custom_sequences: true,
-      hardware_integration: true
+      plugin_access: true,        // REQUIRED by desktop app
+      apx500_measurements: true,  // REQUIRED by desktop app
+      apx500_analysis: true,
+      apx500_export: true,
+      data_integration: true
     },
     license_tiers: {
       standard: {

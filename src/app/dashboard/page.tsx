@@ -2041,52 +2041,28 @@ export default function Dashboard() {
                     </h4>
                     <div className="space-y-2">
                       {desktopAppInfo.platform === 'windows' && (
-                        <>
-                          <button
-                            onClick={() => handleDownload('exe')}
-                            disabled={downloadingApp}
-                            className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
-                          >
-                            <div className="flex items-center">
-                              <svg className="h-8 w-8 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" />
-                              </svg>
-                              <div className="ml-3 text-left">
-                                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                  Setup.exe (Recommended)
-                                </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  Standard Windows installer
-                                </p>
-                              </div>
-                            </div>
-                            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        <button
+                          onClick={() => handleDownload('exe')}
+                          disabled={downloadingApp}
+                          className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                        >
+                          <div className="flex items-center">
+                            <svg className="h-8 w-8 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" />
                             </svg>
-                          </button>
-                          <button
-                            onClick={() => handleDownload('msi')}
-                            disabled={downloadingApp}
-                            className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
-                          >
-                            <div className="flex items-center">
-                              <svg className="h-8 w-8 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" />
-                              </svg>
-                              <div className="ml-3 text-left">
-                                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                  Setup.msi
-                                </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  For enterprise deployment
-                                </p>
-                              </div>
+                            <div className="ml-3 text-left">
+                              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                Download for Windows
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Windows installer (.exe)
+                              </p>
                             </div>
-                            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                          </button>
-                        </>
+                          </div>
+                          <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                        </button>
                       )}
                       {desktopAppInfo.platform === 'macos' && (
                         <button

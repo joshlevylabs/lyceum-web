@@ -20,11 +20,13 @@ interface SessionValidationResponse {
 }
 
 export async function POST(req: NextRequest) {
-  // CORS headers for Centcom and testing
+  // CORS headers for Centcom desktop app and web testing
   const origin = req.headers.get('origin')
-  const allowedOrigins = ['http://localhost:3003', 'http://localhost:3594', 'null']
-  const corsOrigin = allowedOrigins.includes(origin || 'null') ? (origin || '*') : 'http://localhost:3003'
-  
+  // Include tauri://localhost for Tauri desktop app native HTTP requests
+  const allowedOrigins = ['http://localhost:3003', 'http://localhost:3594', 'tauri://localhost', 'null']
+  // For production requests without origin (native HTTP) or from allowed origins, permit with '*'
+  const corsOrigin = !origin || allowedOrigins.includes(origin) ? '*' : origin
+
   const headers = {
     'Access-Control-Allow-Origin': corsOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -98,15 +100,18 @@ export async function POST(req: NextRequest) {
 
 export async function OPTIONS(req: NextRequest) {
   const origin = req.headers.get('origin')
-  const allowedOrigins = ['http://localhost:3003', 'http://localhost:3594', 'null']
-  const corsOrigin = allowedOrigins.includes(origin || 'null') ? (origin || '*') : 'http://localhost:3003'
-  
+  // Include tauri://localhost for Tauri desktop app native HTTP requests
+  const allowedOrigins = ['http://localhost:3003', 'http://localhost:3594', 'tauri://localhost', 'null']
+  // For production requests without origin (native HTTP) or from allowed origins, permit with '*'
+  const corsOrigin = !origin || allowedOrigins.includes(origin) ? '*' : origin
+
   return new NextResponse(null, {
     status: 200,
     headers: {
       'Access-Control-Allow-Origin': corsOrigin,
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
     },
   })
 }
