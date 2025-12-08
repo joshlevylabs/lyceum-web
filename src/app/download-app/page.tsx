@@ -655,6 +655,21 @@ export default function DownloadAppPage() {
                     <li>Klippel COM component registration (if using Klippel QC features)</li>
                   </ul>
                 </div>
+
+                {/* Klippel dB-Lab Prerequisite */}
+                <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                  <h3 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">
+                    Klippel dB-Lab - Required for Klippel QC features
+                  </h3>
+                  <p className="text-sm text-purple-800 dark:text-purple-200 mb-2">
+                    If you plan to use the Klippel QC plugin to import .kdbx files, you must have <strong>Klippel dB-Lab</strong> installed on your machine before using these features.
+                  </p>
+                  <ul className="text-sm text-purple-800 dark:text-purple-200 space-y-1 ml-4 list-disc">
+                    <li>dB-Lab provides the COM components needed to read Klippel database files</li>
+                    <li>Contact Klippel or your Klippel distributor to obtain dB-Lab</li>
+                    <li>Not required if you are not using Klippel QC features</li>
+                  </ul>
+                </div>
               </div>
             </div>
           )}
@@ -759,6 +774,7 @@ export default function DownloadAppPage() {
                 <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
                   <h3 className="font-semibold text-purple-900 dark:text-purple-100 mb-2">For Klippel QC Users:</h3>
                   <ul className="text-sm text-purple-800 dark:text-purple-200 space-y-2 ml-4 list-disc">
+                    <li><strong>Klippel dB-Lab must be installed</strong> on your machine to use Klippel QC features</li>
                     <li>Klippel COM registration occurs automatically when first importing a .kdbx file</li>
                     <li>A UAC prompt will appear - click &quot;Yes&quot; to complete registration</li>
                     <li>This is a one-time setup</li>
@@ -1060,7 +1076,7 @@ Start-Process "regsvr32.exe" -ArgumentList "/s \`"$dllPath\`"" -Wait`}</code>
                           Download for Windows (64-bit)
                         </p>
                         <p className="text-sm text-blue-100">
-                          Windows installer (.exe) • ~150 MB
+                          Windows installer (.exe) • ~335 MB
                         </p>
                       </div>
                     </div>
