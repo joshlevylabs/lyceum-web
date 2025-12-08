@@ -81,8 +81,9 @@ export async function POST(req: NextRequest) {
 
     console.log('🔐 Centcom authentication attempt:', { email, app_id })
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co'
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4OTU0MTYsImV4cCI6MjA2ODQ3MTQxNn0.5Wzzoat1TsoLLbsqjuoUEKyawJgYmvrMYbJ-uvosdu0'
+    // Trim environment variables to remove any trailing whitespace/line endings
+    const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co').trim()
+    const anonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4OTU0MTYsImV4cCI6MjA2ODQ3MTQxNn0.5Wzzoat1TsoLLbsqjuoUEKyawJgYmvrMYbJ-uvosdu0').trim()
     const supabase = createClient(supabaseUrl, anonKey)
 
     // Step 1: Authenticate with Supabase
@@ -93,9 +94,12 @@ export async function POST(req: NextRequest) {
 
     if (authError || !authData.user) {
       console.log('❌ Supabase authentication failed:', authError?.message)
+      console.log('❌ Full auth error:', JSON.stringify(authError, null, 2))
+      const errorMessage = authError?.message || 'Invalid credentials'
       return NextResponse.json({
         success: false,
-        error: 'Invalid credentials'
+        error: errorMessage,
+        details: authError?.message // Include details for debugging
       }, { status: 401, headers })
     }
 
@@ -180,9 +184,12 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('❌ Authentication error:', error)
+    console.error('❌ Error stack:', error?.stack)
+    console.error('❌ Error message:', error?.message)
     return NextResponse.json({
       success: false,
-      error: 'Internal server error'
+      error: error?.message || 'Internal server error',
+      details: error?.message // Include details for debugging
     }, { status: 500, headers })
   }
 }
@@ -209,8 +216,9 @@ export async function OPTIONS(req: NextRequest) {
 async function getUserProfile(supabase: any, userId: string) {
   try {
     // IMPORTANT: Use service role key to bypass RLS and get authoritative role data
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co'
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4'
+    // Trim environment variables to remove any trailing whitespace/line endings
+    const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co').trim()
+    const serviceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4').trim()
     const serviceSupabase = createClient(supabaseUrl, serviceKey)
 
     // Query user profile and license information using service role
@@ -637,8 +645,9 @@ async function getUserLicenses(supabase: any, userId: string) {
     console.log('🔍 getUserLicenses called for user:', userId)
 
     // Use service role to fetch licenses
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co'
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4'
+    // Trim environment variables to remove any trailing whitespace/line endings
+    const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kffiaqsihldgqdwagook.supabase.co').trim()
+    const serviceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZmlhcXNpaGxkZ3Fkd2Fnb29rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjg5NTQxNiwiZXhwIjoyMDY4NDcxNDE2fQ.rdpMb817paWLCcJXzWuONBJgDU-RLDs45H33rgrvAE4').trim()
     const serviceSupabase = createClient(supabaseUrl, serviceKey)
 
     // Method 0: Try license_keys table with assigned_to field (PRIMARY METHOD)
