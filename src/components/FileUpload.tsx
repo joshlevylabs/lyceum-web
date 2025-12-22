@@ -1,19 +1,19 @@
 'use client'
 
 import React, { useState, useCallback, useRef, useEffect } from 'react'
-import { 
-  CloudArrowUpIcon, 
-  DocumentIcon, 
-  PhotoIcon, 
-  VideoCameraIcon, 
-  XMarkIcon,
-  EyeIcon,
-  DocumentArrowDownIcon,
-  ExclamationTriangleIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  PaperClipIcon
-} from '@heroicons/react/24/outline'
+import {
+  CloudArrowUp,
+  File,
+  Image,
+  VideoCamera,
+  X,
+  Eye,
+  FileArrowDown,
+  Warning,
+  CaretDown,
+  CaretUp,
+  Paperclip
+} from '@phosphor-icons/react'
 
 interface FileUploadProps {
   ticketId: string
@@ -59,36 +59,36 @@ interface UploadingFile {
 
 const ACCEPTED_TYPES = {
   // Images
-  'image/jpeg': { icon: PhotoIcon, color: 'text-green-500', category: 'image' },
-  'image/jpg': { icon: PhotoIcon, color: 'text-green-500', category: 'image' },
-  'image/png': { icon: PhotoIcon, color: 'text-green-500', category: 'image' },
-  'image/gif': { icon: PhotoIcon, color: 'text-green-500', category: 'image' },
-  'image/webp': { icon: PhotoIcon, color: 'text-green-500', category: 'image' },
-  'image/svg+xml': { icon: PhotoIcon, color: 'text-green-500', category: 'image' },
-  
+  'image/jpeg': { icon: Image, color: 'text-green-500', category: 'image' },
+  'image/jpg': { icon: Image, color: 'text-green-500', category: 'image' },
+  'image/png': { icon: Image, color: 'text-green-500', category: 'image' },
+  'image/gif': { icon: Image, color: 'text-green-500', category: 'image' },
+  'image/webp': { icon: Image, color: 'text-green-500', category: 'image' },
+  'image/svg+xml': { icon: Image, color: 'text-green-500', category: 'image' },
+
   // Videos
-  'video/mp4': { icon: VideoCameraIcon, color: 'text-purple-500', category: 'video' },
-  'video/webm': { icon: VideoCameraIcon, color: 'text-purple-500', category: 'video' },
-  'video/ogg': { icon: VideoCameraIcon, color: 'text-purple-500', category: 'video' },
-  'video/avi': { icon: VideoCameraIcon, color: 'text-purple-500', category: 'video' },
-  'video/mov': { icon: VideoCameraIcon, color: 'text-purple-500', category: 'video' },
-  'video/quicktime': { icon: VideoCameraIcon, color: 'text-purple-500', category: 'video' },
-  
+  'video/mp4': { icon: VideoCamera, color: 'text-purple-500', category: 'video' },
+  'video/webm': { icon: VideoCamera, color: 'text-purple-500', category: 'video' },
+  'video/ogg': { icon: VideoCamera, color: 'text-purple-500', category: 'video' },
+  'video/avi': { icon: VideoCamera, color: 'text-purple-500', category: 'video' },
+  'video/mov': { icon: VideoCamera, color: 'text-purple-500', category: 'video' },
+  'video/quicktime': { icon: VideoCamera, color: 'text-purple-500', category: 'video' },
+
   // Documents
-  'application/pdf': { icon: DocumentIcon, color: 'text-red-500', category: 'document' },
-  'application/msword': { icon: DocumentIcon, color: 'text-blue-500', category: 'document' },
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': { icon: DocumentIcon, color: 'text-blue-500', category: 'document' },
-  'application/vnd.ms-excel': { icon: DocumentIcon, color: 'text-green-600', category: 'document' },
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': { icon: DocumentIcon, color: 'text-green-600', category: 'document' },
-  'text/plain': { icon: DocumentIcon, color: 'text-gray-500', category: 'document' },
-  'text/csv': { icon: DocumentIcon, color: 'text-gray-500', category: 'document' },
-  'application/json': { icon: DocumentIcon, color: 'text-gray-500', category: 'document' },
-  'application/xml': { icon: DocumentIcon, color: 'text-gray-500', category: 'document' },
-  
+  'application/pdf': { icon: File, color: 'text-red-500', category: 'document' },
+  'application/msword': { icon: File, color: 'text-blue-500', category: 'document' },
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': { icon: File, color: 'text-blue-500', category: 'document' },
+  'application/vnd.ms-excel': { icon: File, color: 'text-green-600', category: 'document' },
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': { icon: File, color: 'text-green-600', category: 'document' },
+  'text/plain': { icon: File, color: 'text-gray-500', category: 'document' },
+  'text/csv': { icon: File, color: 'text-gray-500', category: 'document' },
+  'application/json': { icon: File, color: 'text-gray-500', category: 'document' },
+  'application/xml': { icon: File, color: 'text-gray-500', category: 'document' },
+
   // Archives
-  'application/zip': { icon: DocumentArrowDownIcon, color: 'text-orange-500', category: 'archive' },
-  'application/x-rar-compressed': { icon: DocumentArrowDownIcon, color: 'text-orange-500', category: 'archive' },
-  'application/x-7z-compressed': { icon: DocumentArrowDownIcon, color: 'text-orange-500', category: 'archive' }
+  'application/zip': { icon: FileArrowDown, color: 'text-orange-500', category: 'archive' },
+  'application/x-rar-compressed': { icon: FileArrowDown, color: 'text-orange-500', category: 'archive' },
+  'application/x-7z-compressed': { icon: FileArrowDown, color: 'text-orange-500', category: 'archive' }
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({
@@ -135,7 +135,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
   const getFileTypeInfo = (mimeType: string) => {
     return ACCEPTED_TYPES[mimeType as keyof typeof ACCEPTED_TYPES] || {
-      icon: DocumentIcon,
+      icon: File,
       color: 'text-gray-500',
       category: 'other'
     }
@@ -378,7 +378,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
         >
           {isDragOver && (
             <div className="text-center">
-              <CloudArrowUpIcon className="mx-auto h-8 w-8 text-blue-500" />
+              <CloudArrowUp className="mx-auto h-8 w-8 text-blue-500" />
               <p className="text-sm font-medium text-blue-600 mt-2">Drop files to attach</p>
             </div>
           )}
@@ -391,7 +391,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
             className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
             title="Attach files"
           >
-            <PaperClipIcon className="h-5 w-5" />
+            <Paperclip className="h-5 w-5" />
           </button>
           <input
             ref={fileInputRef}
@@ -436,7 +436,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
       {collapsible && (
         <div className="flex items-center justify-between">
           <h4 className="text-sm font-medium text-gray-900 flex items-center">
-            <PaperClipIcon className="h-4 w-4 mr-2" />
+            <Paperclip className="h-4 w-4 mr-2" />
             {title} ({totalFiles})
           </h4>
           <button
@@ -444,9 +444,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
             className="p-1 hover:bg-gray-100 rounded transition-colors"
           >
             {isCollapsed ? (
-              <ChevronDownIcon className="h-4 w-4 text-gray-500" />
+              <CaretDown className="h-4 w-4 text-gray-500" />
             ) : (
-              <ChevronUpIcon className="h-4 w-4 text-gray-500" />
+              <CaretUp className="h-4 w-4 text-gray-500" />
             )}
           </button>
         </div>
@@ -468,7 +468,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           `}
           onClick={() => !disabled && fileInputRef.current?.click()}
         >
-          <CloudArrowUpIcon className={`mx-auto h-12 w-12 ${isDragOver ? 'text-blue-500' : 'text-gray-400'}`} />
+          <CloudArrowUp className={`mx-auto h-12 w-12 ${isDragOver ? 'text-blue-500' : 'text-gray-400'}`} />
           <div className="mt-4">
             <p className="text-sm font-medium text-gray-900">
               {isDragOver ? 'Drop files here' : 'Upload files'}
@@ -518,7 +518,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     )}
                     {uploadingFile.status === 'error' && (
                       <div className="flex items-center space-x-1">
-                        <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
+                        <Warning className="h-4 w-4 text-red-500" />
                         <p className="text-xs text-red-600">{uploadingFile.error}</p>
                       </div>
                     )}
@@ -531,7 +531,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                   onClick={() => removeUploadingFile(uploadingFile.id)}
                   className="p-1 hover:bg-gray-200 rounded"
                 >
-                  <XMarkIcon className="h-4 w-4 text-gray-400" />
+                  <X className="h-4 w-4 text-gray-400" />
                 </button>
               </div>
             )
@@ -583,14 +583,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600"
                     title="View file"
                   >
-                    <EyeIcon className="h-4 w-4" />
+                    <Eye className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => removeCompletedAttachment(attachment.id)}
                     className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-red-600"
                     title="Delete file"
                   >
-                    <XMarkIcon className="h-4 w-4" />
+                    <X className="h-4 w-4" />
                   </button>
                 </div>
               </div>

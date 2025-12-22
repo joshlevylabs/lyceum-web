@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/DashboardLayout'
-import { CheckCircleIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { CheckCircle, X } from '@phosphor-icons/react'
 
 function CheckoutSuccessContent() {
   const { user, loading } = useAuth()
@@ -141,16 +141,16 @@ function CheckoutSuccessContent() {
   if (loading || processing) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex items-center justify-center min-h-screen bg-background">
           <div className="text-center max-w-md">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-6"></div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            <div className="animate-spin rounded-full h-16 w-16 border-2 border-cyan-500/20 border-t-cyan-500 mx-auto mb-6"></div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">
               Processing Your Payment
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-foreground/60">
               Please wait while we set up your subscription and generate your license...
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500 mt-4">
+            <p className="text-sm text-foreground/40 mt-4">
               This usually takes 5-10 seconds
             </p>
           </div>
@@ -162,18 +162,18 @@ function CheckoutSuccessContent() {
   if (error) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="max-w-md w-full bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-8 text-center">
-            <XMarkIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+        <div className="flex items-center justify-center min-h-screen bg-background">
+          <div className="max-w-md w-full glass-card p-8 text-center border border-red-500/20">
+            <X className="h-16 w-16 text-red-400 mx-auto mb-4" weight="duotone" />
+            <h2 className="text-2xl font-bold text-foreground mb-2">
               Payment Processing Issue
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-foreground/60 mb-6">
               {error}
             </p>
             <button
               onClick={() => router.push('/dashboard')}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="btn-primary px-6 py-3"
             >
               Go to Dashboard
             </button>
@@ -186,27 +186,27 @@ function CheckoutSuccessContent() {
   if (success) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="max-w-md w-full bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-8 text-center">
-            <CheckCircleIcon className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+        <div className="flex items-center justify-center min-h-screen bg-background">
+          <div className="max-w-md w-full glass-card p-8 text-center border border-emerald-500/20">
+            <CheckCircle className="h-16 w-16 text-emerald-400 mx-auto mb-4" weight="duotone" />
+            <h2 className="text-2xl font-bold text-foreground mb-2">
               Payment Successful!
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-foreground/60 mb-4">
               Your subscription has been activated and your license has been generated.
             </p>
             {subscriptionDetails?.license_subscription_relationships?.[0]?.license_keys?.key_code && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4">
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">License Key:</p>
-                <p className="font-mono text-lg font-bold text-gray-900 dark:text-white">
+              <div className="glass-card p-4 mb-4 bg-emerald-500/10 border border-emerald-500/20">
+                <p className="text-sm text-foreground/60 mb-1">License Key:</p>
+                <p className="font-mono text-lg font-bold text-foreground">
                   {subscriptionDetails.license_subscription_relationships[0].license_keys.key_code}
                 </p>
               </div>
             )}
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-foreground/60 mb-6">
               Redirecting to download page...
             </p>
-            <div className="animate-pulse text-blue-600 dark:text-blue-400">
+            <div className="animate-pulse text-cyan-400">
               Redirecting...
             </div>
           </div>
@@ -222,8 +222,8 @@ export default function CheckoutSuccessPage() {
   return (
     <Suspense fallback={
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="flex items-center justify-center min-h-screen bg-background">
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-cyan-500/20 border-t-cyan-500"></div>
         </div>
       </DashboardLayout>
     }>

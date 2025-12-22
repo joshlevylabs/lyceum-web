@@ -4,37 +4,27 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-  CircleStackIcon,
-  PlusIcon,
-  MagnifyingGlassIcon,
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  XCircleIcon,
-  ClockIcon,
-  CpuChipIcon,
-  ServerIcon,
-  ChartBarIcon,
-  Cog6ToothIcon,
-  PlayIcon,
-  PauseIcon,
-  ArrowPathIcon,
-  EyeIcon,
-  UserGroupIcon,
-  CurrencyDollarIcon,
-  UsersIcon,
-  BanknotesIcon,
-  WrenchScrewdriverIcon
-} from '@heroicons/react/24/outline'
-import { 
-  Zap, 
-  Brain, 
-  Shield, 
-  TrendingUp, 
-  Database,
-  Settings,
-  BarChart3,
-  Users
-} from 'lucide-react'
+  Database as CircleStack,
+  Plus,
+  MagnifyingGlass,
+  CheckCircle,
+  Warning as ExclamationTriangle,
+  XCircle,
+  Clock,
+  Cpu as CpuChip,
+  HardDrives as Server,
+  ChartBar,
+  Gear as Cog6Tooth,
+  Play,
+  Pause,
+  ArrowsClockwise as ArrowPath,
+  Eye,
+  UserCircle as UserGroup,
+  CurrencyDollar,
+  Users as UsersIcon,
+  Money as Banknotes,
+  Wrench as WrenchScrewdriver
+} from '@phosphor-icons/react'
 import UnifiedClusterWizard from '@/components/UnifiedClusterWizard'
 import { Badge } from '@/components/ui/badge'
 
@@ -312,25 +302,25 @@ export default function UnifiedClusterManagement() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'active': return <CheckCircleIcon className="w-5 h-5 text-green-500" />
-      case 'offline': return <XCircleIcon className="w-5 h-5 text-gray-500" />
-      case 'creating': return <ArrowPathIcon className="w-5 h-5 text-blue-500 animate-spin" />
-      case 'maintenance': return <ClockIcon className="w-5 h-5 text-yellow-500" />
-      case 'error': return <XCircleIcon className="w-5 h-5 text-red-500" />
-      case 'terminated': return <XCircleIcon className="w-5 h-5 text-gray-500" />
-      default: return <ExclamationTriangleIcon className="w-5 h-5 text-gray-500" />
+      case 'active': return <CheckCircle className="w-5 h-5 text-emerald-400" />
+      case 'offline': return <XCircle className="w-5 h-5 text-foreground/40" />
+      case 'creating': return <div className="animate-spin rounded-full h-5 w-5 border-2 border-cyan-500/20 border-t-cyan-500" />
+      case 'maintenance': return <Clock className="w-5 h-5 text-amber-500" />
+      case 'error': return <XCircle className="w-5 h-5 text-red-500" />
+      case 'terminated': return <XCircle className="w-5 h-5 text-foreground/40" />
+      default: return <ExclamationTriangle className="w-5 h-5 text-foreground/40" />
     }
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800'
-      case 'offline': return 'bg-gray-100 text-gray-800'
-      case 'creating': return 'bg-blue-100 text-blue-800'
-      case 'maintenance': return 'bg-yellow-100 text-yellow-800'
-      case 'error': return 'bg-red-100 text-red-800'
-      case 'terminated': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'active': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+      case 'offline': return 'bg-foreground/5 text-foreground/60 border border-foreground/10'
+      case 'creating': return 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+      case 'maintenance': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+      case 'error': return 'bg-red-500/10 text-red-400 border border-red-500/20'
+      case 'terminated': return 'bg-foreground/5 text-foreground/60 border border-foreground/10'
+      default: return 'bg-foreground/5 text-foreground/60 border border-foreground/10'
     }
   }
 
@@ -348,21 +338,21 @@ export default function UnifiedClusterManagement() {
   const getArchitectureIcon = (architecture: string) => {
     switch (architecture) {
       case 'optimized':
-        return <Zap className="w-5 h-5 text-green-600" />
+        return <ChartBar className="w-5 h-5 text-emerald-400" />
       case 'centcom':
-        return <Database className="w-5 h-5 text-purple-600" />
+        return <CircleStack className="w-5 h-5 text-cyan-400" />
       default:
-        return <ServerIcon className="w-5 h-5 text-blue-600" />
+        return <Server className="w-5 h-5 text-cyan-400" />
     }
   }
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'development': return <PlayIcon className="w-5 h-5 text-blue-600" title="Development" />
-      case 'staging': return <ChartBarIcon className="w-5 h-5 text-yellow-600" title="Staging" />
-      case 'production': return <ServerIcon className="w-5 h-5 text-red-600" title="Production" />
-      case 'analytics': return <ChartBarIcon className="w-5 h-5 text-purple-600" title="Analytics" />
-      default: return <Cog6ToothIcon className="w-5 h-5 text-gray-600" title={type} />
+      case 'development': return <Play className="w-5 h-5 text-cyan-400" title="Development" />
+      case 'staging': return <ChartBar className="w-5 h-5 text-amber-400" title="Staging" />
+      case 'production': return <Server className="w-5 h-5 text-red-400" title="Production" />
+      case 'analytics': return <ChartBar className="w-5 h-5 text-cyan-400" title="Analytics" />
+      default: return <Cog6Tooth className="w-5 h-5 text-foreground/60" title={type} />
     }
   }
 
@@ -384,17 +374,17 @@ export default function UnifiedClusterManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-                <CircleStackIcon className="mr-3 h-8 w-8 text-blue-600" />
+              <h1 className="text-3xl font-bold text-foreground flex items-center">
+                <CircleStack className="mr-3 h-8 w-8 text-cyan-400" />
                 Clusters
               </h1>
-              <p className="mt-2 text-gray-600">
+              <p className="mt-2 text-foreground/60">
                 Manage your traditional and optimized analytics clusters with comprehensive user and billing control
               </p>
             </div>
@@ -403,23 +393,23 @@ export default function UnifiedClusterManagement() {
               <button
                 onClick={loadClusters}
                 disabled={loading}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                className="btn-glass inline-flex items-center px-4 py-2"
               >
-                <ArrowPathIcon className="-ml-1 mr-2 h-5 w-5" />
+                <ArrowPath className="-ml-1 mr-2 h-5 w-5" />
                 Refresh
               </button>
               <button
                 onClick={() => router.push('/admin/test-cluster')}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                className="btn-glass inline-flex items-center px-4 py-2"
               >
-                <WrenchScrewdriverIcon className="-ml-1 mr-2 h-5 w-5" />
+                <WrenchScrewdriver className="-ml-1 mr-2 h-5 w-5" />
                 Test Clusters
               </button>
               <button
                 onClick={() => setShowWizard(true)}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                className="btn-primary inline-flex items-center px-4 py-2"
               >
-                <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+                <Plus className="-ml-1 mr-2 h-5 w-5" />
                 Create Cluster
               </button>
             </div>
@@ -428,68 +418,68 @@ export default function UnifiedClusterManagement() {
 
         {/* Architecture Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="glass-card p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <CircleStackIcon className="h-8 w-8 text-blue-600" />
+                <CircleStack className="h-8 w-8 text-cyan-400" />
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Total Clusters</p>
-                <p className="text-2xl font-semibold text-gray-900">{filteredClusters.length}</p>
+                <p className="text-sm font-medium text-foreground/60">Total Clusters</p>
+                <p className="text-2xl font-semibold text-foreground">{filteredClusters.length}</p>
               </div>
             </div>
           </div>
-          
-          <div className="bg-white rounded-lg shadow p-4">
+
+          <div className="glass-card p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Zap className="h-8 w-8 text-green-600" />
+                <ChartBar className="h-8 w-8 text-emerald-400" />
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Optimized</p>
-                <p className="text-2xl font-semibold text-green-600">
+                <p className="text-sm font-medium text-foreground/60">Optimized</p>
+                <p className="text-2xl font-semibold text-emerald-400">
                   {filteredClusters.filter(c => c.architecture === 'optimized').length}
                 </p>
               </div>
             </div>
           </div>
-          
-          <div className="bg-white rounded-lg shadow p-4">
+
+          <div className="glass-card p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <ServerIcon className="h-8 w-8 text-blue-600" />
+                <Server className="h-8 w-8 text-cyan-400" />
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Traditional</p>
-                <p className="text-2xl font-semibold text-blue-600">
+                <p className="text-sm font-medium text-foreground/60">Traditional</p>
+                <p className="text-2xl font-semibold text-cyan-400">
                   {filteredClusters.filter(c => c.architecture === 'traditional').length}
                 </p>
               </div>
             </div>
           </div>
-          
-          <div className="bg-white rounded-lg shadow p-4">
+
+          <div className="glass-card p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Database className="h-8 w-8 text-purple-600" />
+                <CircleStack className="h-8 w-8 text-cyan-400" />
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">CentCom</p>
-                <p className="text-2xl font-semibold text-purple-600">
+                <p className="text-sm font-medium text-foreground/60">CentCom</p>
+                <p className="text-2xl font-semibold text-cyan-400">
                   {filteredClusters.filter(c => c.architecture === 'centcom').length}
                 </p>
               </div>
             </div>
           </div>
-          
-          <div className="bg-white rounded-lg shadow p-4">
+
+          <div className="glass-card p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <CurrencyDollarIcon className="h-8 w-8 text-purple-600" />
+                <CurrencyDollar className="h-8 w-8 text-cyan-400" />
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Monthly Cost</p>
-                <p className="text-2xl font-semibold text-purple-600">
+                <p className="text-sm font-medium text-foreground/60">Monthly Cost</p>
+                <p className="text-2xl font-semibold text-cyan-400">
                   ${filteredClusters.reduce((sum, c) => sum + c.estimated_monthly_cost, 0).toLocaleString()}
                 </p>
               </div>
@@ -498,17 +488,17 @@ export default function UnifiedClusterManagement() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow mb-6 p-4">
+        <div className="glass-card mb-6 p-4">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             {/* Search */}
             <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-foreground/40 h-5 w-5" />
               <input
                 type="text"
                 placeholder="Search clusters..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                className="glass-input w-full pl-10 pr-4 py-2 text-foreground placeholder-foreground/40"
               />
             </div>
 
@@ -516,7 +506,7 @@ export default function UnifiedClusterManagement() {
             <select
               value={filterArchitecture}
               onChange={(e) => setFilterArchitecture(e.target.value as any)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="glass-input px-3 py-2 text-foreground"
             >
               <option value="all">All Architectures</option>
               <option value="optimized">Optimized</option>
@@ -528,7 +518,7 @@ export default function UnifiedClusterManagement() {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as any)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="glass-input px-3 py-2 text-foreground"
             >
               <option value="all">All Types</option>
               <option value="development">Development</option>
@@ -541,7 +531,7 @@ export default function UnifiedClusterManagement() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as any)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="glass-input px-3 py-2 text-foreground"
             >
               <option value="all">All Statuses</option>
               <option value="active">Active</option>
@@ -553,7 +543,7 @@ export default function UnifiedClusterManagement() {
 
             {/* Results Count */}
             <div className="flex items-center justify-center">
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-foreground/60">
                 <span className="font-medium">{filteredClusters.length}</span> clusters found
               </span>
             </div>
@@ -561,53 +551,53 @@ export default function UnifiedClusterManagement() {
         </div>
 
         {/* Clusters Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="glass-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-cyan-500/10">
+              <thead className="bg-background">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider w-16">
                     View
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider w-20">
                     Type
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-72">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider w-72">
                     Key
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-96">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider w-96">
                     Cluster Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Architecture
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider w-32">
                     Region
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Resources
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Users
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Cost
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Created
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-background divide-y divide-cyan-500/10">
                 {loading ? (
                   <tr>
                     <td colSpan={11} className="px-6 py-12 text-center">
                       <div className="flex items-center justify-center">
-                        <ArrowPathIcon className="h-8 w-8 text-blue-600 animate-spin mr-3" />
-                        <span className="text-gray-600">Loading clusters...</span>
+                        <div className="animate-spin rounded-full h-8 w-8 border-2 border-cyan-500/20 border-t-cyan-500 mr-3" />
+                        <span className="text-foreground/60">Loading clusters...</span>
                       </div>
                     </td>
                   </tr>
@@ -616,14 +606,14 @@ export default function UnifiedClusterManagement() {
                     <td colSpan={11} className="px-6 py-12 text-center">
                       {showSetupRequired ? (
                         <div className="text-center">
-                          <CircleStackIcon className="mx-auto h-12 w-12 text-orange-300 mb-4" />
-                          <h3 className="text-lg font-medium text-gray-900 mb-2">Database Setup Required</h3>
-                          <p className="text-gray-600 mb-4">
+                          <CircleStack className="mx-auto h-12 w-12 text-foreground/40 mb-4" />
+                          <h3 className="text-lg font-medium text-foreground mb-2">Database Setup Required</h3>
+                          <p className="text-foreground/60 mb-4">
                             The unified cluster system needs to be set up in your database.
                           </p>
-                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 text-left max-w-2xl mx-auto">
-                            <h4 className="font-medium text-blue-900 mb-2">Quick Setup Instructions:</h4>
-                            <ol className="text-sm text-blue-800 space-y-1">
+                          <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4 mb-4 text-left max-w-2xl mx-auto">
+                            <h4 className="font-medium text-cyan-400 mb-2">Quick Setup Instructions:</h4>
+                            <ol className="text-sm text-foreground/60 space-y-1">
                               <li>1. Open your Supabase Dashboard</li>
                               <li>2. Go to SQL Editor</li>
                               <li>3. Copy and paste the SQL from <code>simplified-unified-cluster-setup.sql</code></li>
@@ -633,24 +623,24 @@ export default function UnifiedClusterManagement() {
                           </div>
                           <button
                             onClick={loadClusters}
-                            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                            className="btn-primary inline-flex items-center px-4 py-2"
                           >
-                            <ArrowPathIcon className="-ml-1 mr-2 h-5 w-5" />
+                            <ArrowPath className="-ml-1 mr-2 h-5 w-5" />
                             Retry After Setup
                           </button>
                         </div>
                       ) : (
                         <div className="text-center">
-                          <CircleStackIcon className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                          <h3 className="text-lg font-medium text-gray-900 mb-2">No clusters found</h3>
-                          <p className="text-gray-600 mb-4">
+                          <CircleStack className="mx-auto h-12 w-12 text-foreground/40 mb-4" />
+                          <h3 className="text-lg font-medium text-foreground mb-2">No clusters found</h3>
+                          <p className="text-foreground/60 mb-4">
                             Get started by creating your first analytics cluster.
                           </p>
                           <button
                             onClick={() => setShowWizard(true)}
-                            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                            className="btn-primary inline-flex items-center px-4 py-2"
                           >
-                            <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+                            <Plus className="-ml-1 mr-2 h-5 w-5" />
                             Create Cluster
                           </button>
                         </div>
@@ -661,19 +651,19 @@ export default function UnifiedClusterManagement() {
                   filteredClusters.map((cluster) => (
                     <tr
                       key={cluster.id}
-                      className={`hover:bg-gray-50 ${
-                        cluster.architecture === 'optimized' ? 'bg-green-50/30' : 
-                        cluster.architecture === 'centcom' ? 'bg-purple-50/30' : ''
+                      className={`hover:bg-cyan-500/5 ${
+                        cluster.architecture === 'optimized' ? 'bg-emerald-500/5' :
+                        cluster.architecture === 'centcom' ? 'bg-cyan-500/5' : ''
                       }`}
                     >
                       {/* View */}
                       <td className="px-4 py-4">
                         <button
                           onClick={() => window.location.href = `/admin/clusters/${cluster.cluster_key}`}
-                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                          className="p-2 text-foreground/40 hover:text-cyan-400 hover:bg-cyan-500/10 rounded-full transition-colors"
                           title="View cluster details"
                         >
-                          <EyeIcon className="h-5 w-5" />
+                          <Eye className="h-5 w-5" />
                         </button>
                       </td>
 
@@ -686,13 +676,13 @@ export default function UnifiedClusterManagement() {
 
                       {/* Key */}
                       <td className="px-6 py-4">
-                        <Badge 
+                        <Badge
                           className={`text-sm font-mono whitespace-nowrap ${
-                            cluster.architecture === 'optimized' 
-                              ? 'bg-green-100 text-green-800 border border-green-200' 
+                            cluster.architecture === 'optimized'
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                               : cluster.architecture === 'centcom'
-                                ? 'bg-purple-100 text-purple-800 border border-purple-200'
-                                : 'bg-blue-100 text-blue-800 border border-blue-200'
+                                ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+                                : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
                           }`}
                         >
                           {cluster.cluster_key}
@@ -702,27 +692,27 @@ export default function UnifiedClusterManagement() {
                       {/* Cluster Name */}
                       <td className="px-6 py-4">
                         <div className="whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{cluster.name}</div>
-                          <div className="text-sm text-gray-500">{cluster.description}</div>
+                          <div className="text-sm font-medium text-foreground">{cluster.name}</div>
+                          <div className="text-sm text-foreground/60">{cluster.description}</div>
                         </div>
                       </td>
 
                       {/* Architecture */}
                       <td className="px-6 py-4">
                         <div className="flex items-center">
-                          <Badge 
+                          <Badge
                             className={`${
-                              cluster.architecture === 'optimized' 
-                                ? 'bg-green-100 text-green-800' 
+                              cluster.architecture === 'optimized'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                                 : cluster.architecture === 'centcom'
-                                  ? 'bg-purple-100 text-purple-800'
-                                  : 'bg-blue-100 text-blue-800'
+                                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+                                  : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
                             }`}
                           >
                             {cluster.architecture}
                           </Badge>
                           {cluster.tier && (
-                            <Badge className="ml-2 bg-gray-100 text-gray-800 text-xs">
+                            <Badge className="ml-2 bg-foreground/5 text-foreground/60 border border-foreground/10 text-xs">
                               {cluster.tier}
                             </Badge>
                           )}
@@ -731,7 +721,7 @@ export default function UnifiedClusterManagement() {
 
                       {/* Region */}
                       <td className="px-6 py-4">
-                        <span className="text-sm text-gray-900 whitespace-nowrap">{cluster.region}</span>
+                        <span className="text-sm text-foreground whitespace-nowrap">{cluster.region}</span>
                       </td>
 
                       {/* Status */}
@@ -743,7 +733,7 @@ export default function UnifiedClusterManagement() {
                           </Badge>
                         </div>
                         {cluster.architecture === 'centcom' && cluster.last_heartbeat_at && (
-                          <div className="text-xs text-gray-500 mt-1">
+                          <div className="text-xs text-foreground/60 mt-1">
                             Last seen: {getTimeAgo(cluster.last_heartbeat_at)}
                           </div>
                         )}
@@ -753,36 +743,36 @@ export default function UnifiedClusterManagement() {
                       <td className="px-6 py-4 text-sm">
                         {cluster.architecture === 'traditional' ? (
                           <div>
-                            <div className="flex items-center text-gray-600">
-                              <ServerIcon className="h-3 w-3 mr-1" />
+                            <div className="flex items-center text-foreground/60">
+                              <Server className="h-3 w-3 mr-1" />
                               {cluster.node_count} nodes
                             </div>
-                            <div className="flex items-center text-gray-600 mt-1">
-                              <CpuChipIcon className="h-3 w-3 mr-1" />
+                            <div className="flex items-center text-foreground/60 mt-1">
+                              <CpuChip className="h-3 w-3 mr-1" />
                               {cluster.cpu_per_node} CPU, {cluster.memory_per_node}
                             </div>
                           </div>
                         ) : cluster.architecture === 'centcom' ? (
                           <div>
-                            <div className="flex items-center text-purple-600">
-                              <Database className="h-3 w-3 mr-1" />
+                            <div className="flex items-center text-cyan-400">
+                              <CircleStack className="h-3 w-3 mr-1" />
                               Local ClickHouse
                             </div>
                             {cluster.storage_used_gb !== undefined && (
-                              <div className="text-xs text-gray-600 mt-1">
+                              <div className="text-xs text-foreground/60 mt-1">
                                 {cluster.storage_used_gb.toFixed(2)} GB used
                               </div>
                             )}
                             {cluster.queries_this_month !== undefined && (
-                              <div className="text-xs text-gray-600">
+                              <div className="text-xs text-foreground/60">
                                 {cluster.queries_this_month.toLocaleString()} queries/mo
                               </div>
                             )}
                           </div>
                         ) : (
                           <div>
-                            <div className="flex items-center text-green-600">
-                              <Zap className="h-3 w-3 mr-1" />
+                            <div className="flex items-center text-emerald-400">
+                              <ChartBar className="h-3 w-3 mr-1" />
                               Serverless
                             </div>
                           </div>
@@ -791,7 +781,7 @@ export default function UnifiedClusterManagement() {
 
                       {/* Users */}
                       <td className="px-6 py-4 text-sm">
-                        <div className="flex items-center text-gray-600">
+                        <div className="flex items-center text-foreground/60">
                           <UsersIcon className="h-4 w-4 mr-1" />
                           <span>{cluster.current_assigned_users}/{cluster.max_assigned_users}</span>
                         </div>
@@ -800,15 +790,15 @@ export default function UnifiedClusterManagement() {
                       {/* Cost */}
                       <td className="px-6 py-4">
                         <div className={`text-sm font-medium ${
-                          cluster.architecture === 'optimized' ? 'text-green-600' : 
-                          cluster.architecture === 'centcom' ? 'text-purple-600' : 'text-blue-600'
+                          cluster.architecture === 'optimized' ? 'text-emerald-400' :
+                          cluster.architecture === 'centcom' ? 'text-cyan-400' : 'text-cyan-400'
                         }`}>
                           ${cluster.estimated_monthly_cost.toLocaleString()}/mo
                         </div>
                       </td>
 
                       {/* Created */}
-                      <td className="px-6 py-4 text-sm text-gray-900">
+                      <td className="px-6 py-4 text-sm text-foreground">
                         {formatDate(cluster.created_at)}
                       </td>
                     </tr>

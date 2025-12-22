@@ -12,7 +12,9 @@
       "Bash(cat:*)",
       "Bash(find:*)",
       "Bash(dir /s c:UsersjoshualDocumentsCursorlyceumsrcappapi)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(wc:*)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []

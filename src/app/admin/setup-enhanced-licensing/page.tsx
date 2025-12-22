@@ -3,17 +3,17 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  ArrowPathIcon,
-  ClockIcon,
-  PuzzlePieceIcon,
-  UsersIcon,
-  CogIcon,
-  ShieldCheckIcon,
-  ArrowRightIcon,
-  CodeBracketIcon
-} from '@heroicons/react/24/outline'
+  CheckCircle,
+  Warning,
+  ArrowClockwise,
+  Clock,
+  PuzzlePiece,
+  Users,
+  Gear,
+  ShieldCheck,
+  ArrowRight,
+  Code
+} from '@phosphor-icons/react'
 
 export default function SetupEnhancedLicensing() {
   const [result, setResult] = useState<any>(null)
@@ -46,9 +46,9 @@ export default function SetupEnhancedLicensing() {
   }
   
   const getStepIcon = (success: boolean) => {
-    return success ? 
-      <CheckCircleIcon className="h-5 w-5 text-green-500" /> :
-      <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
+    return success ?
+      <CheckCircle className="h-5 w-5 text-green-500" /> :
+      <Warning className="h-5 w-5 text-red-500" />
   }
   
   const goToLicenses = () => {
@@ -115,7 +115,7 @@ ON CONFLICT (plugin_id) DO NOTHING;
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex items-center mb-4">
-            <ClockIcon className="h-8 w-8 text-blue-500 mr-3" />
+            <Clock className="h-8 w-8 text-blue-500 mr-3" />
             <h3 className="text-lg font-medium text-gray-900">Time-Based Licensing</h3>
           </div>
           <ul className="text-sm text-gray-600 space-y-2">
@@ -128,7 +128,7 @@ ON CONFLICT (plugin_id) DO NOTHING;
         
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex items-center mb-4">
-            <PuzzlePieceIcon className="h-8 w-8 text-green-500 mr-3" />
+            <PuzzlePiece className="h-8 w-8 text-green-500 mr-3" />
             <h3 className="text-lg font-medium text-gray-900">Plugin-Based Licensing</h3>
           </div>
           <ul className="text-sm text-gray-600 space-y-2">
@@ -141,7 +141,7 @@ ON CONFLICT (plugin_id) DO NOTHING;
         
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex items-center mb-4">
-            <UsersIcon className="h-8 w-8 text-purple-500 mr-3" />
+            <Users className="h-8 w-8 text-purple-500 mr-3" />
             <h3 className="text-lg font-medium text-gray-900">User Access Types</h3>
           </div>
           <ul className="text-sm text-gray-600 space-y-2">
@@ -165,12 +165,12 @@ ON CONFLICT (plugin_id) DO NOTHING;
             >
               {loading ? (
                 <>
-                  <ArrowPathIcon className="-ml-1 mr-2 h-5 w-5 animate-spin" />
+                  <ArrowClockwise className="-ml-1 mr-2 h-5 w-5 animate-spin" />
                   Updating Schema...
                 </>
               ) : (
                 <>
-                  <CogIcon className="-ml-1 mr-2 h-5 w-5" />
+                  <Gear className="-ml-1 mr-2 h-5 w-5" />
                   Update License Schema
                 </>
               )}
@@ -196,7 +196,7 @@ ON CONFLICT (plugin_id) DO NOTHING;
       {manualSetupMode && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
           <div className="flex items-center mb-4">
-            <CodeBracketIcon className="h-6 w-6 text-yellow-600 mr-3" />
+            <Code className="h-6 w-6 text-yellow-600 mr-3" />
             <h3 className="text-lg font-medium text-yellow-800">Manual Setup Instructions</h3>
           </div>
           
@@ -274,26 +274,26 @@ ON CONFLICT (plugin_id) DO NOTHING;
                   onClick={goToLicenses}
                   className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
                 >
-                  <ArrowRightIcon className="-ml-1 mr-2 h-5 w-5" />
+                  <ArrowRight className="-ml-1 mr-2 h-5 w-5" />
                   Go to License Management
                 </button>
-                
+
                 <Link
                   href="/admin/licenses/create-advanced"
                   className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                 >
-                  <PuzzlePieceIcon className="-ml-1 mr-2 h-5 w-5" />
+                  <PuzzlePiece className="-ml-1 mr-2 h-5 w-5" />
                   Create Advanced License
                 </Link>
               </>
             )}
-            
+
             <button
               onClick={updateLicenseSchema}
               disabled={loading}
               className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
             >
-              <ArrowPathIcon className="-ml-1 mr-2 h-5 w-5" />
+              <ArrowClockwise className="-ml-1 mr-2 h-5 w-5" />
               Try Again
             </button>
           </div>

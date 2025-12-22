@@ -4,13 +4,13 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { 
-  ZoomInIcon, 
-  ZoomOutIcon, 
-  ArrowPathIcon,
-  ChartBarIcon,
-  CogIcon
-} from '@heroicons/react/24/outline'
+import {
+  MagnifyingGlassPlus,
+  MagnifyingGlassMinus,
+  ArrowClockwise,
+  ChartBar,
+  Gear
+} from '@phosphor-icons/react'
 
 interface DataPoint {
   timestamp: number
@@ -251,7 +251,7 @@ export default function ManufacturingChart({
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <ChartBarIcon className="h-5 w-5" />
+              <ChartBar className="h-5 w-5" />
               {title}
             </CardTitle>
             <CardDescription>
@@ -280,7 +280,7 @@ export default function ManufacturingChart({
               size="sm"
               onClick={() => setShowControls(!showControls)}
             >
-              <CogIcon className="h-4 w-4" />
+              <Gear className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -288,13 +288,13 @@ export default function ManufacturingChart({
         {showControls && (
           <div className="flex items-center gap-2 pt-2 border-t">
             <Button variant="outline" size="sm" onClick={handleZoomIn}>
-              <ZoomInIcon className="h-4 w-4" />
+              <MagnifyingGlassPlus className="h-4 w-4" />
             </Button>
             <Button variant="outline" size="sm" onClick={handleZoomOut}>
-              <ZoomOutIcon className="h-4 w-4" />
+              <MagnifyingGlassMinus className="h-4 w-4" />
             </Button>
             <Button variant="outline" size="sm" onClick={handleReset}>
-              <ArrowPathIcon className="h-4 w-4" />
+              <ArrowClockwise className="h-4 w-4" />
             </Button>
             <span className="text-sm text-gray-500 ml-2">
               Zoom: {Math.round(zoomLevel * 100)}%
@@ -327,7 +327,7 @@ export default function ManufacturingChart({
           {curves.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center text-gray-500">
               <div className="text-center">
-                <ChartBarIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                <ChartBar className="h-12 w-12 mx-auto mb-2 text-gray-300" />
                 <p>No data to display</p>
                 <p className="text-sm">Add curves to visualize manufacturing data</p>
               </div>

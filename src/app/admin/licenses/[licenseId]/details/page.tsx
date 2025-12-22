@@ -5,19 +5,19 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import {
-  ArrowLeftIcon,
-  KeyIcon,
-  ShieldCheckIcon,
-  UserIcon,
-  CalendarIcon,
-  ClockIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
-  PencilIcon,
-  CurrencyDollarIcon,
-  CreditCardIcon
-} from '@heroicons/react/24/outline'
+  ArrowLeft,
+  Key,
+  ShieldCheck,
+  User,
+  Calendar,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Warning,
+  Pencil,
+  CurrencyDollar,
+  CreditCard
+} from '@phosphor-icons/react'
 import UserAssignmentManager from '@/components/admin/UserAssignmentManager'
 import LicenseStatusManager from '@/components/admin/LicenseStatusManager'
 
@@ -467,17 +467,17 @@ export default function LicenseDetailsPage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'active':
-        return <CheckCircleIcon className="h-5 w-5 text-green-500" />
+        return <CheckCircle className="h-5 w-5 text-green-500" />
       case 'inactive':
-        return <XCircleIcon className="h-5 w-5 text-gray-500" />
+        return <XCircle className="h-5 w-5 text-gray-500" />
       case 'trial':
-        return <ClockIcon className="h-5 w-5 text-blue-500" />
+        return <Clock className="h-5 w-5 text-blue-500" />
       case 'expired':
-        return <XCircleIcon className="h-5 w-5 text-red-500" />
+        return <XCircle className="h-5 w-5 text-red-500" />
       case 'revoked':
-        return <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
+        return <Warning className="h-5 w-5 text-red-500" />
       default:
-        return <ClockIcon className="h-5 w-5 text-yellow-500" />
+        return <Clock className="h-5 w-5 text-yellow-500" />
     }
   }
 
@@ -547,7 +547,7 @@ export default function LicenseDetailsPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
+          <Warning className="mx-auto h-12 w-12 text-red-500" />
           <h3 className="mt-2 text-sm font-semibold text-gray-900">Error Loading License</h3>
           <p className="mt-1 text-sm text-gray-500">{error}</p>
           <div className="mt-6">
@@ -555,7 +555,7 @@ export default function LicenseDetailsPage() {
               href="/admin/licenses"
               className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
             >
-              <ArrowLeftIcon className="-ml-1 mr-2 h-5 w-5" />
+              <ArrowLeft className="-ml-1 mr-2 h-5 w-5" />
               Back to Licenses
             </Link>
           </div>
@@ -568,7 +568,7 @@ export default function LicenseDetailsPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <KeyIcon className="mx-auto h-12 w-12 text-gray-400" />
+          <Key className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-semibold text-gray-900">License Not Found</h3>
           <p className="mt-1 text-sm text-gray-500">The requested license could not be found.</p>
           <div className="mt-6">
@@ -576,7 +576,7 @@ export default function LicenseDetailsPage() {
               href="/admin/licenses"
               className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
             >
-              <ArrowLeftIcon className="-ml-1 mr-2 h-5 w-5" />
+              <ArrowLeft className="-ml-1 mr-2 h-5 w-5" />
               Back to Licenses
             </Link>
           </div>
@@ -596,7 +596,7 @@ export default function LicenseDetailsPage() {
                 href="/admin/licenses"
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
               >
-                <ArrowLeftIcon className="h-6 w-6" />
+                <ArrowLeft className="h-6 w-6" />
               </Link>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -630,7 +630,7 @@ export default function LicenseDetailsPage() {
                   onClick={handleEditToggle}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
-                  <PencilIcon className="-ml-1 mr-2 h-5 w-5" />
+                  <Pencil className="-ml-1 mr-2 h-5 w-5" />
                   Edit License
                 </button>
               )}
@@ -644,7 +644,7 @@ export default function LicenseDetailsPage() {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-4">
                 <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <KeyIcon className="h-6 w-6 text-blue-600" />
+                  <Key className="h-6 w-6 text-blue-600" />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -997,9 +997,9 @@ export default function LicenseDetailsPage() {
                     </div>
                     <div className="flex items-center space-x-2">
                       {license.local_cluster_limits?.lifecycle_tiers_enabled ? (
-                        <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                        <CheckCircle className="h-5 w-5 text-green-500" />
                       ) : (
-                        <XCircleIcon className="h-5 w-5 text-gray-400" />
+                        <XCircle className="h-5 w-5 text-gray-400" />
                       )}
                       <span className="text-sm text-gray-700 dark:text-gray-300">
                         Lifecycle Tiers {license.local_cluster_limits?.lifecycle_tiers_enabled ? 'Enabled' : 'Disabled'}
@@ -1418,7 +1418,7 @@ export default function LicenseDetailsPage() {
 
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
-                <CalendarIcon className="h-5 w-5 text-blue-500" />
+                <Calendar className="h-5 w-5 text-blue-500" />
                 <div>
                   <div className="text-sm font-medium text-gray-900 dark:text-white">Created</div>
                   <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -1428,7 +1428,7 @@ export default function LicenseDetailsPage() {
               </div>
 
               <div className="flex items-center space-x-3">
-                <CalendarIcon className="h-5 w-5 text-gray-500" />
+                <Calendar className="h-5 w-5 text-gray-500" />
                 <div>
                   <div className="text-sm font-medium text-gray-900 dark:text-white">Last Updated</div>
                   <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -1439,7 +1439,7 @@ export default function LicenseDetailsPage() {
 
               {license.expires_at && (
                 <div className="flex items-center space-x-3">
-                  <ClockIcon className="h-5 w-5 text-orange-500" />
+                  <Clock className="h-5 w-5 text-orange-500" />
                   <div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white">Expires</div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -1482,7 +1482,7 @@ export default function LicenseDetailsPage() {
                     className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-600 transition-colors"
                   >
                     <div className="flex items-center space-x-3">
-                      <CreditCardIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      <CreditCard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                       <div>
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
                           {rel.subscription?.subscription_key || 'N/A'}
@@ -1517,7 +1517,7 @@ export default function LicenseDetailsPage() {
               </div>
             ) : (
               <div className="text-center py-8">
-                <CreditCardIcon className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
+                <CreditCard className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600" />
                 <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No associated subscriptions</h3>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                   This license has not been linked to any subscriptions yet.

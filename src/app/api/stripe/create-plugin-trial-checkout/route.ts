@@ -62,15 +62,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Get plugin price ID from environment variables
-    // For now, we'll need to add these as environment variables
-    // STRIPE_PLUGIN_APX500_PRICE_ID and STRIPE_PLUGIN_KLIPPEL_QC_PRICE_ID
-    let priceId: string | undefined;
+    // Plugin price IDs are stored as STRIPE_PLUGIN_<PLUGIN_TYPE>_PRICE_ID
+    const pluginPriceMap: Record<string, string | undefined> = {
+      'apx500': process.env.STRIPE_PLUGIN_APX500_PRICE_ID,
+      'klippel_qc': process.env.STRIPE_PLUGIN_KLIPPEL_QC_PRICE_ID,
+      'preen_psu': process.env.STRIPE_PLUGIN_PREEN_PSU_PRICE_ID,
+      'keysight_daq': process.env.STRIPE_PLUGIN_KEYSIGHT_DAQ_PRICE_ID,
+      'kwikwai': process.env.STRIPE_PLUGIN_KWIKWAI_PRICE_ID,
+      'grl_pd': process.env.STRIPE_PLUGIN_GRL_PD_PRICE_ID,
+      'sifos_poe': process.env.STRIPE_PLUGIN_SIFOS_POE_PRICE_ID,
+      'time_machines': process.env.STRIPE_PLUGIN_TIME_MACHINES_PRICE_ID,
+    };
 
-    if (plugin_type === 'apx500') {
-      priceId = process.env.STRIPE_PLUGIN_APX500_PRICE_ID;
-    } else if (plugin_type === 'klippel_qc') {
-      priceId = process.env.STRIPE_PLUGIN_KLIPPEL_QC_PRICE_ID;
-    }
+    const priceId = pluginPriceMap[plugin_type];
 
     if (!priceId) {
       console.error(`❌ Stripe price ID not configured for plugin: ${plugin_type}`);

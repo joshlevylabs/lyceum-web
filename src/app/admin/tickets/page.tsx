@@ -3,21 +3,23 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
-  MagnifyingGlassIcon,
-  FunnelIcon,
-  EyeIcon,
-  ChatBubbleLeftRightIcon,
-  PaperClipIcon,
-  CalendarIcon,
-  UserIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  TagIcon,
-  AdjustmentsHorizontalIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  TicketIcon
-} from '@heroicons/react/24/outline'
+  MagnifyingGlass,
+  Funnel,
+  Eye,
+  ChatCircle,
+  Paperclip,
+  CalendarBlank,
+  User,
+  CheckCircle,
+  Clock,
+  Tag,
+  Faders,
+  CaretLeft,
+  CaretRight,
+  Ticket,
+  Warning,
+  X
+} from '@phosphor-icons/react'
 import { useRouter } from 'next/navigation'
 
 // Custom Bug Icon Component
@@ -211,10 +213,10 @@ const getReproductionRateColor = (rate?: string) => {
 const getTypeIcon = (type: string) => {
   switch (type) {
     case 'bug': return <BugIcon className="h-4 w-4 text-red-500" />
-    case 'feature_request': return <CheckCircleIcon className="h-4 w-4 text-blue-500" />
-    case 'improvement': return <AdjustmentsHorizontalIcon className="h-4 w-4 text-purple-500" />
-    case 'support': return <ChatBubbleLeftRightIcon className="h-4 w-4 text-green-500" />
-    default: return <ClockIcon className="h-4 w-4 text-gray-500" />
+    case 'feature_request': return <CheckCircle className="h-4 w-4 text-blue-500" />
+    case 'improvement': return <Faders className="h-4 w-4 text-purple-500" />
+    case 'support': return <ChatCircle className="h-4 w-4 text-green-500" />
+    default: return <Clock className="h-4 w-4 text-gray-500" />
   }
 }
 
@@ -380,11 +382,11 @@ export default function AdminTicketsPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Support Tickets</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage user-submitted tickets from Centcom</p>
+          <h1 className="text-2xl font-bold text-foreground">Support Tickets</h1>
+          <p className="text-sm text-foreground/60 mt-1">Manage user-submitted tickets from Centcom</p>
         </div>
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-cyan-500/20 border-t-cyan-500"></div>
         </div>
       </div>
     )
@@ -394,26 +396,26 @@ export default function AdminTicketsPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Support Tickets</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage user-submitted tickets from Centcom</p>
+          <h1 className="text-2xl font-bold text-foreground">Support Tickets</h1>
+          <p className="text-sm text-foreground/60 mt-1">Manage user-submitted tickets from Centcom</p>
         </div>
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+        <div className="glass-card p-4 border-red-500/20">
           <div className="flex">
-            <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
+            <Warning className="h-5 w-5 text-red-400" />
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error loading tickets</h3>
-              <p className="mt-1 text-sm text-red-700">{error}</p>
+              <h3 className="text-sm font-medium text-foreground">Error loading tickets</h3>
+              <p className="mt-1 text-sm text-foreground/60">{error}</p>
               <div className="mt-2 flex space-x-2">
-                <button 
+                <button
                   onClick={() => loadTickets()}
-                  className="text-sm text-red-600 hover:text-red-500 underline"
+                  className="text-sm text-cyan-400 hover:text-cyan-300 underline"
                 >
                   Try again
                 </button>
                 {error?.includes('setup') && (
                   <button
                     onClick={getSetupInstructions}
-                    className="text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                    className="btn-primary text-sm px-3 py-1"
                   >
                     Setup Database
                   </button>
@@ -431,20 +433,20 @@ export default function AdminTicketsPage() {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-bold">Support Tickets</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage user-submitted tickets from Centcom</p>
+          <h1 className="text-2xl font-bold text-foreground">Support Tickets</h1>
+          <p className="text-sm text-foreground/60 mt-1">Manage user-submitted tickets from Centcom</p>
         </div>
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            className="btn-ghost inline-flex items-center px-3 py-2"
           >
-            <FunnelIcon className="h-4 w-4 mr-2" />
+            <Funnel className="h-4 w-4 mr-2" />
             Filters
           </button>
           <button
             onClick={() => loadTickets()}
-            className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+            className="btn-primary inline-flex items-center px-3 py-2"
           >
             Refresh
           </button>
@@ -452,37 +454,37 @@ export default function AdminTicketsPage() {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="glass-card p-4">
         <form onSubmit={handleSearch} className="flex items-center space-x-4">
           <div className="flex-1">
             <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <MagnifyingGlass className="absolute left-3 top-3 h-4 w-4 text-foreground/40" />
               <input
                 type="text"
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
                 placeholder="Search tickets by key, title, description, username, application, or tags..."
-                className="pl-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="glass-input pl-10 w-full px-3 py-2 text-sm text-foreground placeholder-foreground/40"
               />
             </div>
           </div>
           <button
             type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+            className="btn-primary px-4 py-2 text-sm font-medium"
           >
             Search
           </button>
         </form>
 
         {showFilters && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
+          <div className="mt-4 pt-4 border-t border-cyan-500/10">
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Status</label>
                 <select
                   value={filters.status}
                   onChange={(e) => handleFilterChange('status', e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="glass-input w-full px-3 py-2 text-sm text-foreground"
                 >
                   <option value="">All Statuses</option>
                   {Object.entries(statusLabels).map(([value, label]) => (
@@ -491,11 +493,11 @@ export default function AdminTicketsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Type</label>
                 <select
                   value={filters.ticket_type}
                   onChange={(e) => handleFilterChange('ticket_type', e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="glass-input w-full px-3 py-2 text-sm text-foreground"
                 >
                   <option value="">All Types</option>
                   {Object.entries(ticketTypeLabels).map(([value, label]) => (
@@ -504,11 +506,11 @@ export default function AdminTicketsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Priority</label>
                 <select
                   value={filters.priority}
                   onChange={(e) => handleFilterChange('priority', e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="glass-input w-full px-3 py-2 text-sm text-foreground"
                 >
                   <option value="">All Priorities</option>
                   {Object.entries(priorityLabels).map(([value, label]) => (
@@ -517,11 +519,11 @@ export default function AdminTicketsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Severity</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Severity</label>
                 <select
                   value={filters.severity}
                   onChange={(e) => handleFilterChange('severity', e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="glass-input w-full px-3 py-2 text-sm text-foreground"
                 >
                   <option value="">All Severities</option>
                   {Object.entries(severityLabels).map(([value, label]) => (
@@ -530,11 +532,11 @@ export default function AdminTicketsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Application</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Application</label>
                 <select
                   value={filters.application_section}
                   onChange={(e) => handleFilterChange('application_section', e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="glass-input w-full px-3 py-2 text-sm text-foreground"
                 >
                   <option value="">All Applications</option>
                   <option value="main_application">Main Application</option>
@@ -546,11 +548,11 @@ export default function AdminTicketsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
+                <label className="block text-sm font-medium text-foreground mb-1">Assigned To</label>
                 <select
                   value={filters.assigned_to}
                   onChange={(e) => handleFilterChange('assigned_to', e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="glass-input w-full px-3 py-2 text-sm text-foreground"
                 >
                   <option value="">All Assignees</option>
                   <option value="unassigned">Unassigned</option>
@@ -563,78 +565,78 @@ export default function AdminTicketsPage() {
       </div>
 
       {/* Tickets Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="glass-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-cyan-500/10">
+            <thead className="bg-background">
               <tr>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                <th className="px-4 py-3 text-center text-xs font-medium text-foreground/60 uppercase tracking-wider w-16">
                   View
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider w-24">
                   Key
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                   Title
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                <th className="px-4 py-3 text-center text-xs font-medium text-foreground/60 uppercase tracking-wider w-16">
                   Type
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                   Priority
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                   Severity
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                   Tags
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                   Application
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                   Submitter
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                   Created
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                   Activity
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-background divide-y divide-cyan-500/10">
               {filteredTickets.map((ticket) => (
-                <tr key={ticket.id} className="hover:bg-gray-50">
+                <tr key={ticket.id} className="hover:bg-cyan-500/5 transition-colors">
                   {/* View Button Column */}
                   <td className="px-4 py-4 whitespace-nowrap text-center">
                     <button
                       onClick={() => openTicketView(ticket)}
-                      className="text-blue-600 hover:text-blue-900 p-1 rounded-full hover:bg-blue-50"
+                      className="text-cyan-400 hover:text-cyan-300 p-1 rounded-full hover:bg-cyan-500/10 transition-colors"
                       title="View ticket details"
                     >
-                      <EyeIcon className="h-5 w-5" />
+                      <Eye className="h-5 w-5" />
                     </button>
                   </td>
-                  
+
                   {/* Key Column */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <span className="text-sm font-medium text-blue-600">{ticket.ticket_key}</span>
+                      <span className="text-sm font-medium text-cyan-400">{ticket.ticket_key}</span>
                       <div className={`ml-2 w-2 h-2 rounded-full ${getPriorityColor(ticket.priority)}`}></div>
                     </div>
                   </td>
-                  
+
                   {/* Title Column */}
                   <td className="px-6 py-4">
                     <div className="max-w-xs">
-                      <div className="text-sm text-gray-900 font-medium truncate">
+                      <div className="text-sm text-foreground font-medium truncate">
                         {ticket.title}
                       </div>
-                      <div className="text-sm text-gray-500 truncate">
+                      <div className="text-sm text-foreground/60 truncate">
                         {ticket.description}
                       </div>
                     </div>
@@ -653,12 +655,12 @@ export default function AdminTicketsPage() {
                       {statusLabels[ticket.status]}
                     </span>
                   </td>
-                  
+
                   {/* Priority Column */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                     {priorityLabels[ticket.priority]}
                   </td>
-                  
+
                   {/* Severity Column */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     {ticket.severity ? (
@@ -666,7 +668,7 @@ export default function AdminTicketsPage() {
                         {severityLabels[ticket.severity]}
                       </span>
                     ) : (
-                      <span className="text-xs text-gray-400">-</span>
+                      <span className="text-xs text-foreground/40">-</span>
                     )}
                   </td>
 
@@ -675,67 +677,67 @@ export default function AdminTicketsPage() {
                     <div className="flex flex-wrap gap-1">
                       {ticket.tags && ticket.tags.length > 0 ? (
                         ticket.tags.slice(0, 3).map((tag, index) => (
-                          <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            <TagIcon className="h-3 w-3 mr-1" />
+                          <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                            <Tag className="h-3 w-3 mr-1" />
                             {tag}
                           </span>
                         ))
                       ) : (
-                        <span className="text-xs text-gray-400">-</span>
+                        <span className="text-xs text-foreground/40">-</span>
                       )}
                       {ticket.tags && ticket.tags.length > 3 && (
-                        <span className="text-xs text-gray-500">+{ticket.tags.length - 3}</span>
+                        <span className="text-xs text-foreground/60">+{ticket.tags.length - 3}</span>
                       )}
                     </div>
                   </td>
-                  
+
                   {/* Application Column */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-sm font-medium text-foreground">
                         {ticket.application_section || 'Main Application'}
                       </div>
                       {ticket.plugin_name && (
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-foreground/60">
                           📦 {ticket.plugin_name}
                         </div>
                       )}
                       {ticket.centcom_version && (
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-foreground/60">
                           v{ticket.centcom_version}
                         </div>
                       )}
                     </div>
                   </td>
-                  
+
                   {/* Submitter Column */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <UserIcon className="h-4 w-4 text-gray-400 mr-2" />
+                      <User className="h-4 w-4 text-foreground/40 mr-2" />
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{ticket.username}</div>
-                        <div className="text-sm text-gray-500">{ticket.email}</div>
+                        <div className="text-sm font-medium text-foreground">{ticket.username}</div>
+                        <div className="text-sm text-foreground/60">{ticket.email}</div>
                       </div>
                     </div>
                   </td>
-                  
+
                   {/* Created Column */}
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center text-sm text-gray-900">
-                      <CalendarIcon className="h-4 w-4 text-gray-400 mr-2" />
+                    <div className="flex items-center text-sm text-foreground">
+                      <CalendarBlank className="h-4 w-4 text-foreground/40 mr-2" />
                       {new Date(ticket.created_at).toLocaleDateString()}
                     </div>
                   </td>
-                  
+
                   {/* Activity Column */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-3">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <ChatBubbleLeftRightIcon className="h-4 w-4 mr-1" />
+                      <div className="flex items-center text-sm text-foreground/60">
+                        <ChatCircle className="h-4 w-4 mr-1" />
                         {ticket.comments_count?.[0]?.count || 0}
                       </div>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <PaperClipIcon className="h-4 w-4 mr-1" />
+                      <div className="flex items-center text-sm text-foreground/60">
+                        <Paperclip className="h-4 w-4 mr-1" />
                         {ticket.attachments_count?.[0]?.count || 0}
                       </div>
                     </div>
@@ -749,10 +751,10 @@ export default function AdminTicketsPage() {
 
         {filteredTickets.length === 0 && !loading && (
           <div className="text-center py-12">
-            <div className="text-gray-500">
-              <TicketIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No tickets found</h3>
-              <p className="mt-1 text-sm text-gray-500">
+            <div className="text-foreground/60">
+              <Ticket className="mx-auto h-12 w-12 text-foreground/40" weight="duotone" />
+              <h3 className="mt-2 text-sm font-medium text-foreground">No tickets found</h3>
+              <p className="mt-1 text-sm text-foreground/60">
                 {filters.search || filters.status || filters.ticket_type || filters.priority
                   ? 'Try adjusting your search criteria'
                   : 'No tickets have been submitted yet'}
@@ -768,7 +770,7 @@ export default function AdminTicketsPage() {
           <button
             onClick={() => loadTickets(false)}
             disabled={loading}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            className="btn-ghost inline-flex items-center px-4 py-2 disabled:opacity-50"
           >
             {loading ? 'Loading...' : 'Load More'}
           </button>
@@ -778,55 +780,55 @@ export default function AdminTicketsPage() {
 
       {/* Setup Instructions Modal */}
       {setupInstructions && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 w-11/12 max-w-4xl glass-card">
             <div className="flex justify-between items-start mb-4">
-              <h2 className="text-xl font-bold">Database Setup Instructions</h2>
+              <h2 className="text-xl font-bold text-foreground">Database Setup Instructions</h2>
               <button
                 onClick={() => setSetupInstructions(null)}
-                className="text-gray-400 hover:text-gray-600 text-2xl"
+                className="p-2 rounded-lg text-foreground/50 hover:text-cyan-400 hover:bg-cyan-500/10"
               >
-                ✕
+                <X className="h-5 w-5" weight="bold" />
               </button>
             </div>
-            
+
             <div className="space-y-4">
               {setupInstructions.success ? (
-                <div className="bg-green-50 border border-green-200 rounded-md p-4">
-                  <p className="text-green-800">{setupInstructions.message}</p>
+                <div className="glass-card p-4 border-emerald-500/20">
+                  <p className="text-emerald-400">{setupInstructions.message}</p>
                 </div>
               ) : (
                 <>
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-                    <p className="text-yellow-800">{setupInstructions.message}</p>
+                  <div className="glass-card p-4 border-amber-500/20">
+                    <p className="text-amber-400">{setupInstructions.message}</p>
                   </div>
-                  
+
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">Instructions:</h3>
-                    <ol className="list-decimal list-inside space-y-1 text-sm">
+                    <h3 className="text-lg font-semibold text-foreground mb-2">Instructions:</h3>
+                    <ol className="list-decimal list-inside space-y-1 text-sm text-foreground/60">
                       {setupInstructions.instructions?.map((instruction: string, index: number) => (
                         <li key={index}>{instruction}</li>
                       ))}
                     </ol>
                   </div>
-                  
+
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">SQL Script:</h3>
-                    <div className="bg-gray-100 border rounded p-3 max-h-96 overflow-y-auto">
-                      <pre className="text-xs whitespace-pre-wrap font-mono">
+                    <h3 className="text-lg font-semibold text-foreground mb-2">SQL Script:</h3>
+                    <div className="glass-card p-3 max-h-96 overflow-y-auto">
+                      <pre className="text-xs whitespace-pre-wrap font-mono text-foreground">
                         {setupInstructions.sql_script}
                       </pre>
                     </div>
                     <button
                       onClick={() => navigator.clipboard.writeText(setupInstructions.sql_script)}
-                      className="mt-2 text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                      className="btn-primary mt-2 text-sm px-3 py-1"
                     >
                       Copy SQL Script
                     </button>
                   </div>
-                  
+
                   <div className="pt-4">
-                    <p className="text-sm text-gray-600 mb-2">
+                    <p className="text-sm text-foreground/60 mb-2">
                       After running the SQL script in your Supabase dashboard, click "Try again" to refresh this page.
                     </p>
                     <button
@@ -834,7 +836,7 @@ export default function AdminTicketsPage() {
                         setSetupInstructions(null)
                         loadTickets()
                       }}
-                      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                      className="btn-primary px-4 py-2"
                     >
                       I've run the script - Try again
                     </button>

@@ -5,12 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/DashboardLayout'
 import {
-  CheckCircleIcon,
-  XMarkIcon,
-  CreditCardIcon,
-  LockClosedIcon,
-  ShieldCheckIcon
-} from '@heroicons/react/24/outline'
+  CheckCircle,
+  X,
+  CreditCard,
+  LockSimple,
+  ShieldCheck
+} from '@phosphor-icons/react'
 
 function PaymentPageContent() {
   const { user, loading } = useAuth()
@@ -185,8 +185,8 @@ function PaymentPageContent() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="flex items-center justify-center min-h-screen bg-background">
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-cyan-500/20 border-t-cyan-500"></div>
         </div>
       </DashboardLayout>
     )
@@ -214,31 +214,31 @@ function PaymentPageContent() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Error Message */}
         {error && (
-          <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div className="mb-6 glass-card p-4 border border-red-500/20 bg-red-500/10">
             <div className="flex">
-              <XMarkIcon className="h-5 w-5 text-red-400 mr-3" />
-              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+              <X className="h-5 w-5 text-red-400 mr-3" weight="duotone" />
+              <p className="text-sm text-foreground/90">{error}</p>
             </div>
           </div>
         )}
 
         {/* Plan Summary */}
         {plan && (
-          <div className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6">
+          <div className="mb-8 glass-card p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <h2 className="text-2xl font-bold text-foreground">
                   {plan.name}
                 </h2>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-foreground/60 mt-1">
                   {plan.duration === 'lifetime' ? 'One-time payment' : `${plan.duration} trial period`}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                <p className="text-3xl font-bold text-cyan-400">
                   {plan.price}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-foreground/40">
                   {plan.duration === 'lifetime' ? 'one-time' : plan.duration}
                 </p>
               </div>
@@ -247,10 +247,10 @@ function PaymentPageContent() {
         )}
 
         {/* Payment Form */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 p-6">
+        <div className="glass-card p-6">
           <div className="flex items-center mb-6">
-            <CreditCardIcon className="h-6 w-6 text-blue-600 mr-3" />
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <CreditCard className="h-6 w-6 text-cyan-400 mr-3" weight="duotone" />
+            <h3 className="text-xl font-semibold text-foreground">
               Payment Information
             </h3>
           </div>
@@ -258,7 +258,7 @@ function PaymentPageContent() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Card Number */}
             <div>
-              <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="cardNumber" className="block text-sm font-medium text-foreground/60 mb-1">
                 Card Number
               </label>
               <input
@@ -267,14 +267,14 @@ function PaymentPageContent() {
                 value={cardInfo.cardNumber}
                 onChange={handleCardNumberChange}
                 placeholder="1234 5678 9012 3456"
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                className="w-full px-4 py-3 rounded-xl glass-input text-foreground placeholder-foreground/40"
                 required
               />
             </div>
 
             {/* Card Name */}
             <div>
-              <label htmlFor="cardName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="cardName" className="block text-sm font-medium text-foreground/60 mb-1">
                 Name on Card
               </label>
               <input
@@ -283,7 +283,7 @@ function PaymentPageContent() {
                 value={cardInfo.cardName}
                 onChange={(e) => setCardInfo({ ...cardInfo, cardName: e.target.value })}
                 placeholder="John Doe"
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                className="w-full px-4 py-3 rounded-xl glass-input text-foreground placeholder-foreground/40"
                 required
               />
             </div>
@@ -291,7 +291,7 @@ function PaymentPageContent() {
             {/* Expiry and CVV */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label htmlFor="expiryDate" className="block text-sm font-medium text-foreground/60 mb-1">
                   Expiry Date
                 </label>
                 <input
@@ -301,12 +301,12 @@ function PaymentPageContent() {
                   onChange={handleExpiryChange}
                   placeholder="MM/YY"
                   maxLength={5}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-3 rounded-xl glass-input text-foreground placeholder-foreground/40"
                   required
                 />
               </div>
               <div>
-                <label htmlFor="cvv" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label htmlFor="cvv" className="block text-sm font-medium text-foreground/60 mb-1">
                   CVV
                 </label>
                 <input
@@ -316,7 +316,7 @@ function PaymentPageContent() {
                   onChange={(e) => setCardInfo({ ...cardInfo, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) })}
                   placeholder="123"
                   maxLength={4}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-3 rounded-xl glass-input text-foreground placeholder-foreground/40"
                   required
                 />
               </div>
@@ -324,7 +324,7 @@ function PaymentPageContent() {
 
             {/* Billing ZIP */}
             <div>
-              <label htmlFor="billingZip" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="billingZip" className="block text-sm font-medium text-foreground/60 mb-1">
                 Billing ZIP Code
               </label>
               <input
@@ -333,18 +333,18 @@ function PaymentPageContent() {
                 value={cardInfo.billingZip}
                 onChange={(e) => setCardInfo({ ...cardInfo, billingZip: e.target.value })}
                 placeholder="12345"
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                className="w-full px-4 py-3 rounded-xl glass-input text-foreground placeholder-foreground/40"
                 required
               />
             </div>
 
             {/* Security Notice */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="glass-card p-4 bg-cyan-500/10 border border-cyan-500/20">
               <div className="flex">
-                <ShieldCheckIcon className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3 flex-shrink-0" />
-                <div className="text-sm text-blue-800 dark:text-blue-200">
+                <ShieldCheck className="h-5 w-5 text-cyan-400 mr-3 flex-shrink-0" weight="duotone" />
+                <div className="text-sm text-foreground/90">
                   <p className="font-medium mb-1">Your payment is secure</p>
-                  <p className="text-blue-700 dark:text-blue-300">
+                  <p className="text-foreground/60">
                     We use industry-standard encryption to protect your payment information.
                   </p>
                 </div>
@@ -356,23 +356,23 @@ function PaymentPageContent() {
               <button
                 type="button"
                 onClick={() => router.push('/native-app/subscribe')}
-                className="flex-1 px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="flex-1 px-6 py-3 btn-ghost"
               >
                 Back
               </button>
               <button
                 type="submit"
                 disabled={processing}
-                className="flex-1 inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 inline-flex justify-center items-center px-6 py-3 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {processing ? (
                   <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-cyan-500/20 border-t-cyan-500 mr-3"></div>
                     Processing...
                   </>
                 ) : (
                   <>
-                    <LockClosedIcon className="h-5 w-5 mr-2" />
+                    <LockSimple className="h-5 w-5 mr-2" weight="duotone" />
                     Complete Payment
                   </>
                 )}
@@ -389,8 +389,8 @@ export default function PaymentPage() {
   return (
     <Suspense fallback={
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="flex items-center justify-center min-h-screen bg-background">
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-cyan-500/20 border-t-cyan-500"></div>
         </div>
       </DashboardLayout>
     }>

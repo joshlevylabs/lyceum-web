@@ -6,16 +6,15 @@ import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { supabase } from '@/lib/supabase'
 import {
-  PuzzlePieceIcon,
-  MagnifyingGlassIcon,
-  StarIcon,
-  CreditCardIcon,
-  CheckIcon,
-  ClockIcon,
-  ShoppingCartIcon,
-  SparklesIcon
-} from '@heroicons/react/24/outline'
-import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid'
+  PuzzlePiece,
+  MagnifyingGlass,
+  Star,
+  CreditCard,
+  Check,
+  Clock,
+  ShoppingCart,
+  Sparkle
+} from '@phosphor-icons/react'
 
 interface Plugin {
   id: string
@@ -147,6 +146,21 @@ export default function PluginsStorePage() {
     return !!getUserLicense(pluginId)
   }
 
+  // Map slug to plugin_type for subscription management
+  const getPluginType = (slug: string): string => {
+    const pluginTypeMap: Record<string, string> = {
+      'klippel-qc': 'klippel_qc',
+      'apx500': 'apx500',
+      'preen-psu': 'preen_psu',
+      'keysight-daq': 'keysight_daq',
+      'kwikwai-k110': 'kwikwai',
+      'granite-river-labs-pd': 'grl_pd',
+      'sifos-poe': 'sifos_poe',
+      'time-machines-grandmaster': 'time_machines'
+    }
+    return pluginTypeMap[slug] || slug
+  }
+
   const handleActivateTrial = async (plugin: Plugin) => {
     try {
       // Create Stripe checkout session for plugin trial
@@ -156,7 +170,7 @@ export default function PluginsStorePage() {
         headers,
         body: JSON.stringify({
           plugin_slug: plugin.slug,
-          plugin_type: plugin.slug === 'klippel-qc' ? 'klippel_qc' : plugin.slug
+          plugin_type: getPluginType(plugin.slug)
         })
       })
 
@@ -237,11 +251,11 @@ export default function PluginsStorePage() {
 
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.push(<StarIconSolid key={i} className="h-4 w-4 text-yellow-400" />)
+        stars.push(<Star key={i} weight="fill" className="h-4 w-4 text-yellow-400" />)
       } else if (i === fullStars && hasHalfStar) {
-        stars.push(<StarIconSolid key={i} className="h-4 w-4 text-yellow-400 opacity-50" />)
+        stars.push(<Star key={i} weight="fill" className="h-4 w-4 text-yellow-400 opacity-50" />)
       } else {
-        stars.push(<StarIcon key={i} className="h-4 w-4 text-gray-300" />)
+        stars.push(<Star key={i} className="h-4 w-4 text-gray-300" />)
       }
     }
     return stars
@@ -253,10 +267,10 @@ export default function PluginsStorePage() {
         {/* Header */}
         <div className="md:flex md:items-center md:justify-between">
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
+          <h1 className="text-2xl font-bold leading-7 text-foreground sm:text-3xl sm:truncate">
             Plugins Store
           </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-foreground/60">
             Discover and purchase plugins to extend your Lyceum experience
           </p>
         </div>
@@ -264,26 +278,26 @@ export default function PluginsStorePage() {
         <div className="mt-4 flex space-x-3 md:mt-0 md:ml-4">
           <button
             onClick={() => router.push('/plugins/my-licenses')}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+            className="btn-ghost inline-flex items-center"
           >
-            <PuzzlePieceIcon className="-ml-1 mr-2 h-5 w-5" />
+            <PuzzlePiece className="-ml-1 mr-2 h-5 w-5" weight="duotone" />
             My Licenses
           </button>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
+      <div className="glass-card p-4">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {/* Search */}
           <div className="relative md:col-span-2">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-foreground/40 h-5 w-5" weight="regular" />
             <input
               type="text"
               placeholder="Search plugins..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              className="w-full pl-10 pr-4 py-2 rounded-xl glass-input text-foreground placeholder-foreground/40"
             />
           </div>
 
@@ -291,7 +305,7 @@ export default function PluginsStorePage() {
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            className="px-3 py-2 rounded-xl glass-input text-foreground"
           >
             <option value="all">All Categories</option>
             {categories.map(cat => (
@@ -303,7 +317,7 @@ export default function PluginsStorePage() {
           <select
             value={filterPrinciple}
             onChange={(e) => setFilterPrinciple(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+            className="px-3 py-2 rounded-xl glass-input text-foreground"
           >
             <option value="all">All Principles</option>
             {principles.map(principle => (
@@ -317,9 +331,9 @@ export default function PluginsStorePage() {
               type="checkbox"
               checked={showFeaturedOnly}
               onChange={(e) => setShowFeaturedOnly(e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded border-cyan-500/30 text-cyan-500 focus:ring-cyan-500"
             />
-            <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Featured only</span>
+            <span className="ml-2 text-sm text-foreground">Featured only</span>
           </label>
         </div>
       </div>
@@ -327,28 +341,28 @@ export default function PluginsStorePage() {
       {/* Plugins Grid */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-600 dark:text-gray-400">Loading plugins...</span>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-cyan-500/20 border-t-cyan-500"></div>
+          <span className="ml-2 text-foreground/60">Loading plugins...</span>
         </div>
       ) : error ? (
         <div className="text-center py-12">
-          <PuzzlePieceIcon className="mx-auto h-12 w-12 text-red-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">Error loading plugins</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{error}</p>
+          <PuzzlePiece className="mx-auto h-12 w-12 text-red-400" weight="duotone" />
+          <h3 className="mt-2 text-sm font-semibold text-foreground">Error loading plugins</h3>
+          <p className="mt-1 text-sm text-foreground/60">{error}</p>
           <div className="mt-6">
             <button
               onClick={loadPlugins}
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              className="btn-primary"
             >
               Try Again
             </button>
           </div>
         </div>
       ) : filteredPlugins.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
-          <PuzzlePieceIcon className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No plugins found</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-center py-12 glass-card">
+          <PuzzlePiece className="mx-auto h-12 w-12 text-foreground/40" weight="duotone" />
+          <h3 className="mt-2 text-sm font-semibold text-foreground">No plugins found</h3>
+          <p className="mt-1 text-sm text-foreground/60">
             Try adjusting your search or filters.
           </p>
         </div>
@@ -362,13 +376,13 @@ export default function PluginsStorePage() {
               <div
                 key={plugin.id}
                 onClick={() => router.push(`/plugins/${plugin.slug}`)}
-                className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg hover:shadow-lg transition-all cursor-pointer relative"
+                className="glass-card overflow-hidden cursor-pointer relative"
               >
                 {/* Featured Badge */}
                 {plugin.is_featured && (
                   <div className="absolute top-4 right-4 z-10">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                      <SparklesIcon className="h-3 w-3 mr-1" />
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                      <Sparkle className="h-3 w-3 mr-1" weight="fill" />
                       Featured
                     </span>
                   </div>
@@ -378,17 +392,17 @@ export default function PluginsStorePage() {
                   {/* Header */}
                   <div className="flex items-start mb-4">
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+                      <h3 className="text-lg font-medium text-foreground hover:text-cyan-400 transition-colors">
                         {plugin.display_name || plugin.name}
                       </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">
+                      <p className="text-sm text-foreground/60 capitalize">
                         {plugin.category}
                       </p>
                     </div>
                   </div>
 
                   {/* Description */}
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
+                  <p className="text-sm text-foreground/60 mb-4 line-clamp-3">
                     {plugin.short_description}
                   </p>
 
@@ -397,7 +411,7 @@ export default function PluginsStorePage() {
                     <div className="flex items-center">
                       {renderRatingStars(plugin.average_rating)}
                     </div>
-                    <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                    <span className="ml-2 text-sm text-foreground/60">
                       {plugin.average_rating.toFixed(1)} ({plugin.total_reviews} reviews)
                     </span>
                   </div>
@@ -406,8 +420,8 @@ export default function PluginsStorePage() {
                   {plugin.features.length > 0 && (
                     <ul className="space-y-1 mb-4">
                       {plugin.features.slice(0, 3).map((feature, idx) => (
-                        <li key={idx} className="flex items-start text-sm text-gray-600 dark:text-gray-400">
-                          <CheckIcon className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                        <li key={idx} className="flex items-start text-sm text-foreground/60">
+                          <Check className="h-4 w-4 text-emerald-400 mr-2 mt-0.5 flex-shrink-0" weight="bold" />
                           <span className="line-clamp-1">{feature}</span>
                         </li>
                       ))}
@@ -415,22 +429,22 @@ export default function PluginsStorePage() {
                   )}
 
                   {/* Publisher */}
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                  <p className="text-xs text-foreground/40 mb-4">
                     by Lyceum Audio Labs
                   </p>
 
                   {/* Downloads */}
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                  <p className="text-xs text-foreground/40 mb-4">
                     {plugin.total_downloads.toLocaleString()} downloads
                   </p>
 
                   {/* Actions */}
-                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="pt-4 border-t border-cyan-500/10">
 
                     {hasLicense ? (
-                      <div className="flex items-center justify-center p-3 bg-green-50 dark:bg-green-900 rounded-md">
-                        <CheckIcon className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
-                        <span className="text-sm font-medium text-green-800 dark:text-green-200">
+                      <div className="flex items-center justify-center p-3 bg-emerald-500/10 rounded-md border border-emerald-500/20">
+                        <Check className="h-5 w-5 text-emerald-400 mr-2" weight="bold" />
+                        <span className="text-sm font-medium text-emerald-400">
                           {userLicense?.is_trial ? 'Trial Active' : 'Licensed'}
                         </span>
                       </div>
@@ -442,7 +456,7 @@ export default function PluginsStorePage() {
                               e.stopPropagation()
                               router.push(`/plugins/${plugin.slug}`)
                             }}
-                            className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                            className="btn-primary w-full"
                           >
                             View Details
                           </button>
@@ -454,9 +468,9 @@ export default function PluginsStorePage() {
                               e.stopPropagation()
                               handleActivateTrial(plugin)
                             }}
-                            className="w-full inline-flex items-center justify-center px-4 py-2 border border-blue-600 rounded-md text-sm font-medium text-blue-600 bg-white hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:hover:bg-gray-600"
+                            className="btn-ghost w-full"
                           >
-                            <ClockIcon className="h-5 w-5 mr-2" />
+                            <Clock className="h-5 w-5 mr-2" weight="regular" />
                             {plugin.trial_duration_days || plugin.free_trial_days}-Day Free Trial
                           </button>
                         )}
@@ -467,9 +481,9 @@ export default function PluginsStorePage() {
                               e.stopPropagation()
                               handleActivateTrial(plugin)
                             }}
-                            className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+                            className="btn-primary w-full"
                           >
-                            <CheckIcon className="h-5 w-5 mr-2" />
+                            <Check className="h-5 w-5 mr-2" weight="bold" />
                             Install Free
                           </button>
                         )}

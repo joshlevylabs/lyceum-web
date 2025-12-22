@@ -5,7 +5,7 @@ import EnhancedClusterAdmin from '@/components/EnhancedClusterAdmin';
 
 export default function ClusterManagementPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8 px-4">
         <EnhancedClusterAdmin />
       </div>

@@ -3,24 +3,22 @@
 import { useState, useEffect } from 'react'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/contexts/AuthContext'
-import { 
-  PlusIcon,
-  MagnifyingGlassIcon,
-  EyeIcon,
-  PencilIcon,
-  TrashIcon,
-  ShareIcon,
-  ClockIcon,
-  UserIcon,
-  FlagIcon,
-  ChartBarIcon,
-  CloudIcon,
-  DocumentArrowDownIcon
-} from '@heroicons/react/24/outline'
-import { 
-  PresentationChartLineIcon as PresentationChartLineIconSolid,
-  UserGroupIcon as UserGroupIconSolid
-} from '@heroicons/react/24/solid'
+import {
+  Plus,
+  MagnifyingGlass,
+  Eye,
+  Pencil,
+  Trash,
+  Share,
+  Clock,
+  User,
+  Flag,
+  ChartBar,
+  Cloud,
+  FileArrowDown,
+  PresentationChart,
+  UsersThree
+} from '@phosphor-icons/react'
 import Link from 'next/link'
 
 interface AnalyticsSession {
@@ -102,11 +100,11 @@ export default function AnalyticsStudio() {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'exploratory': return ChartBarIcon
-      case 'monitoring': return EyeIcon
-      case 'comparison': return PresentationChartLineIconSolid
-      case 'collaborative': return UserGroupIconSolid
-      default: return DocumentArrowDownIcon
+      case 'exploratory': return ChartBar
+      case 'monitoring': return Eye
+      case 'comparison': return PresentationChart
+      case 'collaborative': return UsersThree
+      default: return FileArrowDown
     }
   }
 
@@ -235,7 +233,7 @@ export default function AnalyticsStudio() {
               onClick={handleCreateSession}
               className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
             >
-              <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
+              <Plus className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
               New Session
             </button>
           </div>
@@ -266,7 +264,7 @@ export default function AnalyticsStudio() {
           
           <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+              <MagnifyingGlass className="h-5 w-5 text-gray-400" aria-hidden="true" />
             </div>
             <input
               type="text"
@@ -330,18 +328,18 @@ export default function AnalyticsStudio() {
                   {/* Metadata */}
                   <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
                     <div className="flex items-center">
-                      <ChartBarIcon className="mr-1 h-4 w-4" />
+                      <ChartBar className="mr-1 h-4 w-4" />
                       {session.measurements_count} measurements
                     </div>
                     {session.collaborators_count > 0 && (
                       <div className="flex items-center">
-                        <UserIcon className="mr-1 h-4 w-4" />
+                        <User className="mr-1 h-4 w-4" />
                         {session.collaborators_count} collaborators
                       </div>
                     )}
                     {session.is_public && (
                       <div className="flex items-center">
-                        <ShareIcon className="mr-1 h-4 w-4" />
+                        <Share className="mr-1 h-4 w-4" />
                         Public
                       </div>
                     )}
@@ -350,7 +348,7 @@ export default function AnalyticsStudio() {
                   {/* Footer */}
                   <div className="mt-4 flex items-center justify-between">
                     <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                      <ClockIcon className="mr-1 h-3 w-3" />
+                      <Clock className="mr-1 h-3 w-3" />
                       Updated {formatRelativeTime(session.updated_at)}
                     </div>
                     
@@ -359,7 +357,7 @@ export default function AnalyticsStudio() {
                         onClick={() => handleSessionAction(session.id, 'open')}
                         className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800"
                       >
-                        <EyeIcon className="h-3 w-3 mr-1" />
+                        <Eye className="h-3 w-3 mr-1" />
                         Open
                       </button>
                       
@@ -369,13 +367,13 @@ export default function AnalyticsStudio() {
                             onClick={() => handleSessionAction(session.id, 'edit')}
                             className="inline-flex items-center p-1.5 border border-transparent rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                           >
-                            <PencilIcon className="h-4 w-4" />
+                            <Pencil className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleSessionAction(session.id, 'delete')}
                             className="inline-flex items-center p-1.5 border border-transparent rounded text-gray-400 hover:text-red-600 dark:hover:text-red-400"
                           >
-                            <TrashIcon className="h-4 w-4" />
+                            <Trash className="h-4 w-4" />
                           </button>
                         </>
                       )}
@@ -390,7 +388,7 @@ export default function AnalyticsStudio() {
         {/* Empty State */}
         {!loading && filteredSessions.length === 0 && (
           <div className="text-center py-12">
-            <CloudIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <Cloud className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No analytics sessions</h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {searchTerm ? 'No sessions match your search.' : 'Get started by creating a new analytics session.'}
@@ -401,7 +399,7 @@ export default function AnalyticsStudio() {
                   onClick={handleCreateSession}
                   className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
                 >
-                  <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" />
+                  <Plus className="-ml-0.5 mr-1.5 h-5 w-5" />
                   New Session
                 </button>
               </div>

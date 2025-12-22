@@ -6,14 +6,14 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import ManufacturingChart from './ManufacturingChart'
 import {
-  PlayIcon,
-  PauseIcon,
-  ArrowPathIcon,
-  ChartBarIcon,
-  Cog6ToothIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon
-} from '@heroicons/react/24/outline'
+  Play,
+  Pause,
+  ArrowClockwise,
+  ChartBar,
+  Gear,
+  Warning,
+  CheckCircle
+} from '@phosphor-icons/react'
 
 interface DashboardProps {
   clusterId: string
@@ -213,10 +213,10 @@ export default function ManufacturingDashboard({
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'normal': return <CheckCircleIcon className="h-5 w-5 text-green-500" />
-      case 'warning': return <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />
-      case 'critical': return <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
-      default: return <CheckCircleIcon className="h-5 w-5 text-gray-500" />
+      case 'normal': return <CheckCircle className="h-5 w-5 text-green-500" />
+      case 'warning': return <Warning className="h-5 w-5 text-yellow-500" />
+      case 'critical': return <Warning className="h-5 w-5 text-red-500" />
+      default: return <CheckCircle className="h-5 w-5 text-gray-500" />
     }
   }
 
@@ -251,7 +251,7 @@ export default function ManufacturingDashboard({
             size="sm"
             onClick={() => setIsPaused(!isPaused)}
           >
-            {isPaused ? <PlayIcon className="h-4 w-4" /> : <PauseIcon className="h-4 w-4" />}
+            {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
             {isPaused ? 'Resume' : 'Pause'}
           </Button>
           
@@ -261,7 +261,7 @@ export default function ManufacturingDashboard({
             onClick={refreshData}
             disabled={isRefreshing}
           >
-            <ArrowPathIcon className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <ArrowClockwise className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
           
@@ -279,7 +279,7 @@ export default function ManufacturingDashboard({
           <CardContent className="p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <CheckCircleIcon className="h-8 w-8 text-green-500" />
+                <CheckCircle className="h-8 w-8 text-green-500" />
               </div>
               <div className="ml-3">
                 <p className="text-2xl font-semibold text-gray-900">
@@ -295,7 +295,7 @@ export default function ManufacturingDashboard({
           <CardContent className="p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <ExclamationTriangleIcon className="h-8 w-8 text-yellow-500" />
+                <Warning className="h-8 w-8 text-yellow-500" />
               </div>
               <div className="ml-3">
                 <p className="text-2xl font-semibold text-gray-900">{warningCount}</p>
@@ -309,7 +309,7 @@ export default function ManufacturingDashboard({
           <CardContent className="p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <ExclamationTriangleIcon className="h-8 w-8 text-red-500" />
+                <Warning className="h-8 w-8 text-red-500" />
               </div>
               <div className="ml-3">
                 <p className="text-2xl font-semibold text-gray-900">{criticalCount}</p>
@@ -323,7 +323,7 @@ export default function ManufacturingDashboard({
           <CardContent className="p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <ChartBarIcon className="h-8 w-8 text-blue-500" />
+                <ChartBar className="h-8 w-8 text-blue-500" />
               </div>
               <div className="ml-3">
                 <p className="text-2xl font-semibold text-gray-900">{visibleCurves.length}</p>
@@ -339,7 +339,7 @@ export default function ManufacturingDashboard({
         <Card className="border-red-200 bg-red-50">
           <CardContent className="p-4">
             <div className="flex items-center">
-              <ExclamationTriangleIcon className="h-5 w-5 text-red-500 mr-2" />
+              <Warning className="h-5 w-5 text-red-500 mr-2" />
               <span className="text-red-800">{error}</span>
               <Button variant="outline" size="sm" onClick={refreshData} className="ml-auto">
                 Retry

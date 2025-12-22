@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ChartBarIcon, ArrowTrendingUpIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import { ChartBar, TrendUp, Warning } from '@phosphor-icons/react'
 
 interface UsageData {
   date: string
@@ -88,7 +88,7 @@ export default function LocalClusterUsageCharts() {
       {warningUsers.length > 0 && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
           <div className="flex items-center mb-4">
-            <ExclamationTriangleIcon className="h-6 w-6 text-yellow-600 mr-2" />
+            <Warning className="h-6 w-6 text-yellow-600 mr-2" />
             <h3 className="text-lg font-semibold text-yellow-900">Users Approaching Limits</h3>
           </div>
           
@@ -142,7 +142,7 @@ export default function LocalClusterUsageCharts() {
         {/* Storage Usage Trend */}
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <ChartBarIcon className="h-5 w-5 mr-2 text-blue-600" />
+            <ChartBar className="h-5 w-5 mr-2 text-blue-600" />
             Storage Usage Trend
           </h3>
           
@@ -170,7 +170,7 @@ export default function LocalClusterUsageCharts() {
         {/* Query Volume Trend */}
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <ArrowTrendingUpIcon className="h-5 w-5 mr-2 text-green-600" />
+            <TrendUp className="h-5 w-5 mr-2 text-green-600" />
             Query Volume Trend
           </h3>
           

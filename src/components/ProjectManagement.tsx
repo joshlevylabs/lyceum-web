@@ -9,17 +9,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { 
-  PlusIcon,
-  FolderIcon,
-  ChartBarIcon,
-  Cog6ToothIcon,
-  TrashIcon,
-  PlayIcon,
-  PauseIcon,
-  EyeIcon,
-  PencilIcon
-} from '@heroicons/react/24/outline'
+import {
+  Plus,
+  Folder,
+  ChartBar,
+  Gear,
+  Trash,
+  Play,
+  Pause,
+  Eye,
+  Pencil
+} from '@phosphor-icons/react'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface Project {
@@ -300,7 +300,7 @@ export default function ProjectManagement({ clusterId, onProjectSelect }: Projec
         </div>
         
         <Button onClick={() => setShowCreateForm(true)}>
-          <PlusIcon className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4 mr-2" />
           New Project
         </Button>
       </div>
@@ -391,13 +391,13 @@ export default function ProjectManagement({ clusterId, onProjectSelect }: Projec
       {projects.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
-            <FolderIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <Folder className="mx-auto h-12 w-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No projects found</h3>
             <p className="text-gray-600 mb-6">
               Create your first manufacturing analytics project to get started.
             </p>
             <Button onClick={() => setShowCreateForm(true)}>
-              <PlusIcon className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 mr-2" />
               Create First Project
             </Button>
           </CardContent>
@@ -451,23 +451,23 @@ export default function ProjectManagement({ clusterId, onProjectSelect }: Projec
                         variant="outline"
                         onClick={() => handleProjectAction(project, 'view')}
                       >
-                        <EyeIcon className="h-4 w-4" />
+                        <Eye className="h-4 w-4" />
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleProjectAction(project, 'edit')}
                       >
-                        <PencilIcon className="h-4 w-4" />
+                        <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleProjectAction(project, project.status === 'active' ? 'pause' : 'resume')}
                       >
-                        {project.status === 'active' ? 
-                          <PauseIcon className="h-4 w-4" /> : 
-                          <PlayIcon className="h-4 w-4" />
+                        {project.status === 'active' ?
+                          <Pause className="h-4 w-4" /> :
+                          <Play className="h-4 w-4" />
                         }
                       </Button>
                     </div>

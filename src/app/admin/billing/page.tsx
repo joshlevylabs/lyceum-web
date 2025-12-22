@@ -2,9 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { CreditCard, Check, Star, Zap, Shield, Users } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { CreditCard, Check, Star, Lightning, ShieldCheck, UsersThree } from '@phosphor-icons/react'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { SUBSCRIPTION_PLANS } from '@/lib/stripe-constants'
@@ -149,8 +147,8 @@ export default function BillingPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading billing information...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-cyan-500/20 border-t-cyan-500 mx-auto"></div>
+          <p className="mt-4 text-foreground/60">Loading billing information...</p>
         </div>
       </div>
     )
@@ -160,7 +158,7 @@ export default function BillingPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-gray-600">Redirecting to login...</p>
+          <p className="text-foreground/60">Redirecting to login...</p>
         </div>
       </div>
     )
@@ -171,94 +169,89 @@ export default function BillingPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Billing & Subscriptions</h1>
-        <p className="text-gray-600">Manage your Lyceum Database Clusters subscription</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Billing & Subscriptions</h1>
+        <p className="text-foreground/60">Manage your Lyceum Database Clusters subscription</p>
       </div>
 
       {/* Current Plan Status */}
       {hasActiveSubscription && (
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5" />
-              Current Subscription
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    {userBilling.subscription_status?.toUpperCase()}
-                  </Badge>
-                  <span className="font-semibold">
-                    {userBilling.plan_name ? userBilling.plan_name.charAt(0).toUpperCase() + userBilling.plan_name.slice(1) : 'Unknown Plan'}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Your subscription is active and ready to use.
-                </p>
+        <div className="glass-card mb-8 p-6">
+          <h2 className="text-xl font-semibold text-foreground flex items-center gap-2 mb-4">
+            <CreditCard className="w-5 h-5 text-cyan-400" />
+            Current Subscription
+          </h2>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                  {userBilling.subscription_status?.toUpperCase()}
+                </Badge>
+                <span className="font-semibold text-foreground">
+                  {userBilling.plan_name ? userBilling.plan_name.charAt(0).toUpperCase() + userBilling.plan_name.slice(1) : 'Unknown Plan'}
+                </span>
               </div>
-              <Button onClick={handleManageBilling} variant="outline">
-                Manage Billing
-              </Button>
+              <p className="text-sm text-foreground/60">
+                Your subscription is active and ready to use.
+              </p>
             </div>
-          </CardContent>
-        </Card>
+            <button onClick={handleManageBilling} className="btn-ghost">
+              Manage Billing
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Pricing Plans */}
       <div className="mb-8">
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Choose Your Plan</h2>
-          <p className="text-gray-600">Select the perfect plan for your database cluster needs</p>
+          <h2 className="text-2xl font-bold text-foreground mb-2">Choose Your Plan</h2>
+          <p className="text-foreground/60">Select the perfect plan for your database cluster needs</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {Object.entries(SUBSCRIPTION_PLANS).map(([key, plan]) => (
-            <Card key={key} className={`relative ${key === 'professional' ? 'border-blue-500 shadow-lg' : ''}`}>
+            <div key={key} className={`glass-card relative p-6 ${key === 'professional' ? 'border-cyan-500/20 shadow-lg shadow-cyan-500/10' : ''}`}>
               {key === 'professional' && (
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-blue-600 text-white">
-                    <Star className="w-3 h-3 mr-1" />
+                  <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20">
+                    <Star className="w-3 h-3 mr-1" weight="fill" />
                     Most Popular
                   </Badge>
                 </div>
               )}
-              
-              <CardHeader className="text-center">
-                <CardTitle className="flex items-center justify-center gap-2">
-                  {key === 'starter' && <Users className="w-5 h-5" />}
-                  {key === 'professional' && <Zap className="w-5 h-5" />}
-                  {key === 'enterprise' && <Shield className="w-5 h-5" />}
-                  {key === 'byod' && <CreditCard className="w-5 h-5" />}
-                  {plan.name}
-                </CardTitle>
-                <div className="text-3xl font-bold text-blue-600">
-                  ${plan.price}
-                  <span className="text-sm font-normal text-gray-500">/month</span>
+
+              <div className="text-center mb-6">
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  {key === 'starter' && <UsersThree className="w-5 h-5 text-cyan-400" weight="duotone" />}
+                  {key === 'professional' && <Lightning className="w-5 h-5 text-cyan-400" weight="duotone" />}
+                  {key === 'enterprise' && <ShieldCheck className="w-5 h-5 text-cyan-400" weight="duotone" />}
+                  {key === 'byod' && <CreditCard className="w-5 h-5 text-cyan-400" weight="duotone" />}
+                  <h3 className="text-xl font-semibold text-foreground">{plan.name}</h3>
                 </div>
-              </CardHeader>
-              
-              <CardContent>
+                <div className="text-3xl font-bold text-cyan-400">
+                  ${plan.price}
+                  <span className="text-sm font-normal text-foreground/60">/month</span>
+                </div>
+              </div>
+
+              <div>
                 <ul className="space-y-2 mb-6">
                   {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2 text-sm">
-                      <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <li key={index} className="flex items-center gap-2 text-sm text-foreground/60">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0" weight="bold" />
                       <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
-                
-                <Button
+
+                <button
                   onClick={() => handleSubscribe(key)}
                   disabled={processingCheckout === key || hasActiveSubscription}
-                  className={`w-full ${key === 'professional' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
-                  variant={key === 'professional' ? 'default' : 'outline'}
+                  className={`w-full ${key === 'professional' ? 'btn-primary' : 'btn-ghost'} disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {processingCheckout === key ? (
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <div className="flex items-center gap-2 justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-cyan-500/20 border-t-cyan-500"></div>
                       Processing...
                     </div>
                   ) : hasActiveSubscription ? (
@@ -266,74 +259,72 @@ export default function BillingPage() {
                   ) : (
                     'Get Started'
                   )}
-                </Button>
-              </CardContent>
-            </Card>
+                </button>
+              </div>
+            </div>
           ))}
         </div>
       </div>
 
       {/* Features Comparison */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Plan Comparison</CardTitle>
-          <CardDescription>
+      <div className="glass-card p-6">
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-foreground mb-2">Plan Comparison</h2>
+          <p className="text-sm text-foreground/60">
             Compare features across all plans to find what works best for you
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2">Feature</th>
-                  <th className="text-center py-2">Starter</th>
-                  <th className="text-center py-2">Professional</th>
-                  <th className="text-center py-2">Enterprise</th>
-                  <th className="text-center py-2">BYOD</th>
-                </tr>
-              </thead>
-              <tbody className="space-y-2">
-                <tr className="border-b">
-                  <td className="py-2 font-medium">Max Users</td>
-                  <td className="text-center py-2">5</td>
-                  <td className="text-center py-2">25</td>
-                  <td className="text-center py-2">Unlimited</td>
-                  <td className="text-center py-2">Unlimited</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-2 font-medium">Max Clusters</td>
-                  <td className="text-center py-2">1</td>
-                  <td className="text-center py-2">5</td>
-                  <td className="text-center py-2">Unlimited</td>
-                  <td className="text-center py-2">1</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-2 font-medium">Data Storage</td>
-                  <td className="text-center py-2">10GB</td>
-                  <td className="text-center py-2">100GB</td>
-                  <td className="text-center py-2">1TB</td>
-                  <td className="text-center py-2">Your Own</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-2 font-medium">Support</td>
-                  <td className="text-center py-2">Email</td>
-                  <td className="text-center py-2">Priority</td>
-                  <td className="text-center py-2">Dedicated</td>
-                  <td className="text-center py-2">Email</td>
-                </tr>
-                <tr>
-                  <td className="py-2 font-medium">API Access</td>
-                  <td className="text-center py-2">-</td>
-                  <td className="text-center py-2">✓</td>
-                  <td className="text-center py-2">Full</td>
-                  <td className="text-center py-2">-</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+          </p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-cyan-500/20">
+                <th className="text-left py-2 text-foreground">Feature</th>
+                <th className="text-center py-2 text-foreground">Starter</th>
+                <th className="text-center py-2 text-foreground">Professional</th>
+                <th className="text-center py-2 text-foreground">Enterprise</th>
+                <th className="text-center py-2 text-foreground">BYOD</th>
+              </tr>
+            </thead>
+            <tbody className="space-y-2">
+              <tr className="border-b border-cyan-500/20">
+                <td className="py-2 font-medium text-foreground">Max Users</td>
+                <td className="text-center py-2 text-foreground/60">5</td>
+                <td className="text-center py-2 text-foreground/60">25</td>
+                <td className="text-center py-2 text-foreground/60">Unlimited</td>
+                <td className="text-center py-2 text-foreground/60">Unlimited</td>
+              </tr>
+              <tr className="border-b border-cyan-500/20">
+                <td className="py-2 font-medium text-foreground">Max Clusters</td>
+                <td className="text-center py-2 text-foreground/60">1</td>
+                <td className="text-center py-2 text-foreground/60">5</td>
+                <td className="text-center py-2 text-foreground/60">Unlimited</td>
+                <td className="text-center py-2 text-foreground/60">1</td>
+              </tr>
+              <tr className="border-b border-cyan-500/20">
+                <td className="py-2 font-medium text-foreground">Data Storage</td>
+                <td className="text-center py-2 text-foreground/60">10GB</td>
+                <td className="text-center py-2 text-foreground/60">100GB</td>
+                <td className="text-center py-2 text-foreground/60">1TB</td>
+                <td className="text-center py-2 text-foreground/60">Your Own</td>
+              </tr>
+              <tr className="border-b border-cyan-500/20">
+                <td className="py-2 font-medium text-foreground">Support</td>
+                <td className="text-center py-2 text-foreground/60">Email</td>
+                <td className="text-center py-2 text-foreground/60">Priority</td>
+                <td className="text-center py-2 text-foreground/60">Dedicated</td>
+                <td className="text-center py-2 text-foreground/60">Email</td>
+              </tr>
+              <tr>
+                <td className="py-2 font-medium text-foreground">API Access</td>
+                <td className="text-center py-2 text-foreground/60">-</td>
+                <td className="text-center py-2 text-foreground/60">✓</td>
+                <td className="text-center py-2 text-foreground/60">Full</td>
+                <td className="text-center py-2 text-foreground/60">-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   )
 }

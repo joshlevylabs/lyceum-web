@@ -5,19 +5,19 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter, useParams } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import {
-  UserGroupIcon,
-  UsersIcon,
-  FolderIcon,
-  ClockIcon,
-  Cog6ToothIcon,
-  PlusIcon,
-  TrashIcon,
-  PencilIcon,
-  ShieldCheckIcon,
-  EyeIcon,
-  XMarkIcon,
-  CheckIcon
-} from '@heroicons/react/24/outline'
+  UsersThree,
+  Users,
+  Folder,
+  Clock,
+  Gear,
+  Plus,
+  Trash,
+  Pencil,
+  ShieldCheck,
+  Eye,
+  X,
+  Check
+} from '@phosphor-icons/react'
 
 interface GroupDetails {
   id: string
@@ -303,7 +303,7 @@ export default function GroupDetailPage() {
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex-shrink-0">
-              <UserGroupIcon className="h-12 w-12 text-blue-600" />
+              <UserGroup className="h-12 w-12 text-blue-600" />
             </div>
             <div>
               <div className="flex items-center space-x-3">
@@ -424,7 +424,7 @@ export default function GroupDetailPage() {
                     disabled={addingMember}
                     className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
                   >
-                    <PlusIcon className="h-4 w-4 mr-2" />
+                    <Plus className="h-4 w-4 mr-2" />
                     Add
                   </button>
                 </form>
@@ -456,7 +456,7 @@ export default function GroupDetailPage() {
                         onClick={() => handleRemoveMember(member.user_id)}
                         className="text-red-600 hover:text-red-700 dark:text-red-400"
                       >
-                        <TrashIcon className="h-4 w-4" />
+                        <Trash className="h-4 w-4" />
                       </button>
                     )}
                   </div>
@@ -469,7 +469,7 @@ export default function GroupDetailPage() {
         {activeTab === 'resources' && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div className="text-center py-12">
-              <FolderIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <Folder className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 dark:text-gray-400 mb-4">No resources shared yet</p>
               <p className="text-sm text-gray-500 dark:text-gray-500">
                 Share clusters, sessions, and other resources with your group to collaborate.
@@ -489,7 +489,7 @@ export default function GroupDetailPage() {
                   <div key={activity.id} className="px-6 py-4">
                     <div className="flex items-start space-x-3">
                       <div className="flex-shrink-0">
-                        <ClockIcon className="h-5 w-5 text-gray-400" />
+                        <Clock className="h-5 w-5 text-gray-400" />
                       </div>
                       <div className="flex-1">
                         <p className="text-sm text-gray-900 dark:text-white">
@@ -508,7 +508,7 @@ export default function GroupDetailPage() {
                 ))
               ) : (
                 <div className="px-6 py-12 text-center">
-                  <ClockIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-600 dark:text-gray-400">No activity yet</p>
                 </div>
               )}
@@ -552,14 +552,14 @@ export default function GroupDetailPage() {
                     }}
                     className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
                   >
-                    <TrashIcon className="h-4 w-4 mr-2" />
+                    <Trash className="h-4 w-4 mr-2" />
                     Delete Group
                   </button>
                 </div>
               </div>
             ) : (
               <div className="text-center py-8">
-                <Cog6ToothIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <Cog6Tooth className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600 dark:text-gray-400">
                   Only the group owner can modify settings
                 </p>

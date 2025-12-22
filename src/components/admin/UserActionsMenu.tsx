@@ -2,14 +2,14 @@
 
 import { useState, useRef, useEffect } from 'react'
 import {
-  EllipsisVerticalIcon,
-  NoSymbolIcon,
-  TrashIcon,
-  ShieldExclamationIcon,
-  ShieldCheckIcon,
-  CheckBadgeIcon,
-  XMarkIcon
-} from '@heroicons/react/24/outline'
+  DotsThreeVertical,
+  Prohibit,
+  Trash,
+  ShieldWarning,
+  ShieldCheck,
+  SealCheck,
+  X
+} from '@phosphor-icons/react'
 
 interface User {
   id: string
@@ -237,7 +237,7 @@ export default function UserActionsMenu({ user, onActionComplete }: UserActionsM
         className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
         title="User actions"
       >
-        <EllipsisVerticalIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+        <DotsThreeVertical className="h-5 w-5 text-gray-600 dark:text-gray-400" />
       </button>
 
       {isOpen && (
@@ -249,7 +249,7 @@ export default function UserActionsMenu({ user, onActionComplete }: UserActionsM
               disabled={isLoading}
               className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center disabled:opacity-50"
             >
-              <CheckBadgeIcon className="h-4 w-4 mr-2 text-blue-600" />
+              <SealCheck className="h-4 w-4 mr-2 text-blue-600" />
               Check if Throwaway Email
             </button>
 
@@ -264,12 +264,12 @@ export default function UserActionsMenu({ user, onActionComplete }: UserActionsM
             >
               {user.is_active ? (
                 <>
-                  <NoSymbolIcon className="h-4 w-4 mr-2 text-orange-600" />
+                  <Prohibit className="h-4 w-4 mr-2 text-orange-600" />
                   Deactivate User
                 </>
               ) : (
                 <>
-                  <ShieldCheckIcon className="h-4 w-4 mr-2 text-green-600" />
+                  <ShieldCheck className="h-4 w-4 mr-2 text-green-600" />
                   Activate User
                 </>
               )}
@@ -283,12 +283,12 @@ export default function UserActionsMenu({ user, onActionComplete }: UserActionsM
             >
               {user.banned_until ? (
                 <>
-                  <ShieldCheckIcon className="h-4 w-4 mr-2 text-green-600" />
+                  <ShieldCheck className="h-4 w-4 mr-2 text-green-600" />
                   Unban User
                 </>
               ) : (
                 <>
-                  <ShieldExclamationIcon className="h-4 w-4 mr-2 text-red-600" />
+                  <ShieldWarning className="h-4 w-4 mr-2 text-red-600" />
                   Ban User (Auth-Level)
                 </>
               )}
@@ -303,7 +303,7 @@ export default function UserActionsMenu({ user, onActionComplete }: UserActionsM
               disabled={isLoading}
               className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center disabled:opacity-50"
             >
-              <TrashIcon className="h-4 w-4 mr-2" />
+              <Trash className="h-4 w-4 mr-2" />
               Delete Permanently
             </button>
           </div>

@@ -4,10 +4,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  ArrowLeftIcon,
-  KeyIcon,
-  CheckIcon
-} from '@heroicons/react/24/outline'
+  ArrowLeft,
+  Key,
+  Check
+} from '@phosphor-icons/react'
 
 interface LicenseFormData {
   license_type: string
@@ -29,7 +29,7 @@ const LICENSE_TYPES = {
     default_projects: 5,
     default_storage: 5,
     default_features: ['analytics_studio'],
-    color: 'bg-gray-100 text-gray-800'
+    color: 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
   },
   standard: {
     name: 'Standard',
@@ -38,7 +38,7 @@ const LICENSE_TYPES = {
     default_projects: 50,
     default_storage: 25,
     default_features: ['analytics_studio', 'collaboration'],
-    color: 'bg-green-100 text-green-800'
+    color: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
   },
   professional: {
     name: 'Professional',
@@ -47,7 +47,7 @@ const LICENSE_TYPES = {
     default_projects: 100,
     default_storage: 100,
     default_features: ['analytics_studio', 'collaboration', 'api_access'],
-    color: 'bg-blue-100 text-blue-800'
+    color: 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
   },
   enterprise: {
     name: 'Enterprise',
@@ -56,7 +56,7 @@ const LICENSE_TYPES = {
     default_projects: 1000,
     default_storage: 500,
     default_features: ['analytics_studio', 'collaboration', 'api_access', 'priority_support', 'custom_branding'],
-    color: 'bg-purple-100 text-purple-800'
+    color: 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
   }
 }
 
@@ -153,15 +153,15 @@ export default function CreateLicenseKey() {
       <div className="flex items-center">
         <Link
           href="/admin/licenses"
-          className="mr-4 p-2 text-gray-400 hover:text-gray-600"
+          className="mr-4 p-2 rounded-lg text-foreground/50 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all"
         >
-          <ArrowLeftIcon className="h-5 w-5" />
+          <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+          <h1 className="text-2xl font-bold leading-7 text-foreground sm:text-3xl sm:truncate">
             Create License Key
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-foreground/60">
             Generate a new license key for platform access
           </p>
         </div>
@@ -169,8 +169,8 @@ export default function CreateLicenseKey() {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* License Type Selection */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">License Type</h3>
+        <div className="glass-card rounded-lg p-6">
+          <h3 className="text-lg font-medium text-foreground mb-4">License Type</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {Object.entries(LICENSE_TYPES).map(([key, type]) => (
               <div
@@ -182,7 +182,7 @@ export default function CreateLicenseKey() {
               >
                 {formData.license_type === key && (
                   <div className="absolute top-2 right-2">
-                    <CheckIcon className="h-5 w-5 text-blue-600" />
+                    <Check className="h-5 w-5 text-blue-600" />
                   </div>
                 )}
                 <div className="mb-2">
@@ -383,7 +383,7 @@ export default function CreateLicenseKey() {
               </>
             ) : (
               <>
-                <KeyIcon className="-ml-1 mr-2 h-5 w-5" />
+                <Key className="-ml-1 mr-2 h-5 w-5" />
                 Create License Key
               </>
             )}

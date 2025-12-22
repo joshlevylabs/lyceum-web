@@ -4,26 +4,26 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter, useParams } from 'next/navigation'
 import {
-  ArrowLeftIcon,
-  PencilIcon,
-  ChatBubbleLeftRightIcon,
-  TagIcon,
-  UserIcon,
-  CalendarIcon,
-  CheckIcon,
-  XMarkIcon,
-  ClockIcon,
-  DocumentIcon,
-  PaperClipIcon,
-  PhotoIcon,
-  VideoCameraIcon,
-  EyeIcon,
-  TrashIcon,
-  ChatBubbleLeftIcon,
-  ArrowPathIcon,
-  ExclamationTriangleIcon,
-  BugAntIcon
-} from '@heroicons/react/24/outline'
+  ArrowLeft,
+  Pencil,
+  ChatCircle,
+  Tag,
+  User,
+  CalendarBlank,
+  Check,
+  X,
+  Clock,
+  FileText,
+  Paperclip,
+  Image,
+  VideoCamera,
+  Eye,
+  Trash,
+  Chat,
+  ArrowsClockwise,
+  Warning,
+  Bug
+} from '@phosphor-icons/react'
 import FileUpload from '@/components/FileUpload'
 
 // Custom Bug Icon Component
@@ -233,35 +233,35 @@ const getReproductionRateColor = (rate?: string) => {
 const getTimelineIcon = (eventType: TimelineEvent['type']) => {
   switch (eventType) {
     case 'created':
-      return <ClockIcon className="h-3 w-3 text-blue-500" />
+      return <Clock className="h-3 w-3 text-blue-500" />
     case 'comment':
-      return <ChatBubbleLeftIcon className="h-3 w-3 text-green-500" />
+      return <Chat className="h-3 w-3 text-green-500" />
     case 'comment_edit':
-      return <PencilIcon className="h-3 w-3 text-orange-500" />
+      return <Pencil className="h-3 w-3 text-orange-500" />
     case 'comment_delete':
-      return <TrashIcon className="h-3 w-3 text-red-500" />
+      return <Trash className="h-3 w-3 text-red-500" />
     case 'status_change':
-      return <ArrowPathIcon className="h-3 w-3 text-purple-500" />
+      return <ArrowsClockwise className="h-3 w-3 text-purple-500" />
     case 'assignment':
-      return <UserIcon className="h-3 w-3 text-indigo-500" />
+      return <User className="h-3 w-3 text-indigo-500" />
     case 'resolution':
-      return <CheckIcon className="h-3 w-3 text-green-600" />
+      return <Check className="h-3 w-3 text-green-600" />
     case 'attachment':
-      return <PaperClipIcon className="h-3 w-3 text-gray-500" />
+      return <Paperclip className="h-3 w-3 text-gray-500" />
     case 'update':
-      return <PencilIcon className="h-3 w-3 text-blue-400" />
+      return <Pencil className="h-3 w-3 text-blue-400" />
     default:
-      return <ClockIcon className="h-3 w-3 text-gray-400" />
+      return <Clock className="h-3 w-3 text-gray-400" />
   }
 }
 
 const getTypeIcon = (type: string) => {
   switch (type) {
     case 'bug': return <BugIcon className="h-5 w-5 text-red-500" />
-    case 'feature_request': return <CheckIcon className="h-5 w-5 text-blue-500" />
-    case 'improvement': return <ArrowLeftIcon className="h-5 w-5 text-purple-500" />
-    case 'support': return <ChatBubbleLeftRightIcon className="h-5 w-5 text-green-500" />
-    default: return <TagIcon className="h-5 w-5 text-gray-500" />
+    case 'feature_request': return <Check className="h-5 w-5 text-blue-500" />
+    case 'improvement': return <ArrowLeft className="h-5 w-5 text-purple-500" />
+    case 'support': return <ChatCircle className="h-5 w-5 text-green-500" />
+    default: return <Tag className="h-5 w-5 text-gray-500" />
   }
 }
 
@@ -560,10 +560,10 @@ export default function TicketDetailPage() {
     return (
       <div className="space-y-6">
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-4 bg-cyan-500/20 rounded w-1/4"></div>
           <div className="space-y-3 mt-4">
-            <div className="h-4 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+            <div className="h-4 bg-cyan-500/20 rounded"></div>
+            <div className="h-4 bg-cyan-500/20 rounded w-5/6"></div>
           </div>
         </div>
       </div>
@@ -576,14 +576,14 @@ export default function TicketDetailPage() {
         <div className="flex items-center space-x-4">
           <button
             onClick={() => router.push('/admin/tickets')}
-            className="flex items-center text-sm text-gray-600 hover:text-gray-900"
+            className="flex items-center text-sm text-foreground/60 hover:text-cyan-400 transition-colors"
           >
-            <ArrowLeftIcon className="h-4 w-4 mr-2" />
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Tickets
           </button>
         </div>
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <p className="text-red-800">{error || 'Ticket not found'}</p>
+        <div className="glass-card p-4 border-red-500/20">
+          <p className="text-foreground">{error || 'Ticket not found'}</p>
         </div>
       </div>
     )
@@ -596,20 +596,20 @@ export default function TicketDetailPage() {
         <div className="flex items-center space-x-4">
           <button
             onClick={() => router.push('/admin/tickets')}
-            className="flex items-center text-sm text-gray-600 hover:text-gray-900"
+            className="flex items-center text-sm text-foreground/60 hover:text-cyan-400 transition-colors"
           >
-            <ArrowLeftIcon className="h-4 w-4 mr-2" />
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Tickets
           </button>
-          <div className="h-6 w-px bg-gray-300"></div>
+          <div className="h-6 w-px bg-cyan-500/20"></div>
           <div className="flex items-center space-x-2">
             {getTypeIcon(ticket.ticket_type)}
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-foreground">
               {ticket.ticket_key}: {ticket.title}
             </h1>
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-3">
           {isEditing ? (
             <>
@@ -618,25 +618,25 @@ export default function TicketDetailPage() {
                   setIsEditing(false)
                   setEditForm(ticket)
                 }}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                className="btn-ghost inline-flex items-center px-3 py-2"
               >
-                <XMarkIcon className="h-4 w-4 mr-2" />
+                <X className="h-4 w-4 mr-2" />
                 Cancel
               </button>
               <button
                 onClick={handleSaveEdit}
-                className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+                className="btn-primary inline-flex items-center px-3 py-2"
               >
-                <CheckIcon className="h-4 w-4 mr-2" />
+                <Check className="h-4 w-4 mr-2" />
                 Save Changes
               </button>
             </>
           ) : (
             <button
               onClick={() => setIsEditing(true)}
-              className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+              className="btn-primary inline-flex items-center px-3 py-2"
             >
-              <PencilIcon className="h-4 w-4 mr-2" />
+              <Pencil className="h-4 w-4 mr-2" />
               Edit Ticket
             </button>
           )}
@@ -648,7 +648,7 @@ export default function TicketDetailPage() {
         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(ticket.status)}`}>
           {statusLabels[ticket.status]}
         </span>
-        <span className="text-sm text-gray-600">Priority: {priorityLabels[ticket.priority]}</span>
+        <span className="text-sm text-foreground/60">Priority: {priorityLabels[ticket.priority]}</span>
         <div className={`w-2 h-2 rounded-full ${getPriorityColor(ticket.priority)}`}></div>
         {ticket.severity && (
           <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getSeverityColor(ticket.severity)}`}>
@@ -661,45 +661,45 @@ export default function TicketDetailPage() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Application Context */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-blue-900 mb-2">📱 Application Context</h3>
+          <div className="glass-card p-4 border-cyan-500/20">
+            <h3 className="text-sm font-semibold text-foreground mb-2">Application Context</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <span className="text-sm font-medium text-gray-600">Section:</span>
-                <div className="text-sm text-gray-900">{ticket.application_section || 'Main Application'}</div>
+                <span className="text-sm font-medium text-foreground/60">Section:</span>
+                <div className="text-sm text-foreground">{ticket.application_section || 'Main Application'}</div>
               </div>
               {ticket.plugin_name && (
                 <div>
-                  <span className="text-sm font-medium text-gray-600">Plugin:</span>
-                  <div className="text-sm text-gray-900">📦 {ticket.plugin_name}</div>
+                  <span className="text-sm font-medium text-foreground/60">Plugin:</span>
+                  <div className="text-sm text-foreground">📦 {ticket.plugin_name}</div>
                 </div>
               )}
               {ticket.centcom_version && (
                 <div>
-                  <span className="text-sm font-medium text-gray-600">Version:</span>
-                  <div className="text-sm text-gray-900">v{ticket.centcom_version}</div>
+                  <span className="text-sm font-medium text-foreground/60">Version:</span>
+                  <div className="text-sm text-foreground">v{ticket.centcom_version}</div>
                 </div>
               )}
               <div>
-                <span className="text-sm font-medium text-gray-600">Submitter:</span>
-                <div className="text-sm text-gray-900">{ticket.username}</div>
-                <div className="text-xs text-gray-500">{ticket.email}</div>
+                <span className="text-sm font-medium text-foreground/60">Submitter:</span>
+                <div className="text-sm text-foreground">{ticket.username}</div>
+                <div className="text-xs text-foreground/60">{ticket.email}</div>
               </div>
             </div>
           </div>
 
           {/* Description */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">📝 Description</h3>
+          <div className="glass-card p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Description</h3>
             {isEditing ? (
               <textarea
                 value={editForm.description || ''}
                 onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
                 rows={6}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="glass-input w-full px-3 py-2 text-sm text-foreground"
               />
             ) : (
-              <div className="text-sm text-gray-900 whitespace-pre-wrap">
+              <div className="text-sm text-foreground whitespace-pre-wrap">
                 {ticket.description}
               </div>
             )}
@@ -707,22 +707,23 @@ export default function TicketDetailPage() {
 
           {/* Bug Report Details */}
           {ticket.ticket_type === 'bug' && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-red-900 mb-4">🐛 Bug Report Details</h3>
-              
+            <div className="glass-card p-6 border-red-500/20">
+              <h3 className="text-lg font-semibold text-foreground mb-4">Bug Report Details</h3>
+
+
               {(ticket.steps_to_reproduce || isEditing) && (
                 <div className="mb-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Steps to Reproduce:</h4>
+                  <h4 className="text-sm font-medium text-foreground mb-2">Steps to Reproduce:</h4>
                   {isEditing ? (
                     <textarea
                       value={editForm.steps_to_reproduce || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, steps_to_reproduce: e.target.value }))}
                       rows={4}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="glass-input w-full px-3 py-2 text-sm text-foreground"
                       placeholder="Enter steps to reproduce..."
                     />
                   ) : (
-                    <div className="text-sm text-gray-900 bg-white border rounded p-3 whitespace-pre-wrap">
+                    <div className="text-sm text-foreground glass-card p-3 whitespace-pre-wrap">
                       {ticket.steps_to_reproduce}
                     </div>
                   )}
@@ -732,17 +733,17 @@ export default function TicketDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {(ticket.expected_behavior || isEditing) && (
                   <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Expected Behavior:</h4>
+                    <h4 className="text-sm font-medium text-foreground mb-2">Expected Behavior:</h4>
                     {isEditing ? (
                       <textarea
                         value={editForm.expected_behavior || ''}
                         onChange={(e) => setEditForm(prev => ({ ...prev, expected_behavior: e.target.value }))}
                         rows={3}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="glass-input w-full px-3 py-2 text-sm text-foreground"
                         placeholder="Enter expected behavior..."
                       />
                     ) : (
-                      <div className="text-sm text-gray-900 bg-white border rounded p-3 whitespace-pre-wrap">
+                      <div className="text-sm text-foreground glass-card p-3 whitespace-pre-wrap">
                         {ticket.expected_behavior}
                       </div>
                     )}
@@ -751,17 +752,17 @@ export default function TicketDetailPage() {
 
                 {(ticket.actual_behavior || isEditing) && (
                   <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Actual Behavior:</h4>
+                    <h4 className="text-sm font-medium text-foreground mb-2">Actual Behavior:</h4>
                     {isEditing ? (
                       <textarea
                         value={editForm.actual_behavior || ''}
                         onChange={(e) => setEditForm(prev => ({ ...prev, actual_behavior: e.target.value }))}
                         rows={3}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="glass-input w-full px-3 py-2 text-sm text-foreground"
                         placeholder="Enter actual behavior..."
                       />
                     ) : (
-                      <div className="text-sm text-gray-900 bg-white border rounded p-3 whitespace-pre-wrap">
+                      <div className="text-sm text-foreground glass-card p-3 whitespace-pre-wrap">
                         {ticket.actual_behavior}
                       </div>
                     )}
@@ -771,12 +772,12 @@ export default function TicketDetailPage() {
 
               {(ticket.reproduction_rate || isEditing) && (
                 <div className="mt-4">
-                  <span className="text-sm font-medium text-gray-700">Reproduction Rate:</span>
+                  <span className="text-sm font-medium text-foreground">Reproduction Rate:</span>
                   {isEditing ? (
                     <select
                       value={editForm.reproduction_rate || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, reproduction_rate: e.target.value as any }))}
-                      className="ml-2 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="glass-input ml-2 px-2 py-1 text-sm text-foreground"
                     >
                       <option value="">Select...</option>
                       <option value="always">Always</option>
@@ -796,37 +797,37 @@ export default function TicketDetailPage() {
 
           {/* Environment Information */}
           {ticket.environment_info && Object.keys(ticket.environment_info).length > 0 && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-green-900 mb-4">💻 Environment Information</h3>
+            <div className="glass-card p-6 border-emerald-500/20">
+              <h3 className="text-lg font-semibold text-foreground mb-4">Environment Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {ticket.environment_info.os && (
                   <div>
-                    <span className="text-sm font-medium text-gray-600">Operating System:</span>
-                    <div className="text-sm text-gray-900">{ticket.environment_info.os}</div>
+                    <span className="text-sm font-medium text-foreground/60">Operating System:</span>
+                    <div className="text-sm text-foreground">{ticket.environment_info.os}</div>
                   </div>
                 )}
                 {ticket.environment_info.browser && (
                   <div>
-                    <span className="text-sm font-medium text-gray-600">Browser:</span>
-                    <div className="text-sm text-gray-900">{ticket.environment_info.browser}</div>
+                    <span className="text-sm font-medium text-foreground/60">Browser:</span>
+                    <div className="text-sm text-foreground">{ticket.environment_info.browser}</div>
                   </div>
                 )}
                 {ticket.environment_info.screen_resolution && (
                   <div>
-                    <span className="text-sm font-medium text-gray-600">Screen Resolution:</span>
-                    <div className="text-sm text-gray-900">{ticket.environment_info.screen_resolution}</div>
+                    <span className="text-sm font-medium text-foreground/60">Screen Resolution:</span>
+                    <div className="text-sm text-foreground">{ticket.environment_info.screen_resolution}</div>
                   </div>
                 )}
                 {ticket.environment_info.memory && (
                   <div>
-                    <span className="text-sm font-medium text-gray-600">Memory:</span>
-                    <div className="text-sm text-gray-900">{ticket.environment_info.memory}</div>
+                    <span className="text-sm font-medium text-foreground/60">Memory:</span>
+                    <div className="text-sm text-foreground">{ticket.environment_info.memory}</div>
                   </div>
                 )}
                 {ticket.environment_info.additional_notes && (
                   <div className="col-span-2">
-                    <span className="text-sm font-medium text-gray-600">Additional Notes:</span>
-                    <div className="text-sm text-gray-900 bg-white border rounded p-3 mt-1 whitespace-pre-wrap">
+                    <span className="text-sm font-medium text-foreground/60">Additional Notes:</span>
+                    <div className="text-sm text-foreground glass-card p-3 mt-1 whitespace-pre-wrap">
                       {ticket.environment_info.additional_notes}
                     </div>
                   </div>
@@ -836,7 +837,7 @@ export default function TicketDetailPage() {
           )}
 
           {/* Attachments Section */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">            
+          <div className="glass-card p-6">            
             {ticket && (
               <FileUpload
                 ticketId={ticket.id}
@@ -854,29 +855,29 @@ export default function TicketDetailPage() {
             
             {loadingAttachments && (
               <div className="flex items-center justify-center py-4">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                <span className="ml-2 text-sm text-gray-600">Loading attachments...</span>
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-cyan-500/20 border-t-cyan-500"></div>
+                <span className="ml-2 text-sm text-foreground/60">Loading attachments...</span>
               </div>
             )}
           </div>
 
           {/* Comments Section */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">💬 Comments</h3>
-            
+          <div className="glass-card p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Comments</h3>
+
             {/* Add Comment */}
             <div className="mb-6">
-              <div className="border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
+              <div className="glass-input rounded-xl overflow-hidden">
                 <textarea
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   rows={3}
                   placeholder="Add a comment..."
-                  className="w-full border-0 resize-none px-3 py-2 text-sm focus:outline-none focus:ring-0"
+                  className="w-full bg-transparent border-0 resize-none px-3 py-2 text-sm text-foreground placeholder-foreground/40 focus:outline-none focus:ring-0"
                 />
-                
+
                 {/* Compact File Upload for Comments */}
-                <div className="border-t border-gray-200 px-3 py-2 bg-gray-50">
+                <div className="border-t border-cyan-500/10 px-3 py-2 bg-background">
                   <div className="flex items-center justify-between">
                     {ticket && (
                       <FileUpload
@@ -890,13 +891,14 @@ export default function TicketDetailPage() {
                         className="flex-1"
                       />
                     )}
-                    
+
+
                     <button
                       onClick={handleAddComment}
                       disabled={!newComment.trim() || isSubmittingComment}
-                      className="ml-3 inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                      className="btn-primary ml-3 inline-flex items-center px-3 py-2 text-sm font-medium disabled:opacity-50"
                     >
-                      <ChatBubbleLeftRightIcon className="h-4 w-4 mr-2" />
+                      <ChatCircle className="h-4 w-4 mr-2" />
                       {isSubmittingComment ? 'Adding...' : 'Add Comment'}
                     </button>
                   </div>
@@ -907,29 +909,30 @@ export default function TicketDetailPage() {
             {/* Comments List */}
             <div className="space-y-4">
               {timeline.filter(event => event.type === 'comment').length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <ChatBubbleLeftRightIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                <div className="text-center py-8 text-foreground/60">
+                  <ChatCircle className="h-8 w-8 mx-auto mb-2 text-foreground/40" weight="duotone" />
                   <p>No comments yet</p>
                 </div>
               ) : (
                 timeline.filter(event => event.type === 'comment').map((comment) => (
-                  <div key={comment.id} className="border border-gray-200 rounded-lg p-4">
+                  <div key={comment.id} className="glass-card p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center space-x-2">
-                        <UserIcon className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-900">{comment.author}</span>
-                        <span className="text-xs text-gray-500">
+                        <User className="h-4 w-4 text-foreground/40" />
+                        <span className="text-sm font-medium text-foreground">{comment.author}</span>
+                        <span className="text-xs text-foreground/60">
                           {comment.authorType === 'admin' ? 'Admin' : 'User'}
                         </span>
                         {comment.metadata?.edited && (
-                          <span className="text-xs text-gray-400 italic">(edited)</span>
+                          <span className="text-xs text-foreground/40 italic">(edited)</span>
                         )}
                       </div>
                       <div className="flex items-center space-x-2">
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-foreground/60">
                           {new Date(comment.timestamp).toLocaleString()}
                         </span>
-                        
+
+
                         {/* Edit/Delete buttons */}
                         <div className="flex items-center space-x-1">
                           {editingCommentId === (comment.commentId || comment.id) ? (
@@ -937,39 +940,39 @@ export default function TicketDetailPage() {
                               <button
                                 onClick={handleCancelEditComment}
                                 disabled={isUpdatingComment}
-                                className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600"
+                                className="p-1 hover:bg-cyan-500/10 rounded text-foreground/60 hover:text-cyan-400 transition-colors"
                                 title="Cancel editing"
                               >
-                                <XMarkIcon className="h-3 w-3" />
+                                <X className="h-3 w-3" />
                               </button>
                               <button
                                 onClick={handleSaveEditComment}
                                 disabled={isUpdatingComment || !editingCommentText.trim()}
-                                className="p-1 hover:bg-green-100 rounded text-green-600 hover:text-green-700"
+                                className="p-1 hover:bg-emerald-500/10 rounded text-emerald-400 hover:text-emerald-300 transition-colors"
                                 title="Save changes"
                               >
-                                <CheckIcon className="h-3 w-3" />
+                                <Check className="h-3 w-3" />
                               </button>
                             </>
                           ) : (
                             <>
                               <button
                                 onClick={() => handleEditComment(comment.commentId || comment.id, comment.description)}
-                                className="p-1 hover:bg-blue-100 rounded text-blue-600 hover:text-blue-700"
+                                className="p-1 hover:bg-cyan-500/10 rounded text-cyan-400 hover:text-cyan-300 transition-colors"
                                 title="Edit comment"
                               >
-                                <PencilIcon className="h-3 w-3" />
+                                <Pencil className="h-3 w-3" />
                               </button>
                               <button
                                 onClick={() => handleDeleteComment(comment.commentId || comment.id)}
                                 disabled={isDeletingComment === (comment.commentId || comment.id)}
-                                className="p-1 hover:bg-red-100 rounded text-red-600 hover:text-red-700"
+                                className="p-1 hover:bg-red-500/10 rounded text-red-400 hover:text-red-300 transition-colors"
                                 title="Delete comment"
                               >
                                 {isDeletingComment === (comment.commentId || comment.id) ? (
-                                  <div className="w-3 h-3 border border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                                  <div className="w-3 h-3 border-2 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin"></div>
                                 ) : (
-                                  <TrashIcon className="h-3 w-3" />
+                                  <Trash className="h-3 w-3" />
                                 )}
                               </button>
                             </>
@@ -977,7 +980,7 @@ export default function TicketDetailPage() {
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Comment content - editable if in edit mode */}
                     {editingCommentId === (comment.commentId || comment.id) ? (
                       <div className="mb-3">
@@ -985,50 +988,51 @@ export default function TicketDetailPage() {
                           value={editingCommentText}
                           onChange={(e) => setEditingCommentText(e.target.value)}
                           rows={3}
-                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="glass-input w-full px-3 py-2 text-sm text-foreground"
                           placeholder="Edit your comment..."
                         />
                       </div>
                     ) : (
-                      <div className="text-sm text-gray-900 whitespace-pre-wrap mb-3">
+                      <div className="text-sm text-foreground whitespace-pre-wrap mb-3">
                         {comment.description}
                       </div>
                     )}
-                    
+
+
                     {/* Comment Attachments */}
                     {comment.attachments && comment.attachments.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-gray-100">
-                        <h4 className="text-xs font-medium text-gray-700 mb-2 flex items-center">
-                          <PaperClipIcon className="h-3 w-3 mr-1" />
+                      <div className="mt-3 pt-3 border-t border-cyan-500/10">
+                        <h4 className="text-xs font-medium text-foreground mb-2 flex items-center">
+                          <Paperclip className="h-3 w-3 mr-1" />
                           Attachments ({comment.attachments.length})
                         </h4>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {comment.attachments.map((attachment: any) => (
-                            <div key={attachment.id} className="flex items-center space-x-2 p-2 bg-gray-50 rounded-md">
+                            <div key={attachment.id} className="flex items-center space-x-2 p-2 glass-card">
                               <div className="flex-shrink-0">
                                 {attachment.mime_type?.startsWith('image/') ? (
-                                  <PhotoIcon className="h-4 w-4 text-blue-500" />
+                                  <Image className="h-4 w-4 text-cyan-400" />
                                 ) : attachment.mime_type?.startsWith('video/') ? (
-                                  <VideoCameraIcon className="h-4 w-4 text-green-500" />
+                                  <VideoCamera className="h-4 w-4 text-emerald-400" />
                                 ) : (
-                                  <DocumentIcon className="h-4 w-4 text-gray-500" />
+                                  <FileText className="h-4 w-4 text-foreground/60" />
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium text-gray-900 truncate">
+                                <p className="text-xs font-medium text-foreground truncate">
                                   {attachment.original_filename}
                                 </p>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-foreground/60">
                                   {attachment.file_size ? `${Math.round(attachment.file_size / 1024)} KB` : 'Unknown size'}
                                 </p>
                               </div>
                               <div className="flex-shrink-0">
                                 <button
                                   onClick={() => window.open(attachment.public_url, '_blank')}
-                                  className="p-1 hover:bg-blue-100 rounded text-blue-600 hover:text-blue-700 transition-colors"
+                                  className="p-1 hover:bg-cyan-500/10 rounded text-cyan-400 hover:text-cyan-300 transition-colors"
                                   title="View file"
                                 >
-                                  <EyeIcon className="h-4 w-4" />
+                                  <Eye className="h-4 w-4" />
                                 </button>
                               </div>
                             </div>
@@ -1046,16 +1050,16 @@ export default function TicketDetailPage() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Status & Priority */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Status & Priority</h3>
+          <div className="glass-card p-4">
+            <h3 className="text-sm font-semibold text-foreground mb-3">Status & Priority</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-xs font-medium text-foreground/60 mb-1">Status</label>
                 {isEditing ? (
                   <select
                     value={editForm.status || ticket.status}
                     onChange={(e) => setEditForm(prev => ({ ...prev, status: e.target.value as any }))}
-                    className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="glass-input w-full px-2 py-1 text-sm text-foreground"
                   >
                     {Object.entries(statusLabels).map(([value, label]) => (
                       <option key={value} value={value}>{label}</option>
@@ -1068,12 +1072,12 @@ export default function TicketDetailPage() {
                 )}
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Priority</label>
+                <label className="block text-xs font-medium text-foreground/60 mb-1">Priority</label>
                 {isEditing ? (
                   <select
                     value={editForm.priority || ticket.priority}
                     onChange={(e) => setEditForm(prev => ({ ...prev, priority: e.target.value as any }))}
-                    className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="glass-input w-full px-2 py-1 text-sm text-foreground"
                   >
                     {Object.entries(priorityLabels).map(([value, label]) => (
                       <option key={value} value={value}>{label}</option>
@@ -1081,19 +1085,19 @@ export default function TicketDetailPage() {
                   </select>
                 ) : (
                   <div className="flex items-center">
-                    <span className="text-sm text-gray-900">{priorityLabels[ticket.priority]}</span>
+                    <span className="text-sm text-foreground">{priorityLabels[ticket.priority]}</span>
                     <div className={`ml-2 w-2 h-2 rounded-full ${getPriorityColor(ticket.priority)}`}></div>
                   </div>
                 )}
               </div>
               {(ticket.severity || isEditing) && (
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Severity</label>
+                  <label className="block text-xs font-medium text-foreground/60 mb-1">Severity</label>
                   {isEditing ? (
                     <select
                       value={editForm.severity || ''}
                       onChange={(e) => setEditForm(prev => ({ ...prev, severity: e.target.value as any }))}
-                      className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="glass-input w-full px-2 py-1 text-sm text-foreground"
                     >
                       <option value="">None</option>
                       {Object.entries(severityLabels).map(([value, label]) => (
@@ -1114,12 +1118,12 @@ export default function TicketDetailPage() {
 
           {/* Tags */}
           {ticket.tags && ticket.tags.length > 0 && (
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">🏷️ Tags</h3>
+            <div className="glass-card p-4">
+              <h3 className="text-sm font-semibold text-foreground mb-3">Tags</h3>
               <div className="flex flex-wrap gap-2">
                 {ticket.tags.map((tag, index) => (
-                  <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    <TagIcon className="h-3 w-3 mr-1" />
+                  <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                    <Tag className="h-3 w-3 mr-1" />
                     {tag}
                   </span>
                 ))}
@@ -1128,14 +1132,14 @@ export default function TicketDetailPage() {
           )}
 
           {/* Timeline */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">📅 Timeline</h3>
-            
+          <div className="glass-card p-4">
+            <h3 className="text-sm font-semibold text-foreground mb-3">Timeline</h3>
+
             {/* Timeline Events */}
             <div className="space-y-3">
               {timeline.length === 0 ? (
-                <div className="text-center py-4 text-gray-500">
-                  <ClockIcon className="h-6 w-6 mx-auto mb-1 text-gray-400" />
+                <div className="text-center py-4 text-foreground/60">
+                  <Clock className="h-6 w-6 mx-auto mb-1 text-foreground/40" weight="duotone" />
                   <p className="text-xs">No activity yet</p>
                 </div>
               ) : (
@@ -1145,19 +1149,19 @@ export default function TicketDetailPage() {
                       <li key={event.id}>
                         <div className="relative pb-3">
                           {index !== timeline.length - 1 && (
-                            <span className="absolute top-3 left-2 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true" />
+                            <span className="absolute top-3 left-2 -ml-px h-full w-0.5 bg-cyan-500/20" aria-hidden="true" />
                           )}
                           <div className="relative flex space-x-2">
-                            <div className="h-4 w-4 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <div className="h-4 w-4 rounded-full bg-background border border-cyan-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                               {getTimelineIcon(event.type)}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="text-xs font-medium text-gray-900">{event.title}</div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs font-medium text-foreground">{event.title}</div>
+                              <div className="text-xs text-foreground/60">
                                 by {event.author} • {new Date(event.timestamp).toLocaleDateString()}
                               </div>
                               {event.type === 'comment' && event.description && (
-                                <div className="text-xs text-gray-600 mt-1 truncate">
+                                <div className="text-xs text-foreground/60 mt-1 truncate">
                                   "{event.description.substring(0, 50)}{event.description.length > 50 ? '...' : ''}"
                                 </div>
                               )}
@@ -1174,19 +1178,19 @@ export default function TicketDetailPage() {
 
           {/* Resolution */}
           {(ticket.resolution || isEditing) && (
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Resolution</h3>
+            <div className="glass-card p-4">
+              <h3 className="text-sm font-semibold text-foreground mb-3">Resolution</h3>
               {isEditing ? (
                 <textarea
                   value={editForm.resolution || ''}
                   onChange={(e) => setEditForm(prev => ({ ...prev, resolution: e.target.value }))}
                   rows={3}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="glass-input w-full px-3 py-2 text-sm text-foreground"
                   placeholder="Enter resolution..."
                 />
               ) : (
                 ticket.resolution && (
-                  <div className="text-sm text-gray-900 whitespace-pre-wrap">
+                  <div className="text-sm text-foreground whitespace-pre-wrap">
                     {ticket.resolution}
                   </div>
                 )
@@ -1198,29 +1202,29 @@ export default function TicketDetailPage() {
 
       {/* Delete Comment Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="glass-card p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-foreground mb-4">
               Delete Comment
             </h3>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-foreground/60 mb-4">
               Are you sure you want to delete this comment? This action cannot be undone.
               {commentToDelete?.hasAttachments && (
-                <span className="block mt-2 text-orange-600 font-medium">
-                  ⚠️ This will also delete any attachments associated with this comment.
+                <span className="block mt-2 text-amber-400 font-medium">
+                  This will also delete any attachments associated with this comment.
                 </span>
               )}
             </p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={cancelDeleteComment}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                className="btn-ghost px-4 py-2 text-sm font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDeleteComment}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors"
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
               >
                 Delete Comment
               </button>

@@ -4,22 +4,22 @@ import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/contexts/AuthContext'
 import { useState, useEffect } from 'react'
 import {
-  MagnifyingGlassIcon,
-  PlusIcon,
-  EyeIcon,
-  ChartBarIcon,
-  FlagIcon,
-  FunnelIcon,
-  DocumentArrowDownIcon,
-  TagIcon,
-  CalendarIcon,
-  UserIcon,
-  CircleStackIcon,
-  Cog6ToothIcon,
-  CloudIcon,
-  ComputerDesktopIcon,
-  ArrowPathIcon
-} from '@heroicons/react/24/outline'
+  MagnifyingGlass,
+  Plus,
+  Eye,
+  ChartBar,
+  Flag,
+  Funnel,
+  FileArrowDown,
+  Tag,
+  Calendar,
+  User,
+  Database,
+  Gear,
+  Cloud,
+  Desktop,
+  ArrowsClockwise
+} from '@phosphor-icons/react'
 
 interface ClusterProject {
   id: string
@@ -76,6 +76,14 @@ export default function TestData() {
     try {
       setLoading(true)
 
+      // Get auth session for API call
+      const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession()
+      if (!session?.access_token) {
+        console.log('No session token, skipping fetch')
+        setLoading(false)
+        return
+      }
+
       // Fetch cluster projects from the API
       const queryParams = new URLSearchParams({
         project_type: 'test_data'
@@ -85,7 +93,12 @@ export default function TestData() {
         queryParams.append('sync_status', 'error')
       }
 
-      const response = await fetch(`/api/cluster-projects?${queryParams}`)
+      const response = await fetch(`/api/cluster-projects?${queryParams}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      })
 
       if (!response.ok) {
         throw new Error('Failed to fetch cluster projects')
@@ -149,11 +162,11 @@ export default function TestData() {
           </div>
           <div className="mt-4 flex md:ml-4 md:mt-0 space-x-3">
             <button className="inline-flex items-center rounded-md bg-white dark:bg-gray-800 px-3 py-2 text-sm font-semibold text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">
-              <DocumentArrowDownIcon className="-ml-0.5 mr-1.5 h-5 w-5" />
+              <FileArrowDown className="-ml-0.5 mr-1.5 h-5 w-5" />
               Import Data
             </button>
             <button className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
-              <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" />
+              <Plus className="-ml-0.5 mr-1.5 h-5 w-5" />
               New Project
             </button>
           </div>
@@ -184,7 +197,7 @@ export default function TestData() {
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <CircleStackIcon className="h-6 w-6 text-gray-400" />
+                  <Database className="h-6 w-6 text-gray-400" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -199,7 +212,7 @@ export default function TestData() {
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <ChartBarIcon className="h-6 w-6 text-gray-400" />
+                  <ChartBar className="h-6 w-6 text-gray-400" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -214,7 +227,7 @@ export default function TestData() {
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <ComputerDesktopIcon className="h-6 w-6 text-gray-400" />
+                  <Desktop className="h-6 w-6 text-gray-400" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -229,7 +242,7 @@ export default function TestData() {
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <CloudIcon className="h-6 w-6 text-gray-400" />
+                  <Cloud className="h-6 w-6 text-gray-400" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -267,13 +280,13 @@ export default function TestData() {
           
           <div className="flex items-center space-x-4">
             <button className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700">
-              <FunnelIcon className="h-4 w-4 mr-2" />
+              <Funnel className="h-4 w-4 mr-2" />
               Advanced Filters
             </button>
             
             <div className="relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                <MagnifyingGlass className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 type="text"
@@ -326,7 +339,7 @@ export default function TestData() {
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10">
                               <div className="h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                                <CircleStackIcon className="h-6 w-6 text-blue-600" />
+                                <Database className="h-6 w-6 text-blue-600" />
                               </div>
                             </div>
                             <div className="ml-4">
@@ -344,9 +357,9 @@ export default function TestData() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             {project.cluster_type === 'local' ? (
-                              <ComputerDesktopIcon className="h-5 w-5 text-gray-400 mr-2" />
+                              <Desktop className="h-5 w-5 text-gray-400 mr-2" />
                             ) : (
-                              <CloudIcon className="h-5 w-5 text-gray-400 mr-2" />
+                              <Cloud className="h-5 w-5 text-gray-400 mr-2" />
                             )}
                             <div>
                               <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -376,14 +389,14 @@ export default function TestData() {
                               ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                               : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
                           }`}>
-                            {project.sync_status === 'pending' && <ArrowPathIcon className="h-3 w-3 mr-1 animate-spin" />}
+                            {project.sync_status === 'pending' && <ArrowsClockwise className="h-3 w-3 mr-1 animate-spin" />}
                             {project.sync_status}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           {project.last_synced_at ? (
                             <div className="flex items-center">
-                              <CalendarIcon className="h-4 w-4 mr-1" />
+                              <Calendar className="h-4 w-4 mr-1" />
                               {formatRelativeTime(project.last_synced_at)}
                             </div>
                           ) : (
@@ -396,13 +409,13 @@ export default function TestData() {
                               className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                               title="View project"
                             >
-                              <EyeIcon className="h-4 w-4" />
+                              <Eye className="h-4 w-4" />
                             </button>
                             <button
                               className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
                               title="View analytics"
                             >
-                              <ChartBarIcon className="h-4 w-4" />
+                              <ChartBar className="h-4 w-4" />
                             </button>
                             <button
                               className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
@@ -411,7 +424,7 @@ export default function TestData() {
                                 // TODO: Trigger sync
                               }}
                             >
-                              <ArrowPathIcon className="h-4 w-4" />
+                              <ArrowsClockwise className="h-4 w-4" />
                             </button>
                           </div>
                         </td>
@@ -425,7 +438,7 @@ export default function TestData() {
             {/* Empty State */}
             {!loading && filteredProjects.length === 0 && (
               <div className="text-center py-12">
-                <CircleStackIcon className="mx-auto h-12 w-12 text-gray-400" />
+                <Database className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No projects found</h3>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                   {searchTerm ? 'No projects match your search criteria.' : 'Get started by creating your first project.'}
@@ -433,7 +446,7 @@ export default function TestData() {
                 {!searchTerm && (
                   <div className="mt-6">
                     <button className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
-                      <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" />
+                      <Plus className="-ml-0.5 mr-1.5 h-5 w-5" />
                       New Project
                     </button>
                   </div>

@@ -12,27 +12,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
-  ArrowLeft, 
-  Settings, 
-  Users, 
-  CreditCard, 
-  BarChart3, 
-  AlertCircle,
+  ArrowLeft,
+  Gear as Settings,
+  Users,
+  CreditCard,
+  ChartBar as BarChart3,
+  Warning as AlertCircle,
   CheckCircle,
   UserPlus,
-  Trash2,
-  DollarSign,
-  TrendingUp,
+  Trash,
+  CurrencyDollar as DollarSign,
+  TrendUp as TrendingUp,
   Database,
-  Zap,
-  Server,
+  Desktop as Server,
   Shield,
   Clock,
   Eye,
   Play,
-  Loader2,
-  Cog
-} from 'lucide-react'
+  ArrowsClockwise as Loader2,
+  Gear as Cog
+} from '@phosphor-icons/react'
 
 interface ClusterDetails {
   id: string
@@ -389,27 +388,27 @@ export default function UnifiedClusterManagementPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'text-green-600 bg-green-100'
-      case 'creating': return 'text-blue-600 bg-blue-100'
-      case 'maintenance': return 'text-yellow-600 bg-yellow-100'
-      case 'error': return 'text-red-600 bg-red-100'
-      case 'terminated': return 'text-gray-600 bg-gray-100'
-      default: return 'text-gray-600 bg-gray-100'
+      case 'active': return 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
+      case 'creating': return 'text-cyan-400 bg-cyan-500/10 border border-cyan-500/20'
+      case 'maintenance': return 'text-amber-400 bg-amber-500/10 border border-amber-500/20'
+      case 'error': return 'text-red-400 bg-red-500/10 border border-red-500/20'
+      case 'terminated': return 'text-foreground/60 bg-foreground/5 border border-foreground/10'
+      default: return 'text-foreground/60 bg-foreground/5 border border-foreground/10'
     }
   }
 
   const getArchitectureIcon = () => {
-    return cluster?.architecture === 'optimized' 
-      ? <Zap className="w-6 h-6 text-green-600" />
-      : <Server className="w-6 h-6 text-blue-600" />
+    return cluster?.architecture === 'optimized'
+      ? <ChartBar className="w-6 h-6 text-emerald-400" />
+      : <Server className="w-6 h-6 text-cyan-400" />
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex items-center">
-          <Loader2 className="h-8 w-8 animate-spin mr-3" />
-          <span className="text-lg">Loading cluster details...</span>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-cyan-500/20 border-t-cyan-500 mr-3" />
+          <span className="text-lg text-foreground">Loading cluster details...</span>
         </div>
       </div>
     )
@@ -417,54 +416,53 @@ export default function UnifiedClusterManagementPage() {
 
   if (!cluster) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Cluster Not Found</h2>
-          <p className="text-gray-600 mb-4">The requested cluster could not be found.</p>
-          <Button onClick={() => router.push('/admin/clusters')}>
+          <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-foreground mb-2">Cluster Not Found</h2>
+          <p className="text-foreground/60 mb-4">The requested cluster could not be found.</p>
+          <button onClick={() => router.push('/admin/clusters')} className="btn-primary inline-flex items-center px-4 py-2">
             <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Clusters
-          </Button>
+            Back to Clusters
+          </button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="flex items-start space-x-4">
-              <Button
-                variant="ghost"
+              <button
                 onClick={() => router.push('/admin/clusters')}
-                className="shrink-0"
+                className="btn-ghost shrink-0 inline-flex items-center px-4 py-2"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Clusters
-              </Button>
-              
+                Back to Clusters
+              </button>
+
               <div className="flex items-start space-x-3">
                 <div className="shrink-0 mt-1">
                   {getArchitectureIcon()}
                 </div>
                 <div className="min-w-0">
-                  <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 break-words">{cluster.name}</h1>
+                  <h1 className="text-2xl lg:text-3xl font-bold text-foreground break-words">{cluster.name}</h1>
                   <div className="flex flex-wrap items-center gap-2 mt-2">
                     <Badge className={getStatusColor(cluster.status)}>
                       {cluster.status}
                     </Badge>
-                    <Badge variant="secondary">
+                    <Badge className="bg-foreground/5 text-foreground/60 border border-foreground/10">
                       {cluster.cluster_key}
                     </Badge>
-                    <Badge className={cluster.architecture === 'optimized' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}>
+                    <Badge className={cluster.architecture === 'optimized' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'}>
                       {cluster.architecture}
                     </Badge>
                     {cluster.tier && (
-                      <Badge variant="outline">
+                      <Badge className="bg-foreground/5 text-foreground/60 border border-foreground/10">
                         {cluster.tier}
                       </Badge>
                     )}
@@ -475,105 +473,97 @@ export default function UnifiedClusterManagementPage() {
         </div>
 
           {cluster.description && (
-            <p className="text-gray-600 mt-4 break-words">{cluster.description}</p>
+            <p className="text-foreground/60 mt-4 break-words">{cluster.description}</p>
           )}
         </div>
 
         {/* Key Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Database className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Region</p>
-                  <p className="text-2xl font-bold text-gray-900">{cluster.region}</p>
-                </div>
+          <div className="glass-card p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
+                <Database className="h-6 w-6 text-cyan-400" />
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Users className="h-6 w-6 text-purple-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Users</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {cluster.current_assigned_users}/{cluster.max_assigned_users}
-                  </p>
-                </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-foreground/60">Region</p>
+                <p className="text-2xl font-bold text-foreground">{cluster.region}</p>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <DollarSign className="h-6 w-6 text-green-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Monthly Cost</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    ${cluster.estimated_monthly_cost.toLocaleString()}
-                  </p>
-                </div>
+            </div>
+          </div>
+
+          <div className="glass-card p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
+                <Users className="h-6 w-6 text-cyan-400" />
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <Clock className="h-6 w-6 text-orange-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Created</p>
-                  <p className="text-lg font-bold text-gray-900">
-                    {new Date(cluster.created_at).toLocaleDateString()}
-                  </p>
-                </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-foreground/60">Users</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {cluster.current_assigned_users}/{cluster.max_assigned_users}
+                </p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+
+          <div className="glass-card p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                <DollarSign className="h-6 w-6 text-emerald-400" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-foreground/60">Monthly Cost</p>
+                <p className="text-2xl font-bold text-emerald-400">
+                  ${cluster.estimated_monthly_cost.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="glass-card p-6">
+            <div className="flex items-center">
+              <div className="p-2 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
+                <Clock className="h-6 w-6 text-cyan-400" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-foreground/60">Created</p>
+                <p className="text-lg font-bold text-foreground">
+                  {new Date(cluster.created_at).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Management Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger 
-              value="overview" 
-              className={`${activeTab === 'overview' ? 'bg-blue-600 text-white' : ''}`}
+            <TabsTrigger
+              value="overview"
+              className={`${activeTab === 'overview' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : ''}`}
             >
               Overview
             </TabsTrigger>
-            <TabsTrigger 
-              value="users" 
-              className={`${activeTab === 'users' ? 'bg-blue-600 text-white' : ''}`}
+            <TabsTrigger
+              value="users"
+              className={`${activeTab === 'users' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : ''}`}
             >
               Users
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="billing"
-              className={`${activeTab === 'billing' ? 'bg-blue-600 text-white' : ''}`}
+              className={`${activeTab === 'billing' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : ''}`}
             >
               Billing
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="settings"
-              className={`${activeTab === 'settings' ? 'bg-blue-600 text-white' : ''}`}
+              className={`${activeTab === 'settings' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : ''}`}
             >
               Settings
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="usage"
-              className={`${activeTab === 'usage' ? 'bg-blue-600 text-white' : ''}`}
+              className={`${activeTab === 'usage' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : ''}`}
             >
               Usage
             </TabsTrigger>
@@ -583,23 +573,22 @@ export default function UnifiedClusterManagementPage() {
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Basic Information */}
-            <Card>
-              <CardHeader>
+            <div className="glass-card">
+              <div className="p-6 border-b border-cyan-500/10">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center">
-                      <Settings className="w-5 h-5 mr-2" />
+                    <h3 className="text-lg font-semibold text-foreground flex items-center">
+                      <Settings className="w-5 h-5 mr-2 text-cyan-400" />
                       Basic Information
-                </CardTitle>
-                    <Button
-                      variant="outline"
-                      size="sm"
+                    </h3>
+                    <button
+                      className="btn-ghost px-3 py-1 text-sm"
                       onClick={() => setEditingBasicInfo(!editingBasicInfo)}
                     >
                       {editingBasicInfo ? 'Cancel' : 'Edit'}
-                    </Button>
+                    </button>
                   </div>
-              </CardHeader>
-                <CardContent className="space-y-4">
+              </div>
+                <div className="p-6 space-y-4">
                   {editingBasicInfo ? (
                     <div className="space-y-4">
                   <div>
@@ -699,31 +688,31 @@ export default function UnifiedClusterManagementPage() {
                         >
                           Cancel
                         </Button>
-                  </div>
+                      </div>
                     </div>
                   ) : (
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                          <Label className="text-gray-500">Cluster ID</Label>
+                        <div>
+                          <Label className="text-foreground/60">Cluster ID</Label>
                           <p className="font-mono text-base">{cluster.cluster_key}</p>
-                    </div>
+                        </div>
                         <div>
-                          <Label className="text-gray-500">Type</Label>
+                          <Label className="text-foreground/60">Type</Label>
                           <p className="capitalize text-base">{cluster.cluster_type}</p>
-                  </div>
+                        </div>
                         <div>
-                          <Label className="text-gray-500">Architecture</Label>
+                          <Label className="text-foreground/60">Architecture</Label>
                           <p className="capitalize text-base">{cluster.architecture}</p>
-                </div>
+                        </div>
                         <div>
-                          <Label className="text-gray-500">Health Status</Label>
+                          <Label className="text-foreground/60">Health Status</Label>
                           <p className={`text-base ${cluster.health_status === 'healthy' ? 'text-green-600' : 'text-yellow-600'}`}>
                             {cluster.health_status}
                           </p>
-                    </div>
+                        </div>
                         <div>
-                          <Label className="text-gray-500">Billing Classification</Label>
+                          <Label className="text-foreground/60">Billing Classification</Label>
                           <div className="flex items-center gap-2 mt-1">
                             <Badge className={
                               cluster.classification === 'gratis' ? 'bg-green-100 text-green-800' :
@@ -735,37 +724,37 @@ export default function UnifiedClusterManagementPage() {
                                'Enterprise'}
                             </Badge>
                             {cluster.classification === 'trial' && cluster.trial_end_date && (
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-foreground/60">
                                 {cluster.is_trial_expired ? '(Expired)' : `Ends ${new Date(cluster.trial_end_date).toLocaleDateString()}`}
                               </span>
                             )}
                           </div>
                         </div>
                         <div className="col-span-2">
-                          <Label className="text-gray-500">Description</Label>
-                          <p className="text-base text-gray-900">{cluster.description || 'No description provided'}</p>
-                  </div>
-                </div>
+                          <Label className="text-foreground/60">Description</Label>
+                          <p className="text-base text-foreground">{cluster.description || 'No description provided'}</p>
+                        </div>
+                      </div>
 
                       {/* Connection Information */}
                       <div className="mt-6 pt-4 border-t">
-                        <h4 className="font-medium text-gray-900 mb-3">Connection Information</h4>
+                        <h4 className="font-medium text-foreground mb-3">Connection Information</h4>
                         <div className="space-y-3">
                           {cluster.architecture === 'optimized' ? (
                             <>
                               <div>
-                                <Label className="text-gray-500">Processing Endpoint</Label>
+                                <Label className="text-foreground/60">Processing Endpoint</Label>
                                 <div className="flex items-center space-x-2 mt-1">
                                   <code className="bg-gray-100 px-2 py-1 rounded text-sm flex-1">
                                     {cluster.processing_endpoint || 'https://us-central1-lyceum-clusters-optimized.cloudfunctions.net/processCurves'}
                                   </code>
                                   <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(cluster.processing_endpoint || '')}>
                                     Copy
-                  </Button>
-                </div>
-                    </div>
+                                  </Button>
+                                </div>
+                              </div>
                               <div>
-                                <Label className="text-gray-500">Customer ID</Label>
+                                <Label className="text-foreground/60">Customer ID</Label>
                                 <div className="flex items-center space-x-2 mt-1">
                                   <code className="bg-gray-100 px-2 py-1 rounded text-sm flex-1">
                                     {cluster.customer_id}
@@ -773,12 +762,12 @@ export default function UnifiedClusterManagementPage() {
                                   <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(cluster.customer_id || '')}>
                                     Copy
                                   </Button>
-                    </div>
-                    </div>
+                                </div>
+                              </div>
                             </>
                           ) : (
                             <div>
-                              <Label className="text-gray-500">Connection String</Label>
+                              <Label className="text-foreground/60">Connection String</Label>
                               <div className="flex items-center space-x-2 mt-1">
                                 <code className="bg-gray-100 px-2 py-1 rounded text-sm flex-1">
                                   {cluster.connection_string || 'Connection string not available'}
@@ -786,70 +775,70 @@ export default function UnifiedClusterManagementPage() {
                                 <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(cluster.connection_string || '')}>
                                   Copy
                                 </Button>
-                  </div>
-                    </div>
+                              </div>
+                            </div>
                           )}
-                    </div>
-                    </div>
+                        </div>
+                      </div>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
               {/* Resource Configuration */}
-            <Card>
-              <CardHeader>
-                  <CardTitle className="flex items-center">
+            <div className="glass-card">
+              <div className="p-6 border-b border-cyan-500/10">
+                  <h3 className="text-lg font-semibold text-foreground flex items-center">
                     {cluster.architecture === 'optimized' ? (
                       <Zap className="w-5 h-5 mr-2 text-green-600" />
                     ) : (
                       <Server className="w-5 h-5 mr-2 text-blue-600" />
                     )}
                     {cluster.architecture === 'optimized' ? 'Optimized' : 'Traditional'} Configuration
-                  </CardTitle>
-              </CardHeader>
-                <CardContent className="space-y-4">
+                  </h3>
+              </div>
+                <div className="p-6 space-y-4">
                   {cluster.architecture === 'optimized' ? (
                     <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                        <Label className="text-gray-500">Tier</Label>
+                        <Label className="text-foreground/60">Tier</Label>
                         <p className="capitalize font-medium">{cluster.tier}</p>
                     </div>
                     <div>
-                        <Label className="text-gray-500">Monthly Curves</Label>
+                        <Label className="text-foreground/60">Monthly Curves</Label>
                         <p className="font-medium">{cluster.monthly_curves_limit?.toLocaleString()}</p>
                     </div>
                       <div>
-                        <Label className="text-gray-500">Storage Limit</Label>
+                        <Label className="text-foreground/60">Storage Limit</Label>
                         <p className="font-medium">{cluster.storage_limit}</p>
                   </div>
                     <div>
-                        <Label className="text-gray-500">Processing</Label>
+                        <Label className="text-foreground/60">Processing</Label>
                         <p className="font-medium text-green-600">Serverless</p>
                     </div>
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                        <Label className="text-gray-500">Nodes</Label>
+                        <Label className="text-foreground/60">Nodes</Label>
                         <p className="font-medium">{cluster.node_count}</p>
                       </div>
                       <div>
-                        <Label className="text-gray-500">CPU per Node</Label>
+                        <Label className="text-foreground/60">CPU per Node</Label>
                         <p className="font-medium">{cluster.cpu_per_node}</p>
                     </div>
                       <div>
-                        <Label className="text-gray-500">Memory per Node</Label>
+                        <Label className="text-foreground/60">Memory per Node</Label>
                         <p className="font-medium">{cluster.memory_per_node}</p>
                   </div>
                       <div>
-                        <Label className="text-gray-500">Storage per Node</Label>
+                        <Label className="text-foreground/60">Storage per Node</Label>
                         <p className="font-medium">{cluster.storage_per_node}</p>
                 </div>
                     </div>
                   )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
             </div>
           </TabsContent>
 
@@ -857,14 +846,14 @@ export default function UnifiedClusterManagementPage() {
           <TabsContent value="users" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Add User */}
-            <Card>
-              <CardHeader>
-                  <CardTitle className="flex items-center">
+            <div className="glass-card">
+              <div className="p-6 border-b border-cyan-500/10">
+                  <h3 className="text-lg font-semibold text-foreground flex items-center">
                     <UserPlus className="w-5 h-5 mr-2" />
                     Add User
-                </CardTitle>
-              </CardHeader>
-                <CardContent className="space-y-4">
+                </h3>
+              </div>
+                <div className="p-6 space-y-4">
                   <div>
                     <Label>User Email</Label>
                     <Select
@@ -916,26 +905,26 @@ export default function UnifiedClusterManagementPage() {
                     )}
                     Add User
                     </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
               {/* Current Users */}
               <Card className="lg:col-span-2">
-              <CardHeader>
+                <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span className="flex items-center">
                       <Users className="w-5 h-5 mr-2" />
                       Assigned Users ({cluster.current_assigned_users})
                     </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
                   <div className="space-y-3">
                     {cluster.assigned_users.length === 0 ? (
-                      <p className="text-gray-500">No users assigned to this cluster.</p>
+                      <p className="text-foreground/60">No users assigned to this cluster.</p>
                     ) : (
                       cluster.assigned_users.map((assignment, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div key={index} className="flex items-center justify-between p-3 bg-foreground/5 rounded-lg">
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                               <Users className="w-4 h-4 text-blue-600" />
@@ -944,7 +933,7 @@ export default function UnifiedClusterManagementPage() {
                               <p className="font-medium">
                                 {assignment.user_profiles?.full_name || assignment.user_profiles?.email}
                               </p>
-                              <p className="text-sm text-gray-500">
+                              <p className="text-sm text-foreground/60">
                                 {assignment.user_profiles?.email} • {assignment.access_level}
                               </p>
                             </div>
@@ -964,8 +953,8 @@ export default function UnifiedClusterManagementPage() {
                       ))
                     )}
                   </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
@@ -973,14 +962,14 @@ export default function UnifiedClusterManagementPage() {
           <TabsContent value="billing" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Billing Settings */}
-            <Card>
-              <CardHeader>
-                  <CardTitle className="flex items-center">
+            <div className="glass-card">
+              <div className="p-6 border-b border-cyan-500/10">
+                  <h3 className="text-lg font-semibold text-foreground flex items-center">
                     <CreditCard className="w-5 h-5 mr-2" />
                     Billing Settings
-                </CardTitle>
-              </CardHeader>
-                <CardContent className="space-y-4">
+                </h3>
+              </div>
+                <div className="p-6 space-y-4">
                   <div>
                     <Label>Responsible User (Who pays for this cluster)</Label>
                     <Select
@@ -1025,28 +1014,28 @@ export default function UnifiedClusterManagementPage() {
                     )}
                     Update Billing Settings
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
               {/* Cost Summary */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
+              <div className="glass-card">
+                <div className="p-6 border-b border-cyan-500/10">
+                  <h3 className="text-lg font-semibold text-foreground flex items-center">
                     <TrendingUp className="w-5 h-5 mr-2" />
                     Cost Summary
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                  </h3>
+                </div>
+                <div className="p-6 space-y-4">
                   <div className="space-y-3">
                       <div className="flex justify-between">
-                      <span className="text-gray-600">Architecture:</span>
+                      <span className="text-foreground/60">Architecture:</span>
                       <Badge className={cluster.architecture === 'optimized' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}>
                         {cluster.architecture}
                       </Badge>
                   </div>
                   
                       <div className="flex justify-between">
-                      <span className="text-gray-600">Estimated Monthly Cost:</span>
+                      <span className="text-foreground/60">Estimated Monthly Cost:</span>
                       <span className="font-bold text-lg text-green-600">
                         ${cluster.estimated_monthly_cost.toLocaleString()}
                       </span>
@@ -1064,12 +1053,12 @@ export default function UnifiedClusterManagementPage() {
                     )}
 
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Pricing Model:</span>
+                      <span className="text-foreground/60">Pricing Model:</span>
                       <span className="font-medium capitalize">{cluster.pricing_model}</span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
             </div>
           </TabsContent>
 
@@ -1077,13 +1066,13 @@ export default function UnifiedClusterManagementPage() {
           <TabsContent value="settings" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* General Settings */}
-            <Card>
-              <CardHeader>
+            <div className="glass-card">
+              <div className="p-6 border-b border-cyan-500/10">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center">
+                    <h3 className="text-lg font-semibold text-foreground flex items-center">
                       <Settings className="w-5 h-5 mr-2" />
                       General Settings
-                </CardTitle>
+                </h3>
                     <Button
                       variant="outline"
                       size="sm"
@@ -1092,8 +1081,8 @@ export default function UnifiedClusterManagementPage() {
                       {editingSettings ? 'Cancel' : 'Edit'}
                     </Button>
                   </div>
-              </CardHeader>
-                <CardContent className="space-y-4">
+              </div>
+                <div className="p-6 space-y-4">
                   {editingSettings ? (
                     <div className="space-y-4">
                   <div>
@@ -1165,11 +1154,11 @@ export default function UnifiedClusterManagementPage() {
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 gap-4">
                         <div>
-                          <Label className="text-gray-500">Maximum Assigned Users</Label>
+                          <Label className="text-foreground/60">Maximum Assigned Users</Label>
                           <p className="text-base font-medium">{cluster.max_assigned_users}</p>
                     </div>
                         <div>
-                          <Label className="text-gray-500">Auto-scaling</Label>
+                          <Label className="text-foreground/60">Auto-scaling</Label>
                           <div className="text-base">
                             <Badge variant={settingsForm.auto_scaling_enabled ? "default" : "secondary"}>
                               {settingsForm.auto_scaling_enabled ? "Enabled" : "Disabled"}
@@ -1177,7 +1166,7 @@ export default function UnifiedClusterManagementPage() {
                     </div>
                     </div>
                         <div>
-                          <Label className="text-gray-500">Monitoring</Label>
+                          <Label className="text-foreground/60">Monitoring</Label>
                           <div className="text-base">
                             <Badge variant={settingsForm.monitoring_enabled ? "default" : "secondary"}>
                               {settingsForm.monitoring_enabled ? "Enabled" : "Disabled"}
@@ -1185,7 +1174,7 @@ export default function UnifiedClusterManagementPage() {
                     </div>
                   </div>
                         <div>
-                          <Label className="text-gray-500">Security Level</Label>
+                          <Label className="text-foreground/60">Security Level</Label>
                           <div className="text-base capitalize">
                             <Badge className={
                               settingsForm.security_level === 'maximum' ? 'bg-red-100 text-red-800' :
@@ -1199,21 +1188,21 @@ export default function UnifiedClusterManagementPage() {
                     </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
               {/* Backup & Maintenance Settings */}
-            <Card>
-              <CardHeader>
-                  <CardTitle className="flex items-center">
+            <div className="glass-card">
+              <div className="p-6 border-b border-cyan-500/10">
+                  <h3 className="text-lg font-semibold text-foreground flex items-center">
                     <Shield className="w-5 h-5 mr-2" />
                     Backup & Maintenance
-                  </CardTitle>
-              </CardHeader>
-                <CardContent className="space-y-4">
+                  </h3>
+              </div>
+                <div className="p-6 space-y-4">
                   <div className="space-y-4">
                     <div>
-                      <Label className="text-gray-500">Automated Backups</Label>
+                      <Label className="text-foreground/60">Automated Backups</Label>
                       <div className="text-base">
                         <Badge variant={settingsForm.backup_enabled ? "default" : "secondary"}>
                           {settingsForm.backup_enabled ? "Enabled" : "Disabled"}
@@ -1221,34 +1210,34 @@ export default function UnifiedClusterManagementPage() {
                   </div>
                   </div>
                     <div>
-                      <Label className="text-gray-500">Backup Frequency</Label>
+                      <Label className="text-foreground/60">Backup Frequency</Label>
                       <p className="text-base capitalize">{settingsForm.backup_frequency}</p>
                 </div>
                     <div>
-                      <Label className="text-gray-500">Maintenance Window</Label>
+                      <Label className="text-foreground/60">Maintenance Window</Label>
                       <p className="text-base font-mono">{settingsForm.maintenance_window} UTC</p>
                 </div>
                     <div>
-                      <Label className="text-gray-500">Log Retention</Label>
+                      <Label className="text-foreground/60">Log Retention</Label>
                       <p className="text-base">{settingsForm.log_retention_days} days</p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
             </div>
 
             {/* Advanced Settings */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
+            <div className="glass-card">
+              <div className="p-6 border-b border-cyan-500/10">
+                <h3 className="text-lg font-semibold text-foreground flex items-center">
                   <Cog className="w-5 h-5 mr-2" />
                   Advanced Configuration
-                </CardTitle>
-                <CardDescription>
+                </h3>
+                <p className="text-sm text-foreground/60 mt-1">
                   Advanced settings for power users. Changes here may affect cluster performance.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                </p>
+              </div>
+              <div className="p-6 space-y-4">
                 <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                   <div className="flex items-start space-x-3">
                     <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
@@ -1269,19 +1258,19 @@ export default function UnifiedClusterManagementPage() {
                 {cluster.architecture === 'traditional' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div>
-                      <Label className="text-gray-500">Connection Pool Size</Label>
+                      <Label className="text-foreground/60">Connection Pool Size</Label>
                       <p className="text-base">100</p>
                       </div>
                     <div>
-                      <Label className="text-gray-500">Query Timeout</Label>
+                      <Label className="text-foreground/60">Query Timeout</Label>
                       <p className="text-base">30 seconds</p>
                     </div>
                     <div>
-                      <Label className="text-gray-500">Memory Allocation</Label>
+                      <Label className="text-foreground/60">Memory Allocation</Label>
                       <p className="text-base">Auto-managed</p>
                   </div>
                     <div>
-                      <Label className="text-gray-500">Cache Size</Label>
+                      <Label className="text-foreground/60">Cache Size</Label>
                       <p className="text-base">2 GB</p>
                                 </div>
                         </div>
@@ -1290,40 +1279,40 @@ export default function UnifiedClusterManagementPage() {
                 {cluster.architecture === 'optimized' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <Label className="text-gray-500">Function Timeout</Label>
+                      <Label className="text-foreground/60">Function Timeout</Label>
                       <p className="text-base">540 seconds</p>
                     </div>
                     <div>
-                      <Label className="text-gray-500">Memory per Invocation</Label>
+                      <Label className="text-foreground/60">Memory per Invocation</Label>
                       <p className="text-base">2 GB</p>
                   </div>
                     <div>
-                      <Label className="text-gray-500">Concurrent Executions</Label>
+                      <Label className="text-foreground/60">Concurrent Executions</Label>
                       <p className="text-base">1000</p>
                   </div>
                     <div>
-                      <Label className="text-gray-500">Cold Start Optimization</Label>
+                      <Label className="text-foreground/60">Cold Start Optimization</Label>
                       <p className="text-base">Enabled</p>
                   </div>
                 </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </TabsContent>
 
           {/* Usage Tab */}
           <TabsContent value="usage" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
+            <div className="glass-card">
+              <div className="p-6 border-b border-cyan-500/10">
+                <h3 className="text-lg font-semibold text-foreground flex items-center">
                   <BarChart3 className="w-5 h-5 mr-2" />
                   Usage Analytics
-                </CardTitle>
-                <CardDescription>
+                </h3>
+                <p className="text-sm text-foreground/60 mt-1">
                   Monitor cluster usage, performance metrics, and resource consumption
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+                </p>
+              </div>
+              <div className="p-6 space-y-4">
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                   <p className="text-sm text-blue-800">
                     📊 Detailed usage analytics and reporting interface coming soon. 
@@ -1352,8 +1341,8 @@ export default function UnifiedClusterManagementPage() {
                                 </Button>
                   )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

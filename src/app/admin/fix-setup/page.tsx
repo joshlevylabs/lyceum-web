@@ -3,16 +3,16 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  ArrowPathIcon,
-  UserIcon,
-  KeyIcon,
-  CircleStackIcon,
-  ChartBarIcon,
-  ShieldCheckIcon,
-  ArrowRightIcon
-} from '@heroicons/react/24/outline'
+  CheckCircle,
+  Warning,
+  ArrowClockwise,
+  User,
+  Key,
+  Database,
+  ChartBar,
+  ShieldCheck,
+  ArrowRight
+} from '@phosphor-icons/react'
 
 export default function FixSetup() {
   const [result, setResult] = useState<any>(null)
@@ -44,9 +44,9 @@ export default function FixSetup() {
   }
   
   const getStepIcon = (success: boolean) => {
-    return success ? 
-      <CheckCircleIcon className="h-5 w-5 text-green-500" /> :
-      <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
+    return success ?
+      <CheckCircle className="h-5 w-5 text-green-500" /> :
+      <Warning className="h-5 w-5 text-red-500" />
   }
   
   const goToAdmin = () => {
@@ -70,7 +70,7 @@ export default function FixSetup() {
       {/* Current Status */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
         <div className="flex">
-          <CheckCircleIcon className="flex-shrink-0 w-5 h-5 text-blue-400 mt-0.5" />
+          <CheckCircle className="flex-shrink-0 w-5 h-5 text-blue-400 mt-0.5" />
           <div className="ml-3">
             <h3 className="text-sm font-medium text-blue-800">
               ✅ Good News: All Database Tables Exist!
@@ -102,12 +102,12 @@ export default function FixSetup() {
             >
               {loading ? (
                 <>
-                  <ArrowPathIcon className="-ml-1 mr-2 h-5 w-5 animate-spin" />
+                  <ArrowClockwise className="-ml-1 mr-2 h-5 w-5 animate-spin" />
                   Creating...
                 </>
               ) : (
                 <>
-                  <ShieldCheckIcon className="-ml-1 mr-2 h-5 w-5" />
+                  <ShieldCheck className="-ml-1 mr-2 h-5 w-5" />
                   Create Admin User & Sample Data
                 </>
               )}
@@ -123,31 +123,31 @@ export default function FixSetup() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div className="border rounded-lg p-3">
             <div className="flex items-center mb-2">
-              <UserIcon className="h-5 w-5 text-blue-500 mr-2" />
+              <User className="h-5 w-5 text-blue-500 mr-2" />
               <span className="text-sm font-medium">Super Admin</span>
             </div>
             <p className="text-xs text-gray-500">admin@lyceum.app</p>
           </div>
-          
+
           <div className="border rounded-lg p-3">
             <div className="flex items-center mb-2">
-              <KeyIcon className="h-5 w-5 text-green-500 mr-2" />
+              <Key className="h-5 w-5 text-green-500 mr-2" />
               <span className="text-sm font-medium">License Keys</span>
             </div>
             <p className="text-xs text-gray-500">Sample Enterprise & Pro</p>
           </div>
-          
+
           <div className="border rounded-lg p-3">
             <div className="flex items-center mb-2">
-              <CircleStackIcon className="h-5 w-5 text-purple-500 mr-2" />
+              <Database className="h-5 w-5 text-purple-500 mr-2" />
               <span className="text-sm font-medium">DB Cluster</span>
             </div>
             <p className="text-xs text-gray-500">Production example</p>
           </div>
-          
+
           <div className="border rounded-lg p-3">
             <div className="flex items-center mb-2">
-              <ChartBarIcon className="h-5 w-5 text-orange-500 mr-2" />
+              <ChartBar className="h-5 w-5 text-orange-500 mr-2" />
               <span className="text-sm font-medium">Metrics</span>
             </div>
             <p className="text-xs text-gray-500">Platform analytics</p>
@@ -192,17 +192,17 @@ export default function FixSetup() {
                 onClick={goToAdmin}
                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
               >
-                <ArrowRightIcon className="-ml-1 mr-2 h-5 w-5" />
+                <ArrowRight className="-ml-1 mr-2 h-5 w-5" />
                 Go to Admin Dashboard
               </button>
             )}
-            
+
             <button
               onClick={createAdminUser}
               disabled={loading}
               className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
             >
-              <ArrowPathIcon className="-ml-1 mr-2 h-5 w-5" />
+              <ArrowClockwise className="-ml-1 mr-2 h-5 w-5" />
               Try Again
             </button>
           </div>
@@ -222,7 +222,7 @@ export default function FixSetup() {
       {/* Help Section */}
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
         <div className="flex">
-          <ExclamationTriangleIcon className="flex-shrink-0 w-5 h-5 text-yellow-400 mt-0.5" />
+          <Warning className="flex-shrink-0 w-5 h-5 text-yellow-400 mt-0.5" />
           <div className="ml-3">
             <h3 className="text-sm font-medium text-yellow-800">
               What Happened?

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckCircleIcon, XCircleIcon, ArrowPathIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import { CheckCircle, XCircle, ArrowClockwise, Warning } from '@phosphor-icons/react'
 
 interface ClusterStatus {
   id: string
@@ -74,8 +74,8 @@ export default function TestClusterConnection() {
 
   const getStatusIcon = (isOnline: boolean) => {
     return isOnline
-      ? <CheckCircleIcon className="h-6 w-6 text-green-500" />
-      : <XCircleIcon className="h-6 w-6 text-gray-500" />
+      ? <CheckCircle className="h-6 w-6 text-green-500" />
+      : <XCircle className="h-6 w-6 text-gray-500" />
   }
 
   const getUsageColor = (percent: number) => {
@@ -114,7 +114,7 @@ export default function TestClusterConnection() {
           >
             {loading ? (
               <>
-                <ArrowPathIcon className="h-5 w-5 mr-2 animate-spin" />
+                <ArrowClockwise className="h-5 w-5 mr-2 animate-spin" />
                 Testing...
               </>
             ) : (
@@ -138,7 +138,7 @@ export default function TestClusterConnection() {
               <div className="flex items-center space-x-3">
                 {result.success && result.hasOnlineCluster ? (
                   <>
-                    <CheckCircleIcon className="h-8 w-8 text-green-600" />
+                    <CheckCircle className="h-8 w-8 text-green-600" />
                     <div>
                       <h3 className="text-lg font-semibold text-green-900">Cluster Online!</h3>
                       <p className="text-sm text-green-700">User has an active local cluster</p>
@@ -146,7 +146,7 @@ export default function TestClusterConnection() {
                   </>
                 ) : result.success && result.hasCluster ? (
                   <>
-                    <ExclamationTriangleIcon className="h-8 w-8 text-yellow-600" />
+                    <Warning className="h-8 w-8 text-yellow-600" />
                     <div>
                       <h3 className="text-lg font-semibold text-yellow-900">Cluster Offline</h3>
                       <p className="text-sm text-yellow-700">User has a cluster but it's not currently connected</p>
@@ -154,7 +154,7 @@ export default function TestClusterConnection() {
                   </>
                 ) : result.success ? (
                   <>
-                    <XCircleIcon className="h-8 w-8 text-gray-600" />
+                    <XCircle className="h-8 w-8 text-gray-600" />
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">No Cluster Found</h3>
                       <p className="text-sm text-gray-700">{result.message}</p>
@@ -162,7 +162,7 @@ export default function TestClusterConnection() {
                   </>
                 ) : (
                   <>
-                    <XCircleIcon className="h-8 w-8 text-red-600" />
+                    <XCircle className="h-8 w-8 text-red-600" />
                     <div>
                       <h3 className="text-lg font-semibold text-red-900">Error</h3>
                       <p className="text-sm text-red-700">{result.error}</p>

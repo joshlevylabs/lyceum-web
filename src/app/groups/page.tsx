@@ -5,16 +5,16 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import {
-  UserGroupIcon,
-  PlusIcon,
-  UsersIcon,
-  ShieldCheckIcon,
-  EyeIcon,
-  PencilIcon,
-  Cog6ToothIcon,
-  FolderIcon,
-  MagnifyingGlassIcon
-} from '@heroicons/react/24/outline'
+  UsersThree,
+  Plus,
+  Users,
+  ShieldCheck,
+  Eye,
+  Pencil,
+  Gear,
+  Folder,
+  MagnifyingGlass
+} from '@phosphor-icons/react'
 
 interface Group {
   id: string
@@ -145,18 +145,18 @@ export default function GroupsPage() {
     }
   }
 
-  const getRoleIcon = (role: string) => {
+  const getRole = (role: string) => {
     switch (role) {
       case 'owner':
-        return <ShieldCheckIcon className="h-4 w-4" />
+        return <ShieldCheck className="h-4 w-4" />
       case 'admin':
-        return <Cog6ToothIcon className="h-4 w-4" />
+        return <Cog6Tooth className="h-4 w-4" />
       case 'editor':
-        return <PencilIcon className="h-4 w-4" />
+        return <Pencil className="h-4 w-4" />
       case 'viewer':
-        return <EyeIcon className="h-4 w-4" />
+        return <Eye className="h-4 w-4" />
       default:
-        return <UsersIcon className="h-4 w-4" />
+        return <Users className="h-4 w-4" />
     }
   }
 
@@ -192,7 +192,7 @@ export default function GroupsPage() {
             onClick={() => setShowCreateModal(true)}
             className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
           >
-            <PlusIcon className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-2" />
             Create Group
           </button>
         </div>
@@ -201,7 +201,7 @@ export default function GroupsPage() {
         {groups.length > 0 && (
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+              <MagnifyingGlass className="h-5 w-5 text-gray-400" />
             </div>
             <input
               type="text"
@@ -251,7 +251,7 @@ export default function GroupsPage() {
                         className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                         title="View group details"
                       >
-                        <EyeIcon className="h-5 w-5" />
+                        <Eye className="h-5 w-5" />
                       </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -261,7 +261,7 @@ export default function GroupsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <UserGroupIcon className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
+                        <UserGroup className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
                           {group.name}
                         </div>
@@ -274,13 +274,13 @@ export default function GroupsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center text-sm text-gray-900 dark:text-white">
-                        <UsersIcon className="h-4 w-4 text-gray-400 mr-1" />
+                        <Users className="h-4 w-4 text-gray-400 mr-1" />
                         {group.member_count}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadgeColor(group.user_role)}`}>
-                        {getRoleIcon(group.user_role)}
+                        {getRole(group.user_role)}
                         <span className="ml-1 capitalize">{group.user_role}</span>
                       </span>
                     </td>
@@ -294,7 +294,7 @@ export default function GroupsPage() {
           </div>
         ) : groups.length > 0 ? (
           <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
-            <MagnifyingGlassIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <MagnifyingGlass className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
               No groups found
             </h3>
@@ -304,7 +304,7 @@ export default function GroupsPage() {
           </div>
         ) : (
           <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
-            <UserGroupIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <UserGroup className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
               No groups yet
             </h3>
@@ -315,7 +315,7 @@ export default function GroupsPage() {
               onClick={() => setShowCreateModal(true)}
               className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
             >
-              <PlusIcon className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 mr-2" />
               Create Your First Group
             </button>
           </div>

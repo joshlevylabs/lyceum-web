@@ -1,5 +1,18 @@
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="32" height="32" rx="6" fill="#3B82F6"/>
-  <path d="M8 12V20H12V16H16V20H20V12H16V14H12V12H8Z" fill="white"/>
-  <circle cx="22" cy="10" r="3" fill="#EF4444"/>
+<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="faviconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00d4ff" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect x="2" y="2" width="28" height="28" rx="6" fill="url(#faviconGradient)" opacity="0.15"/>
+
+  <!-- Main L shape -->
+  <rect x="8" y="6" width="5" height="20" rx="2" fill="url(#faviconGradient)"/>
+  <rect x="8" y="21" width="16" height="5" rx="2" fill="url(#faviconGradient)"/>
+
+  <!-- Accent element -->
+  <rect x="20" y="6" width="4" height="4" rx="1" fill="#00d4ff" opacity="0.6"/>
 </svg>

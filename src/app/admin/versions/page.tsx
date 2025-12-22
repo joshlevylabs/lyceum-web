@@ -4,14 +4,14 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import {
-  CheckCircleIcon,
-  XCircleIcon,
-  PencilIcon,
-  TrashIcon,
-  PlusIcon,
-  ArrowPathIcon,
-  ChevronDownIcon
-} from '@heroicons/react/24/outline'
+  CheckCircle,
+  XCircle,
+  Pencil,
+  Trash,
+  Plus,
+  ArrowsClockwise as ArrowPath,
+  CaretDown as ChevronDown
+} from '@phosphor-icons/react'
 
 interface Version {
   id: string
@@ -203,13 +203,13 @@ export default function AdminVersionsPage() {
     const availableVersions = getAvailableVersions(installerType, brandType, currentVersion)
 
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-4">
+      <div className="glass-card p-4">
         <div className="flex items-center justify-between mb-3">
-          <h4 className="text-sm font-semibold text-gray-700 capitalize">
+          <h4 className="text-sm font-semibold text-foreground capitalize">
             {brandType}
           </h4>
           {currentVersion && (
-            <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">
+            <span className="text-xs px-2 py-1 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
               {currentVersion.auto_update_enabled ? 'Latest' : 'Active'}
             </span>
           )}
@@ -218,24 +218,24 @@ export default function AdminVersionsPage() {
         {currentVersion ? (
           <div>
             <div className="mb-2">
-              <span className="text-lg font-bold text-gray-900">
+              <span className="text-lg font-bold text-foreground">
                 {currentVersion.version_number}
               </span>
             </div>
-            <div className="text-xs text-gray-500 mb-3 truncate" title={currentVersion.download_url}>
+            <div className="text-xs text-foreground/60 mb-3 truncate" title={currentVersion.download_url}>
               {currentVersion.download_url}
             </div>
             <div className="flex space-x-2">
               <button
                 onClick={() => handleSetStage(currentVersion.id, 'unreleased')}
-                className="flex-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded"
+                className="flex-1 px-3 py-1.5 text-xs font-medium btn-glass"
               >
                 Remove
               </button>
               {stage === 'testing' && (
                 <button
                   onClick={() => handleSetStage(currentVersion.id, 'production')}
-                  className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded"
+                  className="flex-1 px-3 py-1.5 text-xs font-medium text-black bg-emerald-500 hover:bg-emerald-600 rounded-lg"
                 >
                   → Production
                 </button>
@@ -243,7 +243,7 @@ export default function AdminVersionsPage() {
               {stage === 'production' && (
                 <button
                   onClick={() => handleSetStage(currentVersion.id, 'testing')}
-                  className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-yellow-600 hover:bg-yellow-700 rounded"
+                  className="flex-1 px-3 py-1.5 text-xs font-medium text-black bg-amber-500 hover:bg-amber-600 rounded-lg"
                 >
                   → Testing
                 </button>
@@ -252,7 +252,7 @@ export default function AdminVersionsPage() {
           </div>
         ) : (
           <div>
-            <p className="text-sm text-gray-500 mb-3">No version assigned</p>
+            <p className="text-sm text-foreground/60 mb-3">No version assigned</p>
             {availableVersions.length > 0 ? (
               <select
                 onChange={(e) => {
@@ -260,7 +260,7 @@ export default function AdminVersionsPage() {
                     handleSetStage(e.target.value, stage as any)
                   }
                 }}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                className="glass-input w-full px-3 py-2 text-sm text-foreground"
                 defaultValue=""
               >
                 <option value="">Select version...</option>
@@ -271,7 +271,7 @@ export default function AdminVersionsPage() {
                 ))}
               </select>
             ) : (
-              <p className="text-xs text-gray-400 italic">
+              <p className="text-xs text-foreground/40 italic">
                 No unreleased versions available
               </p>
             )}
@@ -283,8 +283,8 @@ export default function AdminVersionsPage() {
 
   if (loading || loadingVersions) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-2 border-cyan-500/20 border-t-cyan-500"></div>
       </div>
     )
   }
@@ -297,26 +297,26 @@ export default function AdminVersionsPage() {
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-foreground">
             Application Versions
           </h1>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-foreground/60">
             Manage release stages for Lyceum and Centcom desktop applications
           </p>
         </div>
         <div className="flex items-center space-x-3">
           <button
             onClick={() => loadVersions()}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            className="btn-ghost inline-flex items-center"
           >
-            <ArrowPathIcon className="h-5 w-5 mr-2" />
+            <ArrowPath className="h-5 w-5 mr-2" weight="regular" />
             Refresh
           </button>
           <button
             onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+            className="btn-primary inline-flex items-center"
           >
-            <PlusIcon className="h-5 w-5 mr-2" />
+            <Plus className="h-5 w-5 mr-2" weight="regular" />
             Create Version
           </button>
         </div>
@@ -324,26 +324,26 @@ export default function AdminVersionsPage() {
 
       {/* Error Message */}
       {error && (
-        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-800">{error}</p>
+        <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+          <p className="text-sm text-red-400">{error}</p>
         </div>
       )}
 
       {/* Production Section */}
       <div className="mb-8">
-        <div className="bg-green-50 border border-green-200 rounded-t-lg px-6 py-4">
-          <h2 className="text-xl font-bold text-green-900 flex items-center">
-            <CheckCircleIcon className="h-6 w-6 mr-2" />
+        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-t-lg px-6 py-4">
+          <h2 className="text-xl font-bold text-emerald-400 flex items-center">
+            <CheckCircle className="h-6 w-6 mr-2" weight="duotone" />
             Production
           </h2>
-          <p className="text-sm text-green-700 mt-1">
+          <p className="text-sm text-emerald-400/80 mt-1">
             Live versions available to all users with auto-update enabled
           </p>
         </div>
-        <div className="bg-white border border-green-200 border-t-0 rounded-b-lg p-6">
+        <div className="glass-card border border-emerald-500/20 border-t-0 rounded-t-none p-6">
           {/* MSI Installers */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">MSI Installers</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">MSI Installers</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <VersionSlot stage="production" installerType="msi" brandType="lyceum" stageName="Production" />
               <VersionSlot stage="production" installerType="msi" brandType="centcom" stageName="Production" />
@@ -352,7 +352,7 @@ export default function AdminVersionsPage() {
 
           {/* EXE Installers */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">EXE Installers</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">EXE Installers</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <VersionSlot stage="production" installerType="exe" brandType="lyceum" stageName="Production" />
               <VersionSlot stage="production" installerType="exe" brandType="centcom" stageName="Production" />
@@ -363,19 +363,19 @@ export default function AdminVersionsPage() {
 
       {/* Testing Section */}
       <div className="mb-8">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-t-lg px-6 py-4">
-          <h2 className="text-xl font-bold text-yellow-900 flex items-center">
-            <XCircleIcon className="h-6 w-6 mr-2" />
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-t-lg px-6 py-4">
+          <h2 className="text-xl font-bold text-amber-400 flex items-center">
+            <XCircle className="h-6 w-6 mr-2" weight="duotone" />
             Testing
           </h2>
-          <p className="text-sm text-yellow-700 mt-1">
+          <p className="text-sm text-amber-400/80 mt-1">
             Versions in QA testing - can be distributed to testers
           </p>
         </div>
-        <div className="bg-white border border-yellow-200 border-t-0 rounded-b-lg p-6">
+        <div className="glass-card border border-amber-500/20 border-t-0 rounded-t-none p-6">
           {/* MSI Installers */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">MSI Installers</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">MSI Installers</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <VersionSlot stage="testing" installerType="msi" brandType="lyceum" stageName="Testing" />
               <VersionSlot stage="testing" installerType="msi" brandType="centcom" stageName="Testing" />
@@ -384,7 +384,7 @@ export default function AdminVersionsPage() {
 
           {/* EXE Installers */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">EXE Installers</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">EXE Installers</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <VersionSlot stage="testing" installerType="exe" brandType="lyceum" stageName="Testing" />
               <VersionSlot stage="testing" installerType="exe" brandType="centcom" stageName="Testing" />
@@ -395,69 +395,69 @@ export default function AdminVersionsPage() {
 
       {/* Unreleased Versions Section */}
       <div className="mb-8">
-        <div className="bg-gray-50 border border-gray-200 rounded-t-lg px-6 py-4">
-          <h2 className="text-xl font-bold text-gray-900">
+        <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-t-lg px-6 py-4">
+          <h2 className="text-xl font-bold text-foreground">
             Unreleased Versions ({unreleasedVersions.length})
           </h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-foreground/60 mt-1">
             New versions registered via GitHub Actions - not visible to users
           </p>
         </div>
         {unreleasedVersions.length > 0 ? (
-          <div className="bg-white border border-gray-200 border-t-0 rounded-b-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="glass-card border border-cyan-500/20 border-t-0 rounded-t-none overflow-hidden">
+            <table className="min-w-full divide-y divide-cyan-500/10">
+              <thead className="bg-cyan-500/5">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Version
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Brand
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Type
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Download URL
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-cyan-500/10">
                 {unreleasedVersions.map((version) => (
-                  <tr key={version.id} className="hover:bg-gray-50">
+                  <tr key={version.id} className="hover:bg-cyan-500/5">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm font-medium text-foreground">
                         {version.version_number}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900 capitalize">
+                      <span className="text-sm text-foreground capitalize">
                         {version.brand_type}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900 uppercase">
+                      <span className="text-sm text-foreground uppercase">
                         {version.installer_type}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-500 truncate block max-w-md" title={version.download_url}>
+                      <span className="text-sm text-foreground/60 truncate block max-w-md" title={version.download_url}>
                         {version.download_url}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => handleSetStage(version.id, 'testing')}
-                        className="text-blue-600 hover:text-blue-900 mr-3"
+                        className="text-amber-400 hover:text-amber-300 mr-3"
                       >
                         → Testing
                       </button>
                       <button
                         onClick={() => handleSetStage(version.id, 'production')}
-                        className="text-green-600 hover:text-green-900"
+                        className="text-emerald-400 hover:text-emerald-300"
                       >
                         → Production
                       </button>
@@ -468,18 +468,18 @@ export default function AdminVersionsPage() {
             </table>
           </div>
         ) : (
-          <div className="bg-white border border-gray-200 border-t-0 rounded-b-lg p-8 text-center">
-            <p className="text-gray-500">No unreleased versions</p>
+          <div className="glass-card border border-cyan-500/20 border-t-0 rounded-t-none p-8 text-center">
+            <p className="text-foreground/60">No unreleased versions</p>
           </div>
         )}
       </div>
 
       {/* Help Text */}
-      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-sm font-medium text-blue-800 mb-2">
+      <div className="mt-6 bg-cyan-500/10 border border-cyan-500/20 rounded-lg p-4">
+        <h3 className="text-sm font-medium text-cyan-400 mb-2">
           How to Manage Versions
         </h3>
-        <ul className="text-sm text-blue-700 space-y-1">
+        <ul className="text-sm text-foreground/60 space-y-1">
           <li>• New versions are automatically registered as "Unreleased" via GitHub Actions</li>
           <li>• Assign unreleased versions to "Testing" or "Production" slots using the dropdowns or action buttons</li>
           <li>• Only one version per brand/installer type can be in Testing or Production</li>
@@ -491,10 +491,10 @@ export default function AdminVersionsPage() {
 
       {/* Create Version Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Create New Version</h2>
-            <p className="text-sm text-gray-600 mb-6">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="glass-card p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold text-foreground mb-4">Create New Version</h2>
+            <p className="text-sm text-foreground/60 mb-6">
               Manually create a test/mock version for testing auto-update functionality
             </p>
 
@@ -502,7 +502,7 @@ export default function AdminVersionsPage() {
               <div className="space-y-4">
                 {/* Version Number */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Version Number <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -511,20 +511,20 @@ export default function AdminVersionsPage() {
                     placeholder="1.0.0"
                     value={newVersion.version_number}
                     onChange={(e) => setNewVersion({ ...newVersion, version_number: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className="glass-input w-full px-3 py-2.5 rounded-xl text-foreground placeholder-foreground/40"
                   />
                 </div>
 
                 {/* Brand Type */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Brand Type <span className="text-red-500">*</span>
                   </label>
                   <select
                     required
                     value={newVersion.brand_type}
                     onChange={(e) => setNewVersion({ ...newVersion, brand_type: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className="glass-input w-full px-3 py-2.5 rounded-xl text-foreground"
                   >
                     <option value="lyceum">Lyceum</option>
                     <option value="centcom">Centcom</option>
@@ -533,14 +533,14 @@ export default function AdminVersionsPage() {
 
                 {/* Installer Type */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Installer Type <span className="text-red-500">*</span>
                   </label>
                   <select
                     required
                     value={newVersion.installer_type}
                     onChange={(e) => setNewVersion({ ...newVersion, installer_type: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className="glass-input w-full px-3 py-2.5 rounded-xl text-foreground"
                   >
                     <option value="exe">EXE</option>
                     <option value="msi">MSI</option>
@@ -549,14 +549,14 @@ export default function AdminVersionsPage() {
 
                 {/* Release Stage */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Release Stage <span className="text-red-500">*</span>
                   </label>
                   <select
                     required
                     value={newVersion.release_stage}
                     onChange={(e) => setNewVersion({ ...newVersion, release_stage: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className="glass-input w-full px-3 py-2.5 rounded-xl text-foreground"
                   >
                     <option value="unreleased">Unreleased</option>
                     <option value="testing">Testing (recommended for mock versions)</option>
@@ -566,7 +566,7 @@ export default function AdminVersionsPage() {
 
                 {/* Download URL */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-foreground mb-1">
                     Download URL <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -575,17 +575,17 @@ export default function AdminVersionsPage() {
                     placeholder="https://example.com/installer.exe"
                     value={newVersion.download_url}
                     onChange={(e) => setNewVersion({ ...newVersion, download_url: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className="glass-input w-full px-3 py-2.5 rounded-xl text-foreground placeholder-foreground/40"
                   />
                 </div>
 
                 {/* Optional Fields */}
-                <div className="border-t border-gray-200 pt-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Optional Fields</h3>
+                <div className="border-t border-cyan-500/10 pt-4">
+                  <h3 className="text-sm font-medium text-foreground mb-3">Optional Fields</h3>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-foreground mb-1">
                         File Size (bytes)
                       </label>
                       <input
@@ -593,12 +593,12 @@ export default function AdminVersionsPage() {
                         placeholder="125829120"
                         value={newVersion.file_size_bytes}
                         onChange={(e) => setNewVersion({ ...newVersion, file_size_bytes: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        className="glass-input w-full px-3 py-2.5 rounded-xl text-foreground placeholder-foreground/40"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-foreground mb-1">
                         SHA256 Hash
                       </label>
                       <input
@@ -606,12 +606,12 @@ export default function AdminVersionsPage() {
                         placeholder="abc123..."
                         value={newVersion.sha256_hash}
                         onChange={(e) => setNewVersion({ ...newVersion, sha256_hash: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        className="glass-input w-full px-3 py-2.5 rounded-xl text-foreground placeholder-foreground/40"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-foreground mb-1">
                         Changelog URL
                       </label>
                       <input
@@ -619,12 +619,12 @@ export default function AdminVersionsPage() {
                         placeholder="https://example.com/changelog"
                         value={newVersion.changelog_url}
                         onChange={(e) => setNewVersion({ ...newVersion, changelog_url: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        className="glass-input w-full px-3 py-2.5 rounded-xl text-foreground placeholder-foreground/40"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-foreground mb-1">
                         Release Notes
                       </label>
                       <textarea
@@ -632,7 +632,7 @@ export default function AdminVersionsPage() {
                         placeholder="What's new in this version..."
                         value={newVersion.release_notes}
                         onChange={(e) => setNewVersion({ ...newVersion, release_notes: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        className="glass-input w-full px-3 py-2.5 rounded-xl text-foreground placeholder-foreground/40"
                       />
                     </div>
                   </div>
@@ -658,13 +658,13 @@ export default function AdminVersionsPage() {
                       release_notes: ''
                     })
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  className="btn-glass"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                  className="btn-primary"
                 >
                   Create Version
                 </button>

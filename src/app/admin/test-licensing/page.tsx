@@ -2,15 +2,15 @@
 
 import { useState } from 'react'
 import {
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
-  ShieldCheckIcon,
-  KeyIcon,
-  UserIcon,
-  PuzzlePieceIcon,
-  InformationCircleIcon
-} from '@heroicons/react/24/outline'
+  CheckCircle,
+  XCircle,
+  Warning,
+  ShieldCheck,
+  Key,
+  User,
+  PuzzlePiece,
+  Info
+} from '@phosphor-icons/react'
 
 interface ValidationResult {
   valid: boolean
@@ -70,9 +70,9 @@ export default function TestLicensing() {
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center mb-4">
           {result.valid ? (
-            <CheckCircleIcon className="h-6 w-6 text-green-500 mr-3" />
+            <CheckCircle className="h-6 w-6 text-green-500 mr-3" />
           ) : (
-            <XCircleIcon className="h-6 w-6 text-red-500 mr-3" />
+            <XCircle className="h-6 w-6 text-red-500 mr-3" />
           )}
           <h3 className="text-lg font-medium text-gray-900">
             {result.valid ? 'License Valid' : 'License Invalid'}
@@ -97,7 +97,7 @@ export default function TestLicensing() {
         {result.warnings && result.warnings.length > 0 && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
             <div className="flex items-center mb-2">
-              <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500 mr-2" />
+              <Warning className="h-5 w-5 text-yellow-500 mr-2" />
               <h4 className="text-sm font-medium text-yellow-800">Warnings</h4>
             </div>
             <ul className="list-disc list-inside text-sm text-yellow-700">
@@ -242,14 +242,14 @@ export default function TestLicensing() {
       {/* Test Form */}
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center mb-4">
-          <ShieldCheckIcon className="h-6 w-6 text-blue-500 mr-3" />
+          <ShieldCheck className="h-6 w-6 text-blue-500 mr-3" />
           <h3 className="text-lg font-medium text-gray-900">License Validation Test</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              <KeyIcon className="h-4 w-4 inline mr-1" />
+              <Key className="h-4 w-4 inline mr-1" />
               License Key
             </label>
             <input
@@ -264,7 +264,7 @@ export default function TestLicensing() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              <UserIcon className="h-4 w-4 inline mr-1" />
+              <User className="h-4 w-4 inline mr-1" />
               User Type
             </label>
             <select
@@ -295,7 +295,7 @@ export default function TestLicensing() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              <PuzzlePieceIcon className="h-4 w-4 inline mr-1" />
+              <PuzzlePiece className="h-4 w-4 inline mr-1" />
               Plugin to Test (Optional)
             </label>
             <select
@@ -326,7 +326,7 @@ export default function TestLicensing() {
             </>
           ) : (
             <>
-              <ShieldCheckIcon className="-ml-1 mr-2 h-5 w-5" />
+              <ShieldCheck className="-ml-1 mr-2 h-5 w-5" />
               Validate License
             </>
           )}
@@ -339,7 +339,7 @@ export default function TestLicensing() {
       {/* Help */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
         <div className="flex">
-          <InformationCircleIcon className="flex-shrink-0 w-5 h-5 text-blue-400 mt-0.5" />
+          <Info className="flex-shrink-0 w-5 h-5 text-blue-400 mt-0.5" />
           <div className="ml-3">
             <h3 className="text-sm font-medium text-blue-800">
               Testing Enhanced Licensing

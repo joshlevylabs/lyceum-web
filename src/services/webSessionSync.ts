@@ -273,6 +273,9 @@ export class WebSessionSync {
       } else if (response.status === 404) {
         // Silently handle 404 - endpoint might not be available in development
         console.warn('⚠️ Web session heartbeat endpoint not found (this is non-critical)')
+      } else if (response.status === 500 || response.status === 503) {
+        // Silently handle 500/503 - session tracking tables might not be set up yet
+        console.warn('⚠️ Web session heartbeat service unavailable (session tracking may not be configured - this is non-critical)')
       } else {
         console.error('Web session heartbeat failed:', response.statusText)
       }

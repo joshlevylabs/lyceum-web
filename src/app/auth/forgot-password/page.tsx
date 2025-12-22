@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { EnvelopeIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
+import { Envelope, ArrowLeft } from '@phosphor-icons/react'
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
@@ -43,19 +43,19 @@ export default function ForgotPassword() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-green-100">
-              <EnvelopeIcon className="h-6 w-6 text-green-600" />
+            <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/20">
+              <Envelope className="h-6 w-6 text-emerald-400" />
             </div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
               Check your email
             </h2>
-            <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-              We've sent a password reset link to <strong>{email}</strong>
+            <p className="mt-2 text-center text-sm text-foreground/60">
+              We've sent a password reset link to <strong className="text-cyan-400">{email}</strong>
             </p>
-            <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+            <p className="mt-4 text-center text-sm text-foreground/60">
               Didn't receive the email? Check your spam folder or contact your administrator.
             </p>
           </div>
@@ -63,9 +63,9 @@ export default function ForgotPassword() {
           <div className="mt-8">
             <Link
               href="/auth/signin"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-blue-600 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="btn-ghost w-full inline-flex items-center justify-center"
             >
-              <ArrowLeftIcon className="h-4 w-4 mr-2" />
+              <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Sign In
             </Link>
           </div>
@@ -75,31 +75,31 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-blue-600">
-            <span className="text-xl font-bold text-white">L</span>
+          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-cyan-500/10 border border-cyan-500/20">
+            <span className="text-xl font-bold text-cyan-400">L</span>
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
             Reset your password
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-2 text-center text-sm text-foreground/60">
             Enter your email address and we'll send you a link to reset your password.
           </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="rounded-md bg-red-50 dark:bg-red-900/50 p-4">
-              <div className="text-sm text-red-700 dark:text-red-200">
+            <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-4">
+              <div className="text-sm text-red-400">
                 {error}
               </div>
             </div>
           )}
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <div className="glass-card p-6">
+            <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
               Email address
             </label>
             <input
@@ -108,7 +108,7 @@ export default function ForgotPassword() {
               type="email"
               autoComplete="email"
               required
-              className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-800 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+              className="glass-input w-full px-4 py-2.5 rounded-xl text-foreground placeholder-foreground/40"
               placeholder="Enter your email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -119,15 +119,15 @@ export default function ForgotPassword() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full"
             >
               {loading ? 'Sending...' : 'Send Reset Link'}
             </button>
           </div>
 
           <div className="text-center">
-            <Link href="/auth/signin" className="font-medium text-blue-600 hover:text-blue-500">
-              <ArrowLeftIcon className="h-4 w-4 inline mr-1" />
+            <Link href="/auth/signin" className="font-medium text-cyan-400 hover:text-cyan-300 transition-colors inline-flex items-center">
+              <ArrowLeft className="h-4 w-4 mr-1" />
               Back to Sign In
             </Link>
           </div>

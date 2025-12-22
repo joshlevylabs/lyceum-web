@@ -5,19 +5,19 @@ import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/DashboardLayout'
 import {
-  CircleStackIcon,
-  ComputerDesktopIcon,
-  CloudIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
-  ChartBarIcon,
-  CpuChipIcon,
-  ServerStackIcon,
-  ClockIcon,
-  Cog6ToothIcon,
-  ArrowLeftIcon
-} from '@heroicons/react/24/outline'
+  Database,
+  Desktop,
+  Cloud,
+  CheckCircle,
+  XCircle,
+  Warning,
+  ChartBar,
+  Cpu,
+  Stack,
+  Clock,
+  Gear,
+  ArrowLeft
+} from '@phosphor-icons/react'
 
 interface ProjectMetadata {
   project_id: string
@@ -131,12 +131,12 @@ export default function ClusterDetailsPage() {
 
   const getStatusBadge = (status: string) => {
     const statusColors = {
-      active: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-      inactive: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-      offline: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-      configuring: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-      error: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-      maintenance: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+      active: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+      inactive: 'bg-foreground/10 text-foreground/60 border border-foreground/20',
+      offline: 'bg-foreground/10 text-foreground/60 border border-foreground/20',
+      configuring: 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20',
+      error: 'bg-red-500/10 text-red-400 border border-red-500/20',
+      maintenance: 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
     }
 
     return (
@@ -148,11 +148,11 @@ export default function ClusterDetailsPage() {
 
   const getHealthBadge = (health: string) => {
     const healthColors = {
-      healthy: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-      degraded: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-      unhealthy: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-      unknown: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-      offline: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+      healthy: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+      degraded: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+      unhealthy: 'bg-red-500/10 text-red-400 border border-red-500/20',
+      unknown: 'bg-foreground/10 text-foreground/60 border border-foreground/20',
+      offline: 'bg-foreground/10 text-foreground/60 border border-foreground/20'
     }
 
     return (
@@ -183,8 +183,8 @@ export default function ClusterDetailsPage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-600 dark:text-gray-400">Loading cluster details...</span>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-cyan-500/20 border-t-cyan-500"></div>
+          <span className="ml-2 text-foreground/60">Loading cluster details...</span>
         </div>
       </DashboardLayout>
     )
@@ -194,20 +194,20 @@ export default function ClusterDetailsPage() {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
-          <XCircleIcon className="mx-auto h-12 w-12 text-red-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">Error loading cluster</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{error}</p>
+          <XCircle className="mx-auto h-12 w-12 text-red-400" weight="duotone" />
+          <h3 className="mt-2 text-sm font-semibold text-foreground">Error loading cluster</h3>
+          <p className="mt-1 text-sm text-foreground/60">{error}</p>
           <div className="mt-6 space-x-3">
             <button
               onClick={() => router.push('/clusters')}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600"
+              className="btn-ghost inline-flex items-center"
             >
-              <ArrowLeftIcon className="h-4 w-4 mr-2" />
+              <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Clusters
             </button>
             <button
               onClick={loadClusterDetails}
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              className="btn-primary inline-flex items-center"
             >
               Try Again
             </button>
@@ -225,25 +225,25 @@ export default function ClusterDetailsPage() {
           <div className="flex-1 min-w-0">
             <button
               onClick={() => router.push('/clusters')}
-              className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 mb-2"
+              className="inline-flex items-center text-sm text-foreground/60 hover:text-cyan-400 mb-2 transition-colors"
             >
-              <ArrowLeftIcon className="h-4 w-4 mr-1" />
+              <ArrowLeft className="h-4 w-4 mr-1" />
               Back to Clusters
             </button>
             <div className="flex items-center space-x-3">
               <div className="relative">
                 {cluster.cluster_type === 'local' ? (
-                  <ComputerDesktopIcon className="h-8 w-8 text-blue-500" />
+                  <Desktop className="h-8 w-8 text-cyan-400" weight="duotone" />
                 ) : (
-                  <CloudIcon className="h-8 w-8 text-purple-500" />
+                  <Cloud className="h-8 w-8 text-cyan-400" weight="duotone" />
                 )}
                 {/* Connection indicator dot for local clusters */}
                 {cluster.cluster_type === 'local' && (
                   <span
-                    className={`absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white dark:border-gray-900 ${
+                    className={`absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-background ${
                       cluster.is_connected
-                        ? 'bg-green-500 animate-pulse'
-                        : 'bg-gray-400'
+                        ? 'bg-emerald-500 animate-pulse'
+                        : 'bg-foreground/40'
                     }`}
                     title={cluster.is_connected ? 'Connected' : 'Offline'}
                   />
@@ -251,7 +251,7 @@ export default function ClusterDetailsPage() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
+                  <h1 className="text-2xl font-bold leading-7 text-foreground sm:text-3xl sm:truncate">
                     {cluster.name}
                   </h1>
                   {/* Connection status badge for local clusters */}
@@ -259,26 +259,26 @@ export default function ClusterDetailsPage() {
                     <span
                       className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${
                         cluster.is_connected
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                          : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          : 'bg-foreground/10 text-foreground/60 border border-foreground/20'
                       }`}
                     >
-                      <span className={`h-1.5 w-1.5 rounded-full mr-1.5 ${cluster.is_connected ? 'bg-green-500' : 'bg-gray-400'}`} />
+                      <span className={`h-1.5 w-1.5 rounded-full mr-1.5 ${cluster.is_connected ? 'bg-emerald-500' : 'bg-foreground/40'}`} />
                       {cluster.is_connected ? 'Connected' : 'Offline'}
                     </span>
                   )}
                 </div>
                 <div className="mt-1 space-y-1">
                   {cluster.cluster_key && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-foreground/60">
                       Key: <span className="font-medium">{cluster.cluster_key}</span>
                     </p>
                   )}
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                  <p className="text-xs text-foreground/60 font-mono">
                     ID: {cluster.id}
                   </p>
                   {cluster.cluster_type === 'local' && cluster.last_heartbeat_at && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-foreground/60">
                       Last seen: {new Date(cluster.last_heartbeat_at).toLocaleString()}
                     </p>
                   )}
@@ -291,9 +291,9 @@ export default function ClusterDetailsPage() {
             <div className="mt-4 flex md:mt-0 md:ml-4">
               <button
                 onClick={() => setActiveTab('settings')}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                className="btn-primary inline-flex items-center"
               >
-                <Cog6ToothIcon className="h-5 w-5 mr-2" />
+                <Gear className="h-5 w-5 mr-2" />
                 Configure
               </button>
             </div>
@@ -301,194 +301,186 @@ export default function ClusterDetailsPage() {
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="-mb-px flex space-x-8">
+        <nav className="flex space-x-8 border-b border-cyan-500/10">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`${
+              activeTab === 'overview'
+                ? 'border-cyan-400 text-cyan-400'
+                : 'border-transparent text-foreground/50 hover:border-cyan-500/30 hover:text-cyan-400'
+            } flex whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium items-center transition-colors`}
+          >
+            Overview
+          </button>
+          {isAdmin && (
             <button
-              onClick={() => setActiveTab('overview')}
+              onClick={() => setActiveTab('settings')}
               className={`${
-                activeTab === 'overview'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                activeTab === 'settings'
+                  ? 'border-cyan-400 text-cyan-400'
+                  : 'border-transparent text-foreground/50 hover:border-cyan-500/30 hover:text-cyan-400'
+              } flex whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium items-center transition-colors`}
             >
-              Overview
+              Settings
             </button>
-            {isAdmin && (
-              <button
-                onClick={() => setActiveTab('settings')}
-                className={`${
-                  activeTab === 'settings'
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-              >
-                Settings
-              </button>
-            )}
-          </nav>
-        </div>
+          )}
+        </nav>
 
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
             {/* Status Cards */}
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-                <div className="p-5">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <CheckCircleIcon className="h-6 w-6 text-gray-400" />
-                    </div>
-                    <div className="ml-5 w-0 flex-1">
-                      <dl>
-                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                          Status
-                        </dt>
-                        <dd className="mt-1">
-                          {getStatusBadge(cluster.status)}
-                        </dd>
-                      </dl>
-                    </div>
+              <div className="glass-card overflow-hidden p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                    <CheckCircle className="h-6 w-6 text-cyan-400" weight="duotone" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-foreground/60 truncate">
+                        Status
+                      </dt>
+                      <dd className="mt-1">
+                        {getStatusBadge(cluster.status)}
+                      </dd>
+                    </dl>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-                <div className="p-5">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <ExclamationTriangleIcon className="h-6 w-6 text-gray-400" />
-                    </div>
-                    <div className="ml-5 w-0 flex-1">
-                      <dl>
-                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                          Health
-                        </dt>
-                        <dd className="mt-1">
-                          {getHealthBadge(cluster.health_status)}
-                        </dd>
-                      </dl>
-                    </div>
+              <div className="glass-card overflow-hidden p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                    <Warning className="h-6 w-6 text-cyan-400" weight="duotone" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-foreground/60 truncate">
+                        Health
+                      </dt>
+                      <dd className="mt-1">
+                        {getHealthBadge(cluster.health_status)}
+                      </dd>
+                    </dl>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-                <div className="p-5">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <ServerStackIcon className="h-6 w-6 text-gray-400" />
-                    </div>
-                    <div className="ml-5 w-0 flex-1">
-                      <dl>
-                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                          Storage Used
-                        </dt>
-                        <dd className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {formatStorage(cluster.storage_used_gb)}
-                          {cluster.max_storage_gb && cluster.max_storage_gb > 0 && (
-                            <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
-                              {' '}/ {formatStorage(cluster.max_storage_gb)}
-                            </span>
-                          )}
-                        </dd>
-                      </dl>
-                    </div>
+              <div className="glass-card overflow-hidden p-5">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                    <Stack className="h-6 w-6 text-cyan-400" weight="duotone" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-foreground/60 truncate">
+                        Storage Used
+                      </dt>
+                      <dd className="text-lg font-semibold text-foreground">
+                        {formatStorage(cluster.storage_used_gb)}
+                        {cluster.max_storage_gb && cluster.max_storage_gb > 0 && (
+                          <span className="text-sm font-normal text-foreground/60">
+                            {' '}/ {formatStorage(cluster.max_storage_gb)}
+                          </span>
+                        )}
+                      </dd>
+                    </dl>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Cluster Information */}
-            <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-              <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+            <div className="glass-card overflow-hidden">
+              <div className="px-4 py-5 sm:px-6 border-b border-cyan-500/10">
+                <h3 className="text-lg leading-6 font-medium text-foreground">
                   Cluster Information
                 </h3>
               </div>
               <div className="px-4 py-5 sm:p-6">
                 <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
                   <div className="sm:col-span-2">
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Cluster ID</dt>
-                    <dd className="mt-1 text-sm text-gray-900 dark:text-white font-mono break-all">{cluster.id}</dd>
+                    <dt className="text-sm font-medium text-foreground/60">Cluster ID</dt>
+                    <dd className="mt-1 text-sm text-foreground font-mono break-all">{cluster.id}</dd>
                   </div>
 
                   <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Cluster Type</dt>
-                    <dd className="mt-1 text-sm text-gray-900 dark:text-white capitalize">{cluster.cluster_type}</dd>
+                    <dt className="text-sm font-medium text-foreground/60">Cluster Type</dt>
+                    <dd className="mt-1 text-sm text-foreground capitalize">{cluster.cluster_type}</dd>
                   </div>
 
                   {cluster.architecture && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Architecture</dt>
-                      <dd className="mt-1 text-sm text-gray-900 dark:text-white capitalize">{cluster.architecture}</dd>
+                      <dt className="text-sm font-medium text-foreground/60">Architecture</dt>
+                      <dd className="mt-1 text-sm text-foreground capitalize">{cluster.architecture}</dd>
                     </div>
                   )}
 
                   <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Region</dt>
-                    <dd className="mt-1 text-sm text-gray-900 dark:text-white">{cluster.region || 'N/A'}</dd>
+                    <dt className="text-sm font-medium text-foreground/60">Region</dt>
+                    <dd className="mt-1 text-sm text-foreground">{cluster.region || 'N/A'}</dd>
                   </div>
 
                   {cluster.tier && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Tier</dt>
-                      <dd className="mt-1 text-sm text-gray-900 dark:text-white capitalize">{cluster.tier}</dd>
+                      <dt className="text-sm font-medium text-foreground/60">Tier</dt>
+                      <dd className="mt-1 text-sm text-foreground capitalize">{cluster.tier}</dd>
                     </div>
                   )}
 
                   {cluster.clickhouse_version && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">ClickHouse Version</dt>
-                      <dd className="mt-1 text-sm text-gray-900 dark:text-white">{cluster.clickhouse_version}</dd>
+                      <dt className="text-sm font-medium text-foreground/60">ClickHouse Version</dt>
+                      <dd className="mt-1 text-sm text-foreground">{cluster.clickhouse_version}</dd>
                     </div>
                   )}
 
                   {cluster.machine_os && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Operating System</dt>
-                      <dd className="mt-1 text-sm text-gray-900 dark:text-white">{cluster.machine_os}</dd>
+                      <dt className="text-sm font-medium text-foreground/60">Operating System</dt>
+                      <dd className="mt-1 text-sm text-foreground">{cluster.machine_os}</dd>
                     </div>
                   )}
 
                   {cluster.machine_memory_gb && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Memory</dt>
-                      <dd className="mt-1 text-sm text-gray-900 dark:text-white">{cluster.machine_memory_gb} GB</dd>
+                      <dt className="text-sm font-medium text-foreground/60">Memory</dt>
+                      <dd className="mt-1 text-sm text-foreground">{cluster.machine_memory_gb} GB</dd>
                     </div>
                   )}
 
                   {cluster.machine_cpu_cores && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">CPU Cores</dt>
-                      <dd className="mt-1 text-sm text-gray-900 dark:text-white">{cluster.machine_cpu_cores}</dd>
+                      <dt className="text-sm font-medium text-foreground/60">CPU Cores</dt>
+                      <dd className="mt-1 text-sm text-foreground">{cluster.machine_cpu_cores}</dd>
                     </div>
                   )}
 
                   <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Your Role</dt>
-                    <dd className="mt-1 text-sm text-gray-900 dark:text-white capitalize">{cluster.user_role}</dd>
+                    <dt className="text-sm font-medium text-foreground/60">Your Role</dt>
+                    <dd className="mt-1 text-sm text-foreground capitalize">{cluster.user_role}</dd>
                   </div>
 
                   <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Created</dt>
-                    <dd className="mt-1 text-sm text-gray-900 dark:text-white">{formatDate(cluster.created_at)}</dd>
+                    <dt className="text-sm font-medium text-foreground/60">Created</dt>
+                    <dd className="mt-1 text-sm text-foreground">{formatDate(cluster.created_at)}</dd>
                   </div>
 
                   {cluster.last_heartbeat_at && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Heartbeat</dt>
-                      <dd className="mt-1 text-sm text-gray-900 dark:text-white">{formatDate(cluster.last_heartbeat_at)}</dd>
+                      <dt className="text-sm font-medium text-foreground/60">Last Heartbeat</dt>
+                      <dd className="mt-1 text-sm text-foreground">{formatDate(cluster.last_heartbeat_at)}</dd>
                     </div>
                   )}
 
                   {cluster.queries_this_month !== undefined && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Queries This Month</dt>
-                      <dd className="mt-1 text-sm text-gray-900 dark:text-white">
+                      <dt className="text-sm font-medium text-foreground/60">Queries This Month</dt>
+                      <dd className="mt-1 text-sm text-foreground">
                         {cluster.queries_this_month.toLocaleString()}
                         {cluster.max_monthly_queries && cluster.max_monthly_queries > 0 && (
-                          <span className="text-gray-500 dark:text-gray-400">
+                          <span className="text-foreground/60">
                             {' '}/ {cluster.max_monthly_queries.toLocaleString()}
                           </span>
                         )}
@@ -501,57 +493,57 @@ export default function ClusterDetailsPage() {
 
             {/* Projects Table (for local clusters) */}
             {cluster.cluster_type === 'local' && cluster.projects_metadata && cluster.projects_metadata.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-                <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+              <div className="glass-card shadow rounded-lg overflow-hidden">
+                <div className="px-4 py-5 sm:px-6 border-b border-cyan-500/10">
+                  <h3 className="text-lg leading-6 font-medium text-foreground">
                     Projects ({cluster.projects_metadata.length})
                   </h3>
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  <p className="mt-1 text-sm text-foreground/60">
                     ClickHouse projects synced from your local cluster
                   </p>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-900">
+                  <table className="min-w-full divide-y divide-cyan-500/10">
+                    <thead className="bg-background">
                       <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                           Project Name
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                           Measurements
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                           Tables
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                           Created
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                           Last Updated
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tbody className="glass-card divide-y divide-cyan-500/10">
                       {cluster.projects_metadata.map((project) => (
-                        <tr key={project.project_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <tr key={project.project_id} className="hover:bg-cyan-500/5">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
-                              <CircleStackIcon className="h-5 w-5 text-blue-500 mr-2" />
-                              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                              <CircleStack className="h-5 w-5 text-cyan-400 mr-2" />
+                              <span className="text-sm font-medium text-foreground">
                                 {project.project_name}
                               </span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                             {project.measurement_count.toLocaleString()}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                             {project.table_names.length}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/60">
                             {new Date(project.created_at).toLocaleDateString()}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/60">
                             {new Date(project.last_updated_at).toLocaleDateString()}
                           </td>
                         </tr>
@@ -564,14 +556,14 @@ export default function ClusterDetailsPage() {
 
             {/* Description */}
             {cluster.description && (
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-                <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+              <div className="glass-card shadow rounded-lg overflow-hidden">
+                <div className="px-4 py-5 sm:px-6 border-b border-cyan-500/10">
+                  <h3 className="text-lg leading-6 font-medium text-foreground">
                     Description
                   </h3>
                 </div>
                 <div className="px-4 py-5 sm:p-6">
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{cluster.description}</p>
+                  <p className="text-sm text-foreground">{cluster.description}</p>
                 </div>
               </div>
             )}
@@ -581,12 +573,12 @@ export default function ClusterDetailsPage() {
         {/* Settings Tab (Admin Only) */}
         {activeTab === 'settings' && isAdmin && (
           <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-              <div className="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+            <div className="glass-card shadow rounded-lg overflow-hidden">
+              <div className="px-4 py-5 sm:px-6 border-b border-cyan-500/10">
+                <h3 className="text-lg leading-6 font-medium text-foreground">
                   Cluster Settings
                 </h3>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-sm text-foreground/60">
                   Configure your cluster settings and manage access.
                 </p>
               </div>
@@ -594,45 +586,45 @@ export default function ClusterDetailsPage() {
                 <div className="space-y-6">
                   {/* Basic Settings */}
                   <div>
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Basic Settings</h4>
+                    <h4 className="text-sm font-medium text-foreground mb-3">Basic Settings</h4>
                     <div className="space-y-4">
                       <div>
-                        <label htmlFor="cluster-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <label htmlFor="cluster-name" className="block text-sm font-medium text-foreground">
                           Cluster Name
                         </label>
                         <input
                           type="text"
                           id="cluster-name"
                           defaultValue={cluster.name}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 glass-input dark:border-gray-600 dark:text-white sm:text-sm"
                         />
                       </div>
 
                       <div>
-                        <label htmlFor="cluster-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <label htmlFor="cluster-description" className="block text-sm font-medium text-foreground">
                           Description
                         </label>
                         <textarea
                           id="cluster-description"
                           rows={3}
                           defaultValue={cluster.description}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 glass-input dark:border-gray-600 dark:text-white sm:text-sm"
                         />
                       </div>
                     </div>
                   </div>
 
                   {/* Coming Soon Notice */}
-                  <div className="rounded-md bg-blue-50 dark:bg-blue-900/20 p-4">
+                  <div className="rounded-md bg-cyan-500/10 border border-cyan-500/20 p-4">
                     <div className="flex">
                       <div className="flex-shrink-0">
-                        <Cog6ToothIcon className="h-5 w-5 text-blue-400" />
+                        <Cog6Tooth className="h-5 w-5 text-cyan-400" />
                       </div>
                       <div className="ml-3">
-                        <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                        <h3 className="text-sm font-medium text-cyan-400">
                           Configuration Coming Soon
                         </h3>
-                        <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
+                        <div className="mt-2 text-sm text-cyan-400">
                           <p>
                             Advanced cluster configuration options including user management, resource limits,
                             and connection settings will be available here soon.
@@ -646,7 +638,7 @@ export default function ClusterDetailsPage() {
                   <div className="flex justify-end">
                     <button
                       disabled
-                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-400 cursor-not-allowed"
+                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-foreground/40 cursor-not-allowed"
                     >
                       Save Changes (Coming Soon)
                     </button>

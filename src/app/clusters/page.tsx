@@ -6,17 +6,17 @@ import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/DashboardLayout'
 import ClusterCreationWizard from '@/components/ClusterCreationWizard'
 import {
-  CircleStackIcon,
-  PlusIcon,
-  CloudIcon,
-  ComputerDesktopIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
-  Cog6ToothIcon,
-  SignalIcon,
-  EyeIcon
-} from '@heroicons/react/24/outline'
+  Database,
+  Plus,
+  Cloud,
+  Desktop,
+  CheckCircle,
+  XCircle,
+  Warning,
+  Gear,
+  WifiHigh,
+  Eye
+} from '@phosphor-icons/react'
 
 interface Cluster {
   id: string
@@ -130,12 +130,12 @@ export default function ClustersPage() {
 
   const getStatusBadge = (status: string) => {
     const statusColors = {
-      active: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-      inactive: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-      offline: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-      configuring: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-      error: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-      maintenance: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+      active: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+      inactive: 'bg-foreground/10 text-foreground/60 border border-foreground/20',
+      offline: 'bg-foreground/10 text-foreground/60 border border-foreground/20',
+      configuring: 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20',
+      error: 'bg-red-500/10 text-red-400 border border-red-500/20',
+      maintenance: 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
     }
 
     return (
@@ -147,11 +147,11 @@ export default function ClustersPage() {
 
   const getHealthBadge = (health: string) => {
     const healthColors = {
-      healthy: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-      degraded: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-      unhealthy: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-      unknown: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-      offline: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+      healthy: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+      degraded: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+      unhealthy: 'bg-red-500/10 text-red-400 border border-red-500/20',
+      unknown: 'bg-foreground/10 text-foreground/60 border border-foreground/20',
+      offline: 'bg-foreground/10 text-foreground/60 border border-foreground/20'
     }
 
     return (
@@ -186,10 +186,10 @@ export default function ClustersPage() {
         {/* Header */}
         <div className="md:flex md:items-center md:justify-between">
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
+            <h1 className="text-2xl font-bold leading-7 text-foreground sm:text-3xl sm:truncate">
               My Clusters
             </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-foreground/60">
               Manage your local and cloud cluster connections
             </p>
           </div>
@@ -197,9 +197,9 @@ export default function ClustersPage() {
           <div className="mt-4 flex md:mt-0 md:ml-4">
             <button
               onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+              className="btn-primary inline-flex items-center"
             >
-              <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+              <Plus className="-ml-1 mr-2 h-5 w-5" />
               Add Cluster
             </button>
           </div>
@@ -207,82 +207,74 @@ export default function ClustersPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <CircleStackIcon className="h-6 w-6 text-gray-400" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                      Total Clusters
-                    </dt>
-                    <dd className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {clusters.length}
-                    </dd>
-                  </dl>
-                </div>
+          <div className="glass-card overflow-hidden p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                <Database className="h-6 w-6 text-cyan-400" weight="duotone" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-foreground/60 truncate">
+                    Total Clusters
+                  </dt>
+                  <dd className="text-lg font-semibold text-foreground">
+                    {clusters.length}
+                  </dd>
+                </dl>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <ComputerDesktopIcon className="h-6 w-6 text-blue-500" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                      Local Clusters
-                    </dt>
-                    <dd className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {clusters.filter(c => c.cluster_type === 'local').length}
-                    </dd>
-                  </dl>
-                </div>
+          <div className="glass-card overflow-hidden p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                <Desktop className="h-6 w-6 text-cyan-400" weight="duotone" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-foreground/60 truncate">
+                    Local Clusters
+                  </dt>
+                  <dd className="text-lg font-semibold text-foreground">
+                    {clusters.filter(c => c.cluster_type === 'local').length}
+                  </dd>
+                </dl>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <CloudIcon className="h-6 w-6 text-purple-500" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                      Cloud Clusters
-                    </dt>
-                    <dd className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {clusters.filter(c => c.cluster_type === 'cloud').length}
-                    </dd>
-                  </dl>
-                </div>
+          <div className="glass-card overflow-hidden p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                <Cloud className="h-6 w-6 text-cyan-400" weight="duotone" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-foreground/60 truncate">
+                    Cloud Clusters
+                  </dt>
+                  <dd className="text-lg font-semibold text-foreground">
+                    {clusters.filter(c => c.cluster_type === 'cloud').length}
+                  </dd>
+                </dl>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <CheckCircleIcon className="h-6 w-6 text-green-500" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                      Active Clusters
-                    </dt>
-                    <dd className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {clusters.filter(c => c.status === 'active').length}
-                    </dd>
-                  </dl>
-                </div>
+          <div className="glass-card overflow-hidden p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                <CheckCircle className="h-6 w-6 text-emerald-400" weight="duotone" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-foreground/60 truncate">
+                    Active Clusters
+                  </dt>
+                  <dd className="text-lg font-semibold text-foreground">
+                    {clusters.filter(c => c.status === 'active').length}
+                  </dd>
+                </dl>
               </div>
             </div>
           </div>
@@ -291,96 +283,96 @@ export default function ClustersPage() {
         {/* Clusters Table */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-2 text-gray-600 dark:text-gray-400">Loading clusters...</span>
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-cyan-500/20 border-t-cyan-500"></div>
+            <span className="ml-2 text-foreground/60">Loading clusters...</span>
           </div>
         ) : error ? (
           <div className="text-center py-12">
-            <XCircleIcon className="mx-auto h-12 w-12 text-red-400" />
-            <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">Error loading clusters</h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{error}</p>
+            <XCircle className="mx-auto h-12 w-12 text-red-400" weight="duotone" />
+            <h3 className="mt-2 text-sm font-semibold text-foreground">Error loading clusters</h3>
+            <p className="mt-1 text-sm text-foreground/60">{error}</p>
             <div className="mt-6">
               <button
                 onClick={loadClusters}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                className="btn-primary inline-flex items-center"
               >
                 Try Again
               </button>
             </div>
           </div>
         ) : clusters.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
-            <CircleStackIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No clusters</h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <div className="text-center py-12 glass-card">
+            <Database className="mx-auto h-12 w-12 text-foreground/40" weight="duotone" />
+            <h3 className="mt-2 text-sm font-semibold text-foreground">No clusters</h3>
+            <p className="mt-1 text-sm text-foreground/60">
               Get started by connecting your first cluster.
             </p>
             <div className="mt-6">
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                className="btn-primary inline-flex items-center"
               >
-                <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+                <Plus className="-ml-1 mr-2 h-5 w-5" />
                 Add Cluster
               </button>
             </div>
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+          <div className="glass-card overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-900">
+              <table className="min-w-full divide-y divide-cyan-500/10">
+                <thead>
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Cluster
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Cluster ID
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Type
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Region
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Status
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Health
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Storage
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Last Updated
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="divide-y divide-cyan-500/10">
                   {clusters.map((cluster) => (
                     <tr
                       key={cluster.id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                      className="hover:bg-cyan-500/5 transition-colors"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 relative">
                             {cluster.cluster_type === 'local' ? (
-                              <ComputerDesktopIcon className="h-6 w-6 text-blue-500" />
+                              <Desktop className="h-6 w-6 text-cyan-400" weight="duotone" />
                             ) : (
-                              <CloudIcon className="h-6 w-6 text-purple-500" />
+                              <Cloud className="h-6 w-6 text-cyan-400" weight="duotone" />
                             )}
                             {/* Connection indicator dot for local clusters */}
                             {cluster.cluster_type === 'local' && (
                               <span
-                                className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border border-white dark:border-gray-800 ${
+                                className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border border-background ${
                                   cluster.is_connected
-                                    ? 'bg-green-500 animate-pulse'
-                                    : 'bg-gray-400'
+                                    ? 'bg-emerald-500 animate-pulse'
+                                    : 'bg-foreground/40'
                                 }`}
                                 title={cluster.is_connected ? 'Connected' : 'Offline'}
                               />
@@ -388,7 +380,7 @@ export default function ClustersPage() {
                           </div>
                           <div className="ml-4">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                              <span className="text-sm font-medium text-foreground">
                                 {cluster.name}
                               </span>
                               {/* Connection status badge for local clusters */}
@@ -396,8 +388,8 @@ export default function ClustersPage() {
                                 <span
                                   className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                                     cluster.is_connected
-                                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                      : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                                      ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                      : 'bg-foreground/10 text-foreground/60 border border-foreground/20'
                                   }`}
                                 >
                                   {cluster.is_connected ? 'Connected' : 'Offline'}
@@ -405,7 +397,7 @@ export default function ClustersPage() {
                               )}
                             </div>
                             {cluster.cluster_key && (
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                              <div className="text-xs text-foreground/60">
                                 {cluster.cluster_key}
                               </div>
                             )}
@@ -413,16 +405,16 @@ export default function ClustersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-xs text-gray-600 dark:text-gray-400 font-mono break-all max-w-[200px]">
+                        <div className="text-xs text-foreground/60 font-mono break-all max-w-[200px]">
                           {cluster.id}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 capitalize">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 capitalize">
                           {cluster.cluster_type}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                         {cluster.region}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -431,19 +423,19 @@ export default function ClustersPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getHealthBadge(cluster.health_status)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                         {formatStorage(cluster.storage_used_gb)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/60">
                         {formatDate(cluster.updated_at)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
                           onClick={() => handleViewCluster(cluster.slug)}
-                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 inline-flex items-center"
+                          className="p-2 rounded-lg text-foreground/50 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all inline-flex items-center"
                           title="View cluster details"
                         >
-                          <EyeIcon className="h-5 w-5" />
+                          <Eye className="h-5 w-5" />
                         </button>
                       </td>
                     </tr>
@@ -456,8 +448,8 @@ export default function ClustersPage() {
 
         {/* Create Cluster Wizard */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50 overflow-y-auto">
-            <div className="w-full min-h-screen py-8 bg-white dark:bg-gray-900">
+          <div className="fixed inset-0 bg-background flex items-center justify-center z-50 overflow-y-auto">
+            <div className="w-full min-h-screen py-8 bg-background">
               <ClusterCreationWizard
                 onComplete={(cluster) => {
                   setShowCreateModal(false)

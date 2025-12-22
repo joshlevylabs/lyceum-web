@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
+import { Eye, EyeSlash } from '@phosphor-icons/react'
 
 // Force this page to be dynamic
 export const dynamic = 'force-dynamic'
@@ -228,9 +228,9 @@ function SetPasswordContent() {
   }
 
   const getStrengthColor = (strength: number) => {
-    if (strength < 2) return 'bg-red-500'
-    if (strength < 4) return 'bg-yellow-500'
-    return 'bg-green-500'
+    if (strength < 2) return 'bg-red-400'
+    if (strength < 4) return 'bg-yellow-400'
+    return 'bg-emerald-400'
   }
 
   const getStrengthText = (strength: number) => {
@@ -241,18 +241,18 @@ function SetPasswordContent() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="max-w-md w-full mx-auto p-6">
-          <div className="bg-white rounded-lg shadow-md p-8 text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-              <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="glass-card p-8 text-center">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-4">
+              <svg className="h-6 w-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Password Set Successfully!</h1>
-            <p className="text-gray-600 mb-4">Your password has been updated. Signing you in...</p>
-            <p className="text-sm text-gray-500">Redirecting to your dashboard...</p>
+
+            <h1 className="text-2xl font-bold text-foreground mb-2">Password Set Successfully!</h1>
+            <p className="text-foreground/60 mb-4">Your password has been updated. Signing you in...</p>
+            <p className="text-sm text-foreground/60">Redirecting to your dashboard...</p>
           </div>
         </div>
       </div>
@@ -260,26 +260,26 @@ function SetPasswordContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="max-w-md w-full mx-auto p-6">
-        <div className="bg-white rounded-lg shadow-md p-8">
+        <div className="glass-card p-8">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Set Your Password</h1>
-            <p className="text-gray-600">Welcome to Lyceum! Please set a secure password for your account.</p>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Set Your Password</h1>
+            <p className="text-foreground/60">Welcome to Lyceum! Please set a secure password for your account.</p>
             {userInfo && (
-              <p className="text-sm text-gray-500 mt-2">Account: {userInfo.email}</p>
+              <p className="text-sm text-cyan-400 mt-2">Account: {userInfo.email}</p>
             )}
           </div>
 
           <form onSubmit={handleSetPassword} className="space-y-6">
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                <p className="text-sm text-red-800">{error}</p>
+              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+                <p className="text-sm text-red-400">{error}</p>
               </div>
             )}
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
                 New Password
               </label>
               <div className="relative">
@@ -288,36 +288,36 @@ function SetPasswordContent() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="glass-input w-full px-4 py-2.5 pr-10 rounded-xl text-foreground placeholder-foreground/40"
                   placeholder="Enter your password"
                   autoComplete="new-password"
                   required
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-foreground/50 hover:text-cyan-400 transition-colors"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                    <EyeSlash className="h-5 w-5" />
                   ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-400" />
+                    <Eye className="h-5 w-5" />
                   )}
                 </button>
               </div>
-              
+
               {password && (
                 <div className="mt-2">
                   <div className="flex items-center space-x-2">
-                    <div className="flex-1 bg-gray-200 rounded-full h-2">
-                      <div 
+                    <div className="flex-1 bg-foreground/10 rounded-full h-2">
+                      <div
                         className={`h-2 rounded-full transition-all duration-300 ${getStrengthColor(getPasswordStrength(password))}`}
                         style={{ width: `${(getPasswordStrength(password) / 5) * 100}%` }}
                       ></div>
                     </div>
-                    <span className="text-xs text-gray-600">{getStrengthText(getPasswordStrength(password))}</span>
+                    <span className="text-xs text-foreground/60">{getStrengthText(getPasswordStrength(password))}</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-foreground/60 mt-1">
                     Must be 8+ characters with uppercase, lowercase, and number
                   </p>
                 </div>
@@ -325,7 +325,7 @@ function SetPasswordContent() {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground mb-2">
                 Confirm Password
               </label>
               <div className="relative">
@@ -334,36 +334,36 @@ function SetPasswordContent() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="glass-input w-full px-4 py-2.5 pr-10 rounded-xl text-foreground placeholder-foreground/40"
                   placeholder="Confirm your password"
                   autoComplete="new-password"
                   required
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-foreground/50 hover:text-cyan-400 transition-colors"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                    <EyeSlash className="h-5 w-5" />
                   ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-400" />
+                    <Eye className="h-5 w-5" />
                   )}
                 </button>
               </div>
-              
+
               {confirmPassword && password !== confirmPassword && (
-                <p className="text-sm text-red-600 mt-1">Passwords do not match</p>
+                <p className="text-sm text-red-400 mt-1">Passwords do not match</p>
               )}
             </div>
 
             <button
               type="submit"
               disabled={loading || !password || !confirmPassword || password !== confirmPassword}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full"
             >
               {loading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-cyan-500/20 border-t-cyan-500"></div>
               ) : (
                 'Set Password'
               )}
@@ -373,7 +373,7 @@ function SetPasswordContent() {
           <div className="mt-6 text-center">
             <button
               onClick={() => router.push('/dashboard')}
-              className="text-sm text-blue-600 hover:text-blue-500"
+              className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
             >
               Skip for now (you can set password later)
             </button>
@@ -387,12 +387,12 @@ function SetPasswordContent() {
 export default function SetPassword() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="max-w-md w-full mx-auto p-6">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Loading...</h1>
-            <p className="text-gray-600">Please wait</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-2 border-cyan-500/20 border-t-cyan-500 mx-auto mb-4"></div>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Loading...</h1>
+            <p className="text-foreground/60">Please wait</p>
           </div>
         </div>
       </div>

@@ -5,35 +5,36 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import {
-  HomeIcon,
-  UsersIcon,
-  KeyIcon,
-  CircleStackIcon,
-  ChartBarIcon,
-  CogIcon,
-  ShieldCheckIcon,
-  DocumentTextIcon,
-  BellIcon,
-  PowerIcon,
-  PuzzlePieceIcon,
-  ArrowLeftIcon,
-  UserIcon,
-  TicketIcon,
-  WrenchScrewdriverIcon,
-  ComputerDesktopIcon
-} from '@heroicons/react/24/outline'
+  House,
+  Users,
+  Key,
+  Database,
+  ChartBar,
+  Gear,
+  ShieldCheck,
+  FileText,
+  Bell,
+  Power,
+  PuzzlePiece,
+  ArrowLeft,
+  User,
+  Ticket,
+  Wrench,
+  Desktop
+} from '@phosphor-icons/react'
+import { LyceumLogo } from '@/components/LyceumLogo'
 
 const navigation = [
-  { name: 'Dashboard', href: '/admin', icon: HomeIcon },
-  { name: 'Users', href: '/admin/users', icon: UsersIcon },
-  { name: 'Subscriptions & Keys', href: '/admin/licenses', icon: KeyIcon },
-  { name: 'Plugins', href: '/admin/plugins', icon: PuzzlePieceIcon },
-  { name: 'Clusters', href: '/admin/clusters', icon: CircleStackIcon },
-  { name: 'Tickets', href: '/admin/tickets', icon: TicketIcon },
-  { name: 'Onboarding', href: '/admin/onboarding', icon: DocumentTextIcon },
-  { name: 'System Health', href: '/admin/health', icon: ShieldCheckIcon },
-  { name: 'Desktop-App', href: '/admin/versions', icon: ComputerDesktopIcon },
-  { name: 'Settings', href: '/admin/settings', icon: CogIcon },
+  { name: 'Dashboard', href: '/admin', icon: House },
+  { name: 'Users', href: '/admin/users', icon: Users },
+  { name: 'Subscriptions & Keys', href: '/admin/licenses', icon: Key },
+  { name: 'Plugins', href: '/admin/plugins', icon: PuzzlePiece },
+  { name: 'Clusters', href: '/admin/clusters', icon: Database },
+  { name: 'Tickets', href: '/admin/tickets', icon: Ticket },
+  { name: 'Onboarding', href: '/admin/onboarding', icon: FileText },
+  { name: 'System Health', href: '/admin/health', icon: ShieldCheck },
+  { name: 'Desktop-App', href: '/admin/versions', icon: Desktop },
+  { name: 'Settings', href: '/admin/settings', icon: Gear },
 ]
 
 export default function AdminLayout({
@@ -108,8 +109,8 @@ export default function AdminLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-cyan-500/20 border-t-cyan-500"></div>
       </div>
     )
   }
@@ -117,17 +118,17 @@ export default function AdminLayout({
   if (!user || !isAdmin) {
     // Allow billing pages to render without admin layout
     if (isPublicBillingPage) {
-      return <div className="min-h-screen bg-gray-50">{children}</div>
+      return <div className="min-h-screen bg-background">{children}</div>
     }
 
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Access Denied</h2>
-          <p className="text-gray-600 mb-4">You need admin privileges to access this panel.</p>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center glass-card p-8">
+          <h2 className="text-lg font-semibold text-foreground mb-2">Access Denied</h2>
+          <p className="text-foreground/60 mb-4">You need admin privileges to access this panel.</p>
           <button
             onClick={() => router.push('/dashboard')}
-            className="text-blue-600 hover:text-blue-800"
+            className="text-cyan-400 hover:text-cyan-300"
           >
             Return to Dashboard
           </button>
@@ -137,67 +138,65 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="h-screen flex bg-gray-100">
+    <div className="h-screen flex bg-background">
       {/* Sidebar */}
       <div className="hidden md:flex md:w-64 md:flex-col">
-        <div className="flex flex-col flex-grow pt-5 bg-white overflow-y-auto border-r border-gray-200">
+        <div className="flex flex-col flex-grow pt-5 glass-panel overflow-y-auto border-r border-cyan-500/10">
           <div className="flex items-center flex-shrink-0 px-4">
-            <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">L</span>
-            </div>
-            <h1 className="ml-3 text-xl font-semibold text-gray-900">
+            <LyceumLogo size="sm" showText={false} />
+            <h1 className="ml-3 text-xl font-semibold text-foreground">
               Lyceum Admin
             </h1>
           </div>
-          
+
           <div className="mt-5 flex-grow flex flex-col">
             <nav className="flex-1 px-2 pb-4 space-y-1">
               {/* Back to Platform Link */}
               <Link
                 href="/dashboard"
-                className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-blue-600 hover:bg-blue-50 hover:text-blue-700 border border-blue-200 hover:border-blue-300 transition-colors mb-4"
+                className="group flex items-center px-2 py-2 text-sm font-medium rounded-lg text-cyan-400 hover:bg-cyan-500/10 border border-cyan-500/20 hover:border-cyan-500/40 transition-colors mb-4"
               >
-                <ArrowLeftIcon className="mr-3 h-5 w-5 text-blue-500 group-hover:text-blue-600" />
+                <ArrowLeft className="mr-3 h-5 w-5 text-cyan-400" />
                 Back to Platform
               </Link>
-              
+
               {/* Admin Navigation */}
-              <div className="border-t border-gray-200 pt-4">
-                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-2">
+              <div className="border-t border-cyan-500/10 pt-4">
+                <div className="text-xs font-semibold text-foreground/50 uppercase tracking-wider mb-3 px-2">
                   Admin Tools
                 </div>
                 {navigation.map((item) => (
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    className="group flex items-center px-2 py-2 text-sm font-medium rounded-lg text-foreground/70 hover:bg-cyan-500/10 hover:text-cyan-400 transition-colors"
                   >
-                    <item.icon className="mr-3 h-6 w-6 text-gray-400 group-hover:text-gray-500" />
+                    <item.icon className="mr-3 h-6 w-6 text-foreground/40 group-hover:text-cyan-400" weight="duotone" />
                     {item.name}
                   </Link>
                 ))}
               </div>
             </nav>
           </div>
-          
+
           {/* Admin user info */}
-          <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
+          <div className="flex-shrink-0 flex border-t border-cyan-500/10 p-4">
             <div className="flex-shrink-0 w-full group block">
               <div className="flex items-center">
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
+                  <p className="text-sm font-medium text-foreground/80">
                     {adminUser?.full_name}
                   </p>
-                  <p className="text-xs font-medium text-gray-500 group-hover:text-gray-700">
+                  <p className="text-xs font-medium text-foreground/50">
                     {adminUser?.role.replace('_', ' ').replace('superadmin', 'Super Admin').toUpperCase()}
                   </p>
                 </div>
                 <button
                   onClick={handleSignOut}
-                  className="ml-auto p-1 text-gray-400 hover:text-gray-600"
+                  className="ml-auto p-1 text-foreground/40 hover:text-cyan-400 transition-colors"
                   title="Sign out"
                 >
-                  <PowerIcon className="h-5 w-5" />
+                  <Power className="h-5 w-5" />
                 </button>
               </div>
             </div>
@@ -208,7 +207,7 @@ export default function AdminLayout({
       {/* Main content */}
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
         {/* Top navigation */}
-        <div className="relative z-10 flex-shrink-0 flex h-16 bg-white shadow">
+        <div className="relative z-10 flex-shrink-0 flex h-16 glass-panel border-b border-cyan-500/10">
           <div className="flex-1 px-4 flex justify-between items-center">
             <div className="flex-1 flex">
               <div className="w-full flex md:ml-0">
@@ -217,14 +216,14 @@ export default function AdminLayout({
             </div>
             <div className="ml-4 flex items-center md:ml-6">
               {/* Notifications */}
-              <button className="bg-white p-1 rounded-full text-gray-400 hover:text-gray-500">
-                <BellIcon className="h-6 w-6" />
+              <button className="p-2 rounded-lg text-foreground/50 hover:text-cyan-400 hover:bg-cyan-500/10 transition-colors">
+                <Bell className="h-5 w-5" />
               </button>
-              
+
               {/* Admin dropdown would go here */}
               <div className="ml-3 relative">
-                <div className="max-w-xs bg-white flex items-center text-sm rounded-full">
-                  <span className="text-gray-700 text-sm font-medium">
+                <div className="flex items-center text-sm">
+                  <span className="text-foreground/70 text-sm font-medium">
                     {adminUser?.username}
                   </span>
                 </div>

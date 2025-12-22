@@ -4,16 +4,16 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  ArrowLeftIcon,
-  KeyIcon,
-  CheckIcon,
-  ClockIcon,
-  PuzzlePieceIcon,
-  UsersIcon,
-  CogIcon,
-  ExclamationTriangleIcon,
-  InformationCircleIcon
-} from '@heroicons/react/24/outline'
+  ArrowLeft,
+  Key,
+  Check,
+  Clock,
+  PuzzlePiece as Puzzle,
+  Users,
+  Gear,
+  Warning,
+  Info
+} from '@phosphor-icons/react'
 
 interface AdvancedLicenseFormData {
   // Basic license info
@@ -277,7 +277,7 @@ export default function CreateAdvancedLicense() {
           href="/admin/licenses"
           className="mr-4 p-2 text-gray-400 hover:text-gray-600"
         >
-          <ArrowLeftIcon className="h-5 w-5" />
+          <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
           <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
@@ -293,7 +293,7 @@ export default function CreateAdvancedLicense() {
         {/* Time-Based Licensing */}
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex items-center mb-4">
-            <ClockIcon className="h-6 w-6 text-blue-500 mr-3" />
+            <Clock className="h-6 w-6 text-blue-500 mr-3" />
             <h3 className="text-lg font-medium text-gray-900">Time-Based Licensing</h3>
           </div>
           
@@ -308,7 +308,7 @@ export default function CreateAdvancedLicense() {
               >
                 {formData.time_limit_type === option.value && (
                   <div className="absolute top-2 right-2">
-                    <CheckIcon className="h-5 w-5 text-blue-600" />
+                    <Check className="h-5 w-5 text-blue-600" />
                   </div>
                 )}
                 <h4 className="font-medium text-gray-900">{option.label}</h4>
@@ -372,7 +372,7 @@ export default function CreateAdvancedLicense() {
         {/* Plugin-Based Licensing */}
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex items-center mb-4">
-            <PuzzlePieceIcon className="h-6 w-6 text-green-500 mr-3" />
+            <Puzzle className="h-6 w-6 text-green-500 mr-3" />
             <h3 className="text-lg font-medium text-gray-900">Plugin-Based Licensing</h3>
           </div>
           
@@ -422,7 +422,7 @@ export default function CreateAdvancedLicense() {
         {/* User Access Type Licensing */}
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex items-center mb-4">
-            <UsersIcon className="h-6 w-6 text-purple-500 mr-3" />
+            <Users className="h-6 w-6 text-purple-500 mr-3" />
             <h3 className="text-lg font-medium text-gray-900">User Access Type Licensing</h3>
           </div>
           
@@ -464,7 +464,7 @@ export default function CreateAdvancedLicense() {
                 >
                   {formData.access_level === level.value && (
                     <div className="absolute top-2 right-2">
-                      <CheckIcon className="h-4 w-4 text-blue-600" />
+                      <Check className="h-4 w-4 text-blue-600" />
                     </div>
                   )}
                   <h5 className="font-medium text-gray-900 text-sm">{level.label}</h5>
@@ -478,7 +478,7 @@ export default function CreateAdvancedLicense() {
         {/* Basic License Configuration */}
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex items-center mb-4">
-            <CogIcon className="h-6 w-6 text-orange-500 mr-3" />
+            <Gear className="h-6 w-6 text-orange-500 mr-3" />
             <h3 className="text-lg font-medium text-gray-900">Basic Configuration</h3>
           </div>
           
@@ -562,7 +562,7 @@ export default function CreateAdvancedLicense() {
               </>
             ) : (
               <>
-                <KeyIcon className="-ml-1 mr-2 h-5 w-5" />
+                <Key className="-ml-1 mr-2 h-5 w-5" />
                 Create Advanced License
               </>
             )}

@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import {
-  MagnifyingGlassIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
-  KeyIcon,
-  CircleStackIcon,
-  BugAntIcon,
-  ArrowPathIcon
-} from '@heroicons/react/24/outline'
+  MagnifyingGlass,
+  Warning,
+  CheckCircle,
+  Key,
+  Database,
+  Bug,
+  ArrowClockwise
+} from '@phosphor-icons/react'
 
 export default function DebugLicenses() {
   const [licenses, setLicenses] = useState<any[]>([])
@@ -181,138 +181,138 @@ export default function DebugLicenses() {
       {/* Header */}
       <div className="md:flex md:items-center md:justify-between">
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+          <h1 className="text-2xl font-bold leading-7 text-foreground sm:text-3xl sm:truncate">
             License Debug Tool
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-foreground/60">
             Debug license creation and validation issues
           </p>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Debug Actions</h3>
+      <div className="glass-card p-6">
+        <h3 className="text-lg font-medium text-foreground mb-4">Quick Debug Actions</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
           <button
             onClick={loadLicenses}
             disabled={loading}
-            className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            className="btn-ghost disabled:opacity-50"
           >
             {loading ? (
-              <ArrowPathIcon className="h-5 w-5 animate-spin" />
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-cyan-500/20 border-t-cyan-500" />
             ) : (
-              <CircleStackIcon className="h-5 w-5" />
+              <Database className="h-5 w-5" weight="duotone" />
             )}
             <span className="ml-2">Load All Licenses</span>
           </button>
-          
+
           <button
             onClick={createLicenseTables}
-            className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+            className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all"
           >
-            <CircleStackIcon className="h-5 w-5" />
+            <Database className="h-5 w-5" weight="duotone" />
             <span className="ml-2">Manual Table Setup</span>
           </button>
-          
+
           <button
             onClick={createSimpleTables}
-            className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700"
+            className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20 hover:bg-purple-500/20 transition-all"
           >
-            <CircleStackIcon className="h-5 w-5" />
+            <Database className="h-5 w-5" weight="duotone" />
             <span className="ml-2">Try Simple Tables</span>
           </button>
-          
+
           <button
             onClick={createTestLicense}
-            className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+            className="btn-primary"
           >
-            <KeyIcon className="h-5 w-5" />
+            <Key className="h-5 w-5" weight="duotone" />
             <span className="ml-2">Create Test License</span>
           </button>
-          
+
           <button
             onClick={testValidationAPI}
             disabled={!testLicenseKey.trim()}
-            className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+            className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 disabled:opacity-50 transition-all"
           >
-            <BugAntIcon className="h-5 w-5" />
+            <Bug className="h-5 w-5" weight="duotone" />
             <span className="ml-2">Test Validation API</span>
           </button>
         </div>
-        
+
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             Test License Key
           </label>
           <input
             type="text"
             value={testLicenseKey}
             onChange={(e) => setTestLicenseKey(e.target.value)}
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="block w-full px-4 py-2.5 rounded-xl glass-input text-foreground placeholder-foreground/40"
             placeholder="Enter license key to test"
           />
         </div>
       </div>
 
       {/* Existing Licenses */}
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="glass-card p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-900">Existing Licenses</h3>
-          <span className="text-sm text-gray-500">{licenses.length} licenses found</span>
+          <h3 className="text-lg font-medium text-foreground">Existing Licenses</h3>
+          <span className="text-sm text-foreground/60">{licenses.length} licenses found</span>
         </div>
-        
+
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <ArrowPathIcon className="h-6 w-6 animate-spin text-blue-500" />
-            <span className="ml-2 text-gray-600">Loading licenses...</span>
+            <div className="animate-spin rounded-full h-6 w-6 border-2 border-cyan-500/20 border-t-cyan-500" />
+            <span className="ml-2 text-foreground/60">Loading licenses...</span>
           </div>
         ) : licenses.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-cyan-500/10">
+              <thead className="bg-cyan-500/5">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     License Key
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Type
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Created
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-background divide-y divide-cyan-500/10">
                 {licenses.map((license, index) => (
-                  <tr key={license.id || index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                  <tr key={license.id || index} className="hover:bg-cyan-500/5 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-cyan-400">
                       {license.key_code}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                       {license.license_type}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        license.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        license.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
                       }`}>
                         {license.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/60">
                       {license.created_at ? new Date(license.created_at).toLocaleDateString() : 'Unknown'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <button
                         onClick={() => setTestLicenseKey(license.key_code)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-cyan-400 hover:text-cyan-300 transition-colors"
                       >
                         Test This
                       </button>
@@ -324,9 +324,9 @@ export default function DebugLicenses() {
           </div>
         ) : (
           <div className="text-center py-8">
-            <KeyIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-semibold text-gray-900">No licenses found</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <Key className="mx-auto h-12 w-12 text-foreground/40" weight="duotone" />
+            <h3 className="mt-2 text-sm font-semibold text-foreground">No licenses found</h3>
+            <p className="mt-1 text-sm text-foreground/60">
               No licenses exist in the database. Try creating a test license.
             </p>
           </div>
@@ -335,36 +335,36 @@ export default function DebugLicenses() {
 
       {/* Test Results */}
       {testResults && (
-        <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
+        <div className="glass-card p-6">
+          <h3 className="text-lg font-medium text-foreground mb-4">
             {testResults.loading ? 'Testing...' : 'Test Results'}
           </h3>
-          
+
           {testResults.loading ? (
             <div className="flex items-center py-4">
-              <ArrowPathIcon className="h-5 w-5 animate-spin text-blue-500 mr-2" />
-              <span>Running test...</span>
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-cyan-500/20 border-t-cyan-500 mr-2" />
+              <span className="text-foreground/60">Running test...</span>
             </div>
           ) : (
             <div className="space-y-4">
               {/* Status */}
               <div className={`p-4 rounded-md ${
-                testResults.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+                testResults.success ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-red-500/10 border border-red-500/20'
               }`}>
                 <div className="flex items-center">
                   {testResults.success ? (
-                    <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+                    <CheckCircle className="h-5 w-5 text-emerald-400 mr-2" weight="duotone" />
                   ) : (
-                    <ExclamationTriangleIcon className="h-5 w-5 text-red-500 mr-2" />
+                    <Warning className="h-5 w-5 text-red-400 mr-2" weight="duotone" />
                   )}
                   <span className={`text-sm font-medium ${
-                    testResults.success ? 'text-green-800' : 'text-red-800'
+                    testResults.success ? 'text-emerald-400' : 'text-red-400'
                   }`}>
                     {testResults.type === 'create' ? 'License Creation' : 'License Validation'}: {testResults.success ? 'Success' : 'Failed'}
                   </span>
                 </div>
                 <p className={`text-sm mt-1 ${
-                  testResults.success ? 'text-green-700' : 'text-red-700'
+                  testResults.success ? 'text-foreground/80' : 'text-foreground/80'
                 }`}>
                   Status: {testResults.status} | {testResults.error || testResults.data?.message || 'See details below'}
                 </p>
@@ -372,9 +372,9 @@ export default function DebugLicenses() {
 
               {/* Manual Table Creation Results */}
               {testResults.type === 'create_tables_manual' && (
-                <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-                  <h4 className="text-sm font-medium text-blue-800 mb-2">📋 Manual Table Creation Instructions</h4>
-                  <div className="text-sm text-blue-700 space-y-2">
+                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-md p-4">
+                  <h4 className="text-sm font-medium text-foreground mb-2">Manual Table Creation Instructions</h4>
+                  <div className="text-sm text-foreground/80 space-y-2">
                     <p><strong>Problem:</strong> Supabase doesn't allow automatic table creation via API</p>
                     <p><strong>Solution:</strong> Create tables manually in Supabase dashboard</p>
                     
@@ -478,10 +478,10 @@ export default function DebugLicenses() {
 
               {/* Created License */}
               {testResults.type === 'create' && testResults.success && testResults.data?.license && (
-                <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-                  <h4 className="text-sm font-medium text-blue-800 mb-2">✅ License Created Successfully</h4>
-                  <div className="text-sm text-blue-700 space-y-1">
-                    <p><strong>Key:</strong> <code className="bg-blue-100 px-2 py-1 rounded">{testResults.data.license.key_code}</code></p>
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-md p-4">
+                  <h4 className="text-sm font-medium text-emerald-400 mb-2">License Created Successfully</h4>
+                  <div className="text-sm text-foreground/80 space-y-1">
+                    <p><strong>Key:</strong> <code className="bg-cyan-500/10 text-cyan-400 px-2 py-1 rounded">{testResults.data.license.key_code}</code></p>
                     <p><strong>Type:</strong> {testResults.data.license.license_type}</p>
                     <p><strong>Status:</strong> {testResults.data.license.status}</p>
                     <p><strong>ID:</strong> {testResults.data.license.id}</p>
@@ -491,10 +491,10 @@ export default function DebugLicenses() {
 
               {/* Raw Response */}
               <details>
-                <summary className="text-sm text-gray-500 cursor-pointer hover:text-gray-700">
+                <summary className="text-sm text-foreground/60 cursor-pointer hover:text-foreground">
                   View raw response
                 </summary>
-                <pre className="text-xs bg-gray-100 p-3 rounded mt-2 overflow-auto">
+                <pre className="text-xs bg-background border border-cyan-500/20 p-3 rounded mt-2 overflow-auto text-foreground/80">
                   {JSON.stringify(testResults, null, 2)}
                 </pre>
               </details>
@@ -504,14 +504,14 @@ export default function DebugLicenses() {
       )}
 
       {/* Help */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+      <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-6">
         <div className="flex">
-          <ExclamationTriangleIcon className="flex-shrink-0 w-5 h-5 text-yellow-400 mt-0.5" />
+          <Warning className="flex-shrink-0 w-5 h-5 text-amber-400 mt-0.5" weight="duotone" />
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-yellow-800">
+            <h3 className="text-sm font-medium text-foreground">
               Debugging Steps
             </h3>
-            <div className="mt-2 text-sm text-yellow-700 space-y-2">
+            <div className="mt-2 text-sm text-foreground/80 space-y-2">
               <p>1. <strong>Manual Table Setup:</strong> Get SQL commands to create tables in Supabase dashboard</p>
               <p>2. <strong>Try Simple Tables:</strong> Attempt automatic table creation (may not work)</p>
               <p>3. <strong>Load All Licenses:</strong> Check what licenses exist in the database</p>

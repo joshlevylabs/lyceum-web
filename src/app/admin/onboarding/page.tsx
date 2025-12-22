@@ -3,23 +3,23 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
-  UserGroupIcon,
-  CalendarIcon,
-  ChartBarIcon,
-  PlusIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  XCircleIcon,
-  XMarkIcon,
-  ExclamationTriangleIcon,
-  EyeIcon,
-  PencilIcon,
-  TrashIcon,
-  MagnifyingGlassIcon,
-  FunnelIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon
-} from '@heroicons/react/24/outline'
+  UsersThree as UserGroup,
+  Calendar,
+  ChartBar,
+  Plus,
+  CheckCircle,
+  Clock,
+  XCircle,
+  X,
+  Warning,
+  Eye,
+  Pencil,
+  Trash,
+  MagnifyingGlass,
+  Funnel,
+  CaretLeft,
+  CaretRight
+} from '@phosphor-icons/react'
 
 interface License {
   id: string
@@ -321,20 +321,20 @@ export default function AdminOnboardingManagement() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800'
-      case 'in_progress': return 'bg-blue-100 text-blue-800'
-      case 'overdue': return 'bg-red-100 text-red-800'
-      case 'not_started': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'completed': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+      case 'in_progress': return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
+      case 'overdue': return 'bg-red-500/10 text-red-400 border-red-500/20'
+      case 'not_started': return 'bg-foreground/10 text-foreground/60 border-foreground/20'
+      default: return 'bg-foreground/10 text-foreground/60 border-foreground/20'
     }
   }
 
   const getLicenseTypeColor = (type: string) => {
     switch (type) {
-      case 'trial': return 'bg-orange-100 text-orange-800'
-      case 'paid': return 'bg-green-100 text-green-800'
-      case 'enterprise': return 'bg-purple-100 text-purple-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'trial': return 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+      case 'paid': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+      case 'enterprise': return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
+      default: return 'bg-foreground/10 text-foreground/60 border-foreground/20'
     }
   }
 
@@ -389,11 +389,11 @@ export default function AdminOnboardingManagement() {
   }
 
   const tabs = [
-    { id: 'calendar', name: 'Calendar', icon: CalendarIcon },
-    { id: 'sessions', name: 'Sessions', icon: ChartBarIcon },
-    { id: 'users', name: 'User Progress', icon: UserGroupIcon },
-    { id: 'availability', name: 'My Availability', icon: ClockIcon },
-    { id: 'bookings', name: 'Bookings', icon: CalendarIcon }
+    { id: 'calendar', name: 'Calendar', icon: Calendar },
+    { id: 'sessions', name: 'Sessions', icon: ChartBar },
+    { id: 'users', name: 'User Progress', icon: UserGroup },
+    { id: 'availability', name: 'My Availability', icon: Clock },
+    { id: 'bookings', name: 'Bookings', icon: Calendar }
   ]
 
   // Calendar helper functions
@@ -732,11 +732,11 @@ export default function AdminOnboardingManagement() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md mx-auto">
           <div className="bg-red-50 border border-red-200 rounded-md p-4">
             <div className="flex">
-              <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
+              <Warning className="h-5 w-5 text-red-400" />
               <div className="ml-3">
                 <p className="text-sm text-red-800">{error}</p>
                 {error.includes('Database Setup Required') && (
@@ -924,83 +924,95 @@ export default function AdminOnboardingManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-foreground">
             Onboarding Management
           </h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-foreground/60">
             Manage user onboarding sessions and track trial license compliance
           </p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5 mb-8">
+          <div className="glass-card p-5 overflow-hidden">
             <div className="flex items-center">
-              <UserGroupIcon className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{stats.totalUsers}</p>
-                <p className="text-sm text-gray-600">Total Users</p>
+              <div className="flex-shrink-0 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                <UserGroup className="h-6 w-6 text-cyan-400" weight="duotone" />
+              </div>
+              <div className="ml-4 w-0 flex-1">
+                <p className="text-2xl font-bold tracking-tight text-foreground">{stats.totalUsers}</p>
+                <p className="text-sm text-foreground/60">Total Users</p>
               </div>
             </div>
           </div>
-          
-          <div className="bg-white rounded-lg shadow p-6">
+
+          <div className="glass-card p-5 overflow-hidden">
             <div className="flex items-center">
-              <CalendarIcon className="h-8 w-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{stats.totalSessions}</p>
-                <p className="text-sm text-gray-600">Total Sessions</p>
+              <div className="flex-shrink-0 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                <Calendar className="h-6 w-6 text-cyan-400" weight="duotone" />
+              </div>
+              <div className="ml-4 w-0 flex-1">
+                <p className="text-2xl font-bold tracking-tight text-foreground">{stats.totalSessions}</p>
+                <p className="text-sm text-foreground/60">Total Sessions</p>
               </div>
             </div>
           </div>
-          
-          <div className="bg-white rounded-lg shadow p-6">
+
+          <div className="glass-card p-5 overflow-hidden">
             <div className="flex items-center">
-              <CheckCircleIcon className="h-8 w-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{stats.completedSessions}</p>
-                <p className="text-sm text-gray-600">Completed</p>
+              <div className="flex-shrink-0 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                <CheckCircle className="h-6 w-6 text-emerald-400" weight="duotone" />
+              </div>
+              <div className="ml-4 w-0 flex-1">
+                <p className="text-2xl font-bold tracking-tight text-foreground">{stats.completedSessions}</p>
+                <p className="text-sm text-foreground/60">Completed</p>
               </div>
             </div>
           </div>
-          
-          <div className="bg-white rounded-lg shadow p-6">
+
+          <div className="glass-card p-5 overflow-hidden">
             <div className="flex items-center">
-              <ClockIcon className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{stats.upcomingSessions}</p>
-                <p className="text-sm text-gray-600">Upcoming</p>
+              <div className="flex-shrink-0 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                <Clock className="h-6 w-6 text-cyan-400" weight="duotone" />
+              </div>
+              <div className="ml-4 w-0 flex-1">
+                <p className="text-2xl font-bold tracking-tight text-foreground">{stats.upcomingSessions}</p>
+                <p className="text-sm text-foreground/60">Upcoming</p>
               </div>
             </div>
           </div>
-          
-          <div className="bg-white rounded-lg shadow p-6">
+
+          <div className="glass-card p-5 overflow-hidden">
             <div className="flex items-center">
-              <ExclamationTriangleIcon className="h-8 w-8 text-red-600" />
-              <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{stats.overdueUsers}</p>
-                <p className="text-sm text-gray-600">Overdue</p>
+              <div className="flex-shrink-0 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
+                <Warning className="h-6 w-6 text-red-400" weight="duotone" />
+              </div>
+              <div className="ml-4 w-0 flex-1">
+                <p className="text-2xl font-bold tracking-tight text-foreground">{stats.overdueUsers}</p>
+                <p className="text-sm text-foreground/60">Overdue</p>
               </div>
             </div>
           </div>
-          
-          <div className="bg-white rounded-lg shadow p-6">
+
+          <div className="glass-card p-5 overflow-hidden">
             <div className="flex items-center">
-              <XCircleIcon className="h-8 w-8 text-orange-600" />
-              <div className="ml-4">
-                <p className="text-2xl font-semibold text-gray-900">{stats.trialUsers}</p>
-                <p className="text-sm text-gray-600">Trial Users</p>
+              <div className="flex-shrink-0 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                <XCircle className="h-6 w-6 text-amber-400" weight="duotone" />
+              </div>
+              <div className="ml-4 w-0 flex-1">
+                <p className="text-2xl font-bold tracking-tight text-foreground">{stats.trialUsers}</p>
+                <p className="text-sm text-foreground/60">Trial Users</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="mb-6">
+        <div className="mb-6 border-b border-cyan-500/10">
           <nav className="flex space-x-8" aria-label="Tabs">
             {tabs.map((tab) => (
               <button
@@ -1008,11 +1020,11 @@ export default function AdminOnboardingManagement() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`${
                   activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center cursor-pointer`}
+                    ? 'border-cyan-400 text-cyan-400'
+                    : 'border-transparent text-foreground/50 hover:text-cyan-400 hover:border-cyan-500/30'
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center cursor-pointer transition-colors`}
               >
-                <tab.icon className="h-5 w-5 mr-2" />
+                <tab.icon className="h-5 w-5 mr-2" weight={activeTab === tab.id ? 'duotone' : 'regular'} />
                 {tab.name}
               </button>
             ))}
@@ -1020,13 +1032,13 @@ export default function AdminOnboardingManagement() {
         </div>
 
         {/* Filters and Actions */}
-        <div className="bg-white rounded-lg shadow mb-6">
+        <div className="glass-card mb-6">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex flex-col sm:flex-row gap-4">
                 {/* Search */}
                 <div className="relative">
-                  <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <MagnifyingGlass className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-foreground/40" />
                   <input
                     type="text"
                     placeholder="Search users, sessions..."
@@ -1038,7 +1050,7 @@ export default function AdminOnboardingManagement() {
 
                 {/* Status Filter */}
                 <div className="relative">
-                  <FunnelIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Funnel className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-foreground/40" />
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
@@ -1061,12 +1073,12 @@ export default function AdminOnboardingManagement() {
                   onClick={() => openCreateSessionModal()}
                   className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
                 >
-                  <PlusIcon className="h-5 w-5 mr-2" />
+                  <Plus className="h-5 w-5 mr-2" />
                   Schedule Session
                 </button>
                 <button
                   onClick={fetchData}
-                  className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200"
+                  className="bg-foreground/10 text-foreground/70 px-4 py-2 rounded-md hover:bg-gray-200"
                 >
                   Refresh
                 </button>
@@ -1076,11 +1088,11 @@ export default function AdminOnboardingManagement() {
         </div>
 
         {/* Tab Content */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="glass-card">
           {activeTab === 'calendar' && (
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-medium text-gray-900">Onboarding Calendar</h3>
+                <h3 className="text-lg font-medium text-foreground">Onboarding Calendar</h3>
                 <div className="flex items-center space-x-4">
                   <select 
                     value={calendarView} 
@@ -1095,7 +1107,7 @@ export default function AdminOnboardingManagement() {
                     onClick={() => openCreateSessionModal()}
                     className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 flex items-center"
                   >
-                    <PlusIcon className="h-4 w-4 mr-2" />
+                    <Plus className="h-4 w-4 mr-2" />
                     Schedule Session
                   </button>
                 </div>
@@ -1104,9 +1116,9 @@ export default function AdminOnboardingManagement() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Main Calendar */}
                 <div className="lg:col-span-2">
-                  <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div className="bg-white rounded-lg border border-cyan-500/20 p-4">
                     <div className="flex items-center justify-between mb-6">
-                      <h4 className="text-lg font-medium text-gray-900">
+                      <h4 className="text-lg font-medium text-foreground">
                         {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                       </h4>
                       <div className="flex items-center space-x-2">
@@ -1114,7 +1126,7 @@ export default function AdminOnboardingManagement() {
                           onClick={() => navigateMonth('prev')}
                           className="p-2 hover:bg-gray-100 rounded-md"
                         >
-                          <ChevronLeftIcon className="h-5 w-5 text-gray-600" />
+                          <CaretLeft className="h-5 w-5 text-foreground/60" />
                         </button>
                         <button
                           onClick={() => setCurrentDate(new Date())}
@@ -1126,7 +1138,7 @@ export default function AdminOnboardingManagement() {
                           onClick={() => navigateMonth('next')}
                           className="p-2 hover:bg-gray-100 rounded-md"
                         >
-                          <ChevronRightIcon className="h-5 w-5 text-gray-600" />
+                          <CaretRight className="h-5 w-5 text-foreground/60" />
                         </button>
                       </div>
                     </div>
@@ -1135,7 +1147,7 @@ export default function AdminOnboardingManagement() {
                     <div className="grid grid-cols-7 gap-0 mb-4">
                       {/* Day headers */}
                       {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                        <div key={day} className="p-3 text-center text-sm font-medium text-gray-500 bg-gray-50 border-r border-b border-gray-200 last:border-r-0">
+                        <div key={day} className="p-3 text-center text-sm font-medium text-foreground/60 bg-cyan-500/5 border-r border-b border-gray-200 last:border-r-0">
                           {day}
                         </div>
                       ))}
@@ -1151,8 +1163,8 @@ export default function AdminOnboardingManagement() {
                         return (
                           <div
                             key={index}
-                            className={`min-h-[120px] p-2 border-r border-b border-gray-200 last:border-r-0 cursor-pointer hover:bg-gray-50 ${
-                              !isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''
+                            className={`min-h-[120px] p-2 border-r border-b border-gray-200 last:border-r-0 cursor-pointer hover:bg-cyan-500/5 ${
+                              !isCurrentMonth ? 'bg-cyan-500/5 text-foreground/40' : ''
                             } ${isToday ? 'bg-blue-50' : ''}`}
                             onClick={() => setSelectedDate(date)}
                           >
@@ -1170,7 +1182,7 @@ export default function AdminOnboardingManagement() {
                                         ? 'bg-green-100 text-green-800'
                                         : session.status === 'scheduled' 
                                           ? 'bg-blue-100 text-blue-800'
-                                          : 'bg-gray-100 text-gray-800'
+                                          : 'bg-foreground/10 text-foreground/80'
                                   }`}
                                 >
                                   {session.is_overdue && '⚠️ '}
@@ -1178,7 +1190,7 @@ export default function AdminOnboardingManagement() {
                                 </div>
                               ))}
                               {sessionsForDay.length > 3 && (
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-foreground/60">
                                   +{sessionsForDay.length - 3} more
                                 </div>
                               )}
@@ -1195,7 +1207,7 @@ export default function AdminOnboardingManagement() {
                   {/* 🚨 CRITICAL ALERTS */}
                   <div className="bg-white rounded-lg border border-red-200 p-4">
                     <h4 className="text-md font-semibold text-red-900 mb-3 flex items-center">
-                      <ExclamationTriangleIcon className="h-5 w-5 text-red-500 mr-2" />
+                      <Warning className="h-5 w-5 text-red-500 mr-2" />
                       🚨 Critical Alerts
                     </h4>
                     <div className="space-y-3">
@@ -1244,7 +1256,7 @@ export default function AdminOnboardingManagement() {
 
                       {progress.filter(p => p.days_until_deactivation !== null && p.days_until_deactivation !== undefined && p.days_until_deactivation <= 3).length === 0 && 
                        sessions.filter(s => s.is_overdue).length === 0 && (
-                        <div className="text-sm text-gray-600 italic">
+                        <div className="text-sm text-foreground/60 italic">
                           ✅ No critical alerts - all trials are on track!
                         </div>
                       )}
@@ -1252,9 +1264,9 @@ export default function AdminOnboardingManagement() {
                   </div>
 
                   {/* Today's Sessions */}
-                  <div className="bg-white rounded-lg border border-gray-200 p-4">
-                    <h4 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
-                      <ClockIcon className="h-5 w-5 text-blue-500 mr-2" />
+                  <div className="bg-white rounded-lg border border-cyan-500/20 p-4">
+                    <h4 className="text-md font-semibold text-foreground mb-3 flex items-center">
+                      <Clock className="h-5 w-5 text-blue-500 mr-2" />
                       Today's Sessions
                     </h4>
                     <div className="space-y-3">
@@ -1274,7 +1286,7 @@ export default function AdminOnboardingManagement() {
                               <span className={`text-xs px-2 py-1 rounded-full ${
                                 session.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
                                 session.status === 'in_progress' ? 'bg-green-100 text-green-800' :
-                                'bg-gray-100 text-gray-800'
+                                'bg-foreground/10 text-foreground/80'
                               }`}>
                                 {session.status.replace('_', ' ')}
                               </span>
@@ -1292,7 +1304,7 @@ export default function AdminOnboardingManagement() {
                           </div>
                         ))
                       ) : (
-                        <p className="text-sm text-gray-600">No sessions scheduled for today</p>
+                        <p className="text-sm text-foreground/60">No sessions scheduled for today</p>
                       )}
                     </div>
                   </div>
@@ -1300,7 +1312,7 @@ export default function AdminOnboardingManagement() {
                   {/* Warning Zone - 4-7 days */}
                   <div className="bg-white rounded-lg border border-orange-200 p-4">
                     <h4 className="text-md font-semibold text-orange-800 mb-3 flex items-center">
-                      <ExclamationTriangleIcon className="h-5 w-5 text-orange-500 mr-2" />
+                      <Warning className="h-5 w-5 text-orange-500 mr-2" />
                       ⚠️ Warning Zone
                     </h4>
                     <div className="space-y-3">
@@ -1326,17 +1338,17 @@ export default function AdminOnboardingManagement() {
                       ))}
                       
                       {progress.filter(p => p.days_until_deactivation !== null && p.days_until_deactivation !== undefined && p.days_until_deactivation > 3 && p.days_until_deactivation <= 7).length === 0 && (
-                        <p className="text-sm text-gray-600">No trials in warning zone</p>
+                        <p className="text-sm text-foreground/60">No trials in warning zone</p>
                       )}
                     </div>
                   </div>
 
                   {/* Quick Stats */}
-                  <div className="bg-white rounded-lg border border-gray-200 p-4">
-                    <h4 className="text-md font-semibold text-gray-900 mb-3">Quick Stats</h4>
+                  <div className="bg-white rounded-lg border border-cyan-500/20 p-4">
+                    <h4 className="text-md font-semibold text-foreground mb-3">Quick Stats</h4>
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">This Week</span>
+                        <span className="text-sm text-foreground/60">This Week</span>
                         <span className="text-sm font-medium">{sessions.filter(s => {
                           const sessionDate = s.scheduled_at ? new Date(s.scheduled_at) : null
                           if (!sessionDate) return false
@@ -1348,17 +1360,17 @@ export default function AdminOnboardingManagement() {
                         }).length} sessions</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Overdue</span>
+                        <span className="text-sm text-foreground/60">Overdue</span>
                         <span className="text-sm font-medium text-red-600">{sessions.filter(s => s.is_overdue).length}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Critical Trials</span>
+                        <span className="text-sm text-foreground/60">Critical Trials</span>
                         <span className="text-sm font-medium text-red-600">
                           {progress.filter(p => p.days_until_deactivation !== null && p.days_until_deactivation !== undefined && p.days_until_deactivation <= 3).length}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Warning Trials</span>
+                        <span className="text-sm text-foreground/60">Warning Trials</span>
                         <span className="text-sm font-medium text-orange-600">
                           {progress.filter(p => p.days_until_deactivation !== null && p.days_until_deactivation !== undefined && p.days_until_deactivation > 3 && p.days_until_deactivation <= 7).length}
                         </span>
@@ -1379,41 +1391,41 @@ export default function AdminOnboardingManagement() {
                     onClick={() => openCreateSessionModal()}
                     className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
                   >
-                    <PlusIcon className="h-4 w-4 mr-2" />
+                    <Plus className="h-4 w-4 mr-2" />
                     Create Session
                   </button>
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-foreground/60">
                   {filteredSessions.length} sessions
                 </div>
               </div>
 
               <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-cyan-500/5">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       User
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Session
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Type
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Scheduled
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Deadline
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       License
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -1437,7 +1449,7 @@ export default function AdminOnboardingManagement() {
                           <div className="text-sm font-medium text-gray-900">
                             {user?.full_name || user?.email || `User ${session.user_id.slice(0, 8)}`}
                           </div>
-                          <div className="text-sm text-gray-500">{user?.email || 'Unknown user'}</div>
+                          <div className="text-sm text-foreground/60">{user?.email || 'Unknown user'}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -1445,11 +1457,11 @@ export default function AdminOnboardingManagement() {
                           <div className="text-sm font-medium text-gray-900 flex items-center space-x-2">
                             <span>{session.title}</span>
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-foreground/60">
                             {session.plugin_id} • Session {session.session_number} • {session.duration_minutes}min
                           </div>
                           {session.description && (
-                            <div className="text-xs text-gray-400 mt-1 truncate max-w-xs">
+                            <div className="text-xs text-foreground/40 mt-1 truncate max-w-xs">
                               {session.description}
                             </div>
                           )}
@@ -1478,7 +1490,7 @@ export default function AdminOnboardingManagement() {
                             )}
                           </div>
                         ) : (
-                          <span className="text-gray-500">No deadline</span>
+                          <span className="text-foreground/60">No deadline</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -1489,7 +1501,7 @@ export default function AdminOnboardingManagement() {
                             session.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
                             session.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
                             session.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
+                            'bg-foreground/10 text-foreground/80'
                           }`}>
                             {isOverdue ? '⚠️ OVERDUE' : session.status.replace('_', ' ')}
                           </span>
@@ -1499,7 +1511,7 @@ export default function AdminOnboardingManagement() {
                         <div className="text-sm text-gray-900">
                           {license?.key_code || 'Unknown License'}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-foreground/60">
                           {license?.license_type} • {license?.status || 'N/A'}
                         </div>
                       </td>
@@ -1523,7 +1535,7 @@ export default function AdminOnboardingManagement() {
                             className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
                             title="View session details"
                           >
-                            <EyeIcon className="h-4 w-4" />
+                            <Eye className="h-4 w-4" />
                           </button>
                           
                           {/* Edit/Notes */}
@@ -1532,7 +1544,7 @@ export default function AdminOnboardingManagement() {
                             className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
                             title="Add session notes"
                           >
-                            <PencilIcon className="h-4 w-4" />
+                            <Pencil className="h-4 w-4" />
                           </button>
                         </div>
                       </td>
@@ -1544,9 +1556,9 @@ export default function AdminOnboardingManagement() {
               
               {filteredSessions.length === 0 && (
                 <div className="text-center py-12">
-                  <CalendarIcon className="mx-auto h-12 w-12 text-gray-400" />
+                  <Calendar className="mx-auto h-12 w-12 text-foreground/40" />
                   <h3 className="mt-2 text-sm font-medium text-gray-900">No sessions found</h3>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-foreground/60">
                     No onboarding sessions match your current filters.
                   </p>
                 </div>
@@ -1558,27 +1570,27 @@ export default function AdminOnboardingManagement() {
           {activeTab === 'users' && (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-cyan-500/5">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       User
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Licenses
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Outstanding Sessions
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Completed Sessions
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Deadlines
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -1631,7 +1643,7 @@ export default function AdminOnboardingManagement() {
                       .sort((a, b) => a.getTime() - b.getTime())[0]
                     
                     return (
-                      <tr key={`progress-${user.id}`} className="hover:bg-gray-50">
+                      <tr key={`progress-${user.id}`} className="hover:bg-cyan-500/5">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10">
@@ -1645,9 +1657,9 @@ export default function AdminOnboardingManagement() {
                             <div className="text-sm font-medium text-gray-900">
                               {user.full_name || user.email}
                             </div>
-                            <div className="text-sm text-gray-500">{user.email}</div>
+                            <div className="text-sm text-foreground/60">{user.email}</div>
                             {user.company && (
-                              <div className="text-xs text-gray-400">{user.company}</div>
+                              <div className="text-xs text-foreground/40">{user.company}</div>
                             )}
                           </div>
                         </div>
@@ -1656,12 +1668,12 @@ export default function AdminOnboardingManagement() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <button
                             onClick={() => openLicenseDetailsModal(user.licenses, user.full_name || user.email)}
-                            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-cyan-500/5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                           >
                             <span className="text-lg font-semibold text-blue-600">{user.licenses.length}</span>
-                            <span className="ml-1 text-gray-500">{user.licenses.length === 1 ? 'license' : 'licenses'}</span>
+                            <span className="ml-1 text-foreground/60">{user.licenses.length === 1 ? 'license' : 'licenses'}</span>
                           </button>
-                          <div className="mt-1 text-xs text-gray-500">
+                          <div className="mt-1 text-xs text-foreground/60">
                             {user.licenses.filter(l => l.license_type === 'trial').length > 0 && 
                               `${user.licenses.filter(l => l.license_type === 'trial').length} trial`}
                             {user.licenses.filter(l => l.license_type !== 'trial').length > 0 && 
@@ -1673,11 +1685,11 @@ export default function AdminOnboardingManagement() {
                           <div className="space-y-1">
                             <div className="text-sm">
                               <span className="font-medium text-red-600">{requiredOutstanding}</span>
-                              <span className="text-gray-500 ml-1">required</span>
+                              <span className="text-foreground/60 ml-1">required</span>
                             </div>
                             <div className="text-sm">
                               <span className="font-medium text-orange-600">{optionalOutstanding}</span>
-                              <span className="text-gray-500 ml-1">optional</span>
+                              <span className="text-foreground/60 ml-1">optional</span>
                             </div>
                           </div>
                         </td>
@@ -1686,7 +1698,7 @@ export default function AdminOnboardingManagement() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-center">
                             <span className="text-lg font-semibold text-green-600">{completedSessions}</span>
-                            <div className="text-xs text-gray-500">completed</div>
+                            <div className="text-xs text-foreground/60">completed</div>
                           </div>
                         </td>
                         {/* Status Column */}
@@ -1706,14 +1718,14 @@ export default function AdminOnboardingManagement() {
                               }`}>
                                 {closestDeadline.toLocaleDateString()}
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-foreground/60">
                                 {closestDeadline < new Date() ? 'Overdue' : 
                                  closestDeadline <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) ? 'Due soon' : 
                                  'Upcoming'}
                               </div>
                             </div>
                           ) : (
-                            <span className="text-sm text-gray-500">No deadlines</span>
+                            <span className="text-sm text-foreground/60">No deadlines</span>
                           )}
                         </td>
                         {/* Actions Column */}
@@ -1736,9 +1748,9 @@ export default function AdminOnboardingManagement() {
               
               {filteredUsersWithProgress.length === 0 && (
                 <div className="text-center py-12">
-                  <UserGroupIcon className="mx-auto h-12 w-12 text-gray-400" />
+                  <UserGroup className="mx-auto h-12 w-12 text-foreground/40" />
                   <h3 className="mt-2 text-sm font-medium text-gray-900">No users found</h3>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-foreground/60">
                     No users match your current filters.
                   </p>
                 </div>
@@ -1748,7 +1760,7 @@ export default function AdminOnboardingManagement() {
 
           {/* Availability Tab */}
           {activeTab === 'availability' && (
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="glass-card p-6">
               {/* Calendar Header */}
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">
@@ -1757,21 +1769,21 @@ export default function AdminOnboardingManagement() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => navigateAvailabilityMonth('prev')}
-                    className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                    className="px-3 py-2 border border-gray-300 rounded-md hover:bg-cyan-500/5"
                   >
-                    <ChevronLeftIcon className="h-5 w-5" />
+                    <CaretLeft className="h-5 w-5" />
                   </button>
                   <button
                     onClick={() => setAvailabilityCurrentDate(new Date())}
-                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                    className="px-4 py-2 border border-gray-300 rounded-md hover:bg-cyan-500/5"
                   >
                     Today
                   </button>
                   <button
                     onClick={() => navigateAvailabilityMonth('next')}
-                    className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                    className="px-3 py-2 border border-gray-300 rounded-md hover:bg-cyan-500/5"
                   >
-                    <ChevronRightIcon className="h-5 w-5" />
+                    <CaretRight className="h-5 w-5" />
                   </button>
                 </div>
               </div>
@@ -1797,7 +1809,7 @@ export default function AdminOnboardingManagement() {
                       key={index}
                       className={`
                         min-h-[120px] border rounded-lg p-2 transition-all
-                        ${date ? 'bg-white border-gray-200' : 'bg-gray-50 border-transparent'}
+                        ${date ? 'bg-white border-gray-200' : 'bg-cyan-500/5 border-transparent'}
                         ${isToday ? 'ring-2 ring-blue-500' : ''}
                         ${date && !isPast ? 'hover:shadow-md cursor-pointer' : ''}
                         ${isPast && date ? 'opacity-50' : ''}
@@ -1826,7 +1838,7 @@ export default function AdminOnboardingManagement() {
                                 </div>
                               ))}
                               {daySlots.length > 3 && (
-                                <div className="text-xs text-gray-600 text-center">
+                                <div className="text-xs text-foreground/60 text-center">
                                   +{daySlots.length - 3} more
                                 </div>
                               )}
@@ -1834,7 +1846,7 @@ export default function AdminOnboardingManagement() {
                           )}
 
                           {daySlots.length === 0 && !isPast && (
-                            <div className="text-xs text-gray-400 text-center mt-4">
+                            <div className="text-xs text-foreground/40 text-center mt-4">
                               Click to add
                             </div>
                           )}
@@ -1865,20 +1877,20 @@ export default function AdminOnboardingManagement() {
 
           {/* Bookings Tab */}
           {activeTab === 'bookings' && (
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="glass-card p-6">
               <div className="text-center py-8">
-                <CalendarIcon className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <Calendar className="h-16 w-16 mx-auto text-foreground/40 mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">
                   Bookings Management
                 </h3>
-                <p className="text-gray-600 mb-4">
+                <p className="text-foreground/60 mb-4">
                   View and manage all onboarding session bookings
                 </p>
                 <a
                   href="/admin/onboarding/bookings"
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
-                  <CalendarIcon className="h-5 w-5 mr-2" />
+                  <Calendar className="h-5 w-5 mr-2" />
                   Open Bookings Page
                 </a>
               </div>
@@ -1891,11 +1903,11 @@ export default function AdminOnboardingManagement() {
       {showCreateSessionModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Create Onboarding Session</h3>
+            <h3 className="text-lg font-medium text-foreground mb-4">Create Onboarding Session</h3>
             
             <div className="space-y-4">
               {/* User Selection with Search and Filters */}
-              <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+              <div className="border border-gray-300 rounded-lg p-4 bg-cyan-500/5">
                 <label className="block text-sm font-semibold text-gray-900 mb-3">Select User</label>
 
                 {/* Search Bar */}
@@ -1979,7 +1991,7 @@ export default function AdminOnboardingManagement() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm text-gray-900 bg-white"
                     size={8}
                   >
-                    <option value="" className="text-gray-500">Select a user...</option>
+                    <option value="" className="text-foreground/60">Select a user...</option>
                     {filteredUsers.map(user => {
                       const displayName = user.full_name || user.email?.split('@')[0] || 'Unknown'
                       const userKey = user.user_key || 'No Key'
@@ -1995,7 +2007,7 @@ export default function AdminOnboardingManagement() {
                       )
                     })}
                   </select>
-                  <div className="mt-1 text-xs text-gray-600">
+                  <div className="mt-1 text-xs text-foreground/60">
                     Showing {filteredUsers.length} of {users.length} users
                   </div>
                 </div>
@@ -2016,27 +2028,27 @@ export default function AdminOnboardingManagement() {
                           <div className="font-medium text-gray-700 mb-1">License Summary:</div>
                           <div className="grid grid-cols-3 gap-2 text-xs">
                             <div>
-                              <span className="text-gray-600">Total:</span>
+                              <span className="text-foreground/60">Total:</span>
                               <span className="ml-1 font-semibold text-gray-900">{users.find(u => u.id === createSessionForm.user_id)?.license_summary?.total}</span>
                             </div>
                             <div>
-                              <span className="text-gray-600">Centcom:</span>
+                              <span className="text-foreground/60">Centcom:</span>
                               <span className="ml-1 font-semibold text-gray-900">{users.find(u => u.id === createSessionForm.user_id)?.license_summary?.centcom}</span>
                             </div>
                             <div>
-                              <span className="text-gray-600">Plugin:</span>
+                              <span className="text-foreground/60">Plugin:</span>
                               <span className="ml-1 font-semibold text-gray-900">{users.find(u => u.id === createSessionForm.user_id)?.license_summary?.plugin}</span>
                             </div>
                             <div>
-                              <span className="text-gray-600">Active:</span>
+                              <span className="text-foreground/60">Active:</span>
                               <span className="ml-1 font-semibold text-green-700">{users.find(u => u.id === createSessionForm.user_id)?.license_summary?.active}</span>
                             </div>
                             <div>
-                              <span className="text-gray-600">Trial:</span>
+                              <span className="text-foreground/60">Trial:</span>
                               <span className="ml-1 font-semibold text-yellow-700">{users.find(u => u.id === createSessionForm.user_id)?.license_summary?.trial}</span>
                             </div>
                             <div>
-                              <span className="text-gray-600">Expired:</span>
+                              <span className="text-foreground/60">Expired:</span>
                               <span className="ml-1 font-semibold text-red-700">{users.find(u => u.id === createSessionForm.user_id)?.license_summary?.expired}</span>
                             </div>
                           </div>
@@ -2051,11 +2063,11 @@ export default function AdminOnboardingManagement() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">License</label>
                 {loadingUserLicenses ? (
-                  <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
+                  <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-cyan-500/5 text-foreground/60">
                     Loading licenses...
                   </div>
                 ) : userLicenses.length === 0 ? (
-                  <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
+                  <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-cyan-500/5 text-foreground/60">
                     {createSessionForm.user_id ? 'No licenses found for this user' : 'Select a user first'}
                   </div>
                 ) : (
@@ -2102,7 +2114,7 @@ export default function AdminOnboardingManagement() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Session Template</label>
                   {loadingTemplates ? (
-                    <div className="text-sm text-gray-500">Loading templates...</div>
+                    <div className="text-sm text-foreground/60">Loading templates...</div>
                   ) : (
                     <select
                       value={createSessionForm.template_id}
@@ -2120,12 +2132,12 @@ export default function AdminOnboardingManagement() {
                   
                   {/* Template Preview */}
                   {createSessionForm.template_id && templates.find(t => t.id === createSessionForm.template_id) && (
-                    <div className="mt-2 p-3 bg-gray-50 rounded-md">
+                    <div className="mt-2 p-3 bg-cyan-500/5 rounded-md">
                       <h4 className="text-sm font-medium text-gray-900">Template Details:</h4>
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p className="text-sm text-foreground/60 mt-1">
                         {templates.find(t => t.id === createSessionForm.template_id)?.description}
                       </p>
-                      <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                      <div className="flex items-center space-x-4 mt-2 text-xs text-foreground/60">
                         <span>Duration: {templates.find(t => t.id === createSessionForm.template_id)?.duration_minutes} min</span>
                         <span>Plugin: {templates.find(t => t.id === createSessionForm.template_id)?.plugin_id}</span>
                         <span className={templates.find(t => t.id === createSessionForm.template_id)?.is_mandatory ? 'text-red-600' : 'text-green-600'}>
@@ -2201,20 +2213,20 @@ export default function AdminOnboardingManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-medium text-gray-900">
+              <h3 className="text-lg font-medium text-foreground">
                 License Details - {selectedUserName}
               </h3>
               <button
                 onClick={() => setShowLicenseDetailsModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-foreground/40 hover:text-foreground/60"
               >
-                <XMarkIcon className="h-6 w-6" />
+                <X className="h-6 w-6" />
               </button>
             </div>
             
             <div className="space-y-4">
               {selectedUserLicenses.map((license) => (
-                <div key={license.id} className="border border-gray-200 rounded-lg p-4">
+                <div key={license.id} className="border border-cyan-500/20 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-3">
                       <span className={`px-3 py-1 text-sm font-medium rounded-full ${getLicenseTypeColor(license.license_type)}`}>
@@ -2225,7 +2237,7 @@ export default function AdminOnboardingManagement() {
                       </span>
                     </div>
                     <span className={`px-2 py-1 text-xs rounded-full ${
-                      license.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      license.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-foreground/10 text-foreground/80'
                     }`}>
                       {license.status}
                     </span>
@@ -2233,20 +2245,20 @@ export default function AdminOnboardingManagement() {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="font-medium text-gray-500">Assigned:</span>
+                      <span className="font-medium text-foreground/60">Assigned:</span>
                       <span className="ml-2 text-gray-900">
                         {license.assigned_at ? new Date(license.assigned_at).toLocaleDateString() : 'N/A'}
                       </span>
                     </div>
                     <div>
-                      <span className="font-medium text-gray-500">Expires:</span>
+                      <span className="font-medium text-foreground/60">Expires:</span>
                       <span className="ml-2 text-gray-900">
                         {license.expires_at ? new Date(license.expires_at).toLocaleDateString() : 'Never'}
                       </span>
                     </div>
                     {license.enabled_plugins && (
                       <div className="md:col-span-2">
-                        <span className="font-medium text-gray-500">Enabled Plugins:</span>
+                        <span className="font-medium text-foreground/60">Enabled Plugins:</span>
                         <div className="mt-1 flex flex-wrap gap-2">
                           {license.enabled_plugins.map((plugin, idx) => (
                             <span key={idx} className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
@@ -2262,14 +2274,14 @@ export default function AdminOnboardingManagement() {
                     <div className="mt-4 pt-4 border-t border-gray-100">
                       <h4 className="text-sm font-medium text-gray-900 mb-2">Onboarding Progress</h4>
                       {license.onboarding_progress.map((progress, idx) => (
-                        <div key={idx} className="bg-gray-50 rounded p-3 mb-2">
+                        <div key={idx} className="bg-cyan-500/5 rounded p-3 mb-2">
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-sm font-medium text-gray-700">Plugin: {progress.plugin_id || 'centcom'}</span>
                             <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(progress.overall_status)}`}>
                               {progress.overall_status.replace('_', ' ')}
                             </span>
                           </div>
-                          <div className="flex items-center space-x-4 text-sm text-gray-600">
+                          <div className="flex items-center space-x-4 text-sm text-foreground/60">
                             <span>Sessions: {progress.sessions_completed}/{progress.total_sessions_required}</span>
                             {progress.onboarding_deadline && (
                               <span>Deadline: {new Date(progress.onboarding_deadline).toLocaleDateString()}</span>
@@ -2283,7 +2295,7 @@ export default function AdminOnboardingManagement() {
                                   style={{ width: `${progress.completion_rate}%` }}
                                 ></div>
                               </div>
-                              <span className="text-xs text-gray-500 mt-1">{progress.completion_rate}% complete</span>
+                              <span className="text-xs text-foreground/60 mt-1">{progress.completion_rate}% complete</span>
                             </div>
                           )}
                         </div>
@@ -2294,7 +2306,7 @@ export default function AdminOnboardingManagement() {
               ))}
               
               {selectedUserLicenses.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-foreground/60">
                   No licenses found for this user.
                 </div>
               )}
@@ -2329,17 +2341,17 @@ export default function AdminOnboardingManagement() {
                     <h3 className="text-xl font-medium text-gray-900">
                       {selectedUser.full_name || selectedUser.email}
                     </h3>
-                    <p className="text-sm text-gray-600">{selectedUser.email}</p>
+                    <p className="text-sm text-foreground/60">{selectedUser.email}</p>
                     {selectedUser.company && (
-                      <p className="text-sm text-gray-500">{selectedUser.company}</p>
+                      <p className="text-sm text-foreground/60">{selectedUser.company}</p>
                     )}
                   </div>
                 </div>
                 <button
                   onClick={() => setShowUserModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-foreground/40 hover:text-foreground/60"
                 >
-                  <XCircleIcon className="h-8 w-8" />
+                  <XCircle className="h-8 w-8" />
                 </button>
               </div>
 
@@ -2347,31 +2359,31 @@ export default function AdminOnboardingManagement() {
               <div className="flex-1 overflow-y-auto p-6 min-h-0" style={{maxHeight: 'calc(90vh - 120px)'}}>
                 <div className="space-y-8">
                   {/* User Information */}
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="text-lg font-medium text-gray-900 mb-3">User Information</h4>
+                  <div className="bg-cyan-500/5 rounded-lg p-4">
+                    <h4 className="text-lg font-medium text-foreground mb-3">User Information</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Email</label>
+                        <label className="text-sm font-medium text-foreground/60">Email</label>
                         <p className="text-sm text-gray-900">{selectedUser.email}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Full Name</label>
+                        <label className="text-sm font-medium text-foreground/60">Full Name</label>
                         <p className="text-sm text-gray-900">{selectedUser.full_name || 'Not provided'}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Company</label>
+                        <label className="text-sm font-medium text-foreground/60">Company</label>
                         <p className="text-sm text-gray-900">{selectedUser.company || 'Not provided'}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Created</label>
+                        <label className="text-sm font-medium text-foreground/60">Created</label>
                         <p className="text-sm text-gray-900">{new Date(selectedUser.created_at).toLocaleDateString()}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Total Licenses</label>
+                        <label className="text-sm font-medium text-foreground/60">Total Licenses</label>
                         <p className="text-sm text-gray-900">{selectedUser.licenses.length}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Active Licenses</label>
+                        <label className="text-sm font-medium text-foreground/60">Active Licenses</label>
                         <p className="text-sm text-gray-900">
                           {selectedUser.licenses.filter(l => l.status === 'active').length}
                         </p>
@@ -2381,24 +2393,24 @@ export default function AdminOnboardingManagement() {
 
                   {/* Licenses and Onboarding Progress */}
                   {selectedUser.licenses.map((license) => (
-                    <div key={license.id} className="border border-gray-200 rounded-lg p-6">
+                    <div key={license.id} className="border border-cyan-500/20 rounded-lg p-6">
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center space-x-3">
                           <span className={`px-3 py-1 text-sm font-medium rounded-full ${getLicenseTypeColor(license.license_type)}`}>
                             {license.license_type.toUpperCase()}
                           </span>
-                          <span className="text-lg font-medium text-gray-900">
+                          <span className="text-lg font-medium text-foreground">
                             License: {license.key_code}
                           </span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <span className={`px-2 py-1 text-xs rounded-full ${
-                            license.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                            license.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-foreground/10 text-foreground/80'
                           }`}>
                             {license.status}
                           </span>
                           {license.expires_at && (
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm text-foreground/60">
                               Expires: {new Date(license.expires_at).toLocaleDateString()}
                             </span>
                           )}
@@ -2421,7 +2433,7 @@ export default function AdminOnboardingManagement() {
                           <h5 className="text-sm font-medium text-gray-700 mb-2">License Status</h5>
                           <p className="text-sm text-gray-900">{license.status}</p>
                           {license.expires_at && (
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-foreground/60 mt-1">
                               Expires on {new Date(license.expires_at).toLocaleDateString()}
                             </p>
                           )}
@@ -2431,7 +2443,7 @@ export default function AdminOnboardingManagement() {
                       {/* Onboarding Progress */}
                       {license.onboarding_progress && license.onboarding_progress.length > 0 ? (
                         <div>
-                          <h5 className="text-lg font-medium text-gray-900 mb-4">Onboarding Progress</h5>
+                          <h5 className="text-lg font-medium text-foreground mb-4">Onboarding Progress</h5>
                           <div className="space-y-4">
                             {license.onboarding_progress.map((progress, idx) => (
                               <div key={idx} className="bg-white border rounded-lg p-4">
@@ -2444,7 +2456,7 @@ export default function AdminOnboardingManagement() {
                                   </div>
                                   <div className="text-right">
                                     <div className="text-sm font-medium text-gray-900">{progress.completion_rate}%</div>
-                                    <div className="text-xs text-gray-500">
+                                    <div className="text-xs text-foreground/60">
                                       {progress.sessions_completed}/{progress.total_sessions_required} sessions
                                     </div>
                                   </div>
@@ -2460,14 +2472,14 @@ export default function AdminOnboardingManagement() {
 
                                 {/* Deadline Information */}
                                 {progress.onboarding_deadline && (
-                                  <div className="mb-4 p-3 rounded-lg bg-gray-50">
+                                  <div className="mb-4 p-3 rounded-lg bg-cyan-500/5">
                                     <div className="flex items-center justify-between">
                                       <span className="text-sm font-medium text-gray-700">Deadline</span>
                                       <div className="text-right">
                                         <div className="text-sm text-gray-900">
                                           {new Date(progress.onboarding_deadline).toLocaleDateString()}
                                         </div>
-                                        <div className={`text-xs ${progress.is_overdue ? 'text-red-600' : 'text-gray-500'}`}>
+                                        <div className={`text-xs ${progress.is_overdue ? 'text-red-600' : 'text-foreground/60'}`}>
                                           {progress.days_until_deadline && progress.days_until_deadline > 0 
                                             ? `${progress.days_until_deadline} days remaining`
                                             : progress.is_overdue 
@@ -2519,7 +2531,7 @@ export default function AdminOnboardingManagement() {
                                           </div>
                                         ))
                                       ) : (
-                                        <div className="text-sm text-gray-500 italic">No upcoming sessions</div>
+                                        <div className="text-sm text-foreground/60 italic">No upcoming sessions</div>
                                       )}
                                     </div>
                                   </div>
@@ -2541,12 +2553,12 @@ export default function AdminOnboardingManagement() {
                                                   }
                                                 </div>
                                               </div>
-                                              <CheckCircleIcon className="h-4 w-4 text-green-600" />
+                                              <CheckCircle className="h-4 w-4 text-green-600" />
                                             </div>
                                           </div>
                                         ))
                                       ) : (
-                                        <div className="text-sm text-gray-500 italic">No completed sessions</div>
+                                        <div className="text-sm text-foreground/60 italic">No completed sessions</div>
                                       )}
                                     </div>
                                   </div>
@@ -2557,25 +2569,25 @@ export default function AdminOnboardingManagement() {
                         </div>
                       ) : (
                         <div className="text-center py-8">
-                          <div className="text-gray-400 mb-2">
-                            <CheckCircleIcon className="h-12 w-12 mx-auto" />
+                          <div className="text-foreground/40 mb-2">
+                            <CheckCircle className="h-12 w-12 mx-auto" />
                           </div>
-                          <h5 className="text-lg font-medium text-gray-900 mb-1">No Onboarding Required</h5>
-                          <p className="text-sm text-gray-500">This license doesn't require onboarding sessions.</p>
+                          <h5 className="text-lg font-medium text-foreground mb-1">No Onboarding Required</h5>
+                          <p className="text-sm text-foreground/60">This license doesn't require onboarding sessions.</p>
                         </div>
                       )}
                     </div>
                   ))}
 
                   {/* Quick Actions */}
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="text-lg font-medium text-gray-900 mb-3">Quick Actions</h4>
+                  <div className="bg-cyan-500/5 rounded-lg p-4">
+                    <h4 className="text-lg font-medium text-foreground mb-3">Quick Actions</h4>
                     <div className="flex flex-wrap gap-3">
                       <button 
                         onClick={() => openCreateSessionModal(selectedUser.id, selectedUser.licenses[0]?.id)}
                         className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
                       >
-                        <PlusIcon className="h-4 w-4 mr-2" />
+                        <Plus className="h-4 w-4 mr-2" />
                         Create Session
                       </button>
                       <button 
@@ -2586,7 +2598,7 @@ export default function AdminOnboardingManagement() {
                         }}
                         className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center"
                       >
-                        <CalendarIcon className="h-4 w-4 mr-2" />
+                        <Calendar className="h-4 w-4 mr-2" />
                         Schedule New Session
                       </button>
                       {selectedUser.licenses.length > 0 && (
@@ -2594,7 +2606,7 @@ export default function AdminOnboardingManagement() {
                           onClick={() => autoCreateSessions(selectedUser.id, selectedUser.licenses[0].id)}
                           className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center"
                         >
-                          <CalendarIcon className="h-4 w-4 mr-2" />
+                          <Calendar className="h-4 w-4 mr-2" />
                           Auto-Create Sessions
                         </button>
                       )}
@@ -2602,7 +2614,7 @@ export default function AdminOnboardingManagement() {
                         onClick={() => setActiveTab('calendar')}
                         className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 flex items-center"
                       >
-                        <ChartBarIcon className="h-4 w-4 mr-2" />
+                        <ChartBar className="h-4 w-4 mr-2" />
                         View Calendar
                       </button>
                     </div>
@@ -2629,20 +2641,20 @@ export default function AdminOnboardingManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-2xl w-full p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">
+              <h3 className="text-lg font-medium text-foreground">
                 Session Notes - {selectedSession.title}
               </h3>
               <button
                 onClick={() => setShowNotesModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-foreground/40 hover:text-foreground/60"
               >
-                <XCircleIcon className="h-6 w-6" />
+                <XCircle className="h-6 w-6" />
               </button>
             </div>
             
             <div className="mb-4">
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <div className="text-sm text-gray-600">
+              <div className="bg-cyan-500/5 p-3 rounded-lg">
+                <div className="text-sm text-foreground/60">
                   <p><strong>User:</strong> {selectedSession.user_profiles?.email || `User ${selectedSession.user_id}`}</p>
                   <p><strong>Session:</strong> {selectedSession.plugin_id} • Session {selectedSession.session_number}</p>
                   <p><strong>Status:</strong> {selectedSession.status.replace('_', ' ')}</p>
@@ -2672,13 +2684,13 @@ Examples:
 • Next steps or recommendations"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               />
-              <div className="mt-1 text-xs text-gray-500">
+              <div className="mt-1 text-xs text-foreground/60">
                 Notes are private to admins and help track session progress and issues.
               </div>
             </div>
 
             <div className="flex justify-between items-center">
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-foreground/60">
                 {selectedSession.session_notes ? 'Last updated: ' + new Date().toLocaleDateString() : 'No previous notes'}
               </div>
               <div className="flex space-x-3">
@@ -2706,14 +2718,14 @@ Examples:
           <div className="bg-white rounded-lg max-w-md w-full">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-lg font-medium text-foreground">
                   {selectedScheduleSession.scheduled_at ? 'Reschedule Session' : 'Schedule Session'}
                 </h3>
                 <button
                   onClick={() => setShowScheduleModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-foreground/40 hover:text-foreground/60"
                 >
-                  <XMarkIcon className="h-6 w-6" />
+                  <X className="h-6 w-6" />
                 </button>
               </div>
 
@@ -2722,7 +2734,7 @@ Examples:
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Session
                   </label>
-                  <div className="text-sm text-gray-900 p-2 bg-gray-50 rounded">
+                  <div className="text-sm text-gray-900 p-2 bg-cyan-500/5 rounded">
                     {selectedScheduleSession.title}
                   </div>
                 </div>
@@ -2901,7 +2913,7 @@ Examples:
                 <button
                   type="button"
                   onClick={() => { setShowAvailabilityModal(false); resetAvailabilityForm() }}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-cyan-500/5"
                 >Cancel</button>
               </div>
             </form>

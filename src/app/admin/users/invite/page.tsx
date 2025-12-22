@@ -4,14 +4,14 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-  UserPlusIcon,
-  ArrowLeftIcon,
-  KeyIcon,
-  EnvelopeIcon,
-  UserIcon,
-  BuildingOfficeIcon,
-  ShieldCheckIcon
-} from '@heroicons/react/24/outline'
+  UserPlus,
+  ArrowLeft,
+  Key,
+  Envelope,
+  User,
+  Buildings,
+  ShieldCheck
+} from '@phosphor-icons/react'
 
 export default function InviteUserPage() {
   const router = useRouter()
@@ -71,39 +71,39 @@ export default function InviteUserPage() {
           <div className="flex items-center space-x-3">
             <Link
               href="/admin/users"
-              className="inline-flex items-center text-gray-500 hover:text-gray-700"
+              className="inline-flex items-center text-foreground/60 hover:text-cyan-400 transition-colors"
             >
-              <ArrowLeftIcon className="h-5 w-5 mr-2" />
+              <ArrowLeft className="h-5 w-5 mr-2" />
               Back to Users
             </Link>
           </div>
-          <h1 className="mt-2 text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+          <h1 className="mt-2 text-2xl font-bold leading-7 text-foreground sm:text-3xl sm:truncate">
             Invite New User
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-foreground/60">
             Create and invite a new user to the platform
           </p>
         </div>
       </div>
 
       {/* Form */}
-      <div className="bg-white shadow sm:rounded-lg">
+      <div className="glass-card">
         <div className="px-4 py-5 sm:p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Information */}
             <div>
-              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                <UserIcon className="inline h-5 w-5 mr-2" />
+              <h3 className="text-lg leading-6 font-medium text-foreground mb-4">
+                <User className="inline h-5 w-5 mr-2 text-cyan-400" weight="duotone" />
                 Basic Information
               </h3>
               <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="email" className="block text-sm font-medium text-foreground/60">
                     Email Address *
                   </label>
                   <div className="mt-1 relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <EnvelopeIcon className="h-5 w-5 text-gray-400" />
+                      <Envelope className="h-5 w-5 text-cyan-400" />
                     </div>
                     <input
                       type="email"
@@ -111,14 +111,14 @@ export default function InviteUserPage() {
                       required
                       value={formData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="block w-full pl-10 pr-3 py-2.5 rounded-xl glass-input text-foreground placeholder-foreground/40"
                       placeholder="user@company.com"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="full_name" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="full_name" className="block text-sm font-medium text-foreground/60">
                     Full Name
                   </label>
                   <input
@@ -126,13 +126,13 @@ export default function InviteUserPage() {
                     id="full_name"
                     value={formData.full_name}
                     onChange={(e) => handleInputChange('full_name', e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="mt-1 block w-full px-4 py-2.5 rounded-xl glass-input text-foreground placeholder-foreground/40"
                     placeholder="John Doe"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="username" className="block text-sm font-medium text-foreground/60">
                     Username
                   </label>
                   <input
@@ -140,18 +140,18 @@ export default function InviteUserPage() {
                     id="username"
                     value={formData.username}
                     onChange={(e) => handleInputChange('username', e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className="mt-1 block w-full px-4 py-2.5 rounded-xl glass-input text-foreground placeholder-foreground/40"
                     placeholder="jdoe"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="company" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="company" className="block text-sm font-medium text-foreground/60">
                     Company *
                   </label>
                   <div className="mt-1 relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <BuildingOfficeIcon className="h-5 w-5 text-gray-400" />
+                      <Buildings className="h-5 w-5 text-cyan-400" />
                     </div>
                     <input
                       type="text"
@@ -159,7 +159,7 @@ export default function InviteUserPage() {
                       required
                       value={formData.company}
                       onChange={(e) => handleInputChange('company', e.target.value)}
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      className="block w-full pl-10 pr-3 py-2.5 rounded-xl glass-input text-foreground placeholder-foreground/40"
                       placeholder="Acme Corp"
                     />
                   </div>
@@ -169,26 +169,26 @@ export default function InviteUserPage() {
 
             {/* Role & Permissions */}
             <div>
-              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                <ShieldCheckIcon className="inline h-5 w-5 mr-2" />
+              <h3 className="text-lg leading-6 font-medium text-foreground mb-4">
+                <ShieldCheck className="inline h-5 w-5 mr-2 text-cyan-400" weight="duotone" />
                 Role & Permissions
               </h3>
               <div>
-                <label htmlFor="role" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="role" className="block text-sm font-medium text-foreground/60">
                   User Role
                 </label>
                 <select
                   id="role"
                   value={formData.role}
                   onChange={(e) => handleInputChange('role', e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full px-4 py-2.5 rounded-xl glass-input text-foreground"
                 >
                   <option value="viewer">Viewer - View only access</option>
                   <option value="analyst">Analyst - Data analysis and reporting</option>
                   <option value="engineer">Engineer - Full measurement capabilities</option>
                   <option value="admin">Admin - Full administrative access</option>
                 </select>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-foreground/60">
                   Role determines the user's permissions and access level in the platform
                 </p>
               </div>
@@ -196,8 +196,8 @@ export default function InviteUserPage() {
 
             {/* License Options */}
             <div>
-              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                <KeyIcon className="inline h-5 w-5 mr-2" />
+              <h3 className="text-lg leading-6 font-medium text-foreground mb-4">
+                <Key className="inline h-5 w-5 mr-2 text-cyan-400" weight="duotone" />
                 License Options
               </h3>
               
@@ -208,24 +208,24 @@ export default function InviteUserPage() {
                     type="checkbox"
                     checked={formData.create_license}
                     onChange={(e) => handleInputChange('create_license', e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-cyan-500/20 rounded"
                   />
-                  <label htmlFor="create_license" className="ml-2 block text-sm text-gray-900">
+                  <label htmlFor="create_license" className="ml-2 block text-sm text-foreground">
                     Create license for this user
                   </label>
                 </div>
 
                 {formData.create_license && (
-                  <div className="ml-6 space-y-4 border-l-2 border-gray-200 pl-4">
+                  <div className="ml-6 space-y-4 border-l-2 border-cyan-500/20 pl-4">
                     <div>
-                      <label htmlFor="license_type" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="license_type" className="block text-sm font-medium text-foreground/60">
                         License Type
                       </label>
                       <select
                         id="license_type"
                         value={formData.license_type}
                         onChange={(e) => handleInputChange('license_type', e.target.value)}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full px-4 py-2.5 rounded-xl glass-input text-foreground"
                       >
                         <option value="trial">Trial - 30 day trial license</option>
                         <option value="standard">Standard - Basic features</option>
@@ -235,14 +235,14 @@ export default function InviteUserPage() {
                     </div>
 
                     <div>
-                      <label htmlFor="license_plugin" className="block text-sm font-medium text-gray-700">
+                      <label htmlFor="license_plugin" className="block text-sm font-medium text-foreground/60">
                         Plugin Access
                       </label>
                       <select
                         id="license_plugin"
                         value={formData.license_plugin}
                         onChange={(e) => handleInputChange('license_plugin', e.target.value)}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full px-4 py-2.5 rounded-xl glass-input text-foreground"
                       >
                         <option value="basic">Basic - Core functionality</option>
                         <option value="klippel_qc">Klippel QC - Quality control tools</option>
@@ -257,8 +257,8 @@ export default function InviteUserPage() {
 
             {/* Email Options */}
             <div>
-              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                <EnvelopeIcon className="inline h-5 w-5 mr-2" />
+              <h3 className="text-lg leading-6 font-medium text-foreground mb-4">
+                <Envelope className="inline h-5 w-5 mr-2 text-cyan-400" weight="duotone" />
                 Email Options
               </h3>
               <div className="flex items-center">
@@ -267,13 +267,13 @@ export default function InviteUserPage() {
                   type="checkbox"
                   checked={formData.send_email}
                   onChange={(e) => handleInputChange('send_email', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-cyan-500/20 rounded"
                 />
-                <label htmlFor="send_email" className="ml-2 block text-sm text-gray-900">
+                <label htmlFor="send_email" className="ml-2 block text-sm text-foreground">
                   Send invitation email to user
                 </label>
               </div>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-foreground/60">
                 When enabled, the user will receive an email with login instructions and temporary password
               </p>
             </div>
@@ -282,23 +282,23 @@ export default function InviteUserPage() {
             <div className="flex justify-end space-x-3 pt-6">
               <Link
                 href="/admin/users"
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="btn-glass px-4 py-2"
               >
                 Cancel
               </Link>
               <button
                 type="submit"
                 disabled={loading || !formData.email || !formData.company}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-cyan-500/20 border-t-cyan-500 mr-2"></div>
                     Creating...
                   </>
                 ) : (
                   <>
-                    <UserPlusIcon className="-ml-1 mr-2 h-5 w-5" />
+                    <UserPlus className="-ml-1 mr-2 h-5 w-5" />
                     Invite User
                   </>
                 )}

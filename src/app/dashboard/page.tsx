@@ -6,27 +6,27 @@ import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/DashboardLayout'
 import OnboardingCalendar from '@/components/OnboardingCalendar'
 import {
-  TableCellsIcon,
-  CubeIcon,
-  UserGroupIcon,
-  ChartBarIcon,
-  ExclamationTriangleIcon,
-  AcademicCapIcon,
-  CalendarIcon,
-  ClockIcon,
-  CheckCircleIcon,
-  XMarkIcon,
-  VideoCameraIcon,
-  PlusIcon,
-  TicketIcon,
-  ChatBubbleLeftRightIcon,
-  NewspaperIcon,
-  UserIcon,
-  MapPinIcon,
-  ArrowRightIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon
-} from '@heroicons/react/24/outline'
+  Table,
+  Cube,
+  UsersThree,
+  ChartBar,
+  Warning,
+  GraduationCap,
+  Calendar,
+  Clock,
+  CheckCircle,
+  X,
+  VideoCamera,
+  Plus,
+  Ticket,
+  ChatCircle,
+  Newspaper,
+  User,
+  MapPin,
+  ArrowRight,
+  CaretLeft,
+  CaretRight
+} from '@phosphor-icons/react'
 
 interface DashboardStats {
   testDataProjects: number
@@ -161,19 +161,12 @@ export default function Dashboard() {
   // Helper: Get product badge color based on category and product name
   const getProductBadgeStyle = (category?: string, productName?: string) => {
     if (category === 'native_app') {
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+      return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-300'
     }
 
     if (category === 'plugin') {
-      // Differentiate plugins by name
-      if (productName?.toLowerCase().includes('klippel')) {
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
-      }
-      if (productName?.toLowerCase().includes('apx')) {
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-      }
-      // Default plugin color
-      return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+      // All plugins use emerald
+      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
     }
 
     // Fallback for other or unknown categories
@@ -270,56 +263,43 @@ export default function Dashboard() {
     }
   }
 
-  // Fetch onboarding sessions - Query directly from Supabase (bypasses hanging getSession)
+  // Fetch onboarding sessions via API endpoint (avoids RLS timeout issues)
   const fetchOnboardingSessions = async () => {
     if (!user) {
       console.log('No user, skipping fetch')
       return
     }
 
-    console.log('Fetching onboarding sessions directly from Supabase...')
+    console.log('Fetching onboarding sessions via API...')
     setLoadingSessions(true)
-    
+
     try {
-      const { supabase } = await import('@/lib/supabase')
-      
-      console.log('Querying onboarding_sessions table with 5s timeout...')
-      
-      // Create a timeout promise
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Query timeout after 5 seconds')), 5000)
+      const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession()
+      if (!session?.access_token) {
+        console.log('No session token, skipping fetch')
+        setLoadingSessions(false)
+        return
+      }
+
+      const response = await fetch('/api/user/onboarding/sessions', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
       })
-      
-      // Query sessions directly - RLS will automatically filter by user_id
-      // NOTE: Removed license_keys join to avoid RLS timeout issues
-      const queryPromise = supabase
-        .from('onboarding_sessions')
-        .select('*')
-        .in('status', ['scheduled', 'pending', 'rescheduled'])
-        .order('scheduled_at', { ascending: true })
-      
-      // Race the query against the timeout
-      const result = await Promise.race([queryPromise, timeoutPromise]) as any
-      const { data: sessions, error: sessionsError } = result
-      
-      console.log('Query result:', { 
-        success: !sessionsError, 
-        count: sessions?.length || 0,
-        error: sessionsError?.message 
-      })
-      
-      if (sessionsError) {
-        console.error('Error querying sessions:', sessionsError)
-        setOnboardingSessions([])
+
+      if (response.ok) {
+        const data = await response.json()
+        // API returns sessions as { upcoming: [], completed: [], cancelled: [], all: [] }
+        const upcomingSessions = data.sessions?.upcoming || []
+        console.log('Sessions loaded via API:', upcomingSessions.length)
+        setOnboardingSessions(upcomingSessions)
       } else {
-        console.log('Sessions loaded:', sessions?.length || 0)
-        setOnboardingSessions(sessions || [])
+        console.error('API error:', response.status, response.statusText)
+        setOnboardingSessions([])
       }
     } catch (error: any) {
       console.error('Error fetching onboarding sessions:', error.message || error)
-      if (error.message?.includes('timeout')) {
-        console.error('⚠️ Query timed out - Supabase might be slow or RLS policies might be blocking')
-      }
       setOnboardingSessions([])
     } finally {
       console.log('Setting loadingSessions to false')
@@ -802,7 +782,7 @@ export default function Dashboard() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
         </div>
       </DashboardLayout>
     )
@@ -830,11 +810,11 @@ export default function Dashboard() {
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'open':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
+        return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-200'
       case 'in_progress':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200'
+        return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-200'
       case 'resolved':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
+        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200'
       case 'closed':
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-200'
       default:
@@ -845,13 +825,13 @@ export default function Dashboard() {
   const getPriorityBadgeColor = (priority: string) => {
     switch (priority) {
       case 'critical':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
+        return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-200'
       case 'high':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200'
+        return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-200'
       case 'medium':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200'
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-200'
       case 'low':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
+        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200'
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-200'
     }
@@ -862,17 +842,17 @@ export default function Dashboard() {
       <div className="space-y-6">
         {/* Password Reset Notice */}
         {needsPasswordReset && (
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+          <div className="glass-card border-l-4 border-cyan-400 p-4">
             <div className="flex">
-              <div className="flex-shrink-0">
-                <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400" />
+              <div className="flex-shrink-0 p-2 rounded-lg bg-cyan-500/10">
+                <Warning className="h-5 w-5 text-cyan-400" />
               </div>
               <div className="ml-3">
-                <p className="text-sm text-yellow-700">
+                <p className="text-sm text-foreground/80">
                   Please set a secure password for your account.
                   <button
                     onClick={handleSetPassword}
-                    className="ml-2 font-medium text-yellow-700 underline hover:text-yellow-600"
+                    className="ml-2 font-medium text-cyan-400 hover:text-cyan-300 underline"
                   >
                     Set Password Now
                   </button>
@@ -884,24 +864,24 @@ export default function Dashboard() {
 
         {/* Onboarding Scheduling Alerts */}
         {!loadingSchedulingBookings && requiresActionBookings.length > 0 && (
-          <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-600 p-6 rounded-lg shadow-md">
+          <div className="glass-card border-l-4 border-cyan-500 p-6">
             <div className="flex">
-              <div className="flex-shrink-0">
-                <ExclamationTriangleIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
+              <div className="flex-shrink-0 p-2 rounded-lg bg-cyan-500/10">
+                <Warning className="h-6 w-6 text-cyan-400" />
               </div>
-              <div className="ml-3 flex-1">
-                <h3 className="text-base font-semibold text-red-900 dark:text-red-100">
-                  ⚠️ Action Required: Schedule Your Onboarding Session
+              <div className="ml-4 flex-1">
+                <h3 className="text-base font-semibold text-foreground">
+                  Action Required: Schedule Your Onboarding Session
                 </h3>
-                <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                <div className="mt-2 text-sm text-foreground/70">
                   <p className="mb-2">
                     You have {requiresActionBookings.length} trial license{requiresActionBookings.length > 1 ? 's' : ''} that require onboarding within 14 days or they will be revoked.
                   </p>
                   {requiresActionBookings.map((booking) => (
-                    <div key={booking.id} className="mt-2 p-3 bg-red-100 dark:bg-red-900/40 rounded">
-                      <p className="font-medium">{booking.title}</p>
+                    <div key={booking.id} className="mt-2 p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-lg">
+                      <p className="font-medium text-foreground">{booking.title}</p>
                       {booking.trial_deadline && (
-                        <p className="text-xs mt-1">
+                        <p className="text-xs mt-1 text-cyan-400">
                           <strong>Deadline:</strong> {new Date(booking.trial_deadline).toLocaleDateString('en-US', {
                             weekday: 'long',
                             year: 'numeric',
@@ -916,9 +896,9 @@ export default function Dashboard() {
                 <div className="mt-4">
                   <button
                     onClick={() => router.push('/onboarding/schedule')}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    className="btn-primary inline-flex items-center"
                   >
-                    <CalendarIcon className="h-5 w-5 mr-2" />
+                    <Calendar className="h-5 w-5 mr-2" />
                     Schedule Now
                   </button>
                 </div>
@@ -928,20 +908,20 @@ export default function Dashboard() {
         )}
 
         {!loadingSchedulingBookings && requiresActionBookings.length === 0 && schedulingBookings.length > 0 && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-600 p-4 rounded-lg">
+          <div className="glass-card border-l-4 border-cyan-500 p-4">
             <div className="flex">
-              <div className="flex-shrink-0">
-                <CheckCircleIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <div className="flex-shrink-0 p-2 rounded-lg bg-cyan-500/10">
+                <CheckCircle className="h-5 w-5 text-cyan-400" />
               </div>
               <div className="ml-3 flex-1">
-                <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                <h3 className="text-sm font-semibold text-foreground">
                   Upcoming Onboarding Sessions
                 </h3>
-                <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                <p className="mt-1 text-sm text-foreground/70">
                   You have {schedulingBookings.length} scheduled onboarding session{schedulingBookings.length > 1 ? 's' : ''}.
                   <button
                     onClick={() => router.push('/onboarding/schedule')}
-                    className="ml-2 font-medium underline hover:text-blue-600 dark:hover:text-blue-200"
+                    className="ml-2 font-medium text-cyan-400 hover:text-cyan-300 underline"
                   >
                     View Details
                   </button>
@@ -953,10 +933,11 @@ export default function Dashboard() {
 
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:truncate sm:text-3xl sm:tracking-tight">
-            Welcome back, {profile.full_name || profile.username}!
+          <h1 className="text-2xl font-bold leading-7 sm:truncate sm:text-3xl sm:tracking-tight">
+            <span className="text-gradient-cyan">Welcome back,</span>{' '}
+            <span className="text-foreground">{profile.full_name || profile.username}!</span>
           </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-foreground/60">
             Here's what's happening with your Lyceum workspace today.
           </p>
         </div>
@@ -964,191 +945,183 @@ export default function Dashboard() {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {/* Test Data Projects */}
-          <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow ring-1 ring-gray-200 dark:ring-gray-700">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <TableCellsIcon className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="truncate text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Test Data Projects
-                    </dt>
-                    <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">
-                      {loadingStats ? '...' : stats.testDataProjects}
-                    </dd>
-                  </dl>
-                </div>
+          <div className="glass-card overflow-hidden p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                <Table className="h-6 w-6 text-cyan-400" weight="duotone" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="truncate text-sm font-medium text-foreground/60">
+                    Test Data Projects
+                  </dt>
+                  <dd className="mt-1 text-3xl font-bold tracking-tight text-gradient-cyan">
+                    {loadingStats ? '...' : stats.testDataProjects}
+                  </dd>
+                </dl>
               </div>
             </div>
           </div>
 
           {/* Connected Clusters */}
-          <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow ring-1 ring-gray-200 dark:ring-gray-700">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <CubeIcon className="h-6 w-6 text-green-600" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="truncate text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Connected Clusters
-                    </dt>
-                    <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">
-                      {loadingStats ? '...' : stats.connectedClusters}
-                    </dd>
-                  </dl>
-                </div>
+          <div className="glass-card overflow-hidden p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                <Cube className="h-6 w-6 text-emerald-400" weight="duotone" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="truncate text-sm font-medium text-foreground/60">
+                    Connected Clusters
+                  </dt>
+                  <dd className="mt-1 text-3xl font-bold tracking-tight text-emerald-400">
+                    {loadingStats ? '...' : stats.connectedClusters}
+                  </dd>
+                </dl>
               </div>
             </div>
           </div>
 
           {/* Onboarding Sessions */}
-          <div className="overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow ring-1 ring-gray-200 dark:ring-gray-700">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <AcademicCapIcon className="h-6 w-6 text-orange-600" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="truncate text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Upcoming Sessions
-                    </dt>
-                    <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">
-                      {loadingStats ? '...' : stats.onboardingSessions}
-                    </dd>
-                  </dl>
-                </div>
+          <div className="glass-card overflow-hidden p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                <GraduationCap className="h-6 w-6 text-cyan-400" weight="duotone" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="truncate text-sm font-medium text-foreground/60">
+                    Upcoming Sessions
+                  </dt>
+                  <dd className="mt-1 text-3xl font-bold tracking-tight text-cyan-400">
+                    {loadingStats ? '...' : stats.onboardingSessions}
+                  </dd>
+                </dl>
               </div>
             </div>
           </div>
 
           {/* Desktop App Download */}
           {desktopAppInfo && (
-            <div className="overflow-hidden rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 shadow ring-1 ring-indigo-400">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                    </svg>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="truncate text-sm font-medium text-indigo-100">
-                        Desktop Application
-                      </dt>
-                      <dd className="mt-1 text-lg font-semibold text-white">
-                        {desktopAppInfo.hasApp && (
-                          <>
-                            v{desktopAppInfo.currentVersion}
-                            {desktopAppInfo.updateAvailable && (
-                              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-400 text-yellow-900">
-                                Update Available
-                              </span>
-                            )}
-                          </>
-                        )}
-                      </dd>
-                    </dl>
-                  </div>
+            <div className="glass-card overflow-hidden p-5 border-cyan-500/30 glow-cyan-border">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 p-3 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-600 shadow-lg shadow-cyan-500/30">
+                  <svg className="h-6 w-6 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                  </svg>
                 </div>
-                <div className="mt-4">
-                  <button
-                    onClick={async () => {
-                      // Check if user already has a license
-                      console.log('🔍 Checking if user has existing license...')
-                      try {
-                        const { supabase } = await import('@/lib/supabase')
-                        const { data: { session } } = await supabase.auth.getSession()
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="truncate text-sm font-medium text-foreground/60">
+                      Desktop Application
+                    </dt>
+                    <dd className="mt-1 text-lg font-semibold text-foreground">
+                      {desktopAppInfo.hasApp && (
+                        <>
+                          v{desktopAppInfo.currentVersion}
+                          {desktopAppInfo.updateAvailable && (
+                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                              Update Available
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+              <div className="mt-4">
+                <button
+                  onClick={async () => {
+                    // Check if user already has a license
+                    console.log('🔍 Checking if user has existing license...')
+                    try {
+                      const { supabase } = await import('@/lib/supabase')
+                      const { data: { session } } = await supabase.auth.getSession()
 
-                        if (session?.access_token) {
-                          const licenseResponse = await fetch('/api/licenses/generate-main-app', {
-                            headers: {
-                              'Authorization': `Bearer ${session.access_token}`,
-                              'Content-Type': 'application/json'
-                            }
-                          })
+                      if (session?.access_token) {
+                        const licenseResponse = await fetch('/api/licenses/generate-main-app', {
+                          headers: {
+                            'Authorization': `Bearer ${session.access_token}`,
+                            'Content-Type': 'application/json'
+                          }
+                        })
 
-                          console.log('📄 License check response status:', licenseResponse.status)
+                        console.log('📄 License check response status:', licenseResponse.status)
 
-                          if (licenseResponse.ok) {
-                            const licenseData = await licenseResponse.json()
-                            console.log('📄 License data:', licenseData)
+                        if (licenseResponse.ok) {
+                          const licenseData = await licenseResponse.json()
+                          console.log('📄 License data:', licenseData)
 
-                            if (licenseData.hasLicense) {
-                              // User has license, go directly to download page
-                              console.log('✅ User has license, redirecting to download page')
-                              router.push('/download-app')
-                              return
-                            } else {
-                              console.log('❌ User does not have license')
-                            }
+                          if (licenseData.hasLicense) {
+                            // User has license, go directly to download page
+                            console.log('✅ User has license, redirecting to download page')
+                            router.push('/download-app')
+                            return
                           } else {
-                            console.error('❌ License check failed:', await licenseResponse.text())
+                            console.log('❌ User does not have license')
                           }
                         } else {
-                          console.error('❌ No session found')
+                          console.error('❌ License check failed:', await licenseResponse.text())
                         }
-                      } catch (error) {
-                        console.error('Error checking license:', error)
+                      } else {
+                        console.error('❌ No session found')
                       }
+                    } catch (error) {
+                      console.error('Error checking license:', error)
+                    }
 
-                      // No license found, go to subscription page
-                      console.log('➡️  Redirecting to subscription page')
-                      router.push('/native-app/subscribe')
-                    }}
-                    className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                    </svg>
-                    {desktopAppInfo.hasApp ? 'Manage Subscription' : 'Click To Download'}
-                  </button>
-                </div>
+                    // No license found, go to subscription page
+                    console.log('➡️  Redirecting to subscription page')
+                    router.push('/native-app/subscribe')
+                  }}
+                  className="btn-primary w-full inline-flex justify-center items-center"
+                >
+                  <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                  </svg>
+                  {desktopAppInfo.hasApp ? 'Manage Subscription' : 'Click To Download'}
+                </button>
               </div>
             </div>
           )}
         </div>
 
         {/* Tabs Section */}
-        <div className="bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 rounded-lg">
-          <div className="border-b border-gray-200 dark:border-gray-700">
+        <div className="glass-card overflow-hidden">
+          <div className="border-b border-cyan-500/10">
             <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">
               <button
                 onClick={() => setActiveTab('onboarding')}
                 className={`${
                   activeTab === 'onboarding'
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                } flex whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium items-center`}
+                    ? 'border-cyan-400 text-cyan-400'
+                    : 'border-transparent text-foreground/50 hover:border-cyan-500/30 hover:text-cyan-400'
+                } flex whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium items-center transition-colors`}
               >
-                <AcademicCapIcon className="h-5 w-5 mr-2" />
+                <GraduationCap className="h-5 w-5 mr-2" weight={activeTab === 'onboarding' ? 'duotone' : 'regular'} />
                 Onboarding
               </button>
               <button
                 onClick={() => setActiveTab('posts')}
                 className={`${
                   activeTab === 'posts'
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                } flex whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium items-center`}
+                    ? 'border-cyan-400 text-cyan-400'
+                    : 'border-transparent text-foreground/50 hover:border-cyan-500/30 hover:text-cyan-400'
+                } flex whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium items-center transition-colors`}
               >
-                <NewspaperIcon className="h-5 w-5 mr-2" />
+                <Newspaper className="h-5 w-5 mr-2" weight={activeTab === 'posts' ? 'duotone' : 'regular'} />
                 Posts
               </button>
               <button
                 onClick={() => setActiveTab('tickets')}
                 className={`${
                   activeTab === 'tickets'
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                } flex whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium items-center`}
+                    ? 'border-cyan-400 text-cyan-400'
+                    : 'border-transparent text-foreground/50 hover:border-cyan-500/30 hover:text-cyan-400'
+                } flex whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium items-center transition-colors`}
               >
-                <TicketIcon className="h-5 w-5 mr-2" />
+                <Ticket className="h-5 w-5 mr-2" weight={activeTab === 'tickets' ? 'duotone' : 'regular'} />
                 Tickets
               </button>
             </nav>
@@ -1160,7 +1133,7 @@ export default function Dashboard() {
               <div className="space-y-6">
                 {loadingSchedulingBookings ? (
                   <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-cyan-500/20 border-t-cyan-400"></div>
                   </div>
                 ) : (
                   <>
@@ -1173,12 +1146,12 @@ export default function Dashboard() {
 
                         {/* Suggested Sessions (Need to book) */}
                         {suggestedBookings.map((booking: any) => (
-                          <div key={booking.id} className="border-2 border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-6 mb-4">
+                          <div key={booking.id} className="glass-card border-2 border-cyan-400/30 dark:border-cyan-500/30 p-6 mb-4">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-3 flex-wrap">
-                                  <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300">
+                                  <Warning className="h-5 w-5 text-cyan-500" />
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-300">
                                     Suggested - Not Yet Scheduled
                                   </span>
                                   {booking.product_name && (
@@ -1201,7 +1174,7 @@ export default function Dashboard() {
                                   Please select a time slot below to schedule this session
                                 </p>
                                 {booking.is_trial_required && booking.trial_deadline && (
-                                  <p className="text-sm text-red-600 dark:text-red-400 mt-2 font-medium">
+                                  <p className="text-sm text-cyan-600 dark:text-cyan-400 mt-2 font-medium">
                                     <strong>Must be scheduled by:</strong> {formatDate(booking.trial_deadline)}
                                   </p>
                                 )}
@@ -1212,12 +1185,12 @@ export default function Dashboard() {
 
                         {/* Upcoming Scheduled Sessions */}
                         {schedulingBookings.map((booking: any) => (
-                          <div key={booking.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-4 bg-white dark:bg-gray-800">
+                          <div key={booking.id} className="glass-card p-6 mb-4">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-3 flex-wrap">
-                                  <CheckCircleIcon className="h-5 w-5 text-green-600" />
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                                  <CheckCircle className="h-5 w-5 text-emerald-500" />
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
                                     Scheduled
                                   </span>
                                   {booking.product_name && (
@@ -1239,13 +1212,13 @@ export default function Dashboard() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                                   <div>
                                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                                      <CalendarIcon className="h-4 w-4" />
+                                      <Calendar className="h-4 w-4" />
                                       <span className="text-sm">
                                         {formatDate(booking.scheduled_start_time)}
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mt-2">
-                                      <ClockIcon className="h-4 w-4" />
+                                      <Clock className="h-4 w-4" />
                                       <span className="text-sm">
                                         {formatTime(booking.scheduled_start_time)} - {formatTime(booking.scheduled_end_time)}
                                       </span>
@@ -1253,13 +1226,13 @@ export default function Dashboard() {
                                   </div>
                                   <div>
                                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                                      <UserIcon className="h-4 w-4" />
+                                      <User className="h-4 w-4" />
                                       <span className="text-sm">
                                         {booking.admin?.full_name || booking.admin?.email}
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mt-2">
-                                      <VideoCameraIcon className="h-4 w-4" />
+                                      <VideoCamera className="h-4 w-4" />
                                       <span className="text-sm capitalize">
                                         {booking.meeting_platform}
                                       </span>
@@ -1272,16 +1245,16 @@ export default function Dashboard() {
                                       href={booking.meeting_link}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-blue-600 hover:underline text-sm inline-flex items-center"
+                                      className="text-cyan-500 hover:underline text-sm inline-flex items-center"
                                     >
-                                      Join Meeting <ArrowRightIcon className="h-4 w-4 ml-1" />
+                                      Join Meeting <ArrowRight className="h-4 w-4 ml-1" />
                                     </a>
                                   </div>
                                 )}
                               </div>
                               <button
                                 onClick={() => handleCancelBooking(booking.id)}
-                                className="ml-4 px-3 py-1.5 border border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 text-sm rounded-md hover:bg-red-50 dark:hover:bg-red-900/20"
+                                className="ml-4 px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-400 text-sm rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
                               >
                                 Cancel
                               </button>
@@ -1293,47 +1266,47 @@ export default function Dashboard() {
 
                     {/* Onboarding Statistics */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                      <div className="glass-card p-6">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Required Sessions</p>
-                            <p className="text-3xl font-bold text-red-600 dark:text-red-400">
+                            <p className="text-sm text-foreground/60">Required Sessions</p>
+                            <p className="text-3xl font-bold text-cyan-500">
                               {suggestedBookings.filter((b: any) => b.is_mandatory).length}
                             </p>
                           </div>
-                          <ExclamationTriangleIcon className="h-10 w-10 text-red-600 dark:text-red-400" />
+                          <Warning className="h-10 w-10 text-cyan-500" weight="duotone" />
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        <p className="text-xs text-foreground/50 mt-2">
                           Must be scheduled
                         </p>
                       </div>
 
-                      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                      <div className="glass-card p-6">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Scheduled</p>
-                            <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                            <p className="text-sm text-foreground/60">Scheduled</p>
+                            <p className="text-3xl font-bold text-emerald-500">
                               {schedulingBookings.length}
                             </p>
                           </div>
-                          <CheckCircleIcon className="h-10 w-10 text-green-600 dark:text-green-400" />
+                          <CheckCircle className="h-10 w-10 text-emerald-500" weight="duotone" />
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        <p className="text-xs text-foreground/50 mt-2">
                           Upcoming sessions
                         </p>
                       </div>
 
-                      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                      <div className="glass-card p-6">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Optional</p>
-                            <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                            <p className="text-sm text-foreground/60">Optional</p>
+                            <p className="text-3xl font-bold text-cyan-500">
                               {suggestedBookings.filter((b: any) => !b.is_mandatory).length}
                             </p>
                           </div>
-                          <AcademicCapIcon className="h-10 w-10 text-blue-600 dark:text-blue-400" />
+                          <GraduationCap className="h-10 w-10 text-cyan-500" weight="duotone" />
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        <p className="text-xs text-foreground/50 mt-2">
                           Recommended sessions
                         </p>
                       </div>
@@ -1350,7 +1323,7 @@ export default function Dashboard() {
                             onClick={() => navigateMonth('prev')}
                             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
                           >
-                            <ChevronLeftIcon className="h-5 w-5" />
+                            <CaretLeft className="h-5 w-5" />
                           </button>
                           <button
                             onClick={() => setCalendarCurrentDate(new Date())}
@@ -1362,7 +1335,7 @@ export default function Dashboard() {
                             onClick={() => navigateMonth('next')}
                             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
                           >
-                            <ChevronRightIcon className="h-5 w-5" />
+                            <CaretRight className="h-5 w-5" />
                           </button>
                         </div>
                       </div>
@@ -1392,15 +1365,15 @@ export default function Dashboard() {
                               <div
                                 key={index}
                                 className={`min-h-[100px] border rounded-lg p-2 transition-all
-                                  ${date ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-900 border-transparent'}
-                                  ${todayCheck ? 'ring-2 ring-blue-500' : ''}
-                                  ${date && !isPast && daySlots.length > 0 ? 'hover:shadow-md cursor-pointer hover:border-blue-300 dark:hover:border-blue-700' : ''}
+                                  ${date ? 'glass-card !rounded-lg' : 'bg-gray-50 dark:bg-gray-900 border-transparent'}
+                                  ${todayCheck ? 'ring-2 ring-cyan-500' : ''}
+                                  ${date && !isPast && daySlots.length > 0 ? 'hover:shadow-md cursor-pointer hover:border-cyan-400/50' : ''}
                                   ${isPast && date ? 'opacity-50' : ''}`}
                                 onClick={() => date && !isPast && daySlots.length > 0 && openSlotsModal(date)}
                               >
                                 {date && (
                                   <>
-                                    <div className={`text-sm font-semibold mb-2 ${todayCheck ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>
+                                    <div className={`text-sm font-semibold mb-2 ${todayCheck ? 'text-cyan-500' : 'text-foreground'}`}>
                                       {date.getDate()}
                                     </div>
 
@@ -1409,14 +1382,14 @@ export default function Dashboard() {
                                         {daySlots.slice(0, 2).map((slot: any) => (
                                           <div
                                             key={slot.id}
-                                            className="text-xs px-2 py-1 rounded bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 truncate"
+                                            className="text-xs px-2 py-1 rounded bg-cyan-100 dark:bg-cyan-900/50 text-cyan-800 dark:text-cyan-200 truncate"
                                             title={`${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}`}
                                           >
                                             {formatTime(slot.start_time)}
                                           </div>
                                         ))}
                                         {daySlots.length > 2 && (
-                                          <div className="text-xs text-center text-blue-600 dark:text-blue-400 font-medium">
+                                          <div className="text-xs text-center text-cyan-500 font-medium">
                                             +{daySlots.length - 2} more
                                           </div>
                                         )}
@@ -1438,12 +1411,12 @@ export default function Dashboard() {
                         {/* Legend */}
                         <div className="mt-6 flex gap-4 text-sm justify-center">
                           <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 bg-blue-100 dark:bg-blue-900 rounded"></div>
-                            <span className="text-gray-700 dark:text-gray-300">Available slots</span>
+                            <div className="w-4 h-4 bg-cyan-100 dark:bg-cyan-900/50 rounded"></div>
+                            <span className="text-foreground/70">Available slots</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 ring-2 ring-blue-500 rounded"></div>
-                            <span className="text-gray-700 dark:text-gray-300">Today</span>
+                            <div className="w-4 h-4 ring-2 ring-cyan-500 rounded"></div>
+                            <span className="text-foreground/70">Today</span>
                           </div>
                         </div>
                       </div>
@@ -1457,24 +1430,24 @@ export default function Dashboard() {
             {activeTab === 'posts' && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  <h3 className="text-lg font-medium text-foreground">
                     Community Posts
                   </h3>
-                  <button className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                    <PlusIcon className="h-4 w-4 mr-2" />
+                  <button className="btn-primary inline-flex items-center">
+                    <Plus className="h-4 w-4 mr-2" />
                     New Post
                   </button>
                 </div>
 
                 <div className="text-center py-12">
-                  <NewspaperIcon className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No posts yet</h3>
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  <Newspaper className="mx-auto h-12 w-12 text-foreground/40" weight="duotone" />
+                  <h3 className="mt-2 text-sm font-medium text-foreground">No posts yet</h3>
+                  <p className="mt-1 text-sm text-foreground/60">
                     Community posts and announcements will appear here.
                   </p>
                   <div className="mt-6">
-                    <button className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                      <PlusIcon className="h-4 w-4 mr-2" />
+                    <button className="btn-primary inline-flex items-center">
+                      <Plus className="h-4 w-4 mr-2" />
                       Create your first post
                     </button>
                   </div>
@@ -1486,28 +1459,28 @@ export default function Dashboard() {
             {activeTab === 'tickets' && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  <h3 className="text-lg font-medium text-foreground">
                     Support Tickets
                   </h3>
-                  <button 
+                  <button
                     onClick={() => setShowCreateTicketModal(true)}
-                    className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    className="btn-primary inline-flex items-center"
                   >
-                    <PlusIcon className="h-4 w-4 mr-2" />
+                    <Plus className="h-4 w-4 mr-2" />
                     New Ticket
                   </button>
                 </div>
 
                 {loadingTickets ? (
                   <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
                   </div>
                 ) : tickets.length > 0 ? (
                   <div className="space-y-3">
                     {tickets.map((ticket) => (
                       <div
                         key={ticket.id}
-                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-700 transition-all cursor-pointer"
+                        className="glass-card p-4 cursor-pointer"
                         onClick={() => setSelectedTicketToView(ticket)}
                       >
                         <div className="flex items-start justify-between">
@@ -1544,17 +1517,17 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <TicketIcon className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No tickets yet</h3>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <Ticket className="mx-auto h-12 w-12 text-foreground/40" weight="duotone" />
+                    <h3 className="mt-2 text-sm font-medium text-foreground">No tickets yet</h3>
+                    <p className="mt-1 text-sm text-foreground/60">
                       Need help? Create a support ticket and our team will assist you.
                     </p>
                     <div className="mt-6">
-                      <button 
+                      <button
                         onClick={() => setShowCreateTicketModal(true)}
-                        className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                        className="btn-primary inline-flex items-center"
                       >
-                        <PlusIcon className="h-4 w-4 mr-2" />
+                        <Plus className="h-4 w-4 mr-2" />
                         Create your first ticket
                       </button>
                     </div>
@@ -1567,51 +1540,51 @@ export default function Dashboard() {
 
         {/* Schedule Session Modal */}
         {showScheduleModal && selectedSession && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 w-96 glass-card">
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  <h3 className="text-lg font-medium text-foreground">
                     {selectedSession.scheduled_at ? 'Reschedule' : 'Schedule'} Session
                   </h3>
                   <button
                     onClick={() => setShowScheduleModal(false)}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="text-foreground/50 hover:text-cyan-400 transition-colors"
                   >
-                    <XMarkIcon className="h-5 w-5" />
+                    <X className="h-5 w-5" />
                   </button>
                 </div>
 
                 <div className="mb-4">
-                  <h4 className="font-medium text-gray-900 dark:text-white">{selectedSession.title}</h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <h4 className="font-medium text-foreground">{selectedSession.title}</h4>
+                  <p className="text-sm text-foreground/60">
                     {selectedSession.plugin_id} • {selectedSession.duration_minutes} minutes
                   </p>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-foreground/80 mb-1">
                       Date & Time
                     </label>
                     <input
                       type="datetime-local"
                       value={scheduleForm.scheduled_at}
                       onChange={(e) => setScheduleForm({...scheduleForm, scheduled_at: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      className="glass-input w-full px-3 py-2 rounded-md text-foreground"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-foreground/80 mb-1">
                       Duration (minutes)
                     </label>
                     <input
                       type="number"
                       value={scheduleForm.duration_minutes}
                       onChange={(e) => setScheduleForm({...scheduleForm, duration_minutes: parseInt(e.target.value)})}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      className="glass-input w-full px-3 py-2 rounded-md text-foreground"
                       min="15"
                       max="180"
                       required
@@ -1622,14 +1595,14 @@ export default function Dashboard() {
                 <div className="flex space-x-3 mt-6">
                   <button
                     onClick={() => setShowScheduleModal(false)}
-                    className="flex-1 px-4 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600"
+                    className="btn-ghost flex-1"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleScheduleSession}
                     disabled={!scheduleForm.scheduled_at}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {selectedSession.scheduled_at ? 'Reschedule' : 'Schedule'}
                   </button>
@@ -1641,33 +1614,33 @@ export default function Dashboard() {
 
         {/* Session Details Modal */}
         {showSessionDetails && selectedSession && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border max-w-2xl shadow-lg rounded-md bg-white dark:bg-gray-800">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 max-w-2xl glass-card">
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  <h3 className="text-lg font-medium text-foreground">
                     Session Details
                   </h3>
                   <button
                     onClick={() => setShowSessionDetails(false)}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="text-foreground/50 hover:text-cyan-400 transition-colors"
                   >
-                    <XMarkIcon className="h-5 w-5" />
+                    <X className="h-5 w-5" />
                   </button>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{selectedSession.title}</h4>
+                    <h4 className="text-lg font-semibold text-foreground">{selectedSession.title}</h4>
                     <div className="flex items-center space-x-2 mt-1">
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        selectedSession.is_mandatory 
-                          ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
-                          : 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200'
+                        selectedSession.is_mandatory
+                          ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-200'
+                          : 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-200'
                       }`}>
                         {selectedSession.is_mandatory ? 'Required' : 'Optional'}
                       </span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                      <span className="text-sm text-foreground/60">
                         {selectedSession.plugin_id} • {selectedSession.duration_minutes} minutes
                       </span>
                     </div>
@@ -1675,15 +1648,15 @@ export default function Dashboard() {
 
                   {selectedSession.description && (
                     <div>
-                      <h5 className="font-medium text-gray-900 dark:text-white mb-2">Description</h5>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">{selectedSession.description}</p>
+                      <h5 className="font-medium text-foreground mb-2">Description</h5>
+                      <p className="text-sm text-foreground/70">{selectedSession.description}</p>
                     </div>
                   )}
 
                   {selectedSession.scheduled_at && (
                     <div>
-                      <h5 className="font-medium text-gray-900 dark:text-white mb-1">Scheduled Time</h5>
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                      <h5 className="font-medium text-foreground mb-1">Scheduled Time</h5>
+                      <p className="text-sm text-foreground/70">
                         {new Date(selectedSession.scheduled_at).toLocaleString()}
                       </p>
                     </div>
@@ -1691,18 +1664,18 @@ export default function Dashboard() {
 
                   {selectedSession.meeting_link && (
                     <div>
-                      <h5 className="font-medium text-gray-900 dark:text-white mb-1">Meeting Link</h5>
+                      <h5 className="font-medium text-foreground mb-1">Meeting Link</h5>
                       <button
                         onClick={() => window.open(selectedSession.meeting_link, '_blank')}
-                        className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                        className="btn-primary inline-flex items-center"
                       >
-                        <VideoCameraIcon className="h-4 w-4 mr-2" />
+                        <VideoCamera className="h-4 w-4 mr-2" />
                         Join Session
                       </button>
                     </div>
                   )}
 
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-6">
+                  <div className="border-t border-cyan-500/10 pt-4 mt-6">
                     <div className="flex space-x-3">
                       {selectedSession.status !== 'completed' && (
                         <button
@@ -1710,9 +1683,9 @@ export default function Dashboard() {
                             setShowSessionDetails(false)
                             openScheduleModal(selectedSession)
                           }}
-                          className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                          className="btn-ghost inline-flex items-center"
                         >
-                          <CalendarIcon className="h-4 w-4 mr-2" />
+                          <Calendar className="h-4 w-4 mr-2" />
                           {selectedSession.scheduled_at ? 'Reschedule' : 'Schedule'}
                         </button>
                       )}
@@ -1726,44 +1699,44 @@ export default function Dashboard() {
 
         {/* Create Ticket Modal */}
         {showCreateTicketModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border max-w-2xl shadow-lg rounded-md bg-white dark:bg-gray-800">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 max-w-2xl glass-card">
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  <h3 className="text-lg font-medium text-foreground">
                     Create Support Ticket
                   </h3>
                   <button
                     onClick={() => setShowCreateTicketModal(false)}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="text-foreground/50 hover:text-cyan-400 transition-colors"
                   >
-                    <XMarkIcon className="h-5 w-5" />
+                    <X className="h-5 w-5" />
                   </button>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-foreground/80 mb-1">
                       Title
                     </label>
                     <input
                       type="text"
                       value={ticketForm.title}
                       onChange={(e) => setTicketForm({...ticketForm, title: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      className="glass-input w-full px-3 py-2 rounded-md text-foreground"
                       placeholder="Brief description of the issue"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-foreground/80 mb-1">
                       Description
                     </label>
                     <textarea
                       value={ticketForm.description}
                       onChange={(e) => setTicketForm({...ticketForm, description: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      className="glass-input w-full px-3 py-2 rounded-md text-foreground"
                       rows={4}
                       placeholder="Detailed description of the issue"
                       required
@@ -1772,13 +1745,13 @@ export default function Dashboard() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-foreground/80 mb-1">
                         Type
                       </label>
                       <select
                         value={ticketForm.ticket_type}
                         onChange={(e) => setTicketForm({...ticketForm, ticket_type: e.target.value as Ticket['ticket_type']})}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        className="glass-input w-full px-3 py-2 rounded-md text-foreground"
                       >
                         <option value="bug">Bug</option>
                         <option value="feature_request">Feature Request</option>
@@ -1789,13 +1762,13 @@ export default function Dashboard() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      <label className="block text-sm font-medium text-foreground/80 mb-1">
                         Priority
                       </label>
                       <select
                         value={ticketForm.priority}
                         onChange={(e) => setTicketForm({...ticketForm, priority: e.target.value as Ticket['priority']})}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                        className="glass-input w-full px-3 py-2 rounded-md text-foreground"
                       >
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -1809,14 +1782,14 @@ export default function Dashboard() {
                 <div className="flex space-x-3 mt-6">
                   <button
                     onClick={() => setShowCreateTicketModal(false)}
-                    className="flex-1 px-4 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600"
+                    className="btn-ghost flex-1"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleCreateTicket}
                     disabled={!ticketForm.title || !ticketForm.description}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Create Ticket
                   </button>
@@ -1844,7 +1817,7 @@ export default function Dashboard() {
                     onClick={() => setSelectedTicketToView(null)}
                     className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
-                    <XMarkIcon className="h-5 w-5" />
+                    <X className="h-5 w-5" />
                   </button>
                 </div>
 
@@ -1964,19 +1937,19 @@ export default function Dashboard() {
 
                   {/* Resolution (if resolved/closed) */}
                   {selectedTicketToView.resolution_notes && (
-                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                      <label className="block text-sm font-medium text-green-800 dark:text-green-300 mb-2">
+                    <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4">
+                      <label className="block text-sm font-medium text-emerald-800 dark:text-emerald-300 mb-2">
                         Resolution
                       </label>
-                      <div className="text-sm text-green-700 dark:text-green-300 whitespace-pre-wrap">
+                      <div className="text-sm text-emerald-700 dark:text-emerald-300 whitespace-pre-wrap">
                         {selectedTicketToView.resolution_notes}
                       </div>
                     </div>
                   )}
 
                   {/* Status info */}
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <div className="text-sm text-blue-800 dark:text-blue-300">
+                  <div className="bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 rounded-lg p-4">
+                    <div className="text-sm text-cyan-800 dark:text-cyan-300">
                       {selectedTicketToView.status === 'open' && 'Your ticket has been received and is awaiting review by our support team.'}
                       {selectedTicketToView.status === 'in_progress' && 'Our team is actively working on your ticket.'}
                       {selectedTicketToView.status === 'pending_user' && 'We need additional information from you. Please check for any comments or requests.'}
@@ -1989,7 +1962,7 @@ export default function Dashboard() {
                 <div className="flex justify-end mt-6">
                   <button
                     onClick={() => setSelectedTicketToView(null)}
-                    className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600"
+                    className="btn-ghost"
                   >
                     Close
                   </button>
@@ -2001,34 +1974,34 @@ export default function Dashboard() {
 
         {/* Download Desktop Application Modal */}
         {showDownloadModal && desktopAppInfo && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border max-w-2xl shadow-lg rounded-md bg-white dark:bg-gray-800">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 max-w-2xl glass-card">
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  <h3 className="text-lg font-medium text-foreground">
                     Download {brandName}
                   </h3>
                   <button
                     onClick={() => setShowDownloadModal(false)}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="text-foreground/50 hover:text-cyan-400 transition-colors"
                   >
-                    <XMarkIcon className="h-5 w-5" />
+                    <X className="h-5 w-5" />
                   </button>
                 </div>
 
                 <div className="space-y-4">
-                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <div className="bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 rounded-lg p-4">
                     <div className="flex">
                       <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="h-5 w-5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                         </svg>
                       </div>
                       <div className="ml-3">
-                        <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                        <h3 className="text-sm font-medium text-cyan-800 dark:text-cyan-200">
                           Latest Version: {desktopAppInfo.latestVersion}
                         </h3>
-                        <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
+                        <div className="mt-2 text-sm text-cyan-700 dark:text-cyan-300">
                           <p>Platform detected: <strong className="capitalize">{desktopAppInfo.platform}</strong></p>
                         </div>
                       </div>
@@ -2036,7 +2009,7 @@ export default function Dashboard() {
                   </div>
 
                   <div>
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+                    <h4 className="text-sm font-medium text-foreground mb-3">
                       Choose your installer format:
                     </h4>
                     <div className="space-y-2">
@@ -2044,22 +2017,22 @@ export default function Dashboard() {
                         <button
                           onClick={() => handleDownload('exe')}
                           disabled={downloadingApp}
-                          className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                          className="w-full flex items-center justify-between px-4 py-3 glass-card"
                         >
                           <div className="flex items-center">
-                            <svg className="h-8 w-8 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                            <svg className="h-8 w-8 text-cyan-500" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" />
                             </svg>
                             <div className="ml-3 text-left">
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              <p className="text-sm font-medium text-foreground">
                                 Download for Windows
                               </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                              <p className="text-xs text-foreground/60">
                                 Windows installer (.exe)
                               </p>
                             </div>
                           </div>
-                          <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="h-5 w-5 text-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                           </svg>
                         </button>
@@ -2068,22 +2041,22 @@ export default function Dashboard() {
                         <button
                           onClick={() => handleDownload('dmg')}
                           disabled={downloadingApp}
-                          className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                          className="w-full flex items-center justify-between px-4 py-3 glass-card"
                         >
                           <div className="flex items-center">
-                            <svg className="h-8 w-8 text-gray-700" viewBox="0 0 24 24" fill="currentColor">
+                            <svg className="h-8 w-8 text-cyan-500" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
                             </svg>
                             <div className="ml-3 text-left">
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                              <p className="text-sm font-medium text-foreground">
                                 Disk Image (.dmg)
                               </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                              <p className="text-xs text-foreground/60">
                                 Standard macOS installer
                               </p>
                             </div>
                           </div>
-                          <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="h-5 w-5 text-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                           </svg>
                         </button>
@@ -2093,44 +2066,44 @@ export default function Dashboard() {
                           <button
                             onClick={() => handleDownload('AppImage')}
                             disabled={downloadingApp}
-                            className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                            className="w-full flex items-center justify-between px-4 py-3 glass-card"
                           >
                             <div className="flex items-center">
-                              <svg className="h-8 w-8 text-orange-600" viewBox="0 0 24 24" fill="currentColor">
+                              <svg className="h-8 w-8 text-cyan-500" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.84-.41 1.684-.287 2.489a6.372 6.372 0 002.716 4.521c.885.584 1.249.584 2.716.584 1.092 0 2.716-.584 2.716-2.489 0-1.467.584-2.716 1.467-2.716 1.467 0 2.716 1.467 2.716 2.716 0 1.905 1.624 2.489 2.716 2.489 1.467 0 1.831 0 2.716-.584a6.372 6.372 0 002.716-4.521c.123-.805-.009-1.649-.287-2.489-.589-1.771-1.831-3.47-2.716-4.521-.75-1.067-.974-1.928-1.05-3.02-.065-1.491 1.056-5.965-3.17-6.298-.165-.013-.325-.021-.48-.021z" />
                               </svg>
                               <div className="ml-3 text-left">
-                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                <p className="text-sm font-medium text-foreground">
                                   AppImage
                                 </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                <p className="text-xs text-foreground/60">
                                   Universal Linux package
                                 </p>
                               </div>
                             </div>
-                            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="h-5 w-5 text-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
                           </button>
                           <button
                             onClick={() => handleDownload('deb')}
                             disabled={downloadingApp}
-                            className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                            className="w-full flex items-center justify-between px-4 py-3 glass-card"
                           >
                             <div className="flex items-center">
-                              <svg className="h-8 w-8 text-red-600" viewBox="0 0 24 24" fill="currentColor">
+                              <svg className="h-8 w-8 text-cyan-500" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.84-.41 1.684-.287 2.489a6.372 6.372 0 002.716 4.521c.885.584 1.249.584 2.716.584 1.092 0 2.716-.584 2.716-2.489 0-1.467.584-2.716 1.467-2.716 1.467 0 2.716 1.467 2.716 2.716 0 1.905 1.624 2.489 2.716 2.489 1.467 0 1.831 0 2.716-.584a6.372 6.372 0 002.716-4.521c.123-.805-.009-1.649-.287-2.489-.589-1.771-1.831-3.47-2.716-4.521-.75-1.067-.974-1.928-1.05-3.02-.065-1.491 1.056-5.965-3.17-6.298-.165-.013-.325-.021-.48-.021z" />
                               </svg>
                               <div className="ml-3 text-left">
-                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                <p className="text-sm font-medium text-foreground">
                                   Debian Package (.deb)
                                 </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                <p className="text-xs text-foreground/60">
                                   For Debian/Ubuntu systems
                                 </p>
                               </div>
                             </div>
-                            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="h-5 w-5 text-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
                           </button>
@@ -2187,7 +2160,7 @@ export default function Dashboard() {
                     }}
                     className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
-                    <XMarkIcon className="h-6 w-6" />
+                    <X className="h-6 w-6" />
                   </button>
                 </div>
 
@@ -2198,39 +2171,39 @@ export default function Dashboard() {
                       <div key={slot.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <div className="mb-3">
                           <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-2">
-                            <UserIcon className="h-4 w-4" />
+                            <User className="h-4 w-4" />
                             <span>{slot.admin.full_name || slot.admin.email}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <VideoCameraIcon className="h-4 w-4" />
+                            <VideoCamera className="h-4 w-4" />
                             <span className="capitalize">{slot.meeting_platform}</span>
                           </div>
                         </div>
 
                         <div className="space-y-2">
-                          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Available 1-Hour Sessions:</p>
+                          <p className="text-xs font-semibold text-foreground/80 mb-2">Available 1-Hour Sessions:</p>
                           {segments.map((segment: any, index: number) => (
-                            <div key={index} className="flex items-center justify-between bg-gray-50 dark:bg-gray-900 rounded p-3 border border-gray-200 dark:border-gray-700">
+                            <div key={index} className="flex items-center justify-between glass-card !rounded-lg p-3">
                               <div className="flex items-center gap-2">
-                                <ClockIcon className="h-4 w-4 text-blue-600" />
-                                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                <Clock className="h-4 w-4 text-cyan-500" />
+                                <span className="text-sm font-medium text-foreground">
                                   {formatTime(segment.segment_start)}
                                 </span>
-                                <span className="text-sm text-gray-500 dark:text-gray-400">-</span>
-                                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                <span className="text-sm text-foreground/60">-</span>
+                                <span className="text-sm font-medium text-foreground">
                                   {formatTime(segment.segment_end)}
                                 </span>
-                                <span className="text-xs text-gray-500 dark:text-gray-400">(60 min)</span>
+                                <span className="text-xs text-foreground/50">(60 min)</span>
                               </div>
                               <button
                                 onClick={() => {
                                   setShowSlotsModal(false)
                                   openBookingModal(segment)
                                 }}
-                                className="px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 inline-flex items-center"
+                                className="btn-primary text-sm inline-flex items-center"
                               >
                                 Book
-                                <ArrowRightIcon className="h-3 w-3 ml-1" />
+                                <ArrowRight className="h-3 w-3 ml-1" />
                               </button>
                             </div>
                           ))}
@@ -2246,59 +2219,57 @@ export default function Dashboard() {
 
         {/* Booking Confirmation Modal */}
         {showBookingModal && bookingSlot && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="max-w-lg w-full bg-white dark:bg-gray-800 rounded-lg shadow-xl">
-              <div className="p-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="max-w-lg w-full glass-card p-6">
+              <h2 className="text-2xl font-bold text-foreground mb-4">
+                Confirm Booking
+              </h2>
+
+              <div className="space-y-4 mb-6">
+                <div>
+                  <div className="text-sm text-foreground/60">Date & Time</div>
+                  <div className="text-lg font-semibold text-foreground">
+                    {formatDate(bookingSlot.segment_start || bookingSlot.start_time)}
+                  </div>
+                  <div className="text-foreground/80">
+                    {formatTime(bookingSlot.segment_start || bookingSlot.start_time)} - {formatTime(bookingSlot.segment_end || bookingSlot.end_time)}
+                  </div>
+                  <div className="text-xs text-cyan-500 mt-1">
+                    60 minute session
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm text-foreground/60">Admin</div>
+                  <div className="font-medium text-foreground">
+                    {bookingSlot.admin.full_name || bookingSlot.admin.email}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm text-foreground/60">Platform</div>
+                  <div className="font-medium text-foreground capitalize">
+                    {bookingSlot.meeting_platform}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleBookSession}
+                  className="btn-primary flex-1"
+                >
                   Confirm Booking
-                </h2>
-
-                <div className="space-y-4 mb-6">
-                  <div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Date & Time</div>
-                    <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {formatDate(bookingSlot.segment_start || bookingSlot.start_time)}
-                    </div>
-                    <div className="text-gray-700 dark:text-gray-300">
-                      {formatTime(bookingSlot.segment_start || bookingSlot.start_time)} - {formatTime(bookingSlot.segment_end || bookingSlot.end_time)}
-                    </div>
-                    <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                      60 minute session
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Admin</div>
-                    <div className="font-medium text-gray-900 dark:text-white">
-                      {bookingSlot.admin.full_name || bookingSlot.admin.email}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Platform</div>
-                    <div className="font-medium text-gray-900 dark:text-white capitalize">
-                      {bookingSlot.meeting_platform}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleBookSession}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700"
-                  >
-                    Confirm Booking
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowBookingModal(false)
-                      setBookingSlot(null)
-                    }}
-                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
-                  >
-                    Cancel
-                  </button>
-                </div>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowBookingModal(false)
+                    setBookingSlot(null)
+                  }}
+                  className="btn-ghost flex-1"
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           </div>

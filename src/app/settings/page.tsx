@@ -9,29 +9,29 @@ import PaymentMethodSetup from '@/components/billing/PaymentMethodSetup'
 import ClusterCreationWizard from '@/components/ClusterCreationWizard'
 import { createClient } from '@/lib/supabase'
 import {
-  UserIcon,
-  KeyIcon,
-  ShieldCheckIcon,
-  ComputerDesktopIcon,
-  CreditCardIcon,
-  UserGroupIcon,
-  Cog6ToothIcon,
-  ArrowLeftIcon,
-  InformationCircleIcon,
-  XMarkIcon,
-  SunIcon,
-  MoonIcon,
-  PencilIcon,
-  CheckIcon,
-  XCircleIcon,
-  ClockIcon,
-  ExclamationTriangleIcon,
-  CircleStackIcon,
-  PlusIcon,
-  CloudIcon,
-  CheckCircleIcon,
-  EyeIcon
-} from '@heroicons/react/24/outline'
+  User,
+  Key,
+  ShieldCheck,
+  Desktop,
+  CreditCard,
+  UsersThree,
+  Gear,
+  ArrowLeft,
+  Info,
+  X,
+  Sun,
+  Moon,
+  Pencil,
+  Check,
+  XCircle,
+  Clock,
+  Warning,
+  Database,
+  Plus,
+  Cloud,
+  CheckCircle,
+  Eye
+} from '@phosphor-icons/react'
 
 type ViewType = 'home' | 'profile' | 'appearance' | 'payment' | 'licenses' | 'sessions' | 'groups' | 'clusters'
 
@@ -71,7 +71,7 @@ function QuickstartTip({ title, description, steps, onClose }: QuickstartTipProp
     <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-3">
-          <InformationCircleIcon className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+          <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
           <div className="flex-1">
             <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
               🚀 Quickstart: {title}
@@ -97,7 +97,7 @@ function QuickstartTip({ title, description, steps, onClose }: QuickstartTipProp
           onClick={onClose}
           className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 p-1"
         >
-          <XMarkIcon className="h-4 w-4" />
+          <X className="h-4 w-4" />
         </button>
       </div>
     </div>
@@ -544,7 +544,7 @@ export default function SettingsPage() {
               onClick={() => toggleQuickstart('home')}
               className="p-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
             >
-              <InformationCircleIcon className="h-5 w-5" />
+              <Info className="h-5 w-5" />
             </button>
           </div>
 
@@ -572,7 +572,7 @@ export default function SettingsPage() {
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="p-3 bg-gray-100 dark:bg-gray-900/30 rounded-lg group-hover:bg-gray-200 dark:group-hover:bg-gray-900/50 transition-colors">
-                  <UserIcon className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+                  <User className="h-6 w-6 text-gray-600 dark:text-gray-400" />
                 </div>
                 <div className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
                   →
@@ -596,7 +596,7 @@ export default function SettingsPage() {
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg group-hover:bg-indigo-200 dark:group-hover:bg-indigo-900/50 transition-colors">
-                  <Cog6ToothIcon className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                  <Gear className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <div className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
                   →
@@ -620,7 +620,7 @@ export default function SettingsPage() {
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/50 transition-colors">
-                  <CreditCardIcon className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                  <CreditCard className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
                   →
@@ -644,7 +644,7 @@ export default function SettingsPage() {
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
-                  <ShieldCheckIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  <ShieldCheck className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
                   →
@@ -668,7 +668,7 @@ export default function SettingsPage() {
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg group-hover:bg-yellow-200 dark:group-hover:bg-yellow-900/50 transition-colors">
-                  <ComputerDesktopIcon className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+                  <Desktop className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
                 </div>
                 <div className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
                   →
@@ -692,7 +692,7 @@ export default function SettingsPage() {
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors">
-                  <CircleStackIcon className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  <Database className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
                   →
@@ -716,7 +716,7 @@ export default function SettingsPage() {
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="p-3 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg group-hover:bg-cyan-200 dark:group-hover:bg-cyan-900/50 transition-colors">
-                  <UserGroupIcon className="h-6 w-6 text-cyan-600 dark:text-cyan-400" />
+                  <UsersThree className="h-6 w-6 text-cyan-600 dark:text-cyan-400" />
                 </div>
                 <div className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
                   →
@@ -749,7 +749,7 @@ export default function SettingsPage() {
               onClick={() => setCurrentView('home')}
               className="mr-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              <ArrowLeftIcon className="h-5 w-5" />
+              <ArrowLeft className="h-5 w-5" />
             </button>
             <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
               Profile & Identity
@@ -758,7 +758,7 @@ export default function SettingsPage() {
               onClick={() => toggleQuickstart('profile')}
               className="ml-4 p-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
             >
-              <InformationCircleIcon className="h-5 w-5" />
+              <Info className="h-5 w-5" />
             </button>
           </div>
 
@@ -783,7 +783,7 @@ export default function SettingsPage() {
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                    <UserIcon className="h-5 w-5 mr-2 text-gray-500" />
+                    <User className="h-5 w-5 mr-2 text-gray-500" />
                     Personal Information
                   </h2>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -795,7 +795,7 @@ export default function SettingsPage() {
                     onClick={handleStartEdit}
                     className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center space-x-2"
                   >
-                    <PencilIcon className="h-4 w-4" />
+                    <Pencil className="h-4 w-4" />
                     <span>Edit</span>
                   </button>
                 )}
@@ -857,7 +857,7 @@ export default function SettingsPage() {
                         disabled={loading}
                         className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2"
                       >
-                        <CheckIcon className="h-4 w-4" />
+                        <Check className="h-4 w-4" />
                         <span>Save Changes</span>
                       </button>
                       <button
@@ -912,7 +912,7 @@ export default function SettingsPage() {
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                  <InformationCircleIcon className="h-5 w-5 mr-2 text-blue-500" />
+                  <Info className="h-5 w-5 mr-2 text-blue-500" />
                   Account Information
                 </h2>
               </div>
@@ -935,7 +935,7 @@ export default function SettingsPage() {
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                  <KeyIcon className="h-5 w-5 mr-2 text-red-500" />
+                  <Key className="h-5 w-5 mr-2 text-red-500" />
                   Password
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -964,7 +964,7 @@ export default function SettingsPage() {
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                  <ShieldCheckIcon className="h-5 w-5 mr-2 text-blue-500" />
+                  <ShieldCheck className="h-5 w-5 mr-2 text-blue-500" />
                   Two-Factor Authentication
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -993,7 +993,7 @@ export default function SettingsPage() {
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                  <ComputerDesktopIcon className="h-5 w-5 mr-2 text-gray-500" />
+                  <Desktop className="h-5 w-5 mr-2 text-gray-500" />
                   Session Management
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -1034,7 +1034,7 @@ export default function SettingsPage() {
               onClick={() => setCurrentView('home')}
               className="mr-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              <ArrowLeftIcon className="h-5 w-5" />
+              <ArrowLeft className="h-5 w-5" />
             </button>
             <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
               Appearance & Theme
@@ -1043,7 +1043,7 @@ export default function SettingsPage() {
               onClick={() => toggleQuickstart('appearance')}
               className="ml-4 p-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
             >
-              <InformationCircleIcon className="h-5 w-5" />
+              <Info className="h-5 w-5" />
             </button>
           </div>
 
@@ -1067,7 +1067,7 @@ export default function SettingsPage() {
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                  <Cog6ToothIcon className="h-5 w-5 mr-2 text-indigo-500" />
+                  <Gear className="h-5 w-5 mr-2 text-indigo-500" />
                   Theme Preference
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -1087,7 +1087,7 @@ export default function SettingsPage() {
                     }`}
                   >
                     <div className="flex flex-col items-center space-y-3">
-                      <SunIcon className="h-8 w-8 text-yellow-500" />
+                      <Sun className="h-8 w-8 text-yellow-500" />
                       <span className="font-medium text-gray-900 dark:text-white">Light</span>
                       <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
                         Bright and clean interface
@@ -1114,7 +1114,7 @@ export default function SettingsPage() {
                     }`}
                   >
                     <div className="flex flex-col items-center space-y-3">
-                      <MoonIcon className="h-8 w-8 text-indigo-500" />
+                      <Moon className="h-8 w-8 text-indigo-500" />
                       <span className="font-medium text-gray-900 dark:text-white">Dark</span>
                       <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
                         Easy on the eyes in low light
@@ -1141,7 +1141,7 @@ export default function SettingsPage() {
                     }`}
                   >
                     <div className="flex flex-col items-center space-y-3">
-                      <ComputerDesktopIcon className="h-8 w-8 text-gray-500" />
+                      <Desktop className="h-8 w-8 text-gray-500" />
                       <span className="font-medium text-gray-900 dark:text-white">System</span>
                       <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
                         Sync with system preferences
@@ -1177,7 +1177,7 @@ export default function SettingsPage() {
               onClick={() => setCurrentView('home')}
               className="mr-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              <ArrowLeftIcon className="h-5 w-5" />
+              <ArrowLeft className="h-5 w-5" />
             </button>
             <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
               Payment & Billing
@@ -1186,7 +1186,7 @@ export default function SettingsPage() {
               onClick={() => toggleQuickstart('payment')}
               className="ml-4 p-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
             >
-              <InformationCircleIcon className="h-5 w-5" />
+              <Info className="h-5 w-5" />
             </button>
           </div>
 
@@ -1210,7 +1210,7 @@ export default function SettingsPage() {
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                  <CreditCardIcon className="h-5 w-5 mr-2 text-emerald-500" />
+                  <CreditCard className="h-5 w-5 mr-2 text-emerald-500" />
                   Payment Method
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -1238,7 +1238,7 @@ export default function SettingsPage() {
               onClick={() => setCurrentView('home')}
               className="mr-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              <ArrowLeftIcon className="h-5 w-5" />
+              <ArrowLeft className="h-5 w-5" />
             </button>
             <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
               Subscriptions & Licenses
@@ -1247,7 +1247,7 @@ export default function SettingsPage() {
               onClick={() => toggleQuickstart('licenses')}
               className="ml-4 p-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
             >
-              <InformationCircleIcon className="h-5 w-5" />
+              <Info className="h-5 w-5" />
             </button>
           </div>
 
@@ -1271,7 +1271,7 @@ export default function SettingsPage() {
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                  <ShieldCheckIcon className="h-5 w-5 mr-2 text-green-500" />
+                  <ShieldCheck className="h-5 w-5 mr-2 text-green-500" />
                   Desktop Application Subscription
                 </h2>
               </div>
@@ -1369,7 +1369,7 @@ export default function SettingsPage() {
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                  <Cog6ToothIcon className="h-5 w-5 mr-2 text-indigo-500" />
+                  <Gear className="h-5 w-5 mr-2 text-indigo-500" />
                   Plugin Subscriptions
                 </h2>
               </div>
@@ -1519,7 +1519,7 @@ export default function SettingsPage() {
                 <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
                   <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                     <h2 className="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                      <KeyIcon className="h-5 w-5 mr-2 text-amber-500" />
+                      <Key className="h-5 w-5 mr-2 text-amber-500" />
                       Standalone Licenses
                     </h2>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -1600,7 +1600,7 @@ export default function SettingsPage() {
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 shadow-xl">
                 <div className="flex items-start mb-4">
-                  <ExclamationTriangleIcon className="h-6 w-6 text-orange-500 mr-3 flex-shrink-0 mt-0.5" />
+                  <Warning className="h-6 w-6 text-orange-500 mr-3 flex-shrink-0 mt-0.5" />
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                       Cancel Subscription?
@@ -1675,7 +1675,7 @@ export default function SettingsPage() {
                 onClick={() => setCurrentView('home')}
                 className="mr-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
               >
-                <ArrowLeftIcon className="h-5 w-5" />
+                <ArrowLeft className="h-5 w-5" />
               </button>
               <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
                 Session Information
@@ -1684,7 +1684,7 @@ export default function SettingsPage() {
                 onClick={() => toggleQuickstart('sessions')}
                 className="ml-4 p-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
               >
-                <InformationCircleIcon className="h-5 w-5" />
+                <Info className="h-5 w-5" />
               </button>
             </div>
             <button
@@ -1760,7 +1760,7 @@ export default function SettingsPage() {
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                  <ComputerDesktopIcon className="h-5 w-5 mr-2 text-purple-500" />
+                  <Desktop className="h-5 w-5 mr-2 text-purple-500" />
                   Active Desktop Sessions ({activeDesktopSessions.length})
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -1782,7 +1782,7 @@ export default function SettingsPage() {
                         {/* Session Header */}
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center space-x-3">
-                            <ComputerDesktopIcon className={`h-6 w-6 ${session.is_current ? 'text-green-600 dark:text-green-400' : 'text-purple-600 dark:text-purple-400'}`} />
+                            <Desktop className={`h-6 w-6 ${session.is_current ? 'text-green-600 dark:text-green-400' : 'text-purple-600 dark:text-purple-400'}`} />
                             <div>
                               <p className="font-medium text-gray-800 dark:text-white">
                                 {session.device_name}
@@ -1883,7 +1883,7 @@ export default function SettingsPage() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <ComputerDesktopIcon className="h-12 w-12 text-gray-400 dark:text-gray-600 mx-auto mb-3" />
+                    <Desktop className="h-12 w-12 text-gray-400 dark:text-gray-600 mx-auto mb-3" />
                     <p className="text-gray-600 dark:text-gray-400">No active desktop sessions</p>
                     <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">Launch the Lyceum desktop app to create a desktop session</p>
                   </div>
@@ -1895,7 +1895,7 @@ export default function SettingsPage() {
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                  <ComputerDesktopIcon className="h-5 w-5 mr-2 text-blue-500" />
+                  <Desktop className="h-5 w-5 mr-2 text-blue-500" />
                   Active Web Sessions ({activeWebSessions.length})
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -2030,7 +2030,7 @@ export default function SettingsPage() {
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-lg font-medium text-gray-800 dark:text-white flex items-center">
-                  <ClockIcon className="h-5 w-5 mr-2 text-blue-500" />
+                  <Clock className="h-5 w-5 mr-2 text-blue-500" />
                   Session History ({inactiveSessions.length})
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
@@ -2075,7 +2075,7 @@ export default function SettingsPage() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <ClockIcon className="h-12 w-12 text-gray-400 dark:text-gray-600 mx-auto mb-3" />
+                    <Clock className="h-12 w-12 text-gray-400 dark:text-gray-600 mx-auto mb-3" />
                     <p className="text-gray-600 dark:text-gray-400">No session history found</p>
                     <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">Session history is retained for 30 days</p>
                   </div>
@@ -2152,7 +2152,7 @@ export default function SettingsPage() {
                 onClick={() => setCurrentView('home')}
                 className="mr-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
               >
-                <ArrowLeftIcon className="h-5 w-5" />
+                <ArrowLeft className="h-5 w-5" />
               </button>
               <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
                 Clusters
@@ -2161,7 +2161,7 @@ export default function SettingsPage() {
                 onClick={() => toggleQuickstart('clusters')}
                 className="ml-4 p-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
               >
-                <InformationCircleIcon className="h-5 w-5" />
+                <Info className="h-5 w-5" />
               </button>
             </div>
             <div className="flex gap-3">
@@ -2175,7 +2175,7 @@ export default function SettingsPage() {
                 onClick={() => setShowCreateModal(true)}
                 className="inline-flex items-center px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
               >
-                <PlusIcon className="h-4 w-4 mr-1" />
+                <Plus className="h-4 w-4 mr-1" />
                 Add Cluster
               </button>
             </div>
@@ -2201,7 +2201,7 @@ export default function SettingsPage() {
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <CircleStackIcon className="h-6 w-6 text-gray-400" />
+                    <Database className="h-6 w-6 text-gray-400" />
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
@@ -2221,7 +2221,7 @@ export default function SettingsPage() {
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <ComputerDesktopIcon className="h-6 w-6 text-blue-500" />
+                    <Desktop className="h-6 w-6 text-blue-500" />
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
@@ -2241,7 +2241,7 @@ export default function SettingsPage() {
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <CloudIcon className="h-6 w-6 text-purple-500" />
+                    <Cloud className="h-6 w-6 text-purple-500" />
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
@@ -2261,7 +2261,7 @@ export default function SettingsPage() {
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <CheckCircleIcon className="h-6 w-6 text-green-500" />
+                    <CheckCircle className="h-6 w-6 text-green-500" />
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
@@ -2286,7 +2286,7 @@ export default function SettingsPage() {
             </div>
           ) : clustersError ? (
             <div className="text-center py-12 bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
-              <XCircleIcon className="mx-auto h-12 w-12 text-red-400" />
+              <XCircle className="mx-auto h-12 w-12 text-red-400" />
               <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">Error loading clusters</h3>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{clustersError}</p>
               <div className="mt-6">
@@ -2300,7 +2300,7 @@ export default function SettingsPage() {
             </div>
           ) : clusters.length === 0 ? (
             <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-              <CircleStackIcon className="mx-auto h-12 w-12 text-gray-400" />
+              <Database className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No clusters</h3>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Get started by connecting your first cluster.
@@ -2310,7 +2310,7 @@ export default function SettingsPage() {
                   onClick={() => setShowCreateModal(true)}
                   className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
                 >
-                  <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+                  <Plus className="-ml-1 mr-2 h-5 w-5" />
                   Add Cluster
                 </button>
               </div>
@@ -2357,9 +2357,9 @@ export default function SettingsPage() {
                           <div className="flex items-center">
                             <div className="flex-shrink-0 relative">
                               {cluster.cluster_type === 'local' ? (
-                                <ComputerDesktopIcon className="h-6 w-6 text-blue-500" />
+                                <Desktop className="h-6 w-6 text-blue-500" />
                               ) : (
-                                <CloudIcon className="h-6 w-6 text-purple-500" />
+                                <Cloud className="h-6 w-6 text-purple-500" />
                               )}
                               {cluster.cluster_type === 'local' && (
                                 <span
@@ -2423,7 +2423,7 @@ export default function SettingsPage() {
                             className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 inline-flex items-center"
                             title="View cluster details"
                           >
-                            <EyeIcon className="h-5 w-5" />
+                            <Eye className="h-5 w-5" />
                           </button>
                         </td>
                       </tr>
@@ -2464,7 +2464,7 @@ export default function SettingsPage() {
               onClick={() => setCurrentView('home')}
               className="mr-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              <ArrowLeftIcon className="h-5 w-5" />
+              <ArrowLeft className="h-5 w-5" />
             </button>
             <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">
               User Groups

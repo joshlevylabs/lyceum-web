@@ -2,19 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
-  CalendarIcon,
-  ClockIcon,
-  PlusIcon,
-  PencilIcon,
-  TrashIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon
-} from '@heroicons/react/24/outline';
+  Calendar,
+  Clock,
+  Plus,
+  Pencil,
+  Trash,
+  CheckCircle,
+  XCircle,
+  CaretLeft,
+  CaretRight
+} from '@phosphor-icons/react';
 
 interface AvailabilitySlot {
   id: string;
@@ -299,76 +297,78 @@ export default function AdminAvailabilityPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-cyan-500/20 border-t-cyan-500"></div>
+          <span className="text-sm text-foreground/60">Loading...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-3xl font-bold text-foreground">
               Availability Management
             </h1>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">
+            <p className="mt-2 text-foreground/60">
               Manage your availability for onboarding sessions
             </p>
           </div>
 
           <div className="flex gap-3">
-            <Button
-              variant={viewMode === 'calendar' ? 'default' : 'outline'}
+            <button
               onClick={() => setViewMode('calendar')}
-              className="flex items-center gap-2"
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all ${
+                viewMode === 'calendar' ? 'btn-primary' : 'btn-ghost'
+              }`}
             >
-              <CalendarIcon className="h-5 w-5" />
+              <Calendar className="h-5 w-5" />
               Calendar
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
+            </button>
+            <button
               onClick={() => setViewMode('list')}
-              className="flex items-center gap-2"
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all ${
+                viewMode === 'list' ? 'btn-primary' : 'btn-ghost'
+              }`}
             >
-              <ClockIcon className="h-5 w-5" />
+              <Clock className="h-5 w-5" />
               List
-            </Button>
+            </button>
           </div>
         </div>
 
         {/* Calendar View */}
         {viewMode === 'calendar' && (
-          <Card className="p-6">
+          <div className="glass-card p-6">
             {/* Calendar Header */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-2xl font-bold text-foreground">
                 {currentDate.toLocaleString('en-US', { month: 'long', year: 'numeric' })}
               </h2>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
+                <button
                   onClick={() => navigateMonth('prev')}
+                  className="btn-glass p-2 rounded-lg"
                 >
-                  <ChevronLeftIcon className="h-5 w-5" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
+                  <CaretLeft className="h-5 w-5" />
+                </button>
+                <button
                   onClick={() => setCurrentDate(new Date())}
+                  className="btn-glass px-4 py-2 rounded-lg"
                 >
                   Today
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
+                </button>
+                <button
                   onClick={() => navigateMonth('next')}
+                  className="btn-glass p-2 rounded-lg"
                 >
-                  <ChevronRightIcon className="h-5 w-5" />
-                </Button>
+                  <CaretRight className="h-5 w-5" />
+                </button>
               </div>
             </div>
 
@@ -377,7 +377,7 @@ export default function AdminAvailabilityPage() {
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
                 <div
                   key={day}
-                  className="text-center text-sm font-semibold text-gray-700 dark:text-gray-300 py-2"
+                  className="text-center text-sm font-semibold text-foreground/60 py-2"
                 >
                   {day}
                 </div>
@@ -396,9 +396,9 @@ export default function AdminAvailabilityPage() {
                     key={index}
                     className={`
                       min-h-[120px] border rounded-lg p-2 transition-all
-                      ${date ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-900 border-transparent'}
-                      ${isDateToday ? 'ring-2 ring-blue-500' : ''}
-                      ${date && !isPast ? 'hover:shadow-md cursor-pointer' : ''}
+                      ${date ? 'bg-background border-cyan-500/20' : 'bg-background/50 border-transparent'}
+                      ${isDateToday ? 'ring-2 ring-cyan-500' : ''}
+                      ${date && !isPast ? 'hover:border-cyan-500/40 hover:bg-cyan-500/5 cursor-pointer' : ''}
                       ${isPast && date ? 'opacity-50' : ''}
                     `}
                     onClick={() => date && !isPast && openQuickCreateModal(date)}
@@ -407,7 +407,7 @@ export default function AdminAvailabilityPage() {
                       <>
                         <div className={`
                           text-sm font-semibold mb-2
-                          ${isDateToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}
+                          ${isDateToday ? 'text-cyan-400' : 'text-foreground'}
                         `}>
                           {date.getDate()}
                         </div>
@@ -422,12 +422,11 @@ export default function AdminAvailabilityPage() {
                                   openEditModal(slot);
                                 }}
                                 className={`
-                                  text-xs p-1 rounded truncate
+                                  text-xs p-1 rounded truncate border transition-all
                                   ${slot.is_available
-                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20'
+                                    : 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20'
                                   }
-                                  hover:opacity-80
                                 `}
                                 title={`${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}`}
                               >
@@ -435,7 +434,7 @@ export default function AdminAvailabilityPage() {
                               </div>
                             ))}
                             {daySlots.length > 3 && (
-                              <div className="text-xs text-gray-600 dark:text-gray-400 text-center">
+                              <div className="text-xs text-foreground/40 text-center">
                                 +{daySlots.length - 3} more
                               </div>
                             )}
@@ -443,7 +442,7 @@ export default function AdminAvailabilityPage() {
                         )}
 
                         {daySlots.length === 0 && !isPast && (
-                          <div className="text-xs text-gray-400 dark:text-gray-600 text-center mt-4">
+                          <div className="text-xs text-foreground/40 text-center mt-4">
                             Click to add
                           </div>
                         )}
@@ -457,57 +456,57 @@ export default function AdminAvailabilityPage() {
             {/* Legend */}
             <div className="mt-6 flex gap-4 text-sm">
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-green-100 dark:bg-green-900 rounded"></div>
-                <span className="text-gray-700 dark:text-gray-300">Available</span>
+                <div className="w-4 h-4 bg-emerald-500/10 border border-emerald-500/20 rounded"></div>
+                <span className="text-foreground/60">Available</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-red-100 dark:bg-red-900 rounded"></div>
-                <span className="text-gray-700 dark:text-gray-300">Full</span>
+                <div className="w-4 h-4 bg-red-500/10 border border-red-500/20 rounded"></div>
+                <span className="text-foreground/60">Full</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 ring-2 ring-blue-500 rounded"></div>
-                <span className="text-gray-700 dark:text-gray-300">Today</span>
+                <div className="w-4 h-4 ring-2 ring-cyan-500 rounded"></div>
+                <span className="text-foreground/60">Today</span>
               </div>
             </div>
-          </Card>
+          </div>
         )}
 
         {/* List View */}
         {viewMode === 'list' && (
           <>
             <div className="mb-6">
-              <Button
+              <button
                 onClick={() => openQuickCreateModal(new Date())}
-                className="flex items-center gap-2"
+                className="btn-primary flex items-center gap-2"
               >
-                <PlusIcon className="h-5 w-5" />
+                <Plus className="h-5 w-5" />
                 Add Availability Slot
-              </Button>
+              </button>
             </div>
 
             <div className="grid gap-4">
               {slots.length === 0 ? (
-                <Card className="p-8 text-center">
-                  <CalendarIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                <div className="glass-card p-8 text-center">
+                  <Calendar className="h-12 w-12 mx-auto text-foreground/40 mb-4" weight="duotone" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">
                     No availability slots
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  <p className="text-foreground/60 mb-4">
                     Create your first availability slot to allow users to book onboarding sessions.
                   </p>
-                </Card>
+                </div>
               ) : (
                 slots.map((slot) => (
-                  <Card key={slot.id} className="p-6">
+                  <div key={slot.id} className="glass-card p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-3">
-                          <CalendarIcon className="h-5 w-5 text-blue-600" />
+                          <Calendar className="h-5 w-5 text-cyan-400" weight="duotone" />
                           <div>
-                            <div className="font-semibold text-gray-900 dark:text-white">
+                            <div className="font-semibold text-foreground">
                               {formatDate(slot.start_time)}
                             </div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                            <div className="text-sm text-foreground/60">
                               to {formatTime(slot.end_time)}
                             </div>
                           </div>
@@ -515,35 +514,35 @@ export default function AdminAvailabilityPage() {
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                           <div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">Type</div>
-                            <div className="font-medium text-gray-900 dark:text-white capitalize">
+                            <div className="text-sm text-foreground/60">Type</div>
+                            <div className="font-medium text-foreground capitalize">
                               {slot.slot_type}
                             </div>
                           </div>
                           <div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">Capacity</div>
-                            <div className="font-medium text-gray-900 dark:text-white">
+                            <div className="text-sm text-foreground/60">Capacity</div>
+                            <div className="font-medium text-foreground">
                               {slot.current_bookings} / {slot.max_concurrent_sessions}
                             </div>
                           </div>
                           <div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">Platform</div>
-                            <div className="font-medium text-gray-900 dark:text-white capitalize">
+                            <div className="text-sm text-foreground/60">Platform</div>
+                            <div className="font-medium text-foreground capitalize">
                               {slot.meeting_platform.replace('_', ' ')}
                             </div>
                           </div>
                           <div>
-                            <div className="text-sm text-gray-600 dark:text-gray-400">Status</div>
+                            <div className="text-sm text-foreground/60">Status</div>
                             <div className="flex items-center gap-1">
                               {slot.is_available ? (
                                 <>
-                                  <CheckCircleIcon className="h-4 w-4 text-green-600" />
-                                  <span className="text-sm font-medium text-green-600">Available</span>
+                                  <CheckCircle className="h-4 w-4 text-emerald-400" weight="fill" />
+                                  <span className="text-sm font-medium text-emerald-400">Available</span>
                                 </>
                               ) : (
                                 <>
-                                  <XCircleIcon className="h-4 w-4 text-red-600" />
-                                  <span className="text-sm font-medium text-red-600">Full</span>
+                                  <XCircle className="h-4 w-4 text-red-400" weight="fill" />
+                                  <span className="text-sm font-medium text-red-400">Full</span>
                                 </>
                               )}
                             </div>
@@ -551,43 +550,40 @@ export default function AdminAvailabilityPage() {
                         </div>
 
                         {slot.location && (
-                          <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                          <div className="mt-3 text-sm text-foreground/60">
                             <strong>Location:</strong> {slot.location}
                           </div>
                         )}
 
                         {slot.notes && (
-                          <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                          <div className="mt-2 text-sm text-foreground/60">
                             <strong>Notes:</strong> {slot.notes}
                           </div>
                         )}
 
                         {slot.is_recurring && (
-                          <div className="mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                          <div className="mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
                             Recurring: {slot.recurrence_pattern}
                           </div>
                         )}
                       </div>
 
                       <div className="flex gap-2 ml-4">
-                        <Button
-                          variant="outline"
-                          size="sm"
+                        <button
                           onClick={() => openEditModal(slot)}
+                          className="btn-ghost p-2 rounded-lg"
                         >
-                          <PencilIcon className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
                           onClick={() => handleDeleteSlot(slot.id)}
-                          className="text-red-600 hover:text-red-700"
+                          className="p-2 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all border border-transparent hover:border-red-500/20"
                         >
-                          <TrashIcon className="h-4 w-4" />
-                        </Button>
+                          <Trash className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
-                  </Card>
+                  </div>
                 ))
               )}
             </div>
@@ -596,10 +592,10 @@ export default function AdminAvailabilityPage() {
 
         {/* Create/Edit Modal */}
         {(showCreateModal || editingSlot) && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="glass-card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                <h2 className="text-2xl font-bold text-foreground mb-6">
                   {editingSlot ? 'Edit Availability Slot' : 'Create Availability Slot'}
                 </h2>
 
@@ -607,7 +603,7 @@ export default function AdminAvailabilityPage() {
                   <div className="space-y-4">
                     {/* Start Time */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-foreground/60 mb-2">
                         Start Time *
                       </label>
                       <input
@@ -615,13 +611,13 @@ export default function AdminAvailabilityPage() {
                         required
                         value={formData.start_time}
                         onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        className="w-full px-4 py-2.5 rounded-xl glass-input text-foreground"
                       />
                     </div>
 
                     {/* End Time */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-foreground/60 mb-2">
                         End Time *
                       </label>
                       <input
@@ -629,13 +625,13 @@ export default function AdminAvailabilityPage() {
                         required
                         value={formData.end_time}
                         onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        className="w-full px-4 py-2.5 rounded-xl glass-input text-foreground"
                       />
                     </div>
 
                     {/* Max Concurrent Sessions */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-foreground/60 mb-2">
                         Max Concurrent Sessions
                       </label>
                       <input
@@ -643,19 +639,19 @@ export default function AdminAvailabilityPage() {
                         min="1"
                         value={formData.max_concurrent_sessions}
                         onChange={(e) => setFormData({ ...formData, max_concurrent_sessions: parseInt(e.target.value) })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        className="w-full px-4 py-2.5 rounded-xl glass-input text-foreground"
                       />
                     </div>
 
                     {/* Meeting Platform */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-foreground/60 mb-2">
                         Meeting Platform
                       </label>
                       <select
                         value={formData.meeting_platform}
                         onChange={(e) => setFormData({ ...formData, meeting_platform: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        className="w-full px-4 py-2.5 rounded-xl glass-input text-foreground"
                       >
                         <option value="zoom">Zoom</option>
                         <option value="google_meet">Google Meet</option>
@@ -667,7 +663,7 @@ export default function AdminAvailabilityPage() {
 
                     {/* Location */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-foreground/60 mb-2">
                         Meeting Link/Location
                       </label>
                       <input
@@ -675,13 +671,13 @@ export default function AdminAvailabilityPage() {
                         value={formData.location}
                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                         placeholder="e.g., https://zoom.us/j/123456789 or Conference Room A"
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        className="w-full px-4 py-2.5 rounded-xl glass-input text-foreground placeholder-foreground/40"
                       />
                     </div>
 
                     {/* Notes */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-foreground/60 mb-2">
                         Notes (optional)
                       </label>
                       <textarea
@@ -689,12 +685,12 @@ export default function AdminAvailabilityPage() {
                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                         rows={3}
                         placeholder="Any additional information for this time slot"
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        className="w-full px-4 py-2.5 rounded-xl glass-input text-foreground placeholder-foreground/40"
                       />
                     </div>
 
                     {/* Recurring */}
-                    <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <div className="border-t border-cyan-500/10 pt-4">
                       <div className="flex items-center gap-2">
                         <input
                           type="checkbox"
@@ -711,47 +707,47 @@ export default function AdminAvailabilityPage() {
                                 : formData.recurrence_end_date
                             });
                           }}
-                          className="rounded border-gray-300 dark:border-gray-600"
+                          className="rounded border-cyan-500/30"
                         />
-                        <label htmlFor="is_recurring" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <label htmlFor="is_recurring" className="text-sm font-medium text-foreground">
                           Recurring Availability
                         </label>
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-6">
+                      <p className="text-xs text-foreground/60 mt-1 ml-6">
                         Create multiple availability slots automatically
                       </p>
                     </div>
 
                     {formData.is_recurring && (
                       <>
-                        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
-                          <p className="text-sm text-blue-800 dark:text-blue-200">
+                        <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-3">
+                          <p className="text-sm text-cyan-400">
                             <strong>Note:</strong> This will create multiple availability slots based on your pattern. For example, "Weekly" for 3 months will create approximately 12 slots.
                           </p>
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <label className="block text-sm font-medium text-foreground/60 mb-2">
                             Recurrence Pattern *
                           </label>
                           <select
                             required={formData.is_recurring}
                             value={formData.recurrence_pattern}
                             onChange={(e) => setFormData({ ...formData, recurrence_pattern: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                            className="w-full px-4 py-2.5 rounded-xl glass-input text-foreground"
                           >
                             <option value="">Select pattern</option>
                             <option value="daily">Daily (Every day)</option>
                             <option value="weekly">Weekly (Same day each week)</option>
                             <option value="monthly">Monthly (Same date each month)</option>
                           </select>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          <p className="text-xs text-foreground/60 mt-1">
                             How often should this availability repeat?
                           </p>
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          <label className="block text-sm font-medium text-foreground/60 mb-2">
                             Recurrence End Date *
                           </label>
                           <input
@@ -759,9 +755,9 @@ export default function AdminAvailabilityPage() {
                             required={formData.is_recurring}
                             value={formData.recurrence_end_date}
                             onChange={(e) => setFormData({ ...formData, recurrence_end_date: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                            className="w-full px-4 py-2.5 rounded-xl glass-input text-foreground"
                           />
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          <p className="text-xs text-foreground/60 mt-1">
                             When should the recurring pattern stop? (Recommended: 1-3 months)
                           </p>
                         </div>
@@ -771,26 +767,25 @@ export default function AdminAvailabilityPage() {
 
                   {/* Form Actions */}
                   <div className="flex gap-3 mt-6">
-                    <Button type="submit" className="flex-1">
+                    <button type="submit" className="btn-primary flex-1">
                       {editingSlot ? 'Update Slot' : 'Create Slot'}
-                    </Button>
-                    <Button
+                    </button>
+                    <button
                       type="button"
-                      variant="outline"
                       onClick={() => {
                         setShowCreateModal(false);
                         setEditingSlot(null);
                         setSelectedDate(null);
                         resetForm();
                       }}
-                      className="flex-1"
+                      className="btn-ghost flex-1"
                     >
                       Cancel
-                    </Button>
+                    </button>
                   </div>
                 </form>
               </div>
-            </Card>
+            </div>
           </div>
         )}
       </div>

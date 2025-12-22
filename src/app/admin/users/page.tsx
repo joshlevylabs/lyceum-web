@@ -3,29 +3,30 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
-  MagnifyingGlassIcon,
-  UserIcon,
-  KeyIcon,
-  CalendarIcon,
-  PencilIcon,
-  LockClosedIcon,
-  LockOpenIcon,
-  EyeIcon,
-  FunnelIcon,
-  UserPlusIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  CreditCardIcon,
-  CircleStackIcon,
-  ChartBarIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  ServerIcon,
-  ShieldCheckIcon,
-  BanknotesIcon,
-  EyeSlashIcon
-} from '@heroicons/react/24/outline'
+  MagnifyingGlass,
+  User,
+  Key,
+  Calendar,
+  Pencil,
+  Lock,
+  LockOpen,
+  Eye,
+  Funnel,
+  UserPlus,
+  CaretDown,
+  CaretUp,
+  CreditCard,
+  Database,
+  ChartBar,
+  Warning,
+  CheckCircle,
+  Clock,
+  HardDrive,
+  ShieldCheck,
+  CurrencyDollar,
+  EyeSlash,
+  Envelope
+} from '@phosphor-icons/react'
 import UserActionsMenu from '@/components/admin/UserActionsMenu'
 import { validateEmail } from '@/lib/email-validator'
 
@@ -51,6 +52,7 @@ interface User {
     license_type: string
     status: string
     expires_at?: string
+    plugin_id?: string
   }[]
   all_licenses?: {
     id: string
@@ -58,6 +60,7 @@ interface User {
     license_type: string
     status: string
     expires_at?: string
+    plugin_id?: string
   }[]
   license?: {
     id: string
@@ -65,6 +68,7 @@ interface User {
     license_type: string
     status: string
     expires_at?: string
+    plugin_id?: string
   }
   onboarding_status?: string
   projects_count: number
@@ -125,7 +129,6 @@ interface User {
     is_default: boolean
     is_active: boolean
   }>
-  user_key?: string // USER-1, USER-2, etc.
 }
 
 interface Column {
@@ -213,49 +216,49 @@ export default function UserManagement() {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800'
-      case 'engineer': return 'bg-blue-100 text-blue-800'
-      case 'analyst': return 'bg-green-100 text-green-800'
-      case 'viewer': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'admin': return 'bg-red-500/10 text-red-400 border border-red-500/20'
+      case 'engineer': return 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+      case 'analyst': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+      case 'viewer': return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
+      default: return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
     }
   }
 
   const getLicenseTypeColor = (type: string) => {
     switch (type) {
-      case 'enterprise': return 'bg-purple-100 text-purple-800'
-      case 'professional': return 'bg-blue-100 text-blue-800'
-      case 'standard': return 'bg-green-100 text-green-800'
-      case 'trial': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'enterprise': return 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+      case 'professional': return 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+      case 'standard': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+      case 'trial': return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
+      default: return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
     }
   }
 
   const getOnboardingColor = (status?: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800'
-      case 'pending': return 'bg-yellow-100 text-yellow-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'completed': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+      case 'pending': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+      default: return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
     }
   }
 
   const getPaymentStatusColor = (status?: string) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800'
-      case 'pending': return 'bg-yellow-100 text-yellow-800'
-      case 'overdue': return 'bg-red-100 text-red-800'
-      case 'suspended': return 'bg-gray-100 text-gray-800'
-      case 'cancelled': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'active': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+      case 'pending': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+      case 'overdue': return 'bg-red-500/10 text-red-400 border border-red-500/20'
+      case 'suspended': return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
+      case 'cancelled': return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
+      default: return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
     }
   }
 
   const getClusterStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800'
-      case 'suspended': return 'bg-yellow-100 text-yellow-800'
-      case 'archived': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'active': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+      case 'suspended': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+      case 'archived': return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
+      default: return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
     }
   }
 
@@ -273,9 +276,9 @@ export default function UserManagement() {
 
   const getStatusIcon = (isActive: boolean) => {
     return isActive ? (
-      <CheckCircleIcon className="h-5 w-5 text-green-500" title="Active" />
+      <CheckCircle className="h-5 w-5 text-emerald-400" weight="duotone" aria-label="Active" />
     ) : (
-      <ExclamationTriangleIcon className="h-5 w-5 text-red-500" title="Inactive" />
+      <Warning className="h-5 w-5 text-red-400" weight="duotone" aria-label="Inactive" />
     )
   }
 
@@ -334,10 +337,10 @@ export default function UserManagement() {
           <td key="view" className="px-6 py-4 whitespace-nowrap text-center">
             <Link
               href={`/admin/users/${user.user_key || user.id}/profile`}
-              className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 transition-colors"
+              className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
               title="View full user profile"
             >
-              <EyeIcon className="h-4 w-4 mr-1" />
+              <Eye className="h-4 w-4 mr-1" />
               View
             </Link>
           </td>
@@ -346,7 +349,7 @@ export default function UserManagement() {
         return (
           <td key="key" className="px-6 py-4 whitespace-nowrap">
             <div className="flex items-center">
-              <span className="text-sm font-mono font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
+              <span className="text-sm font-mono font-medium text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-1 rounded">
                 {user.user_key}
               </span>
             </div>
@@ -355,7 +358,7 @@ export default function UserManagement() {
       case 'username':
         return (
           <td key="username" className="px-6 py-4 whitespace-nowrap">
-            <div className="text-sm font-medium text-gray-900">
+            <div className="text-sm font-medium text-foreground">
               {user.username}
             </div>
           </td>
@@ -365,14 +368,14 @@ export default function UserManagement() {
           <td key="full_name" className="px-6 py-4 whitespace-nowrap">
             <div className="flex items-center">
               <div className={`h-8 w-8 rounded-full flex items-center justify-center mr-3 ${
-                user.is_active ? 'bg-blue-100' : 'bg-gray-100'
+                user.is_active ? 'bg-cyan-500/10 border border-cyan-500/20' : 'bg-foreground/10 border border-foreground/20'
               }`}>
-                <UserIcon className={`h-4 w-4 ${
-                  user.is_active ? 'text-blue-600' : 'text-gray-400'
-                }`} />
+                <User className={`h-4 w-4 ${
+                  user.is_active ? 'text-cyan-400' : 'text-foreground/60'
+                }`} weight="duotone" />
               </div>
               <div>
-                <div className="text-sm font-medium text-gray-900">
+                <div className="text-sm font-medium text-foreground">
                   {user.full_name}
                 </div>
               </div>
@@ -384,10 +387,10 @@ export default function UserManagement() {
         return (
           <td key="email" className="px-6 py-4 whitespace-nowrap">
             <div className="flex items-center">
-              <div className="text-sm text-gray-900">{user.email}</div>
+              <div className="text-sm text-foreground">{user.email}</div>
               {emailValidation.isDisposable && (
-                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200">
-                  <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
+                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  <Warning className="h-3 w-3 mr-1" weight="duotone" />
                   Throwaway
                 </span>
               )}
@@ -397,7 +400,7 @@ export default function UserManagement() {
       case 'company':
         return (
           <td key="company" className="px-6 py-4 whitespace-nowrap">
-            <div className="text-sm text-gray-500">{user.company || '-'}</div>
+            <div className="text-sm text-foreground/60">{user.company || '-'}</div>
           </td>
         )
       case 'role':
@@ -410,13 +413,13 @@ export default function UserManagement() {
         )
       case 'joined':
         return (
-          <td key="joined" className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          <td key="joined" className="px-6 py-4 whitespace-nowrap text-sm text-foreground/60">
             {formatDate(user.created_at)}
           </td>
         )
       case 'last_login':
         return (
-          <td key="last_login" className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          <td key="last_login" className="px-6 py-4 whitespace-nowrap text-sm text-foreground/60">
             {user.last_login || 'Never'}
           </td>
         )
@@ -425,14 +428,14 @@ export default function UserManagement() {
           <td key="payment" className="px-6 py-4 whitespace-nowrap text-center">
             <button
               onClick={() => setShowPaymentForm(user.id)}
-              className={`p-2 rounded-full hover:bg-gray-100 ${
+              className={`p-2 rounded-lg hover:bg-cyan-500/10 transition-colors ${
                 user.payment_status?.status === 'active' ? 'text-green-600' :
                 user.payment_status?.status === 'overdue' ? 'text-red-600' :
                 'text-gray-400'
               }`}
               title={`Payment Status: ${user.payment_status?.status || 'Unknown'}`}
             >
-              <CreditCardIcon className="h-5 w-5" />
+              <CreditCard className="h-5 w-5" />
             </button>
           </td>
         )
@@ -467,7 +470,7 @@ export default function UserManagement() {
               className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200"
               title="View and manage licenses"
             >
-              <KeyIcon className="h-4 w-4 mr-1" />
+              <Key className="h-4 w-4 mr-1" />
               {user.license_count || 0}
             </button>
           </td>
@@ -476,7 +479,7 @@ export default function UserManagement() {
         return (
           <td key="downloads" className="px-6 py-4 whitespace-nowrap text-center">
             <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800" title="Total desktop app downloads">
-              <ChartBarIcon className="h-4 w-4 mr-1" />
+              <ChartBar className="h-4 w-4 mr-1" />
               {user.downloads_count || 0}
             </div>
           </td>
@@ -489,7 +492,7 @@ export default function UserManagement() {
               className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200"
               title="View database clusters"
             >
-              <CircleStackIcon className="h-4 w-4 mr-1" />
+              <Database className="h-4 w-4 mr-1" />
               {user.database_clusters?.length || 0}
             </button>
           </td>
@@ -502,7 +505,7 @@ export default function UserManagement() {
               className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200"
               title="View invoices"
             >
-              <BanknotesIcon className="h-4 w-4 mr-1" />
+              <CurrencyDollar className="h-4 w-4 mr-1" />
               {user.invoices?.length || 0}
             </button>
           </td>
@@ -518,7 +521,7 @@ export default function UserManagement() {
               className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors"
               title="Edit user profile"
             >
-              <PencilIcon className="h-4 w-4 mr-1" />
+              <Pencil className="h-4 w-4 mr-1" />
               Edit
             </button>
           </td>
@@ -653,20 +656,20 @@ export default function UserManagement() {
       {/* Header */}
       <div className="md:flex md:items-center md:justify-between">
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+          <h1 className="text-2xl font-bold leading-7 text-foreground sm:text-3xl sm:truncate">
             User Management
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-foreground/60">
             Manage user accounts, licenses, and onboarding status
           </p>
         </div>
-        
+
         <div className="mt-4 flex md:mt-0 md:ml-4">
           <Link
             href="/admin/users/invite"
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+            className="btn-primary inline-flex items-center"
           >
-            <UserPlusIcon className="-ml-1 mr-2 h-5 w-5" />
+            <UserPlus className="-ml-1 mr-2 h-5 w-5" />
             Invite User
           </Link>
         </div>
@@ -678,7 +681,7 @@ export default function UserManagement() {
           <select
             value={filterRole}
             onChange={(e) => setFilterRole(e.target.value as any)}
-            className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+            className="block pl-3 pr-10 py-2 text-base rounded-xl glass-input text-foreground sm:text-sm"
           >
             <option value="all">All Roles</option>
             <option value="admin">Admin</option>
@@ -686,53 +689,53 @@ export default function UserManagement() {
             <option value="analyst">Analyst</option>
             <option value="viewer">Viewer</option>
           </select>
-          
+
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as any)}
-            className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+            className="block pl-3 pr-10 py-2 text-base rounded-xl glass-input text-foreground sm:text-sm"
           >
             <option value="all">All Statuses</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
-          
+
           <select
             value={filterOnboarding}
             onChange={(e) => setFilterOnboarding(e.target.value as any)}
-            className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+            className="block pl-3 pr-10 py-2 text-base rounded-xl glass-input text-foreground sm:text-sm"
           >
             <option value="all">All Onboarding</option>
             <option value="completed">Completed</option>
             <option value="pending">Pending</option>
           </select>
         </div>
-        
+
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+            <MagnifyingGlass className="h-5 w-5 text-cyan-400" />
           </div>
           <input
             type="text"
             placeholder="Search users..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            className="block w-full pl-10 pr-3 py-2.5 rounded-xl glass-input text-foreground placeholder-foreground/40 sm:text-sm"
           />
         </div>
       </div>
 
       {/* Users Table - Jira Style */}
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+      <div className="glass-card overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-2 text-gray-600">Loading users...</span>
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-cyan-500/20 border-t-cyan-500"></div>
+            <span className="ml-2 text-foreground/60">Loading users...</span>
           </div>
         ) : users.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-cyan-500/10">
+              <thead className="bg-background">
                 <tr>
                   {columnOrder.map((column) => (
                     <th
@@ -742,22 +745,22 @@ export default function UserManagement() {
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, column.id)}
                       onDragEnd={handleDragEnd}
-                      className={`px-6 py-3 text-${column.align || 'left'} text-xs font-medium text-gray-500 uppercase tracking-wider cursor-move hover:bg-gray-100 transition-colors ${
+                      className={`px-6 py-3 text-${column.align || 'left'} text-xs font-medium text-foreground/60 uppercase tracking-wider cursor-move hover:bg-cyan-500/10 transition-colors ${
                         draggedColumn === column.id ? 'opacity-50' : ''
                       }`}
                       title="Drag to reorder columns"
                     >
                       <div className="flex items-center gap-1">
                         <span>{column.name}</span>
-                        <FunnelIcon className="h-3 w-3 text-gray-400" />
+                        <Funnel className="h-3 w-3 text-cyan-400" weight="duotone" />
                       </div>
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-background divide-y divide-cyan-500/10">
                 {users.map((user) => (
-                  <tr key={`user-row-${user.id}`} className="hover:bg-gray-50">
+                  <tr key={`user-row-${user.id}`} className="hover:bg-cyan-500/5 transition-colors">
                     {columnOrder.map((column) => renderCellContent(column, user))}
                   </tr>
                 ))}
@@ -766,7 +769,7 @@ export default function UserManagement() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <UserIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <User className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-semibold text-gray-900">No users found</h3>
             <p className="mt-1 text-sm text-gray-500">
               {searchTerm ? 'No users match your search criteria.' : 'No users have been created yet.'}
@@ -777,7 +780,7 @@ export default function UserManagement() {
                   href="/admin/users/invite"
                   className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
                 >
-                  <UserPlusIcon className="-ml-1 mr-2 h-5 w-5" />
+                  <UserPlus className="-ml-1 mr-2 h-5 w-5" />
                   Invite First User
                 </Link>
               </div>
@@ -788,7 +791,7 @@ export default function UserManagement() {
 
       {/* Edit User Modal */}
       {showEditModal && editingUser && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
           <div className="relative top-10 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Edit User</h3>
@@ -942,7 +945,7 @@ function EditUserForm({ user, onSave, onCancel }: EditUserFormProps) {
           type="text"
           value={user.email}
           disabled
-          className="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-sm text-gray-500"
+          className="mt-1 block w-full px-4 py-2.5 rounded-xl glass-input text-foreground/60"
         />
       </div>
 
@@ -968,15 +971,15 @@ function EditUserForm({ user, onSave, onCancel }: EditUserFormProps) {
               className={`block w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono ${
                 showPassword 
                   ? 'bg-yellow-50 text-yellow-800 border-yellow-300' 
-                  : 'bg-gray-100 text-gray-500'
+                  : 'bg-foreground/10 text-foreground/60'
               }`}
               placeholder="Encrypted password"
             />
             <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
               {showPassword ? (
-                <EyeIcon className="h-4 w-4 text-yellow-600" />
+                <Eye className="h-4 w-4 text-yellow-600" />
               ) : (
-                <LockClosedIcon className="h-4 w-4 text-gray-400" />
+                <Lock className="h-4 w-4 text-gray-400" />
               )}
             </div>
           </div>
@@ -984,7 +987,7 @@ function EditUserForm({ user, onSave, onCancel }: EditUserFormProps) {
           {passwordResetSent && (
             <div className="bg-green-50 border border-green-200 rounded-md p-3">
               <div className="flex">
-                <CheckCircleIcon className="h-5 w-5 text-green-400" />
+                <CheckCircle className="h-5 w-5 text-green-400" />
                 <div className="ml-3">
                   <p className="text-sm text-green-800">
                     Password reset email sent to {user.email}
@@ -1007,12 +1010,12 @@ function EditUserForm({ user, onSave, onCancel }: EditUserFormProps) {
               </>
             ) : passwordResetSent ? (
               <>
-                <CheckCircleIcon className="h-4 w-4 mr-2" />
+                <CheckCircle className="h-4 w-4 mr-2" />
                 Reset Email Sent
               </>
             ) : (
               <>
-                <KeyIcon className="h-4 w-4 mr-2" />
+                <Key className="h-4 w-4 mr-2" />
                 Send Password Reset Email
               </>
             )}
@@ -1099,13 +1102,13 @@ function EditUserForm({ user, onSave, onCancel }: EditUserFormProps) {
 
       {/* Password Reset Link Modal */}
       {resetLinkGenerated && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
             <div className="mt-3">
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
-                  <CheckCircleIcon className="h-6 w-6 text-green-500 mr-2" />
+                  <CheckCircle className="h-6 w-6 text-green-500 mr-2" />
                   <h3 className="text-lg font-medium text-gray-900">
                     Password Reset Link Generated
                   </h3>
@@ -1128,7 +1131,7 @@ function EditUserForm({ user, onSave, onCancel }: EditUserFormProps) {
               <div className="space-y-4">
                 <div className="bg-green-50 border border-green-200 rounded-md p-4">
                   <div className="flex">
-                    <CheckCircleIcon className="h-5 w-5 text-green-400 mt-0.5 mr-3" />
+                    <CheckCircle className="h-5 w-5 text-green-400 mt-0.5 mr-3" />
                     <div>
                       <h4 className="text-sm font-medium text-green-800">Success!</h4>
                       <p className="mt-1 text-sm text-green-700">
@@ -1161,7 +1164,7 @@ function EditUserForm({ user, onSave, onCancel }: EditUserFormProps) {
                     <textarea
                       readOnly
                       value={resetLinkGenerated}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono bg-gray-50 resize-none"
+                      className="block w-full px-4 py-2.5 rounded-xl glass-input text-foreground font-mono resize-none"
                       rows={3}
                       onClick={(e) => e.currentTarget.select()}
                     />
@@ -1176,7 +1179,7 @@ function EditUserForm({ user, onSave, onCancel }: EditUserFormProps) {
                       >
                         {linkCopied ? (
                           <>
-                            <CheckCircleIcon className="h-4 w-4 mr-1" />
+                            <CheckCircle className="h-4 w-4 mr-1" />
                             Copied!
                           </>
                         ) : (
@@ -1193,7 +1196,7 @@ function EditUserForm({ user, onSave, onCancel }: EditUserFormProps) {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="glass-card p-4">
                   <h4 className="text-sm font-medium text-gray-900 mb-3">Quick Actions:</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <button
@@ -1206,16 +1209,16 @@ function EditUserForm({ user, onSave, onCancel }: EditUserFormProps) {
                       }}
                       className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
                     >
-                      <EnvelopeIcon className="h-4 w-4 mr-2" />
+                      <Envelope className="h-4 w-4 mr-2" />
                       Send via Email
                     </button>
                     <button
                       onClick={() => copyToClipboard(resetLinkGenerated)}
-                      className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                      className="btn-glass inline-flex items-center justify-center px-4 py-2"
                     >
                       {linkCopied ? (
                         <>
-                          <CheckCircleIcon className="h-4 w-4 mr-2" />
+                          <CheckCircle className="h-4 w-4 mr-2" />
                           Copied to Clipboard
                         </>
                       ) : (
@@ -1238,7 +1241,7 @@ function EditUserForm({ user, onSave, onCancel }: EditUserFormProps) {
                       setLinkCopied(false)
                       setPasswordResetSent(false)
                     }}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                    className="btn-glass inline-flex items-center px-4 py-2"
                   >
                     Close
                   </button>
@@ -1272,10 +1275,10 @@ function UserDetailsPanel({ user }: UserDetailsPanelProps) {
 
   const getClusterStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800'
-      case 'suspended': return 'bg-yellow-100 text-yellow-800'
-      case 'archived': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'active': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+      case 'suspended': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+      case 'archived': return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
+      default: return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
     }
   }
 
@@ -1286,7 +1289,7 @@ function UserDetailsPanel({ user }: UserDetailsPanelProps) {
         {/* Subscription Information */}
         <div className="bg-blue-50 rounded-lg p-4">
           <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
-            <BanknotesIcon className="h-4 w-4 mr-2" />
+            <CurrencyDollar className="h-4 w-4 mr-2" />
             Subscription
           </h4>
           
@@ -1341,7 +1344,7 @@ function UserDetailsPanel({ user }: UserDetailsPanelProps) {
         {/* Payment & Billing Information */}
         <div className="bg-gray-50 rounded-lg p-4">
           <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
-            <CreditCardIcon className="h-4 w-4 mr-2" />
+            <CreditCard className="h-4 w-4 mr-2" />
             Payment & Billing
           </h4>
           
@@ -1374,7 +1377,7 @@ function UserDetailsPanel({ user }: UserDetailsPanelProps) {
                 </div>
               )}
               
-              {user.payment_status.payment_failures > 0 && (
+              {(user.payment_status.payment_failures ?? 0) > 0 && (
                 <div className="flex justify-between text-red-600">
                   <span>Payment failures:</span>
                   <span className="font-medium">{user.payment_status.payment_failures}</span>
@@ -1436,7 +1439,7 @@ function UserDetailsPanel({ user }: UserDetailsPanelProps) {
         {/* Resource Usage */}
         <div className="bg-gray-50 rounded-lg p-4">
           <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
-            <ChartBarIcon className="h-4 w-4 mr-2" />
+            <ChartBar className="h-4 w-4 mr-2" />
             Resource Usage
           </h4>
           
@@ -1450,7 +1453,7 @@ function UserDetailsPanel({ user }: UserDetailsPanelProps) {
                     {formatBytes(user.resource_usage.storage_used_mb * 1024 * 1024)} / {formatBytes(user.resource_usage.storage_limit_mb * 1024 * 1024)}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-foreground/20 rounded-full h-2">
                   <div 
                     className={`h-2 rounded-full ${
                       getUsagePercentage(user.resource_usage.storage_used_mb, user.resource_usage.storage_limit_mb) > 80 ? 
@@ -1470,7 +1473,7 @@ function UserDetailsPanel({ user }: UserDetailsPanelProps) {
                     {user.resource_usage.api_calls_count.toLocaleString()} / {user.resource_usage.api_calls_limit.toLocaleString()}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-foreground/20 rounded-full h-2">
                   <div 
                     className={`h-2 rounded-full ${
                       getUsagePercentage(user.resource_usage.api_calls_count, user.resource_usage.api_calls_limit) > 80 ? 
@@ -1490,7 +1493,7 @@ function UserDetailsPanel({ user }: UserDetailsPanelProps) {
                     {user.resource_usage.compute_hours_used} / {user.resource_usage.compute_hours_limit}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-foreground/20 rounded-full h-2">
                   <div 
                     className={`h-2 rounded-full ${
                       getUsagePercentage(user.resource_usage.compute_hours_used, user.resource_usage.compute_hours_limit) > 80 ? 
@@ -1510,7 +1513,7 @@ function UserDetailsPanel({ user }: UserDetailsPanelProps) {
         {/* Onboarding & Profile */}
         <div className="bg-gray-50 rounded-lg p-4">
           <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
-            <UserIcon className="h-4 w-4 mr-2" />
+            <User className="h-4 w-4 mr-2" />
             Profile & Status
           </h4>
           
@@ -1550,7 +1553,7 @@ function UserDetailsPanel({ user }: UserDetailsPanelProps) {
       {user.database_clusters && user.database_clusters.length > 0 && (
         <div className="mt-6">
           <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
-            <ServerIcon className="h-4 w-4 mr-2" />
+            <HardDrive className="h-4 w-4 mr-2" />
             Database Clusters ({user.database_clusters.length})
           </h4>
           
@@ -1581,7 +1584,7 @@ function UserDetailsPanel({ user }: UserDetailsPanelProps) {
       {/* All Licenses */}
       <div className="mt-6">
         <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
-          <ShieldCheckIcon className="h-4 w-4 mr-2" />
+          <ShieldCheck className="h-4 w-4 mr-2" />
           Licenses ({user.all_licenses?.length || 0})
         </h4>
         
@@ -1598,9 +1601,9 @@ function UserDetailsPanel({ user }: UserDetailsPanelProps) {
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-background divide-y divide-cyan-500/10">
                 {user.all_licenses.map((license) => (
-                  <tr key={license.id} className="hover:bg-gray-50">
+                  <tr key={license.id} className="hover:bg-cyan-500/5 transition-colors">
                     <td className="px-4 py-2 text-sm font-medium text-gray-900">
                       {license.plugin_id}
                     </td>
@@ -1611,7 +1614,7 @@ function UserDetailsPanel({ user }: UserDetailsPanelProps) {
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         license.status === 'active' ? 'bg-green-100 text-green-800' :
                         license.status === 'expired' ? 'bg-red-100 text-red-800' :
-                        license.status === 'revoked' ? 'bg-gray-100 text-gray-800' :
+                        license.status === 'revoked' ? 'bg-foreground/10 text-foreground/60 border border-foreground/20' :
                         'bg-yellow-100 text-yellow-800'
                       }`}>
                         {license.status}
@@ -1621,7 +1624,7 @@ function UserDetailsPanel({ user }: UserDetailsPanelProps) {
                       {license.expires_at ? new Date(license.expires_at).toLocaleDateString() : 'Never'}
                     </td>
                     <td className="px-4 py-2">
-                      <code className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">
+                      <code className="text-xs bg-foreground/10 text-foreground/60 border border-foreground/20 px-2 py-1 rounded font-mono">
                         {license.key_code.substring(0, 12)}...
                       </code>
                     </td>
@@ -1647,8 +1650,8 @@ function UserDetailsPanel({ user }: UserDetailsPanelProps) {
             </table>
           </div>
         ) : (
-          <div className="bg-gray-50 rounded-lg p-6 text-center">
-            <ShieldCheckIcon className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+          <div className="glass-card p-6 text-center">
+            <ShieldCheck className="mx-auto h-8 w-8 text-gray-400 mb-2" />
             <p className="text-sm text-gray-600">No licenses assigned</p>
             <button className="mt-2 text-sm text-blue-600 hover:text-blue-800">
               Assign License
@@ -1709,7 +1712,7 @@ function PaymentManagementForm({ user, onClose, onSave }: PaymentManagementFormP
       <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div className="mt-3">
           <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-            <CreditCardIcon className="h-5 w-5 mr-2" />
+            <CreditCard className="h-5 w-5 mr-2" />
             Manage Payment - {user.full_name}
           </h3>
           
@@ -1762,7 +1765,7 @@ function PaymentManagementForm({ user, onClose, onSave }: PaymentManagementFormP
                   <label className="block text-sm font-medium text-gray-700">Monthly Amount</label>
                   <div className="mt-1 relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <BanknotesIcon className="h-5 w-5 text-gray-400" />
+                      <CurrencyDollar className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
                       type="number"
@@ -1801,7 +1804,7 @@ function PaymentManagementForm({ user, onClose, onSave }: PaymentManagementFormP
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="btn-glass px-4 py-2"
               >
                 Cancel
               </button>
@@ -1886,7 +1889,7 @@ function LicenseManagementModal({ userId, licenses, onClose, onRefresh }: Licens
     switch (status) {
       case 'active': return 'bg-green-100 text-green-800'
       case 'expired': return 'bg-red-100 text-red-800'
-      case 'revoked': return 'bg-gray-100 text-gray-800'
+      case 'revoked': return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
       default: return 'bg-yellow-100 text-yellow-800'
     }
   }
@@ -1919,7 +1922,7 @@ function LicenseManagementModal({ userId, licenses, onClose, onRefresh }: Licens
         <div className="mt-3">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-medium text-gray-900 flex items-center">
-              <ShieldCheckIcon className="h-5 w-5 mr-2" />
+              <ShieldCheck className="h-5 w-5 mr-2" />
               License Management
             </h3>
             <div className="flex space-x-2">
@@ -1941,7 +1944,7 @@ function LicenseManagementModal({ userId, licenses, onClose, onRefresh }: Licens
           {licenses.length > 0 ? (
             <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-background">
                   <tr>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Plugin</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
@@ -1954,7 +1957,7 @@ function LicenseManagementModal({ userId, licenses, onClose, onRefresh }: Licens
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {licenses.map((license) => (
-                    <tr key={license.id} className="hover:bg-gray-50">
+                    <tr key={license.id} className="hover:bg-cyan-500/5 transition-colors">
                       <td className="px-4 py-2 text-sm font-medium text-gray-900">
                         {license.plugin_id}
                       </td>
@@ -1970,7 +1973,7 @@ function LicenseManagementModal({ userId, licenses, onClose, onRefresh }: Licens
                         {license.expires_at ? new Date(license.expires_at).toLocaleDateString() : 'Never'}
                       </td>
                       <td className="px-4 py-2">
-                        <code className="text-xs bg-gray-100 px-2 py-1 rounded font-mono">
+                        <code className="text-xs bg-foreground/10 text-foreground/60 border border-foreground/20 px-2 py-1 rounded font-mono">
                           {license.key_code.substring(0, 16)}...
                         </code>
                       </td>
@@ -2003,7 +2006,7 @@ function LicenseManagementModal({ userId, licenses, onClose, onRefresh }: Licens
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500">
-              <ShieldCheckIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <ShieldCheck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <p>No licenses assigned to this user</p>
               <button
                 onClick={() => setShowAssignForm(true)}
@@ -2017,7 +2020,7 @@ function LicenseManagementModal({ userId, licenses, onClose, onRefresh }: Licens
           <div className="flex justify-end space-x-3 pt-4">
             <button
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="btn-glass px-4 py-2"
             >
               Close
             </button>
@@ -2060,14 +2063,14 @@ function LicenseManagementModal({ userId, licenses, onClose, onRefresh }: Licens
                       setShowAssignForm(false)
                       setSelectedLicense('')
                     }}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="btn-glass px-4 py-2"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleAssignExisting}
                     disabled={!selectedLicense}
-                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300"
+                    className="btn-primary px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Assign License
                   </button>
@@ -2100,7 +2103,7 @@ function LicenseManagementModal({ userId, licenses, onClose, onRefresh }: Licens
                 <div className="flex justify-end space-x-3 mt-6">
                   <button
                     onClick={() => setShowCreateLicenseForm(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="btn-glass px-4 py-2"
                   >
                     Close
                   </button>
@@ -2108,6 +2111,97 @@ function LicenseManagementModal({ userId, licenses, onClose, onRefresh }: Licens
               </div>
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Invoice Management Modal Component
+interface InvoiceManagementModalProps {
+  userId: string
+  invoices: any[]
+  onClose: () => void
+}
+
+function InvoiceManagementModal({ userId, invoices, onClose }: InvoiceManagementModalProps) {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'paid': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+      case 'pending': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+      case 'overdue': return 'bg-red-500/10 text-red-400 border border-red-500/20'
+      default: return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div className="relative top-10 mx-auto p-5 border w-[800px] shadow-lg rounded-md bg-white">
+        <div className="mt-3">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-gray-900 flex items-center">
+              <CreditCard className="h-5 w-5 mr-2" />
+              Invoices ({invoices.length})
+            </h3>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+          </div>
+
+          {invoices.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Invoice #</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Due Date</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Paid Date</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {invoices.map((invoice) => (
+                    <tr key={invoice.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-2 text-sm font-medium text-gray-900">
+                        {invoice.invoice_number}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-gray-600">
+                        ${invoice.total_amount} {invoice.currency || 'USD'}
+                      </td>
+                      <td className="px-4 py-2">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(invoice.status)}`}>
+                          {invoice.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 text-sm text-gray-600">
+                        {new Date(invoice.due_date).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-gray-600">
+                        {invoice.paid_date ? new Date(invoice.paid_date).toLocaleDateString() : '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              No invoices found for this user
+            </div>
+          )}
+
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -2124,10 +2218,10 @@ interface ClusterManagementModalProps {
 function ClusterManagementModal({ userId, clusters, onClose }: ClusterManagementModalProps) {
   const getClusterStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800'
-      case 'suspended': return 'bg-yellow-100 text-yellow-800'
-      case 'archived': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'active': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+      case 'suspended': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+      case 'archived': return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
+      default: return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
     }
   }
 
@@ -2145,7 +2239,7 @@ function ClusterManagementModal({ userId, clusters, onClose }: ClusterManagement
         <div className="mt-3">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-medium text-gray-900 flex items-center">
-              <CircleStackIcon className="h-5 w-5 mr-2" />
+              <Database className="h-5 w-5 mr-2" />
               Database Clusters ({clusters.length})
             </h3>
             <button
@@ -2203,7 +2297,7 @@ function ClusterManagementModal({ userId, clusters, onClose }: ClusterManagement
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500">
-              <CircleStackIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <Database className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <p>No database clusters found for this user</p>
               <button className="mt-2 text-green-600 hover:text-green-800">
                 Create the first cluster
@@ -2214,7 +2308,7 @@ function ClusterManagementModal({ userId, clusters, onClose }: ClusterManagement
           <div className="flex justify-end space-x-3 pt-4">
             <button
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="btn-glass px-4 py-2"
             >
               Close
             </button>

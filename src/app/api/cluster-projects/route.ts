@@ -14,17 +14,10 @@ export async function GET(request: NextRequest) {
     const clusterId = searchParams.get('cluster_id')
     const syncStatus = searchParams.get('sync_status')
 
-    // Query cluster_projects table directly with related cluster information
+    // Query cluster_projects table (without join - no FK relationship exists)
     let query = supabaseAdmin
       .from('cluster_projects')
-      .select(`
-        *,
-        clusters:cluster_id (
-          name,
-          cluster_type,
-          architecture
-        )
-      `)
+      .select('*')
       .eq('owner_id', user.id)
 
     // Apply filters
@@ -50,14 +43,36 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch cluster projects' }, { status: 500 })
     }
 
-    // Transform the data to flatten the cluster information
-    const projects = rawProjects?.map((project: any) => ({
-      ...project,
-      cluster_name: project.clusters?.name || 'Unknown',
-      cluster_type: project.clusters?.cluster_type || project.clusters?.architecture === 'centcom' ? 'local' : 'cloud',
-      measurement_count: project.metadata?.measurement_count || 0,
-      file_count: project.metadata?.file_count || 0
-    })) || []
+    // Fetch cluster info separately if we have projects
+    let clusterMap: Record<string, any> = {}
+    if (rawProjects && rawProjects.length > 0) {
+      const clusterIds = [...new Set(rawProjects.map((p: any) => p.cluster_id).filter(Boolean))]
+      if (clusterIds.length > 0) {
+        const { data: clusters } = await supabaseAdmin
+          .from('clusters')
+          .select('id, name, cluster_type, architecture')
+          .in('id', clusterIds)
+
+        if (clusters) {
+          clusterMap = clusters.reduce((acc: Record<string, any>, c: any) => {
+            acc[c.id] = c
+            return acc
+          }, {})
+        }
+      }
+    }
+
+    // Transform the data to include cluster information
+    const projects = rawProjects?.map((project: any) => {
+      const cluster = clusterMap[project.cluster_id]
+      return {
+        ...project,
+        cluster_name: cluster?.name || 'Unknown',
+        cluster_type: cluster?.cluster_type || (cluster?.architecture === 'centcom' ? 'local' : 'cloud'),
+        measurement_count: project.metadata?.measurement_count || 0,
+        file_count: project.metadata?.file_count || 0
+      }
+    }) || []
 
     // Get summary statistics
     const stats = {

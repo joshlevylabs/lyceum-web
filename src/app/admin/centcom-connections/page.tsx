@@ -2,15 +2,16 @@
 
 import { useState, useEffect } from 'react'
 import {
-  ArrowPathIcon,
-  LinkIcon,
-  ClockIcon,
-  UserIcon,
-  CircleStackIcon,
-  ChartBarIcon,
-  CalendarIcon,
-} from '@heroicons/react/24/outline'
-import { Activity, TrendingUp, Users } from 'lucide-react'
+  ArrowsClockwise as ArrowPath,
+  Link,
+  Clock,
+  User,
+  Database as CircleStack,
+  Calendar,
+  Pulse as Activity,
+  TrendUp as TrendingUp,
+  UsersThree as Users,
+} from '@phosphor-icons/react'
 
 interface Connection {
   id: string
@@ -99,13 +100,13 @@ export default function CentComConnectionsAnalytics() {
   function getEventColor(eventType: string) {
     switch (eventType) {
       case 'connect':
-        return 'text-green-600 bg-green-100'
+        return 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
       case 'disconnect':
-        return 'text-gray-600 bg-gray-100'
+        return 'text-foreground/60 bg-foreground/10 border border-foreground/20'
       case 'error':
-        return 'text-red-600 bg-red-100'
+        return 'text-red-400 bg-red-500/10 border border-red-500/20'
       default:
-        return 'text-gray-600 bg-gray-100'
+        return 'text-foreground/60 bg-foreground/10 border border-foreground/20'
     }
   }
 
@@ -126,10 +127,10 @@ export default function CentComConnectionsAnalytics() {
 
   if (loading && !refreshing) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center">
-          <ArrowPathIcon className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading connection analytics...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-cyan-500/20 border-t-cyan-500 mx-auto mb-4" />
+          <p className="text-foreground/60">Loading connection analytics...</p>
         </div>
       </div>
     )
@@ -138,12 +139,12 @@ export default function CentComConnectionsAnalytics() {
   if (error) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-red-800">Error Loading Connections</h3>
-          <p className="text-red-600 mt-1">{error}</p>
+        <div className="glass-card bg-red-500/10 border border-red-500/20 p-6">
+          <h3 className="text-lg font-medium text-foreground">Error Loading Connections</h3>
+          <p className="text-red-400 mt-1">{error}</p>
           <button
             onClick={() => fetchConnections()}
-            className="mt-4 px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200"
+            className="mt-4 btn-ghost"
           >
             Retry
           </button>
@@ -158,19 +159,19 @@ export default function CentComConnectionsAnalytics() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-              <Activity className="h-8 w-8 mr-3 text-blue-600" />
+            <h1 className="text-3xl font-bold text-foreground flex items-center">
+              <Activity className="h-8 w-8 mr-3 text-cyan-400" weight="duotone" />
               Connection Analytics
             </h1>
-            <p className="text-gray-600 mt-2">Track and analyze CentCom cluster connections</p>
+            <p className="text-foreground/60 mt-2">Track and analyze CentCom cluster connections</p>
           </div>
-          
+
           <button
             onClick={() => fetchConnections()}
             disabled={refreshing}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="btn-primary disabled:opacity-50 flex items-center"
           >
-            <ArrowPathIcon className={`h-5 w-5 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            <ArrowPath className={`h-5 w-5 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
           </button>
         </div>
@@ -178,55 +179,55 @@ export default function CentComConnectionsAnalytics() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="glass-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Connections</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.total}</p>
+              <p className="text-sm text-foreground/60">Total Connections</p>
+              <p className="text-3xl font-bold text-foreground mt-1">{stats.total}</p>
             </div>
-            <LinkIcon className="h-12 w-12 text-blue-400" />
+            <Link className="h-12 w-12 text-cyan-400" weight="duotone" />
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="glass-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Last 24 Hours</p>
-              <p className="text-3xl font-bold text-green-600 mt-1">{stats.last24Hours}</p>
+              <p className="text-sm text-foreground/60">Last 24 Hours</p>
+              <p className="text-3xl font-bold text-emerald-400 mt-1">{stats.last24Hours}</p>
             </div>
-            <TrendingUp className="h-12 w-12 text-green-400" />
+            <TrendingUp className="h-12 w-12 text-emerald-400" weight="duotone" />
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="glass-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Unique Users</p>
-              <p className="text-3xl font-bold text-purple-600 mt-1">{stats.uniqueUsers}</p>
+              <p className="text-sm text-foreground/60">Unique Users</p>
+              <p className="text-3xl font-bold text-cyan-400 mt-1">{stats.uniqueUsers}</p>
             </div>
-            <Users className="h-12 w-12 text-purple-400" />
+            <Users className="h-12 w-12 text-cyan-400" weight="duotone" />
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="glass-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Avg Duration</p>
-              <p className="text-3xl font-bold text-orange-600 mt-1">{stats.avgDurationMinutes}m</p>
+              <p className="text-sm text-foreground/60">Avg Duration</p>
+              <p className="text-3xl font-bold text-cyan-400 mt-1">{stats.avgDurationMinutes}m</p>
             </div>
-            <ClockIcon className="h-12 w-12 text-orange-400" />
+            <Clock className="h-12 w-12 text-cyan-400" weight="duotone" />
           </div>
         </div>
       </div>
 
       {/* Time Filter */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
+      <div className="glass-card p-4 mb-6">
         <div className="flex items-center space-x-4">
-          <span className="text-sm font-medium text-gray-700">Time Period:</span>
+          <span className="text-sm font-medium text-foreground">Time Period:</span>
           <button
             onClick={() => setTimeFilter('24h')}
             className={`px-4 py-2 rounded-md text-sm font-medium ${
-              timeFilter === '24h' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              timeFilter === '24h' ? 'btn-primary' : 'btn-ghost'
             }`}
           >
             Last 24 Hours
@@ -234,7 +235,7 @@ export default function CentComConnectionsAnalytics() {
           <button
             onClick={() => setTimeFilter('7d')}
             className={`px-4 py-2 rounded-md text-sm font-medium ${
-              timeFilter === '7d' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              timeFilter === '7d' ? 'btn-primary' : 'btn-ghost'
             }`}
           >
             Last 7 Days
@@ -242,7 +243,7 @@ export default function CentComConnectionsAnalytics() {
           <button
             onClick={() => setTimeFilter('30d')}
             className={`px-4 py-2 rounded-md text-sm font-medium ${
-              timeFilter === '30d' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              timeFilter === '30d' ? 'btn-primary' : 'btn-ghost'
             }`}
           >
             Last 30 Days
@@ -250,7 +251,7 @@ export default function CentComConnectionsAnalytics() {
           <button
             onClick={() => setTimeFilter('all')}
             className={`px-4 py-2 rounded-md text-sm font-medium ${
-              timeFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              timeFilter === 'all' ? 'btn-primary' : 'btn-ghost'
             }`}
           >
             All Time
@@ -260,38 +261,38 @@ export default function CentComConnectionsAnalytics() {
 
       {/* Most Active User */}
       {stats.mostActiveUser && (
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg shadow p-6 mb-6">
+        <div className="glass-card p-6 mb-6 border border-cyan-500/20">
           <div className="flex items-center">
-            <div className="bg-white rounded-full p-3 mr-4">
-              <UserIcon className="h-8 w-8 text-blue-600" />
+            <div className="bg-cyan-500/10 rounded-full p-3 mr-4 border border-cyan-500/20">
+              <User className="h-8 w-8 text-cyan-400" weight="duotone" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Most Active User</p>
-              <p className="text-xl font-bold text-gray-900">{stats.mostActiveUser}</p>
+              <p className="text-sm text-foreground/60">Most Active User</p>
+              <p className="text-xl font-bold text-foreground">{stats.mostActiveUser}</p>
             </div>
           </div>
         </div>
       )}
 
       {/* Connection Timeline */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-            <CalendarIcon className="h-5 w-5 mr-2" />
+      <div className="glass-card">
+        <div className="px-6 py-4 border-b border-cyan-500/10">
+          <h2 className="text-lg font-semibold text-foreground flex items-center">
+            <Calendar className="h-5 w-5 mr-2 text-cyan-400" weight="duotone" />
             Connection Timeline
           </h2>
         </div>
 
         {connections.length === 0 ? (
           <div className="p-12 text-center">
-            <LinkIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Connections Found</h3>
-            <p className="text-gray-600">No connection events in the selected time period.</p>
+            <Link className="h-16 w-16 text-foreground/40 mx-auto mb-4" weight="duotone" />
+            <h3 className="text-lg font-medium text-foreground mb-2">No Connections Found</h3>
+            <p className="text-foreground/60">No connection events in the selected time period.</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-cyan-500/10">
             {connections.map((connection) => (
-              <div key={connection.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
+              <div key={connection.id} className="px-6 py-4 hover:bg-cyan-500/5 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start space-x-4 flex-1">
                     {/* Event Icon */}
@@ -302,33 +303,33 @@ export default function CentComConnectionsAnalytics() {
                     {/* Connection Details */}
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
-                        <UserIcon className="h-4 w-4 text-gray-400" />
-                        <span className="font-medium text-gray-900">
+                        <User className="h-4 w-4 text-foreground/60" weight="duotone" />
+                        <span className="font-medium text-foreground">
                           {connection.user_full_name || connection.user_email}
                         </span>
                         {connection.user_full_name && (
-                          <span className="text-sm text-gray-500">({connection.user_email})</span>
+                          <span className="text-sm text-foreground/60">({connection.user_email})</span>
                         )}
                       </div>
 
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
+                      <div className="flex items-center space-x-4 text-sm text-foreground/60">
                         <div className="flex items-center">
-                          <CircleStackIcon className="h-4 w-4 mr-1" />
+                          <CircleStack className="h-4 w-4 mr-1" />
                           <span>{connection.connection_name}</span>
                         </div>
 
                         {connection.cluster_name && (
                           <div className="flex items-center">
-                            <span className="text-gray-400 mr-1">→</span>
+                            <span className="text-foreground/40 mr-1">→</span>
                             <span>{connection.cluster_name}</span>
                           </div>
                         )}
 
                         <div>
                           <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            connection.connection_type === 'local' 
-                              ? 'bg-blue-100 text-blue-800' 
-                              : 'bg-green-100 text-green-800'
+                            connection.connection_type === 'local'
+                              ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+                              : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                           }`}>
                             {connection.connection_type}
                           </span>
@@ -336,8 +337,8 @@ export default function CentComConnectionsAnalytics() {
 
                         {connection.set_as_default && (
                           <div>
-                            <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
-                              ⭐ Default
+                            <span className="px-2 py-1 rounded text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                              Default
                             </span>
                           </div>
                         )}
@@ -347,8 +348,8 @@ export default function CentComConnectionsAnalytics() {
 
                   {/* Timestamp */}
                   <div className="text-right ml-4">
-                    <div className="text-sm font-medium text-gray-900">{getTimeAgo(connection.created_at)}</div>
-                    <div className="text-xs text-gray-500">{formatDateTime(connection.created_at)}</div>
+                    <div className="text-sm font-medium text-foreground">{getTimeAgo(connection.created_at)}</div>
+                    <div className="text-xs text-foreground/60">{formatDateTime(connection.created_at)}</div>
                   </div>
                 </div>
               </div>
@@ -359,7 +360,7 @@ export default function CentComConnectionsAnalytics() {
 
       {/* Pagination Note */}
       {connections.length >= 50 && (
-        <div className="mt-4 text-center text-sm text-gray-600">
+        <div className="mt-4 text-center text-sm text-foreground/60">
           Showing most recent 50 connections. Use time filters to see different periods.
         </div>
       )}

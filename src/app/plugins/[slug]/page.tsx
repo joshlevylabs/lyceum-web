@@ -6,20 +6,22 @@ import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/DashboardLayout'
 import { supabase } from '@/lib/supabase'
 import {
-  PuzzlePieceIcon,
-  ArrowLeftIcon,
-  CheckIcon,
-  StarIcon,
-  ShoppingCartIcon,
-  EnvelopeIcon,
-  ClockIcon,
-  ChartBarIcon,
-  CloudArrowDownIcon,
-  XMarkIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon
-} from '@heroicons/react/24/outline'
-import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid'
+  PuzzlePiece,
+  ArrowLeft,
+  Check,
+  Star,
+  ShoppingCart,
+  Envelope,
+  Clock,
+  ChartBar,
+  CloudArrowDown,
+  X,
+  Warning,
+  CheckCircle,
+  ArrowSquareOut,
+  Cpu
+} from '@phosphor-icons/react'
+import { getPluginHardware, HardwareDevice } from '@/data/plugin-hardware'
 
 interface Plugin {
   id: string
@@ -106,11 +108,17 @@ export default function PluginDetailsPage() {
     }
   }
 
+  // Map of plugin slugs to their plugin_type identifiers for subscription management
+  const SUBSCRIPTION_PLUGIN_SLUGS = [
+    'klippel-qc', 'apx500', 'preen-psu', 'keysight-daq',
+    'kwikwai-k110', 'granite-river-labs-pd', 'sifos-poe', 'time-machines-grandmaster'
+  ]
+
   useEffect(() => {
     if (user && slug) {
       loadPluginDetails().then(() => {
-        // Check subscription only for klippel-qc and apx500 plugins
-        if (slug === 'klippel-qc' || slug === 'apx500') {
+        // Check subscription for all subscription-based plugins
+        if (SUBSCRIPTION_PLUGIN_SLUGS.includes(slug as string)) {
           checkPluginSubscription()
         } else {
           setCheckingSubscription(false)
@@ -152,10 +160,16 @@ export default function PluginDetailsPage() {
     try {
       setCheckingSubscription(true)
 
-      // Map slug to plugin_type
+      // Map slug to plugin_type for subscription management
       const pluginTypeMap: { [key: string]: string } = {
         'klippel-qc': 'klippel_qc',
-        'apx500': 'apx500'
+        'apx500': 'apx500',
+        'preen-psu': 'preen_psu',
+        'keysight-daq': 'keysight_daq',
+        'kwikwai-k110': 'kwikwai',
+        'granite-river-labs-pd': 'grl_pd',
+        'sifos-poe': 'sifos_poe',
+        'time-machines-grandmaster': 'time_machines'
       }
 
       const plugin_type = pluginTypeMap[slug]
@@ -308,7 +322,13 @@ export default function PluginDetailsPage() {
       // Map slug to plugin_type
       const pluginTypeMap: Record<string, string> = {
         'klippel-qc': 'klippel_qc',
-        'apx500': 'apx500'
+        'apx500': 'apx500',
+        'preen-psu': 'preen_psu',
+        'keysight-daq': 'keysight_daq',
+        'kwikwai-k110': 'kwikwai',
+        'granite-river-labs-pd': 'grl_pd',
+        'sifos-poe': 'sifos_poe',
+        'time-machines-grandmaster': 'time_machines'
       }
       const pluginType = pluginTypeMap[slug as string] || slug
 
@@ -356,6 +376,19 @@ export default function PluginDetailsPage() {
 
   const handleStartTrial = async () => {
     try {
+      // Map slug to plugin_type
+      const pluginTypeMap: Record<string, string> = {
+        'klippel-qc': 'klippel_qc',
+        'apx500': 'apx500',
+        'preen-psu': 'preen_psu',
+        'keysight-daq': 'keysight_daq',
+        'kwikwai-k110': 'kwikwai',
+        'granite-river-labs-pd': 'grl_pd',
+        'sifos-poe': 'sifos_poe',
+        'time-machines-grandmaster': 'time_machines'
+      }
+      const pluginType = pluginTypeMap[slug as string] || slug
+
       // Create Stripe checkout session for plugin trial
       const headers = await getAuthHeaders()
       const response = await fetch('/api/stripe/create-plugin-trial-checkout', {
@@ -363,7 +396,7 @@ export default function PluginDetailsPage() {
         headers,
         body: JSON.stringify({
           plugin_slug: slug,
-          plugin_type: slug === 'klippel-qc' ? 'klippel_qc' : slug
+          plugin_type: pluginType
         })
       })
 
@@ -424,7 +457,7 @@ export default function PluginDetailsPage() {
       const subject = encodeURIComponent(`License Request: ${plugin.display_name}`)
       const body = encodeURIComponent(`Hello,\n\nI would like to request a license for ${plugin.display_name}.\n\nUser Email: ${user?.email}\nPlugin: ${plugin.display_name} (${plugin.slug})\nVersion: ${plugin.current_version}\n\nPlease provide pricing and licensing information.\n\nThank you!`)
       window.location.href = `mailto:sales@lyceum.com?subject=${subject}&body=${body}`
-    } else if (slug === 'klippel-qc' || slug === 'apx500') {
+    } else if (SUBSCRIPTION_PLUGIN_SLUGS.includes(slug as string)) {
       // Redirect to Stripe portal for subscription management
       handleSubscribeNow()
     } else {
@@ -446,18 +479,18 @@ export default function PluginDetailsPage() {
 
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.push(<StarIconSolid key={i} className="h-5 w-5 text-yellow-400" />)
+        stars.push(<Star key={i} weight="fill" className="h-5 w-5 text-yellow-400" />)
       } else if (i === fullStars && hasHalfStar) {
-        stars.push(<StarIconSolid key={i} className="h-5 w-5 text-yellow-400 opacity-50" />)
+        stars.push(<Star key={i} weight="fill" className="h-5 w-5 text-yellow-400 opacity-50" />)
       } else {
-        stars.push(<StarIcon key={i} className="h-5 w-5 text-gray-300" />)
+        stars.push(<Star key={i} weight="regular" className="h-5 w-5 text-foreground/30" />)
       }
     }
     return stars
   }
 
   const renderSubscriptionBadge = () => {
-    if (!subscription || (slug !== 'klippel-qc' && slug !== 'apx500')) {
+    if (!subscription || !SUBSCRIPTION_PLUGIN_SLUGS.includes(slug as string)) {
       return null
     }
 
@@ -475,8 +508,8 @@ export default function PluginDetailsPage() {
 
     if (isTrial && !isCancelled) {
       return (
-        <div className="inline-flex items-center px-4 py-2 rounded-md bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-sm font-medium">
-          <ClockIcon className="h-4 w-4 mr-2" />
+        <div className="inline-flex items-center px-4 py-2 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-sm font-medium">
+          <Clock className="h-4 w-4 mr-2" weight="regular" />
           Trial Active • Expires {formatDate(subscription.current_period_end)}
         </div>
       )
@@ -484,8 +517,8 @@ export default function PluginDetailsPage() {
 
     if (isTrial && isCancelled) {
       return (
-        <div className="inline-flex items-center px-4 py-2 rounded-md bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-sm font-medium">
-          <ClockIcon className="h-4 w-4 mr-2" />
+        <div className="inline-flex items-center px-4 py-2 rounded-md bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 text-sm font-medium">
+          <Clock className="h-4 w-4 mr-2" weight="regular" />
           Trial (Cancelled) • Valid until {formatDate(subscription.current_period_end)}
         </div>
       )
@@ -493,8 +526,8 @@ export default function PluginDetailsPage() {
 
     if (isPaid) {
       return (
-        <div className="inline-flex items-center px-4 py-2 rounded-md bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-sm font-medium">
-          <CheckIcon className="h-4 w-4 mr-2" />
+        <div className="inline-flex items-center px-4 py-2 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-sm font-medium">
+          <Check className="h-4 w-4 mr-2" weight="bold" />
           Paid Subscription Active
         </div>
       )
@@ -508,11 +541,11 @@ export default function PluginDetailsPage() {
 
     if (plugin.pricing_model === 'enterprise') {
       return (
-        <div className="text-center p-6 bg-gray-50 dark:bg-gray-700 rounded-lg">
-          <p className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+        <div className="text-center p-6 glass-card">
+          <p className="text-2xl font-bold text-foreground mb-2">
             Enterprise Pricing
           </p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-foreground/60">
             Contact sales for custom pricing and licensing options
           </p>
         </div>
@@ -521,11 +554,11 @@ export default function PluginDetailsPage() {
 
     if (plugin.pricing_model === 'free') {
       return (
-        <div className="text-center p-6 bg-green-50 dark:bg-green-900 rounded-lg">
-          <p className="text-2xl font-bold text-green-900 dark:text-green-100 mb-2">
+        <div className="text-center p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+          <p className="text-2xl font-bold text-emerald-400 mb-2">
             Free
           </p>
-          <p className="text-sm text-green-700 dark:text-green-300">
+          <p className="text-sm text-emerald-400/80">
             No payment required
           </p>
         </div>
@@ -534,12 +567,12 @@ export default function PluginDetailsPage() {
 
     if (plugin.pricing_model === 'subscription_monthly') {
       return (
-        <div className="text-center p-6 bg-blue-50 dark:bg-blue-900 rounded-lg">
-          <p className="text-3xl font-bold text-blue-900 dark:text-blue-100 mb-2">
+        <div className="text-center p-6 bg-cyan-500/10 border border-cyan-500/20 rounded-lg">
+          <p className="text-3xl font-bold text-cyan-400 mb-2">
             ${(plugin.monthly_price || plugin.base_price).toFixed(2)}
             <span className="text-lg font-normal">/month</span>
           </p>
-          <p className="text-sm text-blue-700 dark:text-blue-300">
+          <p className="text-sm text-cyan-400/80">
             per user
           </p>
         </div>
@@ -547,11 +580,11 @@ export default function PluginDetailsPage() {
     }
 
     return (
-      <div className="text-center p-6 bg-blue-50 dark:bg-blue-900 rounded-lg">
-        <p className="text-3xl font-bold text-blue-900 dark:text-blue-100 mb-2">
+      <div className="text-center p-6 bg-cyan-500/10 border border-cyan-500/20 rounded-lg">
+        <p className="text-3xl font-bold text-cyan-400 mb-2">
           ${plugin.base_price.toFixed(2)}
         </p>
-        <p className="text-sm text-blue-700 dark:text-blue-300">
+        <p className="text-sm text-cyan-400/80">
           {plugin.pricing_model === 'one_time' && 'One-time purchase'}
           {plugin.pricing_model === 'subscription_annual' && plugin.annual_price && '/year'}
         </p>
@@ -563,8 +596,8 @@ export default function PluginDetailsPage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-600 dark:text-gray-400">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-cyan-500/20 border-t-cyan-500"></div>
+          <span className="ml-2 text-foreground/60">
             {loading ? 'Loading plugin details...' : 'Checking subscription status...'}
           </span>
         </div>
@@ -576,15 +609,15 @@ export default function PluginDetailsPage() {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
-          <PuzzlePieceIcon className="mx-auto h-12 w-12 text-red-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">Plugin not found</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{error}</p>
+          <PuzzlePiece className="mx-auto h-12 w-12 text-red-400" weight="duotone" />
+          <h3 className="mt-2 text-sm font-semibold text-foreground">Plugin not found</h3>
+          <p className="mt-1 text-sm text-foreground/60">{error}</p>
           <div className="mt-6">
             <button
               onClick={() => router.push('/plugins')}
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              className="btn-primary inline-flex items-center"
             >
-              <ArrowLeftIcon className="h-4 w-4 mr-2" />
+              <ArrowLeft className="h-4 w-4 mr-2" weight="regular" />
               Back to Plugins Store
             </button>
           </div>
@@ -599,9 +632,9 @@ export default function PluginDetailsPage() {
         {/* Breadcrumb */}
         <button
           onClick={() => router.push('/plugins')}
-          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          className="inline-flex items-center text-sm text-foreground/60 hover:text-cyan-400 transition-colors"
         >
-          <ArrowLeftIcon className="h-4 w-4 mr-2" />
+          <ArrowLeft className="h-4 w-4 mr-2" weight="regular" />
           Back to Plugins Store
         </button>
 
@@ -609,13 +642,13 @@ export default function PluginDetailsPage() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Header */}
-            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+            <div className="glass-card p-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+                  <h1 className="text-3xl font-bold text-foreground mb-3">
                     {plugin.display_name}
                   </h1>
-                  <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">
+                  <p className="text-lg text-foreground/60 mb-4">
                     {plugin.short_description}
                   </p>
 
@@ -624,10 +657,10 @@ export default function PluginDetailsPage() {
                     {renderSubscriptionBadge()}
                   </div>
 
-                  {/* Metadata with Icons */}
+                  {/* Metadata with s */}
                   <div className="flex flex-wrap items-center gap-4 text-sm">
                     {/* Rating */}
-                    <div className="flex items-center text-gray-700 dark:text-gray-300">
+                    <div className="flex items-center text-foreground">
                       <div className="flex items-center">
                         {renderRatingStars(plugin.average_rating)}
                       </div>
@@ -637,39 +670,39 @@ export default function PluginDetailsPage() {
                     </div>
 
                     {/* Reviews */}
-                    <div className="flex items-center text-gray-700 dark:text-gray-300">
-                      <ChartBarIcon className="h-4 w-4 mr-1.5" />
+                    <div className="flex items-center text-foreground/60">
+                      <ChartBar className="h-4 w-4 mr-1.5" weight="regular" />
                       <span className="font-medium">{reviews.length} reviews</span>
                     </div>
 
                     {/* Downloads */}
-                    <div className="flex items-center text-gray-700 dark:text-gray-300">
-                      <CloudArrowDownIcon className="h-4 w-4 mr-1.5" />
+                    <div className="flex items-center text-foreground/60">
+                      <CloudArrowDown className="h-4 w-4 mr-1.5" weight="regular" />
                       <span className="font-medium">{plugin.total_downloads.toLocaleString()} downloads</span>
                     </div>
 
                     {/* Category Badge */}
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 capitalize">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 capitalize">
                       {plugin.category}
                     </span>
 
                     {/* Principle Badge */}
                     {plugin.principle && (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 capitalize">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 capitalize">
                         {plugin.principle}
                       </span>
                     )}
 
                     {/* Featured Badge */}
                     {plugin.is_featured && (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
                         Featured
                       </span>
                     )}
                   </div>
 
                   {/* Publisher */}
-                  <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                  <p className="mt-4 text-sm text-foreground/40">
                     by Lyceum Audio Labs
                   </p>
                 </div>
@@ -677,12 +710,12 @@ export default function PluginDetailsPage() {
             </div>
 
             {/* Description */}
-            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <div className="glass-card p-6">
+              <h2 className="text-xl font-semibold text-foreground mb-4">
                 About this plugin
               </h2>
               <div className="prose dark:prose-invert max-w-none">
-                <p className="text-gray-600 dark:text-gray-400 whitespace-pre-line">
+                <p className="text-foreground/60 whitespace-pre-line">
                   {plugin.full_description || plugin.short_description}
                 </p>
               </div>
@@ -690,15 +723,15 @@ export default function PluginDetailsPage() {
 
             {/* Features */}
             {plugin.features && plugin.features.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              <div className="glass-card p-6">
+                <h2 className="text-xl font-semibold text-foreground mb-4">
                   Features
                 </h2>
                 <ul className="space-y-3">
                   {plugin.features.map((feature, idx) => (
                     <li key={idx} className="flex items-start">
-                      <CheckIcon className="h-5 w-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700 dark:text-gray-300">
+                      <Check className="h-5 w-5 text-emerald-400 mr-3 mt-0.5 flex-shrink-0" weight="bold" />
+                      <span className="text-foreground">
                         {feature}
                       </span>
                     </li>
@@ -707,16 +740,114 @@ export default function PluginDetailsPage() {
               </div>
             )}
 
+            {/* Compatible Hardware Section */}
+            {(() => {
+              const hardwareDevices = getPluginHardware(slug)
+              if (hardwareDevices.length === 0) return null
+
+              return (
+                <div className="glass-card p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <Cpu className="h-6 w-6 text-cyan-400" weight="duotone" />
+                    <h2 className="text-xl font-semibold text-foreground">
+                      Compatible Hardware
+                    </h2>
+                  </div>
+                  <p className="text-foreground/60 mb-6">
+                    This plugin integrates with the following hardware devices for seamless control and data acquisition.
+                  </p>
+                  <div className="space-y-6">
+                    {hardwareDevices.map((device, idx) => (
+                      <div
+                        key={idx}
+                        className="border border-cyan-500/20 rounded-lg overflow-hidden bg-gradient-to-br from-cyan-500/5 to-transparent"
+                      >
+                        <div className="p-6">
+                          <div className="flex flex-col md:flex-row gap-6">
+                            {/* Hardware Image Placeholder */}
+                            <div className="flex-shrink-0">
+                              <div className="w-full md:w-48 h-32 bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg flex items-center justify-center border border-gray-700">
+                                <Cpu className="h-16 w-16 text-cyan-500/40" weight="duotone" />
+                              </div>
+                            </div>
+
+                            {/* Hardware Details */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-4 mb-2">
+                                <div>
+                                  <h3 className="text-lg font-semibold text-foreground">
+                                    {device.name}
+                                  </h3>
+                                  <p className="text-sm text-cyan-400">
+                                    {device.manufacturer} • {device.model}
+                                  </p>
+                                </div>
+                                <a
+                                  href={device.websiteUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-cyan-400 hover:text-cyan-300 border border-cyan-500/30 hover:border-cyan-500/50 rounded-lg transition-colors flex-shrink-0"
+                                >
+                                  Visit Website
+                                  <ArrowSquareOut className="h-4 w-4" weight="regular" />
+                                </a>
+                              </div>
+
+                              <p className="text-foreground/60 text-sm mb-4">
+                                {device.description}
+                              </p>
+
+                              {/* Specifications */}
+                              {device.specifications && Object.keys(device.specifications).length > 0 && (
+                                <div className="mb-4">
+                                  <h4 className="text-sm font-medium text-foreground mb-2">Specifications</h4>
+                                  <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
+                                    {Object.entries(device.specifications).map(([key, value]) => (
+                                      <div key={key} className="flex items-baseline gap-2 text-sm">
+                                        <span className="text-foreground/50">{key}:</span>
+                                        <span className="text-foreground">{value}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Features */}
+                              {device.features && device.features.length > 0 && (
+                                <div>
+                                  <h4 className="text-sm font-medium text-foreground mb-2">Key Features</h4>
+                                  <div className="flex flex-wrap gap-2">
+                                    {device.features.map((feature, featureIdx) => (
+                                      <span
+                                        key={featureIdx}
+                                        className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
+                                      >
+                                        {feature}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
+
             {/* Reviews Section */}
-            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+            <div className="glass-card p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                <h2 className="text-xl font-semibold text-foreground">
                   Reviews ({reviews.length})
                 </h2>
                 {!showReviewForm && (
                   <button
                     onClick={() => setShowReviewForm(true)}
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                    className="btn-primary"
                   >
                     Write a Review
                   </button>
@@ -725,14 +856,14 @@ export default function PluginDetailsPage() {
 
               {/* Review Form */}
               {showReviewForm && (
-                <div className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                <div className="mb-6 p-4 border border-cyan-500/20 rounded-lg glass-card">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
                     Write Your Review
                   </h3>
 
                   {/* Rating */}
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Rating
                     </label>
                     <div className="flex items-center space-x-1">
@@ -743,9 +874,9 @@ export default function PluginDetailsPage() {
                           className="focus:outline-none"
                         >
                           {rating <= newReview.rating ? (
-                            <StarIconSolid className="h-8 w-8 text-yellow-400" />
+                            <Star weight="fill" className="h-8 w-8 text-yellow-400" />
                           ) : (
-                            <StarIcon className="h-8 w-8 text-gray-300" />
+                            <Star weight="regular" className="h-8 w-8 text-foreground/30" />
                           )}
                         </button>
                       ))}
@@ -754,7 +885,7 @@ export default function PluginDetailsPage() {
 
                   {/* Title */}
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Review Title
                     </label>
                     <input
@@ -762,13 +893,13 @@ export default function PluginDetailsPage() {
                       value={newReview.title}
                       onChange={(e) => setNewReview({ ...newReview, title: e.target.value })}
                       placeholder="Sum up your experience in one sentence"
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      className="w-full px-3 py-2 rounded-xl glass-input text-foreground placeholder-foreground/40"
                     />
                   </div>
 
                   {/* Review Text */}
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Your Review
                     </label>
                     <textarea
@@ -776,7 +907,7 @@ export default function PluginDetailsPage() {
                       onChange={(e) => setNewReview({ ...newReview, review_text: e.target.value })}
                       placeholder="Share your experience with this plugin..."
                       rows={5}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      className="w-full px-3 py-2 rounded-xl glass-input text-foreground placeholder-foreground/40"
                     />
                   </div>
 
@@ -785,7 +916,7 @@ export default function PluginDetailsPage() {
                     <button
                       onClick={submitReview}
                       disabled={submittingReview}
-                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                      className="btn-primary disabled:opacity-50"
                     >
                       {submittingReview ? 'Submitting...' : 'Submit Review'}
                     </button>
@@ -794,7 +925,7 @@ export default function PluginDetailsPage() {
                         setShowReviewForm(false)
                         setNewReview({ rating: 5, title: '', review_text: '' })
                       }}
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      className="btn-ghost"
                     >
                       Cancel
                     </button>
@@ -805,10 +936,10 @@ export default function PluginDetailsPage() {
               {/* Reviews List */}
               {reviewsLoading ? (
                 <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-cyan-500/20 border-t-cyan-500 mx-auto"></div>
                 </div>
               ) : reviews.length === 0 ? (
-                <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                <p className="text-center text-foreground/60 py-8">
                   No reviews yet. Be the first to review this plugin!
                 </p>
               ) : (
@@ -823,7 +954,7 @@ export default function PluginDetailsPage() {
                             </div>
                             {review.is_verified_purchase && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                <CheckIcon className="h-3 w-3 mr-1" />
+                                <Check className="h-3 w-3 mr-1" />
                                 Verified Purchase
                               </span>
                             )}
@@ -855,7 +986,7 @@ export default function PluginDetailsPage() {
               <div className="mt-6 space-y-3">
                 {userHasLicense ? (
                   <div className="flex items-center justify-center p-4 bg-green-50 dark:bg-green-900 rounded-md">
-                    <CheckIcon className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
+                    <Check className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
                     <span className="text-sm font-medium text-green-800 dark:text-green-200">
                       You own this plugin
                     </span>
@@ -873,17 +1004,17 @@ export default function PluginDetailsPage() {
                           'Generating License...'
                         ) : plugin.pricing_model === 'enterprise' ? (
                           <>
-                            <EnvelopeIcon className="h-5 w-5 mr-2" />
+                            <Envelope className="h-5 w-5 mr-2" />
                             Contact Sales
                           </>
                         ) : plugin.pricing_model === 'subscription_monthly' || plugin.pricing_model === 'subscription_annual' ? (
                           <>
-                            <ShoppingCartIcon className="h-5 w-5 mr-2" />
+                            <ShoppingCart className="h-5 w-5 mr-2" />
                             Subscribe Now
                           </>
                         ) : (
                           <>
-                            <ShoppingCartIcon className="h-5 w-5 mr-2" />
+                            <ShoppingCart className="h-5 w-5 mr-2" />
                             Purchase License
                           </>
                         )}
@@ -901,7 +1032,7 @@ export default function PluginDetailsPage() {
                           'Generating License...'
                         ) : (
                           <>
-                            <ClockIcon className="h-5 w-5 mr-2" />
+                            <Clock className="h-5 w-5 mr-2" />
                             Start {plugin.trial_duration_days}-Day Free Trial
                           </>
                         )}
@@ -943,7 +1074,7 @@ export default function PluginDetailsPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="flex items-start mb-4">
               <div className="flex-shrink-0">
-                <ExclamationTriangleIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                <Warning className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="ml-3 flex-1">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -998,7 +1129,7 @@ export default function PluginDetailsPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="flex items-start mb-4">
               <div className="flex-shrink-0">
-                <CheckCircleIcon className="h-8 w-8 text-green-600 dark:text-green-400" />
+                <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
               </div>
               <div className="ml-3 flex-1">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -1048,7 +1179,7 @@ export default function PluginDetailsPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="flex items-start mb-4">
               <div className="flex-shrink-0">
-                <XMarkIcon className="h-8 w-8 text-red-600 dark:text-red-400" />
+                <X className="h-8 w-8 text-red-600 dark:text-red-400" />
               </div>
               <div className="ml-3 flex-1">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">

@@ -4,15 +4,15 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import {
-  EyeIcon,
-  CommandLineIcon,
-  CursorArrowRaysIcon,
-  XMarkIcon,
-  ShareIcon,
-  ChatBubbleLeftRightIcon,
-  VideoCameraIcon,
-  MicrophoneIcon
-} from '@heroicons/react/24/outline'
+  Eye,
+  Terminal as CommandLine,
+  CursorClick as CursorArrowRays,
+  X as XMark,
+  ShareNetwork as Share,
+  ChatCircleText as ChatBubbleLeftRight,
+  VideoCamera,
+  Microphone
+} from '@phosphor-icons/react'
 
 export const dynamic = 'force-dynamic'
 
@@ -146,7 +146,7 @@ function AdminLiveViewContent() {
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
           <div className="flex items-center text-red-600 mb-4">
-            <XMarkIcon className="h-6 w-6 mr-2" />
+            <XMark className="h-6 w-6 mr-2" />
             <h2 className="text-lg font-medium">Connection Error</h2>
           </div>
           <p className="text-gray-700 mb-4">{error}</p>
@@ -188,12 +188,12 @@ function AdminLiveViewContent() {
           >
             {isControlling ? (
               <>
-                <CursorArrowRaysIcon className="h-4 w-4 inline mr-1" />
+                <CursorArrowRays className="h-4 w-4 inline mr-1" />
                 End Control
               </>
             ) : (
               <>
-                <CommandLineIcon className="h-4 w-4 inline mr-1" />
+                <CommandLine className="h-4 w-4 inline mr-1" />
                 Take Control
               </>
             )}
@@ -201,13 +201,13 @@ function AdminLiveViewContent() {
 
           {/* Communication Tools */}
           <button className="p-2 text-gray-400 hover:text-white bg-gray-700 hover:bg-gray-600 rounded">
-            <ChatBubbleLeftRightIcon className="h-5 w-5" />
+            <ChatBubbleLeftRight className="h-5 w-5" />
           </button>
           <button className="p-2 text-gray-400 hover:text-white bg-gray-700 hover:bg-gray-600 rounded">
-            <VideoCameraIcon className="h-5 w-5" />
+            <VideoCamera className="h-5 w-5" />
           </button>
           <button className="p-2 text-gray-400 hover:text-white bg-gray-700 hover:bg-gray-600 rounded">
-            <MicrophoneIcon className="h-5 w-5" />
+            <Microphone className="h-5 w-5" />
           </button>
 
           {/* End Session */}
@@ -215,7 +215,7 @@ function AdminLiveViewContent() {
             onClick={endConnection}
             className="px-3 py-1 bg-red-600 text-white rounded text-sm font-medium hover:bg-red-700"
           >
-            <XMarkIcon className="h-4 w-4 inline mr-1" />
+            <XMark className="h-4 w-4 inline mr-1" />
             End Session
           </button>
         </div>

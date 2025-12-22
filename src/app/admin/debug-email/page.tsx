@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { 
-  EnvelopeIcon, 
-  ExclamationTriangleIcon, 
-  CheckCircleIcon,
-  InformationCircleIcon,
-  CogIcon
-} from '@heroicons/react/24/outline'
+import {
+  Envelope,
+  Warning,
+  CheckCircle,
+  Info,
+  Gear
+} from '@phosphor-icons/react'
 
 export default function EmailDebugPage() {
   const [loading, setLoading] = useState(false)
@@ -138,32 +138,32 @@ export default function EmailDebugPage() {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Email Debug Tool</h1>
-        <p className="text-gray-600">Diagnose and test email functionality in the Lyceum platform</p>
+        <h1 className="text-2xl font-bold text-foreground mb-2">Email Debug Tool</h1>
+        <p className="text-foreground/60">Diagnose and test email functionality in the Lyceum platform</p>
       </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-            <CogIcon className="h-5 w-5 mr-2" />
+        <div className="glass-card p-6">
+          <h2 className="text-lg font-medium text-foreground mb-4 flex items-center">
+            <Gear className="h-5 w-5 mr-2 text-cyan-400" weight="duotone" />
             System Diagnostics
           </h2>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-foreground/60 mb-4">
             Check overall email configuration and user status
           </p>
           <button
             onClick={runDiagnostics}
             disabled={loading}
-            className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            className="w-full btn-primary disabled:opacity-50"
           >
             {loading ? 'Running...' : 'Run Diagnostics'}
           </button>
         </div>
 
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-            <EnvelopeIcon className="h-5 w-5 mr-2" />
+        <div className="glass-card p-6">
+          <h2 className="text-lg font-medium text-foreground mb-4 flex items-center">
+            <Envelope className="h-5 w-5 mr-2 text-cyan-400" weight="duotone" />
             Test Email Functions
           </h2>
           <div className="space-y-3">
@@ -172,20 +172,20 @@ export default function EmailDebugPage() {
               placeholder="Enter test email address"
               value={testEmail}
               onChange={(e) => setTestEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-4 py-2.5 rounded-xl glass-input text-foreground placeholder-foreground/40"
             />
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={testEmailSending}
                 disabled={loading || !testEmail}
-                className="bg-green-600 text-white px-3 py-2 text-sm rounded-md hover:bg-green-700 disabled:opacity-50"
+                className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-2 text-sm rounded-lg hover:bg-emerald-500/20 disabled:opacity-50 transition-all"
               >
                 Test Methods
               </button>
               <button
                 onClick={testPasswordReset}
                 disabled={loading || !testEmail}
-                className="bg-yellow-600 text-white px-3 py-2 text-sm rounded-md hover:bg-yellow-700 disabled:opacity-50"
+                className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-3 py-2 text-sm rounded-lg hover:bg-amber-500/20 disabled:opacity-50 transition-all"
               >
                 Test Reset
               </button>
@@ -196,38 +196,38 @@ export default function EmailDebugPage() {
 
       {/* Diagnostics Results */}
       {diagnostics && (
-        <div className="bg-white shadow rounded-lg p-6 mb-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">System Diagnostics</h3>
-          
+        <div className="glass-card p-6 mb-6">
+          <h3 className="text-lg font-medium text-foreground mb-4">System Diagnostics</h3>
+
           {/* Users Summary */}
           <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">
+            <div className="bg-cyan-500/10 border border-cyan-500/20 p-4 rounded-lg">
+              <div className="text-2xl font-bold text-cyan-400">
                 {diagnostics.diagnostics?.users_summary?.total_users || 0}
               </div>
-              <div className="text-sm text-blue-800">Total Users</div>
+              <div className="text-sm text-foreground/60">Total Users</div>
             </div>
-            <div className="bg-green-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">
+            <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-lg">
+              <div className="text-2xl font-bold text-emerald-400">
                 {diagnostics.diagnostics?.users_summary?.confirmed_users || 0}
               </div>
-              <div className="text-sm text-green-800">Confirmed Emails</div>
+              <div className="text-sm text-foreground/60">Confirmed Emails</div>
             </div>
-            <div className="bg-red-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-red-600">
+            <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-lg">
+              <div className="text-2xl font-bold text-red-400">
                 {diagnostics.diagnostics?.users_summary?.unconfirmed_users || 0}
               </div>
-              <div className="text-sm text-red-800">Unconfirmed Emails</div>
+              <div className="text-sm text-foreground/60">Unconfirmed Emails</div>
             </div>
           </div>
 
           {/* Common Issues */}
-          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-md p-4 mb-4">
             <div className="flex">
-              <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400 mt-0.5 mr-3" />
+              <Warning className="h-5 w-5 text-amber-400 mt-0.5 mr-3" weight="duotone" />
               <div>
-                <h4 className="text-sm font-medium text-yellow-800">Common Email Issues</h4>
-                <ul className="mt-2 text-sm text-yellow-700 space-y-1">
+                <h4 className="text-sm font-medium text-foreground">Common Email Issues</h4>
+                <ul className="mt-2 text-sm text-foreground/60 space-y-1">
                   {Object.entries(diagnostics.diagnostics?.common_issues || {}).map(([key, value]) => (
                     <li key={key}>• {value as string}</li>
                   ))}
@@ -237,12 +237,12 @@ export default function EmailDebugPage() {
           </div>
 
           {/* Solutions */}
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+          <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-md p-4">
             <div className="flex">
-              <InformationCircleIcon className="h-5 w-5 text-blue-400 mt-0.5 mr-3" />
+              <Info className="h-5 w-5 text-cyan-400 mt-0.5 mr-3" weight="duotone" />
               <div>
-                <h4 className="text-sm font-medium text-blue-800">Suggested Solutions</h4>
-                <ul className="mt-2 text-sm text-blue-700 space-y-1">
+                <h4 className="text-sm font-medium text-foreground">Suggested Solutions</h4>
+                <ul className="mt-2 text-sm text-foreground/60 space-y-1">
                   {diagnostics.diagnostics?.suggested_solutions?.map((solution: string, index: number) => (
                     <li key={index}>• {solution}</li>
                   ))}
@@ -253,30 +253,30 @@ export default function EmailDebugPage() {
 
           {/* Users Detail */}
           <details className="mt-4">
-            <summary className="cursor-pointer text-sm font-medium text-gray-700">
+            <summary className="cursor-pointer text-sm font-medium text-foreground">
               View User Details ({diagnostics.diagnostics?.users_detail?.length || 0} users)
             </summary>
             <div className="mt-2 overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-cyan-500/10">
+                <thead className="bg-cyan-500/5">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Confirmed</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-foreground/60 uppercase">Email</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-foreground/60 uppercase">Confirmed</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-foreground/60 uppercase">Created</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-background divide-y divide-cyan-500/10">
                   {diagnostics.diagnostics?.users_detail?.map((user: any) => (
                     <tr key={`email-user-${user.id}`}>
-                      <td className="px-3 py-2 text-sm text-gray-900">{user.email}</td>
+                      <td className="px-3 py-2 text-sm text-foreground">{user.email}</td>
                       <td className="px-3 py-2 text-sm">
                         {user.confirmed_at ? (
-                          <CheckCircleIcon className="h-4 w-4 text-green-500" />
+                          <CheckCircle className="h-4 w-4 text-emerald-400" weight="duotone" />
                         ) : (
-                          <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
+                          <Warning className="h-4 w-4 text-red-400" weight="duotone" />
                         )}
                       </td>
-                      <td className="px-3 py-2 text-sm text-gray-500">
+                      <td className="px-3 py-2 text-sm text-foreground/60">
                         {new Date(user.created_at).toLocaleDateString()}
                       </td>
                     </tr>
@@ -290,31 +290,31 @@ export default function EmailDebugPage() {
 
       {/* Test Results */}
       {testResults && (
-        <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Email Test Results</h3>
-          
+        <div className="glass-card p-6">
+          <h3 className="text-lg font-medium text-foreground mb-4">Email Test Results</h3>
+
           <div className="space-y-4">
             {Object.entries(testResults.test_results?.methods || {}).map(([method, result]: [string, any]) => (
               <div key={method} className={`border rounded-lg p-4 ${
-                result.success ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
+                result.success ? 'border-emerald-500/20 bg-emerald-500/10' : 'border-red-500/20 bg-red-500/10'
               }`}>
                 <div className="flex items-center mb-2">
                   {result.success ? (
-                    <CheckCircleIcon className="h-5 w-5 text-green-400 mr-2" />
+                    <CheckCircle className="h-5 w-5 text-emerald-400 mr-2" weight="duotone" />
                   ) : (
-                    <ExclamationTriangleIcon className="h-5 w-5 text-red-400 mr-2" />
+                    <Warning className="h-5 w-5 text-red-400 mr-2" weight="duotone" />
                   )}
-                  <h4 className="font-medium capitalize">{method.replace(/([A-Z])/g, ' $1')}</h4>
+                  <h4 className="font-medium text-foreground capitalize">{method.replace(/([A-Z])/g, ' $1')}</h4>
                 </div>
-                
+
                 {result.error && (
-                  <p className="text-sm text-red-600 mb-2">Error: {result.error}</p>
+                  <p className="text-sm text-red-400 mb-2">Error: {result.error}</p>
                 )}
-                
+
                 {result.action_link && (
-                  <div className="bg-white border rounded p-2 mt-2">
-                    <p className="text-xs text-gray-600 mb-1">Generated Link:</p>
-                    <code className="text-xs break-all">{result.action_link}</code>
+                  <div className="bg-background border border-cyan-500/20 rounded p-2 mt-2">
+                    <p className="text-xs text-foreground/60 mb-1">Generated Link:</p>
+                    <code className="text-xs text-cyan-400 break-all">{result.action_link}</code>
                   </div>
                 )}
               </div>
@@ -325,14 +325,14 @@ export default function EmailDebugPage() {
 
       {/* Password Reset Link Modal */}
       {showResetLinkModal && resetLinkData && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 w-11/12 md:w-3/4 lg:w-1/2 glass-card">
             <div className="mt-3">
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
-                  <CheckCircleIcon className="h-6 w-6 text-green-500 mr-2" />
-                  <h3 className="text-lg font-medium text-gray-900">
+                  <CheckCircle className="h-6 w-6 text-emerald-400 mr-2" weight="duotone" />
+                  <h3 className="text-lg font-medium text-foreground">
                     Password Reset Link Generated
                   </h3>
                 </div>
@@ -341,7 +341,7 @@ export default function EmailDebugPage() {
                     setShowResetLinkModal(false)
                     setLinkCopied(false)
                   }}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="p-2 rounded-lg text-foreground/50 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -351,15 +351,15 @@ export default function EmailDebugPage() {
 
               {/* Content */}
               <div className="space-y-4">
-                <div className="bg-green-50 border border-green-200 rounded-md p-4">
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-md p-4">
                   <div className="flex">
-                    <CheckCircleIcon className="h-5 w-5 text-green-400 mt-0.5 mr-3" />
+                    <CheckCircle className="h-5 w-5 text-emerald-400 mt-0.5 mr-3" weight="duotone" />
                     <div>
-                      <h4 className="text-sm font-medium text-green-800">Success!</h4>
-                      <p className="mt-1 text-sm text-green-700">
+                      <h4 className="text-sm font-medium text-foreground">Success!</h4>
+                      <p className="mt-1 text-sm text-foreground/80">
                         Password reset link generated successfully for <strong>{resetLinkData.email}</strong>
                       </p>
-                      <p className="mt-1 text-xs text-green-600">
+                      <p className="mt-1 text-xs text-foreground/60">
                         Method: {resetLinkData.method} • No rate limiting • Works immediately
                       </p>
                     </div>
@@ -367,9 +367,9 @@ export default function EmailDebugPage() {
                 </div>
 
                 {/* Instructions */}
-                <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-                  <h4 className="text-sm font-medium text-blue-800 mb-2">Instructions:</h4>
-                  <ol className="text-sm text-blue-700 space-y-1">
+                <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-md p-4">
+                  <h4 className="text-sm font-medium text-foreground mb-2">Instructions:</h4>
+                  <ol className="text-sm text-foreground/80 space-y-1">
                     <li>1. Copy the link below using the "Copy Link" button</li>
                     <li>2. Send it to the user via email, Slack, Teams, or any messaging platform</li>
                     <li>3. The link works immediately and bypasses email delivery issues</li>
@@ -379,29 +379,29 @@ export default function EmailDebugPage() {
 
                 {/* Link Display */}
                 <div className="space-y-3">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-foreground">
                     Password Reset Link:
                   </label>
                   <div className="relative">
                     <textarea
                       readOnly
                       value={resetLinkData.link}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono bg-gray-50 resize-none"
+                      className="block w-full px-3 py-2 glass-input text-sm font-mono text-foreground resize-none"
                       rows={3}
                       onClick={(e) => e.currentTarget.select()}
                     />
                     <div className="absolute top-2 right-2">
                       <button
                         onClick={() => copyToClipboard(resetLinkData.link)}
-                        className={`inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md transition-colors ${
+                        className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-md transition-all ${
                           linkCopied
-                            ? 'text-green-800 bg-green-100 hover:bg-green-200'
-                            : 'text-blue-800 bg-blue-100 hover:bg-blue-200'
+                            ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20'
+                            : 'text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 hover:bg-cyan-500/20'
                         }`}
                       >
                         {linkCopied ? (
                           <>
-                            <CheckCircleIcon className="h-4 w-4 mr-1" />
+                            <CheckCircle className="h-4 w-4 mr-1" weight="duotone" />
                             Copied!
                           </>
                         ) : (
@@ -418,8 +418,8 @@ export default function EmailDebugPage() {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">Quick Actions:</h4>
+                <div className="bg-cyan-500/5 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-foreground mb-3">Quick Actions:</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <button
                       onClick={() => {
@@ -429,18 +429,18 @@ export default function EmailDebugPage() {
                         )
                         window.open(`mailto:${resetLinkData.email}?subject=${subject}&body=${body}`)
                       }}
-                      className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                      className="btn-primary"
                     >
-                      <EnvelopeIcon className="h-4 w-4 mr-2" />
+                      <Envelope className="h-4 w-4 mr-2" weight="duotone" />
                       Send via Email
                     </button>
                     <button
                       onClick={() => copyToClipboard(resetLinkData.link)}
-                      className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                      className="btn-ghost"
                     >
                       {linkCopied ? (
                         <>
-                          <CheckCircleIcon className="h-4 w-4 mr-2" />
+                          <CheckCircle className="h-4 w-4 mr-2" weight="duotone" />
                           Copied to Clipboard
                         </>
                       ) : (
@@ -456,13 +456,13 @@ export default function EmailDebugPage() {
                 </div>
 
                 {/* Close Button */}
-                <div className="flex justify-end pt-4 border-t">
+                <div className="flex justify-end pt-4 border-t border-cyan-500/10">
                   <button
                     onClick={() => {
                       setShowResetLinkModal(false)
                       setLinkCopied(false)
                     }}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                    className="btn-glass"
                   >
                     Close
                   </button>

@@ -2,17 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import {
-  CircleStackIcon,
-  ArrowPathIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ClockIcon,
-  ServerIcon,
-  ChartBarIcon,
-  UsersIcon,
-} from '@heroicons/react/24/outline'
-import { Database } from 'lucide-react'
+  Database as CircleStack,
+  ArrowsClockwise as ArrowPath,
+  Warning as ExclamationTriangle,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Desktop as Server,
+} from '@phosphor-icons/react'
 
 interface LocalClusterUsage {
   id: string
@@ -147,26 +144,26 @@ export default function CentComClustersMonitoring() {
     const now = new Date()
     const lastHeartbeat = new Date(cluster.last_heartbeat_at)
     const hoursSinceHeartbeat = (now.getTime() - lastHeartbeat.getTime()) / (1000 * 60 * 60)
-    
+
     if (hoursSinceHeartbeat <= 1) {
-      return { label: 'Online', color: 'text-green-600 bg-green-100', icon: CheckCircleIcon }
+      return { label: 'Online', color: 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20', icon: CheckCircle }
     } else if (hoursSinceHeartbeat <= 24) {
-      return { label: 'Recently Offline', color: 'text-yellow-600 bg-yellow-100', icon: ExclamationTriangleIcon }
+      return { label: 'Recently Offline', color: 'text-amber-400 bg-amber-500/10 border border-amber-500/20', icon: ExclamationTriangle }
     } else {
       const daysOffline = hoursSinceHeartbeat / 24
       const graceDays = cluster.offline_grace_days || 30
       if (daysOffline > graceDays) {
-        return { label: 'Grace Period Expired', color: 'text-red-600 bg-red-100', icon: XCircleIcon }
+        return { label: 'Grace Period Expired', color: 'text-red-400 bg-red-500/10 border border-red-500/20', icon: XCircle }
       } else {
-        return { label: 'In Grace Period', color: 'text-orange-600 bg-orange-100', icon: ClockIcon }
+        return { label: 'In Grace Period', color: 'text-amber-400 bg-amber-500/10 border border-amber-500/20', icon: Clock }
       }
     }
   }
 
   function getUsageColor(percent: number): string {
-    if (percent >= 90) return 'text-red-600 bg-red-100'
-    if (percent >= 80) return 'text-yellow-600 bg-yellow-100'
-    return 'text-green-600 bg-green-100'
+    if (percent >= 90) return 'text-red-400 bg-red-500/10 border border-red-500/20'
+    if (percent >= 80) return 'text-amber-400 bg-amber-500/10 border border-amber-500/20'
+    return 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
   }
 
   function formatBytes(gb: number): string {
@@ -192,10 +189,10 @@ export default function CentComClustersMonitoring() {
 
   if (loading && !refreshing) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center">
-          <ArrowPathIcon className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading CentCom clusters...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-cyan-500/20 border-t-cyan-500 mx-auto mb-4" />
+          <p className="text-foreground/60">Loading CentCom clusters...</p>
         </div>
       </div>
     )
@@ -204,17 +201,17 @@ export default function CentComClustersMonitoring() {
   if (error) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="glass-card bg-red-500/10 border border-red-500/20 p-6">
           <div className="flex items-center">
-            <XCircleIcon className="h-6 w-6 text-red-600 mr-3" />
+            <XCircle className="h-6 w-6 text-red-400 mr-3" weight="duotone" />
             <div>
-              <h3 className="text-lg font-medium text-red-800">Error Loading Clusters</h3>
-              <p className="text-red-600 mt-1">{error}</p>
+              <h3 className="text-lg font-medium text-foreground">Error Loading Clusters</h3>
+              <p className="text-red-400 mt-1">{error}</p>
             </div>
           </div>
           <button
             onClick={() => fetchClusters()}
-            className="mt-4 px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200"
+            className="mt-4 btn-ghost"
           >
             Retry
           </button>
@@ -231,19 +228,19 @@ export default function CentComClustersMonitoring() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-              <Database className="h-8 w-8 mr-3 text-blue-600" />
+            <h1 className="text-3xl font-bold text-foreground flex items-center">
+              <CircleStack className="h-8 w-8 mr-3 text-cyan-400" weight="duotone" />
               CentCom Local Clusters
             </h1>
-            <p className="text-gray-600 mt-2">Real-time monitoring of all CentCom local ClickHouse clusters</p>
+            <p className="text-foreground/60 mt-2">Real-time monitoring of all CentCom local ClickHouse clusters</p>
           </div>
-          
+
           <button
             onClick={() => fetchClusters()}
             disabled={refreshing}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="btn-primary disabled:opacity-50 flex items-center"
           >
-            <ArrowPathIcon className={`h-5 w-5 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            <ArrowPath className={`h-5 w-5 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
           </button>
         </div>
@@ -251,65 +248,65 @@ export default function CentComClustersMonitoring() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="glass-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Clusters</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.total}</p>
+              <p className="text-sm text-foreground/60">Total Clusters</p>
+              <p className="text-3xl font-bold text-foreground mt-1">{stats.total}</p>
             </div>
-            <CircleStackIcon className="h-12 w-12 text-gray-400" />
+            <CircleStack className="h-12 w-12 text-cyan-400" weight="duotone" />
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="glass-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Online</p>
-              <p className="text-3xl font-bold text-green-600 mt-1">{stats.online}</p>
+              <p className="text-sm text-foreground/60">Online</p>
+              <p className="text-3xl font-bold text-emerald-400 mt-1">{stats.online}</p>
             </div>
-            <CheckCircleIcon className="h-12 w-12 text-green-400" />
+            <CheckCircle className="h-12 w-12 text-emerald-400" weight="duotone" />
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="glass-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Offline</p>
-              <p className="text-3xl font-bold text-gray-600 mt-1">{stats.offline}</p>
+              <p className="text-sm text-foreground/60">Offline</p>
+              <p className="text-3xl font-bold text-foreground/60 mt-1">{stats.offline}</p>
             </div>
-            <XCircleIcon className="h-12 w-12 text-gray-400" />
+            <XCircle className="h-12 w-12 text-foreground/40" weight="duotone" />
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="glass-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Grace Period</p>
-              <p className="text-3xl font-bold text-orange-600 mt-1">{stats.inGracePeriod}</p>
+              <p className="text-sm text-foreground/60">Grace Period</p>
+              <p className="text-3xl font-bold text-amber-400 mt-1">{stats.inGracePeriod}</p>
             </div>
-            <ClockIcon className="h-12 w-12 text-orange-400" />
+            <Clock className="h-12 w-12 text-amber-400" weight="duotone" />
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="glass-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Near Limits</p>
-              <p className="text-3xl font-bold text-yellow-600 mt-1">{stats.approachingLimits}</p>
+              <p className="text-sm text-foreground/60">Near Limits</p>
+              <p className="text-3xl font-bold text-amber-400 mt-1">{stats.approachingLimits}</p>
             </div>
-            <ExclamationTriangleIcon className="h-12 w-12 text-yellow-400" />
+            <ExclamationTriangle className="h-12 w-12 text-amber-400" weight="duotone" />
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
+      <div className="glass-card p-4 mb-6">
         <div className="flex items-center space-x-4">
-          <span className="text-sm font-medium text-gray-700">Filter:</span>
+          <span className="text-sm font-medium text-foreground">Filter:</span>
           <button
             onClick={() => setFilter('all')}
             className={`px-4 py-2 rounded-md text-sm font-medium ${
-              filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              filter === 'all' ? 'btn-primary' : 'btn-ghost'
             }`}
           >
             All ({stats.total})
@@ -317,7 +314,7 @@ export default function CentComClustersMonitoring() {
           <button
             onClick={() => setFilter('online')}
             className={`px-4 py-2 rounded-md text-sm font-medium ${
-              filter === 'online' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              filter === 'online' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'btn-ghost'
             }`}
           >
             Online ({stats.online})
@@ -325,7 +322,7 @@ export default function CentComClustersMonitoring() {
           <button
             onClick={() => setFilter('offline')}
             className={`px-4 py-2 rounded-md text-sm font-medium ${
-              filter === 'offline' ? 'bg-gray-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              filter === 'offline' ? 'bg-foreground/10 text-foreground border border-foreground/20' : 'btn-ghost'
             }`}
           >
             Offline ({stats.offline})
@@ -333,7 +330,7 @@ export default function CentComClustersMonitoring() {
           <button
             onClick={() => setFilter('warning')}
             className={`px-4 py-2 rounded-md text-sm font-medium ${
-              filter === 'warning' ? 'bg-yellow-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              filter === 'warning' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'btn-ghost'
             }`}
           >
             Warnings ({stats.approachingLimits})
@@ -343,12 +340,12 @@ export default function CentComClustersMonitoring() {
 
       {/* Clusters List */}
       {filteredClusters.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-          <CircleStackIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Clusters Found</h3>
-          <p className="text-gray-600">
-            {filter === 'all' 
-              ? 'No CentCom local clusters are currently registered.' 
+        <div className="glass-card p-12 text-center">
+          <CircleStack className="h-16 w-16 text-foreground/40 mx-auto mb-4" weight="duotone" />
+          <h3 className="text-lg font-medium text-foreground mb-2">No Clusters Found</h3>
+          <p className="text-foreground/60">
+            {filter === 'all'
+              ? 'No CentCom local clusters are currently registered.'
               : `No clusters match the "${filter}" filter.`}
           </p>
         </div>
@@ -361,22 +358,22 @@ export default function CentComClustersMonitoring() {
             const StatusIcon = status.icon
 
             return (
-              <div key={cluster.id} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+              <div key={cluster.id} className="glass-card">
                 <div className="p-6">
                   {/* Header Row */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <ServerIcon className="h-6 w-6 text-gray-400" />
+                      <Server className="h-6 w-6 text-cyan-400" weight="duotone" />
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-foreground">
                           {cluster.user_full_name || cluster.user_email}
                         </h3>
-                        <p className="text-sm text-gray-600">{cluster.user_email}</p>
+                        <p className="text-sm text-foreground/60">{cluster.user_email}</p>
                       </div>
                     </div>
-                    
+
                     <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${status.color}`}>
-                      <StatusIcon className="h-4 w-4 mr-1" />
+                      <StatusIcon className="h-4 w-4 mr-1" weight="duotone" />
                       {status.label}
                     </span>
                   </div>
@@ -384,27 +381,27 @@ export default function CentComClustersMonitoring() {
                   {/* Details Grid */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">Machine</p>
-                      <p className="text-sm font-medium text-gray-900">{cluster.machine_fingerprint.substring(0, 12)}...</p>
+                      <p className="text-xs text-foreground/60 mb-1">Machine</p>
+                      <p className="text-sm font-medium text-foreground">{cluster.machine_fingerprint.substring(0, 12)}...</p>
                     </div>
-                    
+
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">License</p>
-                      <p className="text-sm font-medium text-gray-900">
-                        <span className={`px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800`}>
+                      <p className="text-xs text-foreground/60 mb-1">License</p>
+                      <p className="text-sm font-medium text-foreground">
+                        <span className={`px-2 py-1 rounded text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20`}>
                           {cluster.license_type}
                         </span>
                       </p>
                     </div>
-                    
+
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">ClickHouse</p>
-                      <p className="text-sm font-medium text-gray-900">{cluster.clickhouse_version || 'Unknown'}</p>
+                      <p className="text-xs text-foreground/60 mb-1">ClickHouse</p>
+                      <p className="text-sm font-medium text-foreground">{cluster.clickhouse_version || 'Unknown'}</p>
                     </div>
-                    
+
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">Last Sync</p>
-                      <p className="text-sm font-medium text-gray-900">{getTimeAgo(cluster.last_heartbeat_at)}</p>
+                      <p className="text-xs text-foreground/60 mb-1">Last Sync</p>
+                      <p className="text-sm font-medium text-foreground">{getTimeAgo(cluster.last_heartbeat_at)}</p>
                     </div>
                   </div>
 
@@ -413,16 +410,16 @@ export default function CentComClustersMonitoring() {
                     {/* Storage */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-gray-700">Storage</span>
+                        <span className="text-sm font-medium text-foreground">Storage</span>
                         <span className={`text-sm font-medium px-2 py-1 rounded ${getUsageColor(storagePercent)}`}>
                           {formatBytes(cluster.storage_used_gb)} / {formatBytes(cluster.max_storage_gb || 0)} ({storagePercent.toFixed(1)}%)
                         </span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-foreground/10 rounded-full h-2">
                         <div
                           className={`h-2 rounded-full ${
                             storagePercent >= 90 ? 'bg-red-500' :
-                            storagePercent >= 80 ? 'bg-yellow-500' : 'bg-green-500'
+                            storagePercent >= 80 ? 'bg-amber-500' : 'bg-emerald-500'
                           }`}
                           style={{ width: `${Math.min(storagePercent, 100)}%` }}
                         />
@@ -432,16 +429,16 @@ export default function CentComClustersMonitoring() {
                     {/* Queries */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-gray-700">Queries (Month)</span>
+                        <span className="text-sm font-medium text-foreground">Queries (Month)</span>
                         <span className={`text-sm font-medium px-2 py-1 rounded ${getUsageColor(queryPercent)}`}>
                           {formatNumber(cluster.queries_this_month)} / {formatNumber(cluster.max_monthly_queries || 0)} ({queryPercent.toFixed(1)}%)
                         </span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-foreground/10 rounded-full h-2">
                         <div
                           className={`h-2 rounded-full ${
                             queryPercent >= 90 ? 'bg-red-500' :
-                            queryPercent >= 80 ? 'bg-yellow-500' : 'bg-green-500'
+                            queryPercent >= 80 ? 'bg-amber-500' : 'bg-emerald-500'
                           }`}
                           style={{ width: `${Math.min(queryPercent, 100)}%` }}
                         />
@@ -451,16 +448,16 @@ export default function CentComClustersMonitoring() {
 
                   {/* Machine Info */}
                   {(cluster.machine_os || cluster.machine_cpu_cores || cluster.machine_memory_gb) && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <div className="flex items-center space-x-6 text-sm text-gray-600">
+                    <div className="mt-4 pt-4 border-t border-cyan-500/10">
+                      <div className="flex items-center space-x-6 text-sm text-foreground/60">
                         {cluster.machine_os && (
-                          <span>💻 {cluster.machine_os}</span>
+                          <span>{cluster.machine_os}</span>
                         )}
                         {cluster.machine_cpu_cores && (
-                          <span>🔧 {cluster.machine_cpu_cores} cores</span>
+                          <span>{cluster.machine_cpu_cores} cores</span>
                         )}
                         {cluster.machine_memory_gb && (
-                          <span>🧠 {cluster.machine_memory_gb} GB RAM</span>
+                          <span>{cluster.machine_memory_gb} GB RAM</span>
                         )}
                       </div>
                     </div>

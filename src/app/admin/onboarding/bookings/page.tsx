@@ -2,18 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
-  CalendarIcon,
-  ClockIcon,
-  UserIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
-  MapPinIcon,
-  VideoCameraIcon
-} from '@heroicons/react/24/outline';
+  Calendar,
+  Clock,
+  User,
+  CheckCircle,
+  XCircle,
+  Warning,
+  MapPin,
+  VideoCamera
+} from '@phosphor-icons/react';
 
 interface Booking {
   id: string;
@@ -106,36 +104,36 @@ export default function AdminBookingsPage() {
 
   const getStatusBadge = (status: string) => {
     const badges = {
-      scheduled: { color: 'bg-blue-100 text-blue-800', icon: CalendarIcon },
-      confirmed: { color: 'bg-green-100 text-green-800', icon: CheckCircleIcon },
-      completed: { color: 'bg-gray-100 text-gray-800', icon: CheckCircleIcon },
-      cancelled: { color: 'bg-red-100 text-red-800', icon: XCircleIcon },
-      suggested: { color: 'bg-yellow-100 text-yellow-800', icon: ExclamationTriangleIcon }
+      scheduled: { color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20', icon: Calendar },
+      confirmed: { color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', icon: CheckCircle },
+      completed: { color: 'bg-foreground/10 text-foreground/60 border-foreground/20', icon: CheckCircle },
+      cancelled: { color: 'bg-red-500/10 text-red-400 border-red-500/20', icon: XCircle },
+      suggested: { color: 'bg-amber-500/10 text-amber-400 border-amber-500/20', icon: Warning }
     };
 
     const badge = badges[status as keyof typeof badges] || badges.scheduled;
     const Icon = badge.icon;
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.color}`}>
-        <Icon className="h-3 w-3 mr-1" />
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${badge.color}`}>
+        <Icon className="h-3 w-3 mr-1" weight="fill" />
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
   };
 
   const renderBookingCard = (booking: Booking) => (
-    <Card key={booking.id} className="p-6 mb-4">
+    <div key={booking.id} className="glass-card p-6 mb-4">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-3">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-lg font-semibold text-foreground">
                 {booking.title}
               </h3>
               <div className="flex items-center gap-2 mt-1">
-                <ClockIcon className="h-4 w-4 text-gray-400" />
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                <Clock className="h-4 w-4 text-cyan-400" weight="duotone" />
+                <span className="text-sm text-foreground/60">
                   {formatTime(booking.scheduled_start_time)} - {formatTime(booking.scheduled_end_time)}
                 </span>
               </div>
@@ -144,23 +142,23 @@ export default function AdminBookingsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             <div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">User</div>
+              <div className="text-sm text-foreground/60">User</div>
               <div className="flex items-center gap-2 mt-1">
-                <UserIcon className="h-4 w-4 text-gray-400" />
-                <span className="font-medium text-gray-900 dark:text-white">
+                <User className="h-4 w-4 text-cyan-400" weight="duotone" />
+                <span className="font-medium text-foreground">
                   {booking.user.full_name || booking.user.email}
                 </span>
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              <div className="text-xs text-foreground/60 mt-0.5">
                 {booking.user.email}
               </div>
             </div>
 
             <div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Platform</div>
+              <div className="text-sm text-foreground/60">Platform</div>
               <div className="flex items-center gap-2 mt-1">
-                <VideoCameraIcon className="h-4 w-4 text-gray-400" />
-                <span className="font-medium text-gray-900 dark:text-white capitalize">
+                <VideoCamera className="h-4 w-4 text-cyan-400" weight="duotone" />
+                <span className="font-medium text-foreground capitalize">
                   {booking.meeting_platform}
                 </span>
               </div>
@@ -169,7 +167,7 @@ export default function AdminBookingsPage() {
                   href={booking.meeting_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:underline mt-0.5 block"
+                  className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline mt-0.5 block transition-colors"
                 >
                   Join Meeting
                 </a>
@@ -177,30 +175,30 @@ export default function AdminBookingsPage() {
             </div>
 
             <div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">License Type</div>
-              <div className="font-medium text-gray-900 dark:text-white mt-1 capitalize">
+              <div className="text-sm text-foreground/60">License Type</div>
+              <div className="font-medium text-foreground mt-1 capitalize">
                 {booking.license?.license_type || 'N/A'}
               </div>
             </div>
           </div>
 
           {booking.description && (
-            <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+            <div className="mt-4 text-sm text-foreground/60">
               {booking.description}
             </div>
           )}
 
           {booking.availability_slot?.location && (
-            <div className="flex items-center gap-2 mt-3 text-sm text-gray-600 dark:text-gray-400">
-              <MapPinIcon className="h-4 w-4" />
+            <div className="flex items-center gap-2 mt-3 text-sm text-foreground/60">
+              <MapPin className="h-4 w-4 text-cyan-400" weight="duotone" />
               {booking.availability_slot.location}
             </div>
           )}
 
           {booking.is_trial_required && booking.trial_deadline && (
             <div className="mt-3 flex items-center gap-2 text-sm">
-              <ExclamationTriangleIcon className="h-4 w-4 text-yellow-600" />
-              <span className="text-yellow-700 dark:text-yellow-500">
+              <Warning className="h-4 w-4 text-amber-400" weight="fill" />
+              <span className="text-amber-400">
                 Trial deadline: {formatDate(booking.trial_deadline)}
               </span>
             </div>
@@ -211,40 +209,43 @@ export default function AdminBookingsPage() {
           {getStatusBadge(booking.status)}
         </div>
       </div>
-    </Card>
+    </div>
   );
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-cyan-500/20 border-t-cyan-500"></div>
+          <span className="text-sm text-foreground/60">Loading...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-bold text-foreground">
             Onboarding Session Bookings
           </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
+          <p className="mt-2 text-foreground/60">
             View and manage all onboarding sessions
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="mb-6 border-b border-cyan-500/10">
           <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab('upcoming')}
               className={`${
                 activeTab === 'upcoming'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                  ? 'border-cyan-400 text-cyan-400'
+                  : 'border-transparent text-foreground/50 hover:text-cyan-400 hover:border-cyan-500/30'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
             >
               Upcoming ({Object.values(upcomingByDate).flat().length})
             </button>
@@ -252,9 +253,9 @@ export default function AdminBookingsPage() {
               onClick={() => setActiveTab('attention')}
               className={`${
                 activeTab === 'attention'
-                  ? 'border-yellow-500 text-yellow-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                  ? 'border-cyan-400 text-cyan-400'
+                  : 'border-transparent text-foreground/50 hover:text-cyan-400 hover:border-cyan-500/30'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
             >
               Needs Attention ({requiresAttention.length})
             </button>
@@ -262,9 +263,9 @@ export default function AdminBookingsPage() {
               onClick={() => setActiveTab('past')}
               className={`${
                 activeTab === 'past'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                  ? 'border-cyan-400 text-cyan-400'
+                  : 'border-transparent text-foreground/50 hover:text-cyan-400 hover:border-cyan-500/30'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
             >
               Past ({pastBookings.length})
             </button>
@@ -275,21 +276,21 @@ export default function AdminBookingsPage() {
         {activeTab === 'upcoming' && (
           <div>
             {Object.keys(upcomingByDate).length === 0 ? (
-              <Card className="p-8 text-center">
-                <CalendarIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              <div className="glass-card p-8 text-center">
+                <Calendar className="h-12 w-12 mx-auto text-foreground/40 mb-4" weight="duotone" />
+                <h3 className="text-lg font-medium text-foreground mb-2">
                   No upcoming bookings
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-foreground/60">
                   Bookings will appear here once users schedule their onboarding sessions.
                 </p>
-              </Card>
+              </div>
             ) : (
               Object.entries(upcomingByDate)
                 .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
                 .map(([date, dateBookings]) => (
                   <div key={date} className="mb-8">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                    <h2 className="text-xl font-bold text-foreground mb-4">
                       {formatDate(date)}
                     </h2>
                     {dateBookings.map(renderBookingCard)}
@@ -302,15 +303,15 @@ export default function AdminBookingsPage() {
         {activeTab === 'attention' && (
           <div>
             {requiresAttention.length === 0 ? (
-              <Card className="p-8 text-center">
-                <CheckCircleIcon className="h-12 w-12 mx-auto text-green-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              <div className="glass-card p-8 text-center">
+                <CheckCircle className="h-12 w-12 mx-auto text-emerald-400 mb-4" weight="duotone" />
+                <h3 className="text-lg font-medium text-foreground mb-2">
                   All caught up!
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-foreground/60">
                   No sessions require immediate attention.
                 </p>
-              </Card>
+              </div>
             ) : (
               requiresAttention.map(renderBookingCard)
             )}
@@ -320,15 +321,15 @@ export default function AdminBookingsPage() {
         {activeTab === 'past' && (
           <div>
             {pastBookings.length === 0 ? (
-              <Card className="p-8 text-center">
-                <ClockIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              <div className="glass-card p-8 text-center">
+                <Clock className="h-12 w-12 mx-auto text-foreground/40 mb-4" weight="duotone" />
+                <h3 className="text-lg font-medium text-foreground mb-2">
                   No past bookings
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-foreground/60">
                   Completed sessions will appear here.
                 </p>
-              </Card>
+              </div>
             ) : (
               pastBookings.map(renderBookingCard)
             )}

@@ -15,7 +15,7 @@ import {
   isToday,
   parseISO
 } from 'date-fns'
-import { ChevronLeftIcon, ChevronRightIcon, CalendarIcon } from '@heroicons/react/24/outline'
+import { CaretLeft, CaretRight, Calendar } from '@phosphor-icons/react'
 
 interface OnboardingSession {
   id: string
@@ -75,7 +75,7 @@ export default function OnboardingCalendar({ sessions, onSessionClick }: Onboard
       {/* Calendar Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-2">
-          <CalendarIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+          <Calendar className="h-5 w-5 text-gray-500 dark:text-gray-400" />
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             {format(currentMonth, dateFormat)}
           </h3>
@@ -85,13 +85,13 @@ export default function OnboardingCalendar({ sessions, onSessionClick }: Onboard
             onClick={prevMonth}
             className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
           >
-            <ChevronLeftIcon className="h-5 w-5" />
+            <CaretLeft className="h-5 w-5" />
           </button>
           <button
             onClick={nextMonth}
             className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
           >
-            <ChevronRightIcon className="h-5 w-5" />
+            <CaretRight className="h-5 w-5" />
           </button>
         </div>
       </div>

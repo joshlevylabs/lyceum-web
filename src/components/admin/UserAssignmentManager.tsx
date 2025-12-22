@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { UserIcon, PlusIcon, TrashIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline'
+import { User, Plus, Trash, CurrencyDollar } from '@phosphor-icons/react'
 
 interface User {
   id: string
@@ -187,14 +187,14 @@ export default function UserAssignmentManager({
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-            <UserIcon className="h-5 w-5 mr-2" />
+            <User className="h-5 w-5 mr-2" />
             Assigned Users ({assignedUsers.length})
           </h3>
           <button
             onClick={() => setShowAddUser(true)}
             className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
           >
-            <PlusIcon className="h-4 w-4 mr-1" />
+            <Plus className="h-4 w-4 mr-1" />
             Add User
           </button>
         </div>
@@ -219,7 +219,7 @@ export default function UserAssignmentManager({
                   className="text-red-600 hover:text-red-800 p-1"
                   title="Remove user"
                 >
-                  <TrashIcon className="h-4 w-4" />
+                  <Trash className="h-4 w-4" />
                 </button>
               </div>
             ))}
@@ -232,7 +232,7 @@ export default function UserAssignmentManager({
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <CurrencyDollarIcon className="h-5 w-5 mr-2" />
+              <CurrencyDollar className="h-5 w-5 mr-2" />
               Payment Responsible User
             </h3>
             <button
@@ -263,7 +263,7 @@ export default function UserAssignmentManager({
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-              <CurrencyDollarIcon className="h-5 w-5 mr-2" />
+              <CurrencyDollar className="h-5 w-5 mr-2" />
               Payment Information
             </h3>
           </div>

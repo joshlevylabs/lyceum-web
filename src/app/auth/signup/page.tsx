@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
+import { Eye, EyeSlash } from '@phosphor-icons/react'
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
@@ -76,33 +76,33 @@ export default function SignUp() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-blue-600">
-            <span className="text-xl font-bold text-white">L</span>
+          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-cyan-500/10 border border-cyan-500/20">
+            <span className="text-xl font-bold text-cyan-400">L</span>
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
             Join Lyceum
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-2 text-center text-sm text-foreground/60">
             Industrial Analytics Platform
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="rounded-md bg-red-50 dark:bg-red-900/50 p-4">
-              <div className="text-sm text-red-700 dark:text-red-200">
+            <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-4">
+              <div className="text-sm text-red-400">
                 {error}
               </div>
             </div>
           )}
-          
-          <div className="space-y-4">
+
+          <div className="glass-card p-6 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label htmlFor="fullName" className="block text-sm font-medium text-foreground mb-1">
                   Full Name
                 </label>
                 <input
@@ -110,15 +110,15 @@ export default function SignUp() {
                   name="fullName"
                   type="text"
                   required
-                  className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-800 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="glass-input w-full px-4 py-2.5 rounded-xl text-foreground placeholder-foreground/40"
                   placeholder="John Doe"
                   value={formData.fullName}
                   onChange={handleChange}
                 />
               </div>
-              
+
               <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label htmlFor="username" className="block text-sm font-medium text-foreground mb-1">
                   Username
                 </label>
                 <input
@@ -126,16 +126,16 @@ export default function SignUp() {
                   name="username"
                   type="text"
                   required
-                  className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-800 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="glass-input w-full px-4 py-2.5 rounded-xl text-foreground placeholder-foreground/40"
                   placeholder="johndoe"
                   value={formData.username}
                   onChange={handleChange}
                 />
               </div>
             </div>
-            
+
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
                 Email address
               </label>
               <input
@@ -144,16 +144,16 @@ export default function SignUp() {
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-800 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="glass-input w-full px-4 py-2.5 rounded-xl text-foreground placeholder-foreground/40"
                 placeholder="john@company.com"
                 value={formData.email}
                 onChange={handleChange}
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="company" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label htmlFor="company" className="block text-sm font-medium text-foreground mb-1">
                   Company
                 </label>
                 <input
@@ -161,21 +161,21 @@ export default function SignUp() {
                   name="company"
                   type="text"
                   required
-                  className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-800 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="glass-input w-full px-4 py-2.5 rounded-xl text-foreground placeholder-foreground/40"
                   placeholder="Your Company"
                   value={formData.company}
                   onChange={handleChange}
                 />
               </div>
-              
+
               <div>
-                <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label htmlFor="role" className="block text-sm font-medium text-foreground mb-1">
                   Role
                 </label>
                 <select
                   id="role"
                   name="role"
-                  className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white dark:bg-gray-800 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="glass-input w-full px-4 py-2.5 rounded-xl text-foreground"
                   value={formData.role}
                   onChange={handleChange}
                 >
@@ -186,9 +186,9 @@ export default function SignUp() {
                 </select>
               </div>
             </div>
-            
+
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1">
                 Password
               </label>
               <div className="relative">
@@ -198,27 +198,27 @@ export default function SignUp() {
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   required
-                  className="appearance-none rounded-lg relative block w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-800 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="glass-input w-full px-4 py-2.5 pr-10 rounded-xl text-foreground placeholder-foreground/40"
                   placeholder="Enter password"
                   value={formData.password}
                   onChange={handleChange}
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-foreground/50 hover:text-cyan-400 transition-colors"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                    <EyeSlash className="h-5 w-5" />
                   ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-400" />
+                    <Eye className="h-5 w-5" />
                   )}
                 </button>
               </div>
             </div>
-            
+
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground mb-1">
                 Confirm Password
               </label>
               <div className="relative">
@@ -228,20 +228,20 @@ export default function SignUp() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   required
-                  className="appearance-none rounded-lg relative block w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-800 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="glass-input w-full px-4 py-2.5 pr-10 rounded-xl text-foreground placeholder-foreground/40"
                   placeholder="Confirm password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-foreground/50 hover:text-cyan-400 transition-colors"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                    <EyeSlash className="h-5 w-5" />
                   ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-400" />
+                    <Eye className="h-5 w-5" />
                   )}
                 </button>
               </div>
@@ -250,7 +250,7 @@ export default function SignUp() {
 
           <div className="flex items-center justify-center">
             <div className="text-sm">
-              <Link href="/auth/signin" className="font-medium text-blue-600 hover:text-blue-500">
+              <Link href="/auth/signin" className="font-medium text-cyan-400 hover:text-cyan-300 transition-colors">
                 Already have an account? Sign in
               </Link>
             </div>
@@ -260,7 +260,7 @@ export default function SignUp() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full"
             >
               {loading ? 'Creating account...' : 'Create account'}
             </button>

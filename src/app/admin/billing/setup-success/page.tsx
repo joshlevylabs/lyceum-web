@@ -2,9 +2,7 @@
 
 import React, { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { CheckCircle, ArrowRight, CreditCard, AlertTriangle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { CheckCircle, ArrowRight, CreditCard, Warning } from '@phosphor-icons/react'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,19 +25,13 @@ function SetupSuccessPageContent() {
 
   const processSession = async () => {
     try {
-      console.log('🔄 Processing setup session:', sessionId)
-
-      // Get fresh session token from Supabase (auto-refreshes if expired)
       const { createClient } = await import('@/lib/supabase')
       const supabase = createClient()
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
       if (sessionError || !session?.access_token) {
-        console.error('Session error:', sessionError)
         throw new Error('Session expired. Please sign in again.')
       }
-
-      console.log('✅ Got fresh auth token')
 
       const response = await fetch('/api/stripe/process-session', {
         method: 'POST',
@@ -51,16 +43,12 @@ function SetupSuccessPageContent() {
       })
 
       if (response.ok) {
-        const result = await response.json()
-        console.log('✅ Setup session processed successfully:', result)
         setProcessedSuccessfully(true)
       } else {
         const error = await response.json()
-        console.error('❌ Setup session processing failed:', error)
         setProcessingError(error.error || 'Failed to process session')
       }
     } catch (error: any) {
-      console.error('❌ Error processing setup session:', error)
       setProcessingError(error.message || 'Unknown error occurred')
     } finally {
       setLoading(false)
@@ -69,102 +57,95 @@ function SetupSuccessPageContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <Card className="w-full max-w-md mx-4">
-          <CardContent className="text-center p-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Processing your payment method...</h2>
-            <p className="text-gray-600">Please wait while we save your payment information.</p>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="glass-card w-full max-w-md mx-4 p-8 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-cyan-500/20 border-t-cyan-500 mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-foreground mb-2">Processing your payment method...</h2>
+          <p className="text-foreground/60">Please wait while we save your payment information.</p>
+        </div>
       </div>
     )
   }
 
   if (processingError) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <Card className="w-full max-w-md mx-4">
-          <CardContent className="text-center p-8">
-            <AlertTriangle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Processing Issue</h2>
-            <p className="text-gray-600 mb-4">{processingError}</p>
-            <Button 
-              onClick={() => window.location.reload()}
-              variant="outline"
-            >
-              Try Again
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="glass-card w-full max-w-md mx-4 p-8 text-center">
+          <Warning className="w-12 h-12 text-amber-500 mx-auto mb-4" weight="duotone" />
+          <h2 className="text-xl font-semibold text-foreground mb-2">Processing Issue</h2>
+          <p className="text-foreground/60 mb-4">{processingError}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="btn-ghost"
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <Card className="w-full max-w-2xl mx-4">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4">
-            <CheckCircle className="w-16 h-16 text-green-500" />
-          </div>
-          <CardTitle className="text-2xl text-gray-900">
-            {processedSuccessfully ? 'Payment Method Added Successfully! 🎉' : 'Payment Method Setup Complete! 🎉'}
-          </CardTitle>
-          <CardDescription className="text-lg">
-            {processedSuccessfully 
-              ? 'Your payment method has been verified and saved' 
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="glass-card w-full max-w-2xl mx-4 p-8">
+        <div className="text-center mb-6">
+          <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto mb-4" weight="duotone" />
+          <h1 className="text-2xl font-bold text-foreground">
+            {processedSuccessfully ? 'Payment Method Added Successfully!' : 'Payment Method Setup Complete!'}
+          </h1>
+          <p className="text-foreground/60 mt-2">
+            {processedSuccessfully
+              ? 'Your payment method has been verified and saved'
               : 'Your payment method has been saved and is ready to use'}
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent className="space-y-6">
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <h3 className="font-semibold text-green-800 mb-2">What's Next?</h3>
-            <ul className="space-y-2 text-sm text-green-700">
+          </p>
+        </div>
+
+        <div className="space-y-6">
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
+            <h3 className="font-semibold text-emerald-400 mb-2">What's Next?</h3>
+            <ul className="space-y-2 text-sm text-foreground/70">
               <li className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
                 Your payment method has been securely saved
               </li>
               <li className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
                 You can now subscribe to any of our plans
               </li>
               <li className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
                 Your clusters will be activated immediately after subscription
               </li>
             </ul>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Button 
+            <button
               onClick={() => router.push('/admin/billing')}
-              className="flex items-center gap-2"
+              className="btn-primary flex items-center justify-center gap-2"
             >
               Subscribe to Plan
               <ArrowRight className="w-4 h-4" />
-            </Button>
-            
-            <Button 
+            </button>
+
+            <button
               onClick={() => router.back()}
-              variant="outline"
-              className="flex items-center gap-2"
+              className="btn-ghost flex items-center justify-center gap-2"
             >
-              <CreditCard className="w-4 h-4" />
+              <CreditCard className="w-4 h-4" weight="duotone" />
               Back to Profile
-            </Button>
+            </button>
           </div>
 
           {sessionId && (
             <div className="text-center">
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-foreground/40 font-mono">
                 Setup Session ID: {sessionId}
               </p>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }
@@ -172,8 +153,8 @@ function SetupSuccessPageContent() {
 export default function SetupSuccessPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-2 border-cyan-500/20 border-t-cyan-500"></div>
       </div>
     }>
       <SetupSuccessPageContent />

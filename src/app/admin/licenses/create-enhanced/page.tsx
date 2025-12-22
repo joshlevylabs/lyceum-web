@@ -4,16 +4,16 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  ArrowLeftIcon,
-  KeyIcon,
-  ComputerDesktopIcon,
-  PuzzlePieceIcon,
-  CheckIcon,
-  XMarkIcon,
-  InformationCircleIcon,
-  CogIcon,
-  ExclamationTriangleIcon
-} from '@heroicons/react/24/outline'
+  ArrowLeft,
+  Key,
+  Desktop,
+  PuzzlePiece as Puzzle,
+  Check,
+  X,
+  Info,
+  Gear,
+  Warning
+} from '@phosphor-icons/react'
 import { LICENSE_TYPES, PLUGIN_CONFIGURATIONS, getLicenseTypeConfig, formatLimitValue, getLicenseTypeDescription } from '@/lib/license-types'
 
 interface EnhancedLicenseFormData {
@@ -274,7 +274,7 @@ export default function CreateEnhancedLicense() {
                   onClick={() => setPreviewMode(false)}
                   className="text-gray-500 hover:text-gray-700"
                 >
-                  <ArrowLeftIcon className="h-6 w-6" />
+                  <ArrowLeft className="h-6 w-6" />
                 </button>
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900">License Preview</h1>
@@ -310,12 +310,12 @@ export default function CreateEnhancedLicense() {
                   <div className="mt-1 flex items-center space-x-2">
                     {formData.license_category === 'main_application' ? (
                       <>
-                        <ComputerDesktopIcon className="h-5 w-5 text-blue-600" />
+                        <Desktop className="h-5 w-5 text-blue-600" />
                         <span className="text-gray-900">CentCom Application</span>
                       </>
                     ) : (
                       <>
-                        <PuzzlePieceIcon className="h-5 w-5 text-purple-600" />
+                        <Puzzle className="h-5 w-5 text-purple-600" />
                         <span className="text-gray-900">Plugin License</span>
                       </>
                     )}
@@ -363,9 +363,9 @@ export default function CreateEnhancedLicense() {
                     }`}>
                       <div className="flex items-center space-x-2">
                         {enabled ? (
-                          <CheckIcon className="h-4 w-4 text-green-600" />
+                          <Check className="h-4 w-4 text-green-600" />
                         ) : (
-                          <XMarkIcon className="h-4 w-4 text-gray-400" />
+                          <X className="h-4 w-4 text-gray-400" />
                         )}
                         <span className={`text-sm font-medium capitalize ${
                           enabled ? 'text-green-900' : 'text-gray-500'
@@ -435,7 +435,7 @@ export default function CreateEnhancedLicense() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Link href="/admin/licenses" className="text-gray-500 hover:text-gray-700">
-                <ArrowLeftIcon className="h-6 w-6" />
+                <ArrowLeft className="h-6 w-6" />
               </Link>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Create License</h1>
@@ -453,7 +453,7 @@ export default function CreateEnhancedLicense() {
                 <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
                   currentStep >= step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
                 }`}>
-                  {currentStep > step ? <CheckIcon className="h-4 w-4" /> : step}
+                  {currentStep > step ? <Check className="h-4 w-4" /> : step}
                 </div>
                 <span className={`ml-2 text-sm font-medium ${
                   currentStep >= step ? 'text-blue-600' : 'text-gray-500'
@@ -481,7 +481,7 @@ export default function CreateEnhancedLicense() {
                   }`}
                 >
                   <div className="flex items-center space-x-3">
-                    <ComputerDesktopIcon className="h-8 w-8 text-blue-600" />
+                    <Desktop className="h-8 w-8 text-blue-600" />
                     <div>
                       <h4 className="font-medium text-gray-900">CentCom Application</h4>
                       <p className="text-sm text-gray-600">Main application features and modules</p>
@@ -497,7 +497,7 @@ export default function CreateEnhancedLicense() {
                   }`}
                 >
                   <div className="flex items-center space-x-3">
-                    <PuzzlePieceIcon className="h-8 w-8 text-purple-600" />
+                    <Puzzle className="h-8 w-8 text-purple-600" />
                     <div>
                       <h4 className="font-medium text-gray-900">Plugin License</h4>
                       <p className="text-sm text-gray-600">Individual plugin functionality</p>
@@ -538,7 +538,7 @@ export default function CreateEnhancedLicense() {
               {currentConfig && (
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-start space-x-2">
-                    <InformationCircleIcon className="h-5 w-5 text-blue-500 mt-0.5" />
+                    <Info className="h-5 w-5 text-blue-500 mt-0.5" />
                     <div className="text-sm">
                       <div className="font-medium text-gray-900">Selected: {formData.license_type.charAt(0).toUpperCase() + formData.license_type.slice(1)}</div>
                       <div className="text-gray-600">{getLicenseTypeDescription(formData.license_type)}</div>
@@ -980,7 +980,7 @@ export default function CreateEnhancedLicense() {
 
                   <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                     <div className="flex items-start space-x-2">
-                      <InformationCircleIcon className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                      <Info className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
                       <div className="text-sm text-blue-900">
                         <div className="font-medium">Local Cluster Limits</div>
                         <div className="mt-1 text-blue-700">

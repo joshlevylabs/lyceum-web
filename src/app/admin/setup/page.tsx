@@ -2,15 +2,15 @@
 
 import { useState } from 'react'
 import {
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  ArrowPathIcon,
-  CogIcon,
-  KeyIcon,
-  CircleStackIcon,
-  UsersIcon,
-  ShieldCheckIcon
-} from '@heroicons/react/24/outline'
+  CheckCircle,
+  Warning,
+  ArrowClockwise,
+  Gear,
+  Key,
+  Database,
+  Users,
+  ShieldCheck
+} from '@phosphor-icons/react'
 
 interface SetupStep {
   id: string
@@ -29,7 +29,7 @@ export default function AdminSetup() {
       title: 'Create Admin Database Schema',
       description: 'Set up admin tables for users, licenses, clusters, and platform metrics',
       status: 'pending',
-      icon: CogIcon,
+      icon: Gear,
       endpoint: '/api/admin/setup-admin-schema'
     },
     {
@@ -37,28 +37,28 @@ export default function AdminSetup() {
       title: 'Create Super Admin User',
       description: 'Initialize the primary administrator account',
       status: 'pending',
-      icon: ShieldCheckIcon
+      icon: ShieldCheck
     },
     {
       id: 'sample-licenses',
       title: 'Generate Sample License Keys',
       description: 'Create example license keys for testing',
       status: 'pending',
-      icon: KeyIcon
+      icon: Key
     },
     {
       id: 'default-cluster',
       title: 'Configure Default Database Cluster',
       description: 'Set up the primary database cluster configuration',
       status: 'pending',
-      icon: CircleStackIcon
+      icon: Database
     },
     {
       id: 'platform-metrics',
       title: 'Initialize Platform Metrics',
       description: 'Set up monitoring and analytics tracking',
       status: 'pending',
-      icon: UsersIcon
+      icon: Users
     }
   ])
   
@@ -135,9 +135,9 @@ export default function AdminSetup() {
 
   const getStatusIcon = (status: SetupStep['status']) => {
     switch (status) {
-      case 'completed': return <CheckCircleIcon className="h-5 w-5 text-green-500" />
-      case 'running': return <ArrowPathIcon className="h-5 w-5 text-blue-500 animate-spin" />
-      case 'error': return <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
+      case 'completed': return <CheckCircle className="h-5 w-5 text-green-500" />
+      case 'running': return <ArrowClockwise className="h-5 w-5 text-blue-500 animate-spin" />
+      case 'error': return <Warning className="h-5 w-5 text-red-500" />
       default: return <div className="h-5 w-5 rounded-full border-2 border-gray-300" />
     }
   }
@@ -191,17 +191,17 @@ export default function AdminSetup() {
           >
             {overallStatus === 'running' ? (
               <>
-                <ArrowPathIcon className="-ml-1 mr-2 h-5 w-5 animate-spin" />
+                <ArrowClockwise className="-ml-1 mr-2 h-5 w-5 animate-spin" />
                 Running Setup...
               </>
             ) : overallStatus === 'completed' ? (
               <>
-                <CheckCircleIcon className="-ml-1 mr-2 h-5 w-5" />
+                <CheckCircle className="-ml-1 mr-2 h-5 w-5" />
                 Setup Complete
               </>
             ) : (
               <>
-                <CogIcon className="-ml-1 mr-2 h-5 w-5" />
+                <Gear className="-ml-1 mr-2 h-5 w-5" />
                 Run Full Setup
               </>
             )}
@@ -212,7 +212,7 @@ export default function AdminSetup() {
               onClick={resetSetup}
               className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
             >
-              <ArrowPathIcon className="-ml-1 mr-2 h-5 w-5" />
+              <ArrowClockwise className="-ml-1 mr-2 h-5 w-5" />
               Reset Setup
             </button>
           )}
@@ -287,7 +287,7 @@ export default function AdminSetup() {
       {overallStatus === 'completed' && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-6">
           <div className="flex">
-            <CheckCircleIcon className="flex-shrink-0 w-5 h-5 text-green-400 mt-0.5" />
+            <CheckCircle className="flex-shrink-0 w-5 h-5 text-green-400 mt-0.5" />
             <div className="ml-3">
               <h3 className="text-sm font-medium text-green-800">
                 Setup Complete!

@@ -1,18 +1,23 @@
 import type { Metadata } from 'next'
+import { Space_Grotesk, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { ClientAuthProvider } from '@/components/ClientAuthProvider'
 import { ClientThemeProvider } from '@/components/ClientThemeProvider'
+import { ClientHeroUIProvider } from '@/components/ClientHeroUIProvider'
 
-// Temporarily disabled Google fonts due to Next.js 15 + Turbopack compatibility issue
-// const geist = Geist({
-//   subsets: ['latin'],
-//   variable: '--font-geist-sans',
-// })
+// Space Grotesk - Modern futuristic font
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-space-grotesk',
+  display: 'swap',
+})
 
-// const geistMono = Geist_Mono({
-//   subsets: ['latin'],
-//   variable: '--font-geist-mono',
-// })
+// JetBrains Mono for code/technical elements
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains-mono',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'Lyceum - Industrial Analytics Platform',
@@ -64,12 +69,14 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white font-sans">
-        <ClientThemeProvider>
-          <ClientAuthProvider>
-            {children}
-          </ClientAuthProvider>
-        </ClientThemeProvider>
+      <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} antialiased min-h-screen bg-background text-foreground font-sans`}>
+        <ClientHeroUIProvider>
+          <ClientThemeProvider>
+            <ClientAuthProvider>
+              {children}
+            </ClientAuthProvider>
+          </ClientThemeProvider>
+        </ClientHeroUIProvider>
       </body>
     </html>
   )

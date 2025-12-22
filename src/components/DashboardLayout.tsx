@@ -6,28 +6,24 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Dialog, Transition } from '@headlessui/react'
 import {
-  XMarkIcon,
-  Bars3Icon,
-  HomeIcon,
-  TableCellsIcon,
-  Cog6ToothIcon,
-  CircleStackIcon,
-  PuzzlePieceIcon,
-  ArrowRightOnRectangleIcon,
-  UserIcon,
-  ShieldCheckIcon
-} from '@heroicons/react/24/outline'
+  X,
+  List,
+  House,
+  Table,
+  Gear,
+  PuzzlePiece,
+  SignOut,
+  User,
+  ShieldCheck
+} from '@phosphor-icons/react'
 import clsx from 'clsx'
+import { LyceumLogo } from './LyceumLogo'
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-  { name: 'Test Data', href: '/test-data', icon: TableCellsIcon },
-  // { name: 'Data Visualizer', href: '/data-visualizer', icon: ChartBarIcon }, // TODO: Create route to fix 404 errors
-  // { name: 'Clusters', href: '/clusters', icon: CircleStackIcon }, // Moved to Settings page
-  { name: 'Plugins Store', href: '/plugins', icon: PuzzlePieceIcon },
-  // { name: 'Centcom Assets', href: '/assets', icon: CubeIcon }, // TODO: Create route to fix 404 errors
-  // { name: 'Sequencer', href: '/sequencer', icon: PlayIcon }, // TODO: Create route to fix 404 errors
-  { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
+  { name: 'Dashboard', href: '/dashboard', icon: House },
+  { name: 'Test Data', href: '/test-data', icon: Table },
+  { name: 'Plugins Store', href: '/plugins', icon: PuzzlePiece },
+  { name: 'Settings', href: '/settings', icon: Gear },
 ]
 
 interface DashboardLayoutProps {
@@ -50,10 +46,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   // Enhanced logout handler with error handling
   const handleLogout = async () => {
     if (loggingOut) return // Prevent multiple logout attempts
-    
+
     console.log('Logout button clicked')
     setLoggingOut(true)
-    
+
     try {
       console.log('Calling signOut...')
       await signOut()
@@ -72,8 +68,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   // Show loading spinner while checking authentication
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-cyan-500/20 border-t-cyan-500"></div>
+          <span className="text-sm text-foreground/60">Loading...</span>
+        </div>
       </div>
     )
   }
@@ -84,14 +83,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       window.location.href = '/auth/signin'
     }
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <p>Redirecting to login...</p>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-foreground/60">Redirecting to login...</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-background">
       {/* Mobile sidebar */}
       <Transition.Root show={sidebarOpen} as={Fragment}>
         <Dialog as="div" className="relative z-50 lg:hidden" onClose={setSidebarOpen}>
@@ -104,7 +103,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <div className="fixed inset-0 bg-gray-900/80" />
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
           </Transition.Child>
 
           <div className="fixed inset-0 flex">
@@ -130,18 +129,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
                     <button type="button" className="-m-2.5 p-2.5" onClick={() => setSidebarOpen(false)}>
                       <span className="sr-only">Close sidebar</span>
-                      <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                      <X className="h-6 w-6 text-white" weight="bold" aria-hidden="true" />
                     </button>
                   </div>
                 </Transition.Child>
-                
-                <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white dark:bg-gray-800 px-6 pb-2">
+
+                {/* Mobile sidebar content */}
+                <div className="flex grow flex-col gap-y-5 overflow-y-auto glass-panel px-6 pb-2">
+                  {/* Logo */}
                   <div className="flex h-16 shrink-0 items-center">
-                    <div className="h-8 w-8 flex items-center justify-center rounded bg-blue-600">
-                      <span className="text-lg font-bold text-white">L</span>
-                    </div>
-                    <span className="ml-3 text-xl font-bold text-gray-900 dark:text-white">Lyceum</span>
+                    <LyceumLogo size="md" />
                   </div>
+
+                  {/* Navigation */}
                   <nav className="flex flex-1 flex-col">
                     <ul role="list" className="flex flex-1 flex-col gap-y-7">
                       <li>
@@ -150,45 +150,47 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                             <li key={item.name}>
                               <Link
                                 href={item.href}
+                                onClick={() => setSidebarOpen(false)}
                                 className={clsx(
-                                  pathname === item.href
-                                    ? 'bg-gray-50 dark:bg-gray-700 text-blue-600 dark:text-blue-400'
-                                    : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700',
-                                  'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold'
+                                  'nav-item',
+                                  pathname === item.href && 'active'
                                 )}
                               >
                                 <item.icon
                                   className={clsx(
-                                    pathname === item.href ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400',
-                                    'h-6 w-6 shrink-0'
+                                    'h-5 w-5 shrink-0 transition-colors',
+                                    pathname === item.href ? 'text-cyan-400' : 'text-foreground/50'
                                   )}
+                                  weight={pathname === item.href ? 'duotone' : 'regular'}
                                   aria-hidden="true"
                                 />
                                 {item.name}
                               </Link>
                             </li>
                           ))}
-                          
+
                           {/* Admin Panel - Only show for admins */}
                           {isAdmin && (
-                            <li>
+                            <li className="pt-4 mt-4 border-t border-cyan-500/10">
                               <Link
                                 href="/admin"
+                                onClick={() => setSidebarOpen(false)}
                                 className={clsx(
-                                  pathname.startsWith('/admin')
-                                    ? 'bg-gray-50 dark:bg-gray-700 text-red-600 dark:text-red-400'
-                                    : 'text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700',
-                                  'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold border-t border-gray-200 dark:border-gray-600 mt-2 pt-4'
+                                  'nav-item',
+                                  pathname.startsWith('/admin') && 'active'
                                 )}
                               >
-                                <ShieldCheckIcon
+                                <ShieldCheck
                                   className={clsx(
-                                    pathname.startsWith('/admin') ? 'text-red-600 dark:text-red-400' : 'text-gray-400 group-hover:text-red-600 dark:group-hover:text-red-400',
-                                    'h-6 w-6 shrink-0'
+                                    'h-5 w-5 shrink-0',
+                                    pathname.startsWith('/admin') ? 'text-emerald-400' : 'text-emerald-400/60'
                                   )}
+                                  weight={pathname.startsWith('/admin') ? 'duotone' : 'regular'}
                                   aria-hidden="true"
                                 />
-                                Admin Panel
+                                <span className={pathname.startsWith('/admin') ? 'text-emerald-400' : 'text-emerald-400/70'}>
+                                  Admin Panel
+                                </span>
                               </Link>
                             </li>
                           )}
@@ -205,13 +207,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Static sidebar for desktop */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-        <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-6">
+        <div className="flex grow flex-col gap-y-5 overflow-y-auto glass-panel border-r border-cyan-500/10 px-6">
+          {/* Logo */}
           <div className="flex h-16 shrink-0 items-center">
-            <div className="h-8 w-8 flex items-center justify-center rounded bg-blue-600">
-              <span className="text-lg font-bold text-white">L</span>
-            </div>
-            <span className="ml-3 text-xl font-bold text-gray-900 dark:text-white">Lyceum</span>
+            <LyceumLogo size="md" />
           </div>
+
+          {/* Navigation */}
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
               <li>
@@ -221,81 +223,81 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       <Link
                         href={item.href}
                         className={clsx(
-                          pathname === item.href
-                            ? 'bg-gray-50 dark:bg-gray-700 text-blue-600 dark:text-blue-400'
-                            : 'text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700',
-                          'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold'
+                          'nav-item',
+                          pathname === item.href && 'active'
                         )}
                       >
                         <item.icon
                           className={clsx(
-                            pathname === item.href ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400',
-                            'h-6 w-6 shrink-0'
+                            'h-5 w-5 shrink-0 transition-colors',
+                            pathname === item.href ? 'text-cyan-400' : 'text-foreground/50'
                           )}
+                          weight={pathname === item.href ? 'duotone' : 'regular'}
                           aria-hidden="true"
                         />
                         {item.name}
                       </Link>
                     </li>
                   ))}
-                  
+
                   {/* Admin Panel - Only show for admins */}
                   {isAdmin && (
-                    <li>
+                    <li className="pt-4 mt-4 border-t border-cyan-500/10">
                       <Link
                         href="/admin"
                         className={clsx(
-                          pathname.startsWith('/admin')
-                            ? 'bg-gray-50 dark:bg-gray-700 text-red-600 dark:text-red-400'
-                            : 'text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700',
-                          'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold border-t border-gray-200 dark:border-gray-600 mt-2 pt-4'
+                          'nav-item group',
+                          pathname.startsWith('/admin') ? 'active !bg-emerald-500/10 !border-l-emerald-400' : ''
                         )}
                       >
-                        <ShieldCheckIcon
+                        <ShieldCheck
                           className={clsx(
-                            pathname.startsWith('/admin') ? 'text-red-600 dark:text-red-400' : 'text-gray-400 group-hover:text-red-600 dark:group-hover:text-red-400',
-                            'h-6 w-6 shrink-0'
+                            'h-5 w-5 shrink-0 transition-colors',
+                            pathname.startsWith('/admin') ? 'text-emerald-400' : 'text-emerald-400/60 group-hover:text-emerald-400'
                           )}
+                          weight={pathname.startsWith('/admin') ? 'duotone' : 'regular'}
                           aria-hidden="true"
                         />
-                        Admin Panel
+                        <span className={pathname.startsWith('/admin') ? 'text-emerald-400' : 'text-emerald-400/70 group-hover:text-emerald-400'}>
+                          Admin Panel
+                        </span>
                       </Link>
                     </li>
                   )}
                 </ul>
               </li>
-              
+
               {/* User section */}
-              <li className="mt-auto">
-                <div className="flex items-center gap-x-4 px-2 py-3 text-sm font-semibold leading-6 text-gray-900 dark:text-white">
-                  <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-                    <UserIcon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+              <li className="mt-auto pb-4">
+                <div className="glass-card p-3 flex items-center gap-x-3">
+                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-emerald-500/20 border border-cyan-500/20 flex items-center justify-center">
+                    <User className="h-5 w-5 text-cyan-400" weight="duotone" />
                   </div>
                   <button
                     onClick={() => router.push('/settings')}
-                    className="flex-1 text-left hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    className="flex-1 text-left hover:opacity-80 transition-opacity"
                     title="Edit Profile"
                   >
-                    <div className="text-sm font-medium">
-                      {userProfile?.full_name || 
-                       user?.user_metadata?.full_name || 
-                       user?.email?.split('@')[0] || 
+                    <div className="text-sm font-medium text-foreground truncate">
+                      {userProfile?.full_name ||
+                       user?.user_metadata?.full_name ||
+                       user?.email?.split('@')[0] ||
                        'User'}
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                    <div className="text-xs text-foreground/50 capitalize">
                       {userProfile?.role || user?.user_metadata?.role || 'user'}
                     </div>
                   </button>
                   <button
                     onClick={handleLogout}
                     disabled={loggingOut}
-                    className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 rounded-lg text-foreground/50 hover:text-cyan-400 hover:bg-cyan-500/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     title={loggingOut ? "Signing out..." : "Sign out"}
                   >
                     {loggingOut ? (
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400"></div>
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-foreground/20 border-t-cyan-400"></div>
                     ) : (
-                      <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                      <SignOut className="h-5 w-5" weight="bold" />
                     )}
                   </button>
                 </div>
@@ -308,38 +310,45 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main content */}
       <div className="lg:pl-72">
         {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-          <button type="button" className="-m-2.5 p-2.5 text-gray-700 dark:text-gray-300 lg:hidden" onClick={() => setSidebarOpen(true)}>
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 glass-panel border-b border-cyan-500/10 px-4 sm:gap-x-6 sm:px-6 lg:px-8">
+          <button
+            type="button"
+            className="-m-2.5 p-2.5 text-foreground/70 hover:text-cyan-400 transition-colors lg:hidden"
+            onClick={() => setSidebarOpen(true)}
+          >
             <span className="sr-only">Open sidebar</span>
-            <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+            <List className="h-6 w-6" weight="bold" aria-hidden="true" />
           </button>
 
           {/* Separator */}
-          <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 lg:hidden" aria-hidden="true" />
+          <div className="h-6 w-px bg-cyan-500/10 lg:hidden" aria-hidden="true" />
 
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
             <div className="flex items-center gap-x-4 lg:gap-x-6">
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                {navigation.find(item => item.href === pathname)?.name || 'Lyceum'}
+              <h1 className="text-xl font-semibold text-gradient-cyan">
+                {navigation.find(item => item.href === pathname)?.name ||
+                 (pathname.startsWith('/admin') ? 'Admin Panel' : 'Lyceum')}
               </h1>
             </div>
-            
+
             <div className="ml-auto flex items-center gap-x-4 lg:gap-x-6">
               {/* User menu for mobile */}
               <div className="lg:hidden">
                 <button
                   onClick={handleLogout}
                   disabled={loggingOut}
-                  className="flex items-center gap-x-2 text-sm font-semibold text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                  className="flex items-center gap-x-2 text-sm font-medium text-foreground/70 disabled:opacity-50 disabled:cursor-not-allowed hover:text-cyan-400 transition-colors"
                 >
-                  <div className="h-6 w-6 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-emerald-500/20 border border-cyan-500/20 flex items-center justify-center">
                     {loggingOut ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 dark:border-gray-300"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-foreground/20 border-t-cyan-400"></div>
                     ) : (
-                      <UserIcon className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                      <User className="h-4 w-4 text-cyan-400" weight="duotone" />
                     )}
                   </div>
-                  {loggingOut ? 'Signing out...' : 'Sign out'}
+                  <span className="sr-only sm:not-sr-only">
+                    {loggingOut ? 'Signing out...' : 'Sign out'}
+                  </span>
                 </button>
               </div>
             </div>
@@ -355,4 +364,4 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
     </div>
   )
-} 
+}

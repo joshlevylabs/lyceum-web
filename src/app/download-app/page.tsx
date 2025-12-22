@@ -5,21 +5,21 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/DashboardLayout'
 import {
-  CheckCircleIcon,
-  XMarkIcon,
-  ShieldCheckIcon,
-  DocumentTextIcon,
-  ArrowDownTrayIcon,
-  ComputerDesktopIcon,
-  CpuChipIcon,
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  CommandLineIcon,
-  QuestionMarkCircleIcon,
-  WrenchScrewdriverIcon
-} from '@heroicons/react/24/outline'
+  CheckCircle,
+  X,
+  ShieldCheck,
+  FileText,
+  DownloadSimple,
+  Desktop,
+  Cpu,
+  Warning,
+  Info,
+  CaretDown,
+  CaretUp,
+  Terminal,
+  Question,
+  Wrench
+} from '@phosphor-icons/react'
 
 interface LicenseData {
   key_code: string
@@ -453,7 +453,7 @@ export default function DownloadAppPage() {
                 ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
                 : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
             }`}>
-              <CheckCircleIcon className={`h-5 w-5 mr-2 ${
+              <CheckCircle className={`h-5 w-5 mr-2 ${
                 subscription.subscription_type === 'trial'
                   ? 'text-blue-600 dark:text-blue-400'
                   : subscription.status === 'cancelled'
@@ -489,7 +489,7 @@ export default function DownloadAppPage() {
               : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
           }`}>
             <div className="flex items-start">
-              <ComputerDesktopIcon className={`h-6 w-6 mr-3 mt-0.5 ${
+              <Desktop className={`h-6 w-6 mr-3 mt-0.5 ${
                 systemCheck.isCompatible
                   ? 'text-green-600 dark:text-green-400'
                   : systemCheck.os === 'windows'
@@ -510,12 +510,12 @@ export default function DownloadAppPage() {
                   <p className={systemCheck.isCompatible ? 'text-green-700 dark:text-green-300' : systemCheck.os === 'windows' ? 'text-yellow-700 dark:text-yellow-300' : 'text-red-700 dark:text-red-300'}>
                     {systemCheck.isCompatible ? (
                       <span className="flex items-center">
-                        <CheckCircleIcon className="h-4 w-4 mr-1" />
+                        <CheckCircle className="h-4 w-4 mr-1" />
                         Operating System: {systemCheck.osVersion} (Compatible)
                       </span>
                     ) : (
                       <span className="flex items-center">
-                        <ExclamationTriangleIcon className="h-4 w-4 mr-1" />
+                        <Warning className="h-4 w-4 mr-1" />
                         {systemCheck.compatibilityMessage}
                       </span>
                     )}
@@ -524,19 +524,19 @@ export default function DownloadAppPage() {
                     <p className={systemCheck.is64Bit ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}>
                       {systemCheck.is64Bit ? (
                         <span className="flex items-center">
-                          <CheckCircleIcon className="h-4 w-4 mr-1" />
+                          <CheckCircle className="h-4 w-4 mr-1" />
                           Architecture: 64-bit (Compatible)
                         </span>
                       ) : (
                         <span className="flex items-center">
-                          <XMarkIcon className="h-4 w-4 mr-1" />
+                          <X className="h-4 w-4 mr-1" />
                           Architecture: 32-bit (Not supported)
                         </span>
                       )}
                     </p>
                   )}
                   <p className="text-gray-600 dark:text-gray-400 flex items-center">
-                    <InformationCircleIcon className="h-4 w-4 mr-1" />
+                    <Info className="h-4 w-4 mr-1" />
                     WSL Status: Cannot detect from browser - see prerequisites below
                   </p>
                 </div>
@@ -552,15 +552,15 @@ export default function DownloadAppPage() {
             className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50"
           >
             <div className="flex items-center">
-              <CpuChipIcon className="h-6 w-6 text-blue-600 mr-3" />
+              <Cpu className="h-6 w-6 text-blue-600 mr-3" />
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                 System Requirements
               </h2>
             </div>
             {expandedSections.requirements ? (
-              <ChevronUpIcon className="h-5 w-5 text-gray-500" />
+              <CaretUp className="h-5 w-5 text-gray-500" />
             ) : (
-              <ChevronDownIcon className="h-5 w-5 text-gray-500" />
+              <CaretDown className="h-5 w-5 text-gray-500" />
             )}
           </button>
           {expandedSections.requirements && (
@@ -612,15 +612,15 @@ export default function DownloadAppPage() {
             className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50"
           >
             <div className="flex items-center">
-              <WrenchScrewdriverIcon className="h-6 w-6 text-blue-600 mr-3" />
+              <Wrench className="h-6 w-6 text-blue-600 mr-3" />
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Prerequisites
               </h2>
             </div>
             {expandedSections.prerequisites ? (
-              <ChevronUpIcon className="h-5 w-5 text-gray-500" />
+              <CaretUp className="h-5 w-5 text-gray-500" />
             ) : (
-              <ChevronDownIcon className="h-5 w-5 text-gray-500" />
+              <CaretDown className="h-5 w-5 text-gray-500" />
             )}
           </button>
           {expandedSections.prerequisites && (
@@ -682,15 +682,15 @@ export default function DownloadAppPage() {
             className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50"
           >
             <div className="flex items-center">
-              <ArrowDownTrayIcon className="h-6 w-6 text-blue-600 mr-3" />
+              <DownloadSimple className="h-6 w-6 text-blue-600 mr-3" />
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Installation Instructions
               </h2>
             </div>
             {expandedSections.installation ? (
-              <ChevronUpIcon className="h-5 w-5 text-gray-500" />
+              <CaretUp className="h-5 w-5 text-gray-500" />
             ) : (
-              <ChevronDownIcon className="h-5 w-5 text-gray-500" />
+              <CaretDown className="h-5 w-5 text-gray-500" />
             )}
           </button>
           {expandedSections.installation && (
@@ -746,15 +746,15 @@ export default function DownloadAppPage() {
             className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50"
           >
             <div className="flex items-center">
-              <InformationCircleIcon className="h-6 w-6 text-blue-600 mr-3" />
+              <Info className="h-6 w-6 text-blue-600 mr-3" />
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Post-Installation Notes
               </h2>
             </div>
             {expandedSections.postInstall ? (
-              <ChevronUpIcon className="h-5 w-5 text-gray-500" />
+              <CaretUp className="h-5 w-5 text-gray-500" />
             ) : (
-              <ChevronDownIcon className="h-5 w-5 text-gray-500" />
+              <CaretDown className="h-5 w-5 text-gray-500" />
             )}
           </button>
           {expandedSections.postInstall && (
@@ -792,15 +792,15 @@ export default function DownloadAppPage() {
             className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50"
           >
             <div className="flex items-center">
-              <QuestionMarkCircleIcon className="h-6 w-6 text-blue-600 mr-3" />
+              <Question className="h-6 w-6 text-blue-600 mr-3" />
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Frequently Asked Questions
               </h2>
             </div>
             {expandedSections.faq ? (
-              <ChevronUpIcon className="h-5 w-5 text-gray-500" />
+              <CaretUp className="h-5 w-5 text-gray-500" />
             ) : (
-              <ChevronDownIcon className="h-5 w-5 text-gray-500" />
+              <CaretDown className="h-5 w-5 text-gray-500" />
             )}
           </button>
           {expandedSections.faq && (
@@ -842,15 +842,15 @@ export default function DownloadAppPage() {
             className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50"
           >
             <div className="flex items-center">
-              <CommandLineIcon className="h-6 w-6 text-blue-600 mr-3" />
+              <Terminal className="h-6 w-6 text-blue-600 mr-3" />
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                 IT Administrator Guide
               </h2>
             </div>
             {expandedSections.itAdmin ? (
-              <ChevronUpIcon className="h-5 w-5 text-gray-500" />
+              <CaretUp className="h-5 w-5 text-gray-500" />
             ) : (
-              <ChevronDownIcon className="h-5 w-5 text-gray-500" />
+              <CaretDown className="h-5 w-5 text-gray-500" />
             )}
           </button>
           {expandedSections.itAdmin && (
@@ -888,7 +888,7 @@ Start-Process "regsvr32.exe" -ArgumentList "/s \`"$dllPath\`"" -Wait`}</code>
         {error && (
           <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <div className="flex">
-              <XMarkIcon className="h-5 w-5 text-red-400 mr-3" />
+              <X className="h-5 w-5 text-red-400 mr-3" />
               <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
             </div>
           </div>
@@ -899,7 +899,7 @@ Start-Process "regsvr32.exe" -ArgumentList "/s \`"$dllPath\`"" -Wait`}</code>
           <div className="bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 rounded-lg overflow-hidden">
             <div className="p-6">
               <div className="flex items-center mb-4">
-                <ShieldCheckIcon className="h-6 w-6 text-blue-600 mr-3" />
+                <ShieldCheck className="h-6 w-6 text-blue-600 mr-3" />
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                   End User License Agreement (EULA)
                 </h2>
@@ -982,7 +982,7 @@ Start-Process "regsvr32.exe" -ArgumentList "/s \`"$dllPath\`"" -Wait`}</code>
                     </>
                   ) : (
                     <>
-                      <CheckCircleIcon className="h-5 w-5 mr-2" />
+                      <CheckCircle className="h-5 w-5 mr-2" />
                       I Agree - Continue to Download
                     </>
                   )}
@@ -1004,7 +1004,7 @@ Start-Process "regsvr32.exe" -ArgumentList "/s \`"$dllPath\`"" -Wait`}</code>
             {/* Success Message */}
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
               <div className="flex">
-                <CheckCircleIcon className="h-5 w-5 text-green-400 mr-3" />
+                <CheckCircle className="h-5 w-5 text-green-400 mr-3" />
                 <div>
                   <h3 className="text-sm font-medium text-green-800 dark:text-green-200">
                     License Generated Successfully
@@ -1019,7 +1019,7 @@ Start-Process "regsvr32.exe" -ArgumentList "/s \`"$dllPath\`"" -Wait`}</code>
             {/* License Details */}
             <div className="bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 rounded-lg p-6">
               <div className="flex items-center mb-4">
-                <DocumentTextIcon className="h-6 w-6 text-blue-600 mr-3" />
+                <FileText className="h-6 w-6 text-blue-600 mr-3" />
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                   Your License Key
                 </h2>
@@ -1053,7 +1053,7 @@ Start-Process "regsvr32.exe" -ArgumentList "/s \`"$dllPath\`"" -Wait`}</code>
             <div className="bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
-                  <ArrowDownTrayIcon className="h-6 w-6 text-blue-600 mr-3" />
+                  <DownloadSimple className="h-6 w-6 text-blue-600 mr-3" />
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                     Download {brandName}
                   </h2>
@@ -1080,7 +1080,7 @@ Start-Process "regsvr32.exe" -ArgumentList "/s \`"$dllPath\`"" -Wait`}</code>
                         </p>
                       </div>
                     </div>
-                    <ArrowDownTrayIcon className="h-7 w-7 text-white" />
+                    <DownloadSimple className="h-7 w-7 text-white" />
                   </button>
                 )}
 
@@ -1101,7 +1101,7 @@ Start-Process "regsvr32.exe" -ArgumentList "/s \`"$dllPath\`"" -Wait`}</code>
                 {/* macOS/Linux coming soon */}
                 {platform !== 'windows' && (
                   <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 text-center">
-                    <InformationCircleIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <Info className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-600 dark:text-gray-300">
                       {brandName} is currently available for Windows only.
                     </p>
@@ -1114,7 +1114,7 @@ Start-Process "regsvr32.exe" -ArgumentList "/s \`"$dllPath\`"" -Wait`}</code>
                 {/* Platform note for all users */}
                 <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 text-center">
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    <InformationCircleIcon className="h-4 w-4 inline mr-1" />
+                    <Info className="h-4 w-4 inline mr-1" />
                     macOS and Linux versions are in development
                   </p>
                 </div>

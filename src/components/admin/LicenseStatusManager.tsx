@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { 
-  CheckCircleIcon, 
-  XCircleIcon, 
-  ExclamationTriangleIcon, 
-  ClockIcon,
-  PencilIcon 
-} from '@heroicons/react/24/outline'
+import {
+  CheckCircle,
+  XCircle,
+  Warning,
+  Clock,
+  Pencil
+} from '@phosphor-icons/react'
 
 interface LicenseStatusManagerProps {
   licenseId: string
@@ -35,17 +35,17 @@ export default function LicenseStatusManager({
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'active':
-        return <CheckCircleIcon className="h-5 w-5 text-green-500" />
+        return <CheckCircle className="h-5 w-5 text-green-500" />
       case 'inactive':
-        return <XCircleIcon className="h-5 w-5 text-gray-500" />
+        return <XCircle className="h-5 w-5 text-gray-500" />
       case 'trial':
-        return <ClockIcon className="h-5 w-5 text-blue-500" />
+        return <Clock className="h-5 w-5 text-blue-500" />
       case 'expired':
-        return <XCircleIcon className="h-5 w-5 text-red-500" />
+        return <XCircle className="h-5 w-5 text-red-500" />
       case 'revoked':
-        return <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
+        return <Warning className="h-5 w-5 text-red-500" />
       default:
-        return <ClockIcon className="h-5 w-5 text-yellow-500" />
+        return <Clock className="h-5 w-5 text-yellow-500" />
     }
   }
 
@@ -133,7 +133,7 @@ export default function LicenseStatusManager({
                   <p className="text-sm text-gray-500">{option.description}</p>
                 </div>
                 {selectedStatus === option.value && (
-                  <CheckCircleIcon className="h-5 w-5 text-blue-500" />
+                  <CheckCircle className="h-5 w-5 text-blue-500" />
                 )}
               </div>
             </div>
@@ -181,7 +181,7 @@ export default function LicenseStatusManager({
           onClick={() => setIsEditing(true)}
           className="flex items-center px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
         >
-          <PencilIcon className="h-4 w-4 mr-1" />
+          <Pencil className="h-4 w-4 mr-1" />
           Change Status
         </button>
       </div>

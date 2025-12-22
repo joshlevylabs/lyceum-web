@@ -4,22 +4,21 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import {
-  PlusIcon,
-  MagnifyingGlassIcon,
-  KeyIcon,
-  UserIcon,
-  CalendarIcon,
-  FunnelIcon,
-  TrashIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ClockIcon,
-  ExclamationTriangleIcon,
-  EyeIcon,
-  CreditCardIcon,
-  ArrowPathIcon,
-  PencilIcon
-} from '@heroicons/react/24/outline'
+  Plus,
+  MagnifyingGlass,
+  Key,
+  User,
+  Calendar,
+  Funnel,
+  Trash,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Warning,
+  Eye,
+  CreditCard,
+  Pencil
+} from '@phosphor-icons/react'
 
 // Helper function to extract license category from either direct field or license_config
 function getLicenseCategory(license: LicenseKey): 'main_application' | 'plugin' {
@@ -205,34 +204,34 @@ export default function LicenseManagement() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'active': return <CheckCircleIcon className="w-5 h-5 text-green-500" />
-      case 'trial': return <ClockIcon className="w-5 h-5 text-blue-500" />
-      case 'expired': return <ClockIcon className="w-5 h-5 text-red-500" />
-      case 'revoked': return <XCircleIcon className="w-5 h-5 text-red-600" />
-      case 'suspended': return <ExclamationTriangleIcon className="w-5 h-5 text-yellow-500" />
-      default: return <ClockIcon className="w-5 h-5 text-gray-500" />
+      case 'active': return <CheckCircle className="w-5 h-5 text-emerald-400" />
+      case 'trial': return <Clock className="w-5 h-5 text-cyan-400" />
+      case 'expired': return <Clock className="w-5 h-5 text-red-400" />
+      case 'revoked': return <XCircle className="w-5 h-5 text-red-400" />
+      case 'suspended': return <Warning className="w-5 h-5 text-amber-400" />
+      default: return <Clock className="w-5 h-5 text-foreground/40" />
     }
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800'
-      case 'trial': return 'bg-blue-100 text-blue-800'
-      case 'expired': return 'bg-red-100 text-red-800'
-      case 'revoked': return 'bg-red-100 text-red-800'
-      case 'suspended': return 'bg-yellow-100 text-yellow-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'active': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+      case 'trial': return 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+      case 'expired': return 'bg-red-500/10 text-red-400 border border-red-500/20'
+      case 'revoked': return 'bg-red-500/10 text-red-400 border border-red-500/20'
+      case 'suspended': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+      default: return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
     }
   }
 
   const getLicenseTypeColor = (type: string) => {
     switch (type) {
-      case 'enterprise': return 'bg-purple-100 text-purple-800'
-      case 'professional': return 'bg-blue-100 text-blue-800'
-      case 'standard': return 'bg-green-100 text-green-800'
-      case 'basic': return 'bg-green-100 text-green-800'
-      case 'trial': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'enterprise': return 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+      case 'professional': return 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+      case 'standard': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+      case 'basic': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+      case 'trial': return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
+      default: return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
     }
   }
 
@@ -451,11 +450,11 @@ export default function LicenseManagement() {
 
   const getRelationshipTypeColor = (type: string) => {
     switch (type) {
-      case 'standard': return 'bg-blue-100 text-blue-800'
-      case 'trial_conversion': return 'bg-green-100 text-green-800'
-      case 'upgrade': return 'bg-purple-100 text-purple-800'
-      case 'addon': return 'bg-yellow-100 text-yellow-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'standard': return 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+      case 'trial_conversion': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+      case 'upgrade': return 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+      case 'addon': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+      default: return 'bg-foreground/10 text-foreground/60 border border-foreground/20'
     }
   }
 
@@ -464,10 +463,10 @@ export default function LicenseManagement() {
       {/* Header */}
       <div className="md:flex md:items-center md:justify-between">
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+          <h1 className="text-2xl font-bold leading-7 text-foreground sm:text-3xl sm:truncate">
             Subscriptions & License Keys
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-foreground/60">
             Manage user subscriptions and license keys for your platform
           </p>
         </div>
@@ -476,9 +475,9 @@ export default function LicenseManagement() {
           <div className="mt-4 flex md:mt-0 md:ml-4">
             <Link
               href="/admin/licenses/create-enhanced"
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              className="btn-primary inline-flex items-center"
             >
-              <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+              <Plus className="-ml-1 mr-2 h-5 w-5" />
               Create License
             </Link>
           </div>
@@ -486,37 +485,37 @@ export default function LicenseManagement() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-cyan-500/10">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('subscriptions')}
             className={`${
               activeTab === 'subscriptions'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+                ? 'border-cyan-500 text-cyan-400'
+                : 'border-transparent text-foreground/60 hover:text-foreground hover:border-cyan-500/40'
+            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-colors`}
           >
-            <CreditCardIcon className="h-5 w-5 mr-2" />
+            <CreditCard className="h-5 w-5 mr-2" />
             Subscriptions
           </button>
           <button
             onClick={() => setActiveTab('licenses')}
             className={`${
               activeTab === 'licenses'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+                ? 'border-cyan-500 text-cyan-400'
+                : 'border-transparent text-foreground/60 hover:text-foreground hover:border-cyan-500/40'
+            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-colors`}
           >
-            <KeyIcon className="h-5 w-5 mr-2" />
+            <Key className="h-5 w-5 mr-2" />
             License Keys
           </button>
           <button
             onClick={() => setActiveTab('relationships')}
             className={`${
               activeTab === 'relationships'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+                ? 'border-cyan-500 text-cyan-400'
+                : 'border-transparent text-foreground/60 hover:text-foreground hover:border-cyan-500/40'
+            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-colors`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -535,7 +534,7 @@ export default function LicenseManagement() {
               <select
                 value={subscriptionStatusFilter}
                 onChange={(e) => setSubscriptionStatusFilter(e.target.value as any)}
-                className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                className="glass-input pl-3 pr-10 py-2 text-sm"
               >
                 <option value="all">All Statuses</option>
                 <option value="active">Active</option>
@@ -546,7 +545,7 @@ export default function LicenseManagement() {
               <select
                 value={subscriptionTypeFilter}
                 onChange={(e) => setSubscriptionTypeFilter(e.target.value as any)}
-                className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                className="glass-input pl-3 pr-10 py-2 text-sm"
               >
                 <option value="all">All Types</option>
                 <option value="trial">Trial</option>
@@ -556,7 +555,7 @@ export default function LicenseManagement() {
               <select
                 value={subscriptionCategoryFilter}
                 onChange={(e) => setSubscriptionCategoryFilter(e.target.value as any)}
-                className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                className="glass-input pl-3 pr-10 py-2 text-sm"
               >
                 <option value="all">All Categories</option>
                 <option value="native_app">Native App</option>
@@ -566,7 +565,7 @@ export default function LicenseManagement() {
               <select
                 value={subscriptionPluginFilter}
                 onChange={(e) => setSubscriptionPluginFilter(e.target.value as any)}
-                className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                className="glass-input pl-3 pr-10 py-2 text-sm"
               >
                 <option value="all">All Plugins</option>
                 <option value="klippel_qc">Klippel QC</option>
@@ -576,83 +575,83 @@ export default function LicenseManagement() {
 
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                <MagnifyingGlass className="h-5 w-5 text-foreground/40" />
               </div>
               <input
                 type="text"
                 placeholder="Search by email or user ID..."
                 value={subscriptionSearchTerm}
                 onChange={(e) => setSubscriptionSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="glass-input w-full pl-10 pr-3 py-2 text-sm"
               />
             </div>
           </div>
 
           {/* Subscriptions Table */}
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+          <div className="glass-card overflow-hidden">
             {subscriptionsLoading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-2 text-gray-600">Loading subscriptions...</span>
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-cyan-500/20 border-t-cyan-500"></div>
+                <span className="ml-2 text-foreground/60">Loading subscriptions...</span>
               </div>
             ) : subscriptions.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-cyan-500/10">
+                  <thead className="bg-cyan-500/5">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         Key
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         User
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         Category
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         Type
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         Amount
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         Trial Period
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         Created
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-center text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         View
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-center text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="divide-y divide-cyan-500/10">
                     {subscriptions.map((subscription) => (
-                      <tr key={subscription.id} className="hover:bg-gray-50">
+                      <tr key={subscription.id} className="hover:bg-cyan-500/5 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-mono font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded">
+                          <span className="text-sm font-mono font-medium text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-1 rounded">
                             {subscription.subscription_key}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-foreground">
                             {subscription.user_email || 'No email'}
                           </div>
-                          <div className="text-xs text-gray-500 font-mono">
+                          <div className="text-xs text-foreground/50 font-mono">
                             {subscription.user_id.substring(0, 8)}...
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             subscription.subscription_category === 'native_app'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-purple-100 text-purple-800'
+                              ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+                              : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
                           }`}>
                             {subscription.subscription_category === 'native_app' ? 'Native App' : subscription.plugin_type || 'Plugin'}
                           </span>
@@ -660,8 +659,8 @@ export default function LicenseManagement() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             subscription.subscription_type === 'trial'
-                              ? 'bg-gray-100 text-gray-800'
-                              : 'bg-blue-100 text-blue-800'
+                              ? 'bg-foreground/10 text-foreground/60 border border-foreground/20'
+                              : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
                           }`}>
                             {subscription.subscription_type}
                           </span>
@@ -669,25 +668,25 @@ export default function LicenseManagement() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             subscription.status === 'active'
-                              ? 'bg-green-100 text-green-800'
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                               : subscription.status === 'cancelled'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
+                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                              : 'bg-red-500/10 text-red-400 border border-red-500/20'
                           }`}>
                             {subscription.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/60">
                           {subscription.amount_paid_cents
                             ? `$${(subscription.amount_paid_cents / 100).toFixed(2)} ${subscription.currency?.toUpperCase()}`
                             : '-'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/60">
                           {subscription.trial_start_date ? (
                             <div>
                               <div>{formatDate(subscription.trial_start_date)}</div>
                               {subscription.trial_end_date && (
-                                <div className="text-xs text-gray-400">
+                                <div className="text-xs text-foreground/40">
                                   to {formatDate(subscription.trial_end_date)}
                                 </div>
                               )}
@@ -696,26 +695,26 @@ export default function LicenseManagement() {
                             '-'
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/60">
                           {formatDate(subscription.created_at)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <Link
                             href={`/admin/subscriptions/${subscription.id}/details`}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-cyan-400 hover:text-cyan-300 transition-colors"
                             title="View subscription details"
                           >
-                            <EyeIcon className="h-5 w-5 inline" />
+                            <Eye className="h-5 w-5 inline" />
                           </Link>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                           <div className="flex justify-center space-x-3">
                             <button
                               onClick={() => handleDeleteSubscription(subscription.id)}
-                              className="text-red-600 hover:text-red-900"
+                              className="text-red-400 hover:text-red-300 transition-colors"
                               title="Delete subscription"
                             >
-                              <TrashIcon className="h-4 w-4" />
+                              <Trash className="h-4 w-4" />
                             </button>
                           </div>
                         </td>
@@ -726,9 +725,9 @@ export default function LicenseManagement() {
               </div>
             ) : (
               <div className="text-center py-12">
-                <CreditCardIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-semibold text-gray-900">No subscriptions found</h3>
-                <p className="mt-1 text-sm text-gray-500">
+                <CreditCard className="mx-auto h-12 w-12 text-foreground/40" />
+                <h3 className="mt-2 text-sm font-semibold text-foreground">No subscriptions found</h3>
+                <p className="mt-1 text-sm text-foreground/60">
                   {subscriptionSearchTerm ? 'No subscriptions match your search criteria.' : 'No subscriptions have been created yet.'}
                 </p>
               </div>
@@ -747,7 +746,7 @@ export default function LicenseManagement() {
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value as any)}
-                className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                className="glass-input pl-3 pr-10 py-2 text-sm"
               >
                 <option value="all">All Statuses</option>
                 <option value="active">Active</option>
@@ -759,7 +758,7 @@ export default function LicenseManagement() {
               <select
                 value={filterLicenseType}
                 onChange={(e) => setFilterLicenseType(e.target.value as any)}
-                className="block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                className="glass-input pl-3 pr-10 py-2 text-sm"
               >
                 <option value="all">All License Types</option>
                 <option value="trial">Trial</option>
@@ -771,82 +770,82 @@ export default function LicenseManagement() {
 
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                <MagnifyingGlass className="h-5 w-5 text-foreground/40" />
               </div>
               <input
                 type="text"
                 placeholder="Search licenses..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="glass-input w-full pl-10 pr-3 py-2 text-sm"
               />
             </div>
           </div>
 
-          {/* License Keys Table - Jira Style */}
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+          {/* License Keys Table */}
+      <div className="glass-card overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-2 text-gray-600">Loading licenses...</span>
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-cyan-500/20 border-t-cyan-500"></div>
+            <span className="ml-2 text-foreground/60">Loading licenses...</span>
           </div>
         ) : licenses.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-cyan-500/10">
+              <thead className="bg-cyan-500/5">
                 <tr>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     View
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Key
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     License Code
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Category
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Type
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Assigned To
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Created
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Expires
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Usage
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-foreground/60 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-cyan-500/10">
                 {licenses.map((license) => (
-                  <tr key={license.id} className="hover:bg-gray-50">
+                  <tr key={license.id} className="hover:bg-cyan-500/5 transition-colors">
                     {/* View License */}
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <Link
                         href={`/admin/licenses/${license.id}/details`}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-cyan-400 hover:text-cyan-300 transition-colors"
                         title="View license details"
                       >
-                        <EyeIcon className="h-4 w-4" />
+                        <Eye className="h-4 w-4" />
                       </Link>
                     </td>
                     {/* License Key */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <span className="text-sm font-mono font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded">
+                        <span className="text-sm font-mono font-medium text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-1 rounded">
                           {license.license_key}
                         </span>
                       </div>
@@ -855,19 +854,19 @@ export default function LicenseManagement() {
                     {/* License Code */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <KeyIcon className="h-5 w-5 text-blue-500 mr-2" />
+                        <Key className="h-5 w-5 text-cyan-400 mr-2" />
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            <code className="bg-gray-100 px-2 py-1 rounded text-xs">
-                              {license.key_code.length > 20 ? 
-                                `${license.key_code.substring(0, 20)}...` : 
+                          <div className="text-sm font-medium text-foreground">
+                            <code className="bg-foreground/10 px-2 py-1 rounded text-xs">
+                              {license.key_code.length > 20 ?
+                                `${license.key_code.substring(0, 20)}...` :
                                 license.key_code
                               }
                             </code>
                           </div>
                           {isExpiringSoon(license.expires_at) && (
-                            <div className="text-xs text-yellow-600 flex items-center mt-1">
-                              <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
+                            <div className="text-xs text-amber-400 flex items-center mt-1">
+                              <Warning className="h-3 w-3 mr-1" />
                               Expires soon
                             </div>
                           )}
@@ -878,9 +877,9 @@ export default function LicenseManagement() {
                     {/* Category */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        getLicenseCategory(license) === 'main_application' 
-                          ? 'bg-blue-100 text-blue-800' 
-                          : 'bg-purple-100 text-purple-800'
+                        getLicenseCategory(license) === 'main_application'
+                          ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+                          : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
                       }`}>
                         {getLicenseCategory(license) === 'main_application' ? 'CentCom App' : 'Plugin'}
                       </span>
@@ -905,36 +904,36 @@ export default function LicenseManagement() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button
                         onClick={() => setShowAssignModal(license.id)}
-                        className="w-full text-left hover:bg-gray-50 rounded p-1 transition-colors"
+                        className="w-full text-left hover:bg-cyan-500/5 rounded p-1 transition-colors"
                         title="Click to assign/reassign license"
                       >
                         {license.assigned_to ? (
                           <div className="text-sm">
-                            <div className="font-medium text-gray-900">{license.assigned_to.full_name}</div>
-                            <div className="text-gray-500">{license.assigned_to.email}</div>
+                            <div className="font-medium text-foreground">{license.assigned_to.full_name}</div>
+                            <div className="text-foreground/60">{license.assigned_to.email}</div>
                           </div>
                         ) : (
-                          <div className="flex items-center text-sm text-gray-400">
-                            <UserIcon className="h-4 w-4 mr-1" />
-                            <span className="text-blue-600 hover:text-blue-800">Click to assign</span>
+                          <div className="flex items-center text-sm text-foreground/40">
+                            <User className="h-4 w-4 mr-1" />
+                            <span className="text-cyan-400 hover:text-cyan-300">Click to assign</span>
                           </div>
                         )}
                       </button>
                     </td>
 
                     {/* Created */}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/60">
                       {formatDate(license.created_at)}
                     </td>
 
                     {/* Expires */}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/60">
                       {license.expires_at ? (
-                        <div className={isExpiringSoon(license.expires_at) ? 'text-yellow-600' : ''}>
+                        <div className={isExpiringSoon(license.expires_at) ? 'text-amber-400' : ''}>
                           {formatDate(license.expires_at)}
                         </div>
                       ) : (
-                        <span className="text-gray-400">Never</span>
+                        <span className="text-foreground/40">Never</span>
                       )}
                     </td>
 
@@ -942,21 +941,21 @@ export default function LicenseManagement() {
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       {license.usage_stats ? (
                         <div className="space-y-1">
-                          <div className="text-xs text-gray-600">
+                          <div className="text-xs text-foreground/60">
                             Users: {license.usage_stats.users_count || 0}/{license.max_users}
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-1.5">
-                            <div 
-                              className="bg-blue-600 h-1.5 rounded-full" 
+                          <div className="w-full bg-cyan-500/10 rounded-full h-1.5">
+                            <div
+                              className="bg-cyan-500 h-1.5 rounded-full"
                               style={{ width: `${getUsagePercentage(license.usage_stats.users_count || 0, license.max_users)}%` }}
                             ></div>
                           </div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-foreground/50">
                             {getUsagePercentage(license.usage_stats.users_count || 0, license.max_users)}%
                           </div>
                         </div>
                       ) : (
-                        <span className="text-gray-400">-</span>
+                        <span className="text-foreground/40">-</span>
                       )}
                     </td>
 
@@ -966,7 +965,7 @@ export default function LicenseManagement() {
                         {!license.assigned_to ? (
                           <button
                             onClick={() => setShowAssignModal(license.id)}
-                            className="text-green-600 hover:text-green-900 text-xs font-medium"
+                            className="text-emerald-400 hover:text-emerald-300 text-xs font-medium transition-colors"
                             title="Assign license"
                           >
                             Assign
@@ -974,7 +973,7 @@ export default function LicenseManagement() {
                         ) : (
                           <button
                             onClick={() => unassignLicense(license.id)}
-                            className="text-orange-600 hover:text-orange-900 text-xs font-medium"
+                            className="text-amber-400 hover:text-amber-300 text-xs font-medium transition-colors"
                             title="Unassign license"
                           >
                             Unassign
@@ -983,18 +982,18 @@ export default function LicenseManagement() {
                         {license.status === 'active' && (
                           <button
                             onClick={() => revokeLicense(license.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-400 hover:text-red-300 transition-colors"
                             title="Revoke license"
                           >
-                            <XCircleIcon className="h-4 w-4" />
+                            <XCircle className="h-4 w-4" />
                           </button>
                         )}
                         <button
                           onClick={() => deleteLicense(license.id, license.key_code || license.license_key || license.id)}
-                          className="text-red-600 hover:text-red-900"
+                          className="text-red-400 hover:text-red-300 transition-colors"
                           title="Delete license"
                         >
-                          <TrashIcon className="h-4 w-4" />
+                          <Trash className="h-4 w-4" />
                         </button>
                       </div>
                     </td>
@@ -1005,18 +1004,18 @@ export default function LicenseManagement() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <KeyIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-semibold text-gray-900">No license keys found</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <Key className="mx-auto h-12 w-12 text-foreground/40" />
+            <h3 className="mt-2 text-sm font-semibold text-foreground">No license keys found</h3>
+            <p className="mt-1 text-sm text-foreground/60">
               {searchTerm ? 'No licenses match your search criteria.' : 'Get started by creating your first license key.'}
             </p>
             {!searchTerm && (
               <div className="mt-6">
                 <Link
                   href="/admin/licenses/create-enhanced"
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                  className="btn-primary inline-flex items-center"
                 >
-                  <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+                  <Plus className="-ml-1 mr-2 h-5 w-5" />
                   Create License
                 </Link>
               </div>
@@ -1034,61 +1033,61 @@ export default function LicenseManagement() {
           <div className="flex justify-end mb-4">
             <button
               onClick={() => setShowCreateRelationshipModal(true)}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+              className="btn-primary inline-flex items-center"
             >
-              <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
+              <Plus className="-ml-1 mr-2 h-5 w-5" />
               Create Relationship
             </button>
           </div>
 
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+          <div className="glass-card overflow-hidden">
             {relationshipsLoading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-2 text-gray-600">Loading relationships...</span>
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-cyan-500/20 border-t-cyan-500"></div>
+                <span className="ml-2 text-foreground/60">Loading relationships...</span>
               </div>
             ) : relationships.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-cyan-500/10">
+                  <thead className="bg-cyan-500/5">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         License Key
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         License Details
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-center text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         Subscription Key
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         Subscription Details
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         User
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         Relationship Type
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         Created
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-center text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="divide-y divide-cyan-500/10">
                     {relationships.map((rel) => (
-                      <tr key={rel.id} className="hover:bg-gray-50">
+                      <tr key={rel.id} className="hover:bg-cyan-500/5 transition-colors">
                         {/* License Key */}
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-mono font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded">
+                          <span className="text-sm font-mono font-medium text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-1 rounded">
                             {rel.license?.license_key || 'N/A'}
                           </span>
                         </td>
@@ -1096,10 +1095,10 @@ export default function LicenseManagement() {
                         {/* License Details */}
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm">
-                            <div className="font-medium text-gray-900">
+                            <div className="font-medium text-foreground">
                               {rel.license?.license_type || 'Unknown'}
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-foreground/60">
                               Status: <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(rel.license?.status || 'unknown')}`}>
                                 {rel.license?.status || 'unknown'}
                               </span>
@@ -1109,14 +1108,14 @@ export default function LicenseManagement() {
 
                         {/* Arrow/Link Icon */}
                         <td className="px-6 py-4 whitespace-nowrap text-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mx-auto text-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                           </svg>
                         </td>
 
                         {/* Subscription Key */}
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-mono font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                          <span className="text-sm font-mono font-medium text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-2 py-1 rounded">
                             {rel.subscription?.subscription_key || 'N/A'}
                           </span>
                         </td>
@@ -1124,10 +1123,10 @@ export default function LicenseManagement() {
                         {/* Subscription Details */}
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm">
-                            <div className="font-medium text-gray-900">
+                            <div className="font-medium text-foreground">
                               {rel.subscription?.subscription_category === 'native_app' ? 'Native App' : rel.subscription?.plugin_type || 'Plugin'}
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-foreground/60">
                               {rel.subscription?.subscription_type} - <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(rel.subscription?.status || 'unknown')}`}>
                                 {rel.subscription?.status || 'unknown'}
                               </span>
@@ -1138,7 +1137,7 @@ export default function LicenseManagement() {
                         {/* User */}
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm">
-                            <div className="font-medium text-gray-900">
+                            <div className="font-medium text-foreground">
                               {rel.license?.user_email || rel.subscription?.user_email || 'Unknown'}
                             </div>
                           </div>
@@ -1152,7 +1151,7 @@ export default function LicenseManagement() {
                         </td>
 
                         {/* Created Date */}
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/60">
                           {formatDate(rel.created_at)}
                         </td>
 
@@ -1161,17 +1160,17 @@ export default function LicenseManagement() {
                           <div className="flex justify-center space-x-3">
                             <button
                               onClick={() => setEditRelationship(rel)}
-                              className="text-blue-600 hover:text-blue-900"
+                              className="text-cyan-400 hover:text-cyan-300 transition-colors"
                               title="Edit relationship"
                             >
-                              <PencilIcon className="h-4 w-4" />
+                              <Pencil className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteRelationship(rel.id)}
-                              className="text-red-600 hover:text-red-900"
+                              className="text-red-400 hover:text-red-300 transition-colors"
                               title="Delete relationship"
                             >
-                              <TrashIcon className="h-4 w-4" />
+                              <Trash className="h-4 w-4" />
                             </button>
                           </div>
                         </td>
@@ -1182,11 +1181,11 @@ export default function LicenseManagement() {
               </div>
             ) : (
               <div className="text-center py-12">
-                <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                 </svg>
-                <h3 className="mt-2 text-sm font-semibold text-gray-900">No relationships found</h3>
-                <p className="mt-1 text-sm text-gray-500">
+                <h3 className="mt-2 text-sm font-semibold text-foreground">No relationships found</h3>
+                <p className="mt-1 text-sm text-foreground/60">
                   No license-subscription relationships have been created yet.
                 </p>
               </div>
@@ -1195,53 +1194,53 @@ export default function LicenseManagement() {
 
           {/* Standalone Licenses Section */}
           {!relationshipsLoading && standaloneLicenses.length > 0 && (
-            <div className="bg-white shadow overflow-hidden sm:rounded-lg mt-6">
-              <div className="px-6 py-4 border-b border-gray-200 bg-amber-50">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                  <KeyIcon className="h-5 w-5 mr-2 text-amber-500" />
+            <div className="glass-card overflow-hidden mt-6">
+              <div className="px-6 py-4 border-b border-cyan-500/10 bg-amber-500/5">
+                <h3 className="text-lg font-semibold text-foreground flex items-center">
+                  <Key className="h-5 w-5 mr-2 text-amber-400" />
                   Standalone Licenses ({standaloneLicenses.length})
                 </h3>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-foreground/60 mt-1">
                   Licenses that are not currently associated with any subscription
                 </p>
               </div>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-cyan-500/10">
+                  <thead className="bg-cyan-500/5">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         License Key
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         Type
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         Assigned To
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         Created
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                         Expires
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="divide-y divide-cyan-500/10">
                     {standaloneLicenses.map((license) => (
-                      <tr key={license.id} className="hover:bg-gray-50">
+                      <tr key={license.id} className="hover:bg-cyan-500/5 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <Link
                             href={`/admin/licenses/${license.id}/details`}
-                            className="text-sm font-mono font-medium text-amber-600 hover:text-amber-800 bg-amber-50 px-2 py-1 rounded"
+                            className="text-sm font-mono font-medium text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded transition-colors"
                           >
                             {license.key_code || license.license_key || 'N/A'}
                           </Link>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-medium text-gray-900">
+                          <span className="text-sm font-medium text-foreground">
                             {license.license_type || 'Unknown'}
                           </span>
                         </td>
@@ -1253,23 +1252,23 @@ export default function LicenseManagement() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           {license.assigned_to ? (
                             <div className="text-sm">
-                              <div className="font-medium text-gray-900">{license.assigned_to.full_name || license.assigned_to.email}</div>
-                              <div className="text-gray-500">{license.assigned_to.email}</div>
+                              <div className="font-medium text-foreground">{license.assigned_to.full_name || license.assigned_to.email}</div>
+                              <div className="text-foreground/60">{license.assigned_to.email}</div>
                             </div>
                           ) : (
-                            <span className="text-sm text-gray-400">Unassigned</span>
+                            <span className="text-sm text-foreground/40">Unassigned</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/60">
                           {formatDate(license.created_at)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/60">
                           {license.expires_at ? (
-                            <span className={isExpiringSoon(license.expires_at) ? 'text-orange-600 font-semibold' : ''}>
+                            <span className={isExpiringSoon(license.expires_at) ? 'text-amber-400 font-semibold' : ''}>
                               {formatDate(license.expires_at)}
                             </span>
                           ) : (
-                            <span className="text-gray-400">Never</span>
+                            <span className="text-foreground/40">Never</span>
                           )}
                         </td>
                       </tr>
@@ -1578,7 +1577,7 @@ function AssignLicenseModal({ licenseId, onClose, onAssign }: AssignLicenseModal
                       <div className={`h-8 w-8 rounded-full flex items-center justify-center mr-3 ${
                         user.is_active ? 'bg-blue-100' : 'bg-gray-100'
                       }`}>
-                        <UserIcon className={`h-4 w-4 ${
+                        <User className={`h-4 w-4 ${
                           user.is_active ? 'text-blue-600' : 'text-gray-400'
                         }`} />
                       </div>
@@ -1622,7 +1621,7 @@ function AssignLicenseModal({ licenseId, onClose, onAssign }: AssignLicenseModal
             <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-4">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400" />
+                  <Warning className="h-5 w-5 text-yellow-400" />
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-yellow-800">

@@ -1,27 +1,20 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Separator } from '@/components/ui/separator'
 import HighPerformanceChart from '@/components/HighPerformanceChart'
 import { useChartWorker } from '@/hooks/useChartWorker'
 import { dataGenerator, CurveData } from '@/lib/chart-data-generator'
-import { 
-  Activity, 
-  Zap, 
-  Settings, 
+import {
+  Pulse as Activity,
+  Lightning,
+  Gear,
   Database,
   Clock,
-  TrendingUp,
-  AlertTriangle,
+  TrendUp,
+  Warning,
   CheckCircle,
-  Download,
-  RefreshCw
-} from 'lucide-react'
+  ArrowsClockwise
+} from '@phosphor-icons/react'
 
 interface PerformanceTest {
   name: string
@@ -74,12 +67,12 @@ export default function PerformanceDemoPage() {
   const [timeRange, setTimeRange] = useState<'1h' | '6h' | '24h' | '7d' | '30d'>('24h')
   const [isGenerating, setIsGenerating] = useState(false)
   const [autoRefresh, setAutoRefresh] = useState(false)
-  
+
   // Performance settings
   const [enablePerformanceMode, setEnablePerformanceMode] = useState(true)
   const [enableWebWorker, setEnableWebWorker] = useState(true)
   const [maxVisibleCurves, setMaxVisibleCurves] = useState(1000)
-  
+
   // Chart worker
   const {
     isReady: workerReady,
@@ -90,7 +83,7 @@ export default function PerformanceDemoPage() {
     clearCache,
     error: workerError
   } = useChartWorker()
-  
+
   // Performance metrics
   const [statistics, setStatistics] = useState<any>(null)
   const [optimizationSuggestions, setOptimizationSuggestions] = useState<any[]>([])
@@ -99,11 +92,11 @@ export default function PerformanceDemoPage() {
   // Generate test data
   const generateTestData = useCallback(async (test: PerformanceTest) => {
     setIsGenerating(true)
-    console.log(`🚀 Generating ${test.name} dataset...`)
-    
+    console.log(`Generating ${test.name} dataset...`)
+
     try {
       const startTime = performance.now()
-      
+
       const newCurves = dataGenerator.generateCurves({
         curveCount: test.curveCount,
         pointsPerCurve: test.pointsPerCurve,
@@ -112,18 +105,18 @@ export default function PerformanceDemoPage() {
         includeNoise: true,
         patterns: ['sine', 'linear', 'cyclic', 'step', 'random']
       })
-      
+
       // Limit visible curves for extreme performance
       const visibleCurves = newCurves.map((curve, index) => ({
         ...curve,
         visible: index < maxVisibleCurves
       }))
-      
+
       const endTime = performance.now()
-      console.log(`✅ Generated ${newCurves.length} curves in ${Math.round(endTime - startTime)}ms`)
-      
+      console.log(`Generated ${newCurves.length} curves in ${Math.round(endTime - startTime)}ms`)
+
       setCurves(visibleCurves)
-      
+
       // Calculate statistics if worker is available
       if (workerReady && enableWebWorker) {
         try {
@@ -133,7 +126,7 @@ export default function PerformanceDemoPage() {
           console.warn('Statistics calculation failed:', error)
         }
       }
-      
+
     } catch (error) {
       console.error('Data generation failed:', error)
     } finally {
@@ -144,7 +137,7 @@ export default function PerformanceDemoPage() {
   // Update optimization suggestions
   const updateOptimizations = useCallback(async (performance: any) => {
     if (!workerReady || !enableWebWorker || !performance) return
-    
+
     try {
       const suggestions = await getOptimizationSuggestions(curves, performance)
       setOptimizationSuggestions(suggestions)
@@ -156,7 +149,7 @@ export default function PerformanceDemoPage() {
   // Auto-refresh simulation
   useEffect(() => {
     if (!autoRefresh || curves.length === 0) return
-    
+
     const interval = setInterval(() => {
       setCurves(prevCurves => {
         const updatedCurves = dataGenerator.generateStreamingUpdate(prevCurves, 5)
@@ -167,7 +160,7 @@ export default function PerformanceDemoPage() {
         }))
       })
     }, 2000) // Update every 2 seconds
-    
+
     return () => clearInterval(interval)
   }, [autoRefresh, curves.length])
 
@@ -181,7 +174,7 @@ export default function PerformanceDemoPage() {
     const visibleCurves = curves.filter(c => c.visible)
     const totalPoints = visibleCurves.reduce((sum, curve) => sum + curve.data.length, 0)
     const dataSize = totalPoints * 16 // Rough estimate: 16 bytes per point
-    
+
     return {
       totalCurves: curves.length,
       visibleCurves: visibleCurves.length,
@@ -202,11 +195,11 @@ export default function PerformanceDemoPage() {
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'easy': return 'bg-green-100 text-green-800'
-      case 'medium': return 'bg-yellow-100 text-yellow-800'
-      case 'hard': return 'bg-orange-100 text-orange-800'
-      case 'extreme': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'easy': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+      case 'medium': return 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+      case 'hard': return 'bg-orange-500/10 text-orange-400 border-orange-500/20'
+      case 'extreme': return 'bg-red-500/10 text-red-400 border-red-500/20'
+      default: return 'bg-foreground/10 text-foreground/60 border-foreground/20'
     }
   }
 
@@ -215,21 +208,27 @@ export default function PerformanceDemoPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <Zap className="h-8 w-8 text-blue-600" />
+          <h1 className="text-3xl font-bold flex items-center gap-3 text-foreground">
+            <Lightning className="h-8 w-8 text-cyan-400" weight="duotone" />
             High-Performance Chart Demo
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-foreground/60 mt-2">
             Test manufacturing data visualization with up to 10,000 curves
           </p>
         </div>
-        
+
         <div className="flex items-center gap-2">
-          <Badge variant={workerReady ? 'default' : 'destructive'}>
+          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${
+            workerReady
+              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+              : 'bg-red-500/10 text-red-400 border-red-500/20'
+          }`}>
             {workerReady ? 'Web Worker Ready' : 'Web Worker Failed'}
-          </Badge>
+          </span>
           {workerProcessing && (
-            <Badge variant="secondary">Processing...</Badge>
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+              Processing...
+            </span>
           )}
         </div>
       </div>
@@ -237,261 +236,267 @@ export default function PerformanceDemoPage() {
       {/* Controls */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Test Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5" />
+        <div className="glass-card">
+          <div className="p-6">
+            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+              <Database className="h-5 w-5 text-cyan-400" weight="duotone" />
               Dataset Configuration
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Performance Test</label>
-              <Select
-                value={selectedTest.name}
-                onValueChange={(value) => {
-                  const test = performanceTests.find(t => t.name === value)
-                  if (test) setSelectedTest(test)
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
+            </h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-foreground/80 mb-2 block">Performance Test</label>
+                <select
+                  value={selectedTest.name}
+                  onChange={(e) => {
+                    const test = performanceTests.find(t => t.name === e.target.value)
+                    if (test) setSelectedTest(test)
+                  }}
+                  className="w-full px-4 py-2.5 rounded-xl glass-input text-foreground"
+                >
                   {performanceTests.map(test => (
-                    <SelectItem key={test.name} value={test.name}>
-                      <div className="flex items-center gap-2">
-                        <Badge className={getDifficultyColor(test.difficulty)}>
-                          {test.difficulty}
-                        </Badge>
-                        {test.name}
-                      </div>
-                    </SelectItem>
+                    <option key={test.name} value={test.name}>
+                      {test.name}
+                    </option>
                   ))}
-                </SelectContent>
-              </Select>
-              <p className="text-sm text-gray-600 mt-1">{selectedTest.description}</p>
+                </select>
+                <p className="text-sm text-foreground/60 mt-1">{selectedTest.description}</p>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border mt-2 ${getDifficultyColor(selectedTest.difficulty)}`}>
+                  {selectedTest.difficulty}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium text-foreground/80">Curves:</span>
+                  <span className="text-foreground ml-1">{selectedTest.curveCount.toLocaleString()}</span>
+                </div>
+                <div>
+                  <span className="font-medium text-foreground/80">Points/Curve:</span>
+                  <span className="text-foreground ml-1">{selectedTest.pointsPerCurve.toLocaleString()}</span>
+                </div>
+                <div>
+                  <span className="font-medium text-foreground/80">Time Span:</span>
+                  <span className="text-foreground ml-1">{selectedTest.timeSpanHours}h</span>
+                </div>
+                <div>
+                  <span className="font-medium text-foreground/80">Total Points:</span>
+                  <span className="text-foreground ml-1">{(selectedTest.curveCount * selectedTest.pointsPerCurve).toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="border-t border-cyan-500/10 pt-4 space-y-3">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="performance-mode"
+                    checked={enablePerformanceMode}
+                    onChange={(e) => setEnablePerformanceMode(e.target.checked)}
+                    className="rounded text-cyan-500 focus:ring-cyan-500"
+                  />
+                  <label htmlFor="performance-mode" className="text-sm text-foreground/80">
+                    Enable performance optimizations
+                  </label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="web-worker"
+                    checked={enableWebWorker}
+                    onChange={(e) => setEnableWebWorker(e.target.checked)}
+                    disabled={!workerReady}
+                    className="rounded text-cyan-500 focus:ring-cyan-500"
+                  />
+                  <label htmlFor="web-worker" className="text-sm text-foreground/80">
+                    Use Web Worker processing
+                  </label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="auto-refresh"
+                    checked={autoRefresh}
+                    onChange={(e) => setAutoRefresh(e.target.checked)}
+                    className="rounded text-cyan-500 focus:ring-cyan-500"
+                  />
+                  <label htmlFor="auto-refresh" className="text-sm text-foreground/80">
+                    Simulate real-time updates
+                  </label>
+                </div>
+              </div>
+
+              <button
+                onClick={() => generateTestData(selectedTest)}
+                disabled={isGenerating}
+                className="btn-primary w-full inline-flex items-center justify-center"
+              >
+                {isGenerating ? (
+                  <>
+                    <ArrowsClockwise className="h-4 w-4 mr-2 animate-spin" weight="bold" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Database className="h-4 w-4 mr-2" weight="duotone" />
+                    Generate Data
+                  </>
+                )}
+              </button>
             </div>
-
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="font-medium">Curves:</span> {selectedTest.curveCount.toLocaleString()}
-              </div>
-              <div>
-                <span className="font-medium">Points/Curve:</span> {selectedTest.pointsPerCurve.toLocaleString()}
-              </div>
-              <div>
-                <span className="font-medium">Time Span:</span> {selectedTest.timeSpanHours}h
-              </div>
-              <div>
-                <span className="font-medium">Total Points:</span> {(selectedTest.curveCount * selectedTest.pointsPerCurve).toLocaleString()}
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="performance-mode"
-                  checked={enablePerformanceMode}
-                  onCheckedChange={setEnablePerformanceMode}
-                />
-                <label htmlFor="performance-mode" className="text-sm">
-                  Enable performance optimizations
-                </label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="web-worker"
-                  checked={enableWebWorker}
-                  onCheckedChange={setEnableWebWorker}
-                  disabled={!workerReady}
-                />
-                <label htmlFor="web-worker" className="text-sm">
-                  Use Web Worker processing
-                </label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="auto-refresh"
-                  checked={autoRefresh}
-                  onCheckedChange={setAutoRefresh}
-                />
-                <label htmlFor="auto-refresh" className="text-sm">
-                  Simulate real-time updates
-                </label>
-              </div>
-            </div>
-
-            <Button 
-              onClick={() => generateTestData(selectedTest)}
-              disabled={isGenerating}
-              className="w-full"
-            >
-              {isGenerating ? (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Database className="h-4 w-4 mr-2" />
-                  Generate Data
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Performance Metrics */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
+        <div className="glass-card">
+          <div className="p-6">
+            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+              <TrendUp className="h-5 w-5 text-cyan-400" weight="duotone" />
               Performance Metrics
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <div className="font-medium text-lg">{displayMetrics.visibleCurves}</div>
-                <div className="text-gray-600">Visible Curves</div>
-              </div>
-              <div>
-                <div className="font-medium text-lg">{displayMetrics.totalPoints.toLocaleString()}</div>
-                <div className="text-gray-600">Data Points</div>
-              </div>
-              <div>
-                <div className="font-medium text-lg">{displayMetrics.dataSize} MB</div>
-                <div className="text-gray-600">Memory Usage</div>
-              </div>
-              <div>
-                <div className="font-medium text-lg">
-                  {chartPerformance?.renderTime ? `${chartPerformance.renderTime}ms` : '---'}
+            </h3>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <div className="font-medium text-lg text-foreground">{displayMetrics.visibleCurves}</div>
+                  <div className="text-foreground/60">Visible Curves</div>
                 </div>
-                <div className="text-gray-600">Render Time</div>
-              </div>
-            </div>
-
-            {chartPerformance && (
-              <div className="flex items-center gap-2">
-                <div className={`h-3 w-3 rounded-full ${
-                  getPerformanceStatus() === 'excellent' ? 'bg-green-500' :
-                  getPerformanceStatus() === 'good' ? 'bg-yellow-500' :
-                  getPerformanceStatus() === 'fair' ? 'bg-orange-500' : 'bg-red-500'
-                }`} />
-                <span className="text-sm capitalize">{getPerformanceStatus()} Performance</span>
-                <Badge variant={chartPerformance.fps >= 30 ? 'default' : 'destructive'}>
-                  {chartPerformance.fps} FPS
-                </Badge>
-              </div>
-            )}
-
-            {statistics && (
-              <div className="pt-2 border-t">
-                <div className="text-sm space-y-1">
-                  <div>Quality Distribution:</div>
-                  <div className="flex gap-2 text-xs">
-                    <span className="text-green-600">
-                      Good: {statistics.qualityDistribution?.good || 0}
-                    </span>
-                    <span className="text-yellow-600">
-                      Warning: {statistics.qualityDistribution?.warning || 0}
-                    </span>
-                    <span className="text-red-600">
-                      Error: {statistics.qualityDistribution?.error || 0}
-                    </span>
+                <div>
+                  <div className="font-medium text-lg text-foreground">{displayMetrics.totalPoints.toLocaleString()}</div>
+                  <div className="text-foreground/60">Data Points</div>
+                </div>
+                <div>
+                  <div className="font-medium text-lg text-foreground">{displayMetrics.dataSize} MB</div>
+                  <div className="text-foreground/60">Memory Usage</div>
+                </div>
+                <div>
+                  <div className="font-medium text-lg text-foreground">
+                    {chartPerformance?.renderTime ? `${chartPerformance.renderTime}ms` : '---'}
                   </div>
+                  <div className="text-foreground/60">Render Time</div>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* Optimization Suggestions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              Optimization
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {optimizationSuggestions.length > 0 ? (
-              <div className="space-y-2">
-                {optimizationSuggestions.map((suggestion, index) => (
-                  <div key={index} className="flex items-start gap-2 p-2 bg-gray-50 rounded">
-                    {suggestion.type === 'error' ? (
-                      <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5" />
-                    ) : (
-                      <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5" />
-                    )}
-                    <div className="text-xs">
-                      <div className="font-medium">{suggestion.message}</div>
-                      <div className="text-gray-600">Action: {suggestion.action}</div>
+              {chartPerformance && (
+                <div className="flex items-center gap-2">
+                  <div className={`h-3 w-3 rounded-full ${
+                    getPerformanceStatus() === 'excellent' ? 'bg-emerald-400' :
+                    getPerformanceStatus() === 'good' ? 'bg-cyan-400' :
+                    getPerformanceStatus() === 'fair' ? 'bg-amber-400' : 'bg-red-400'
+                  }`} />
+                  <span className="text-sm text-foreground/80 capitalize">{getPerformanceStatus()} Performance</span>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ml-auto ${
+                    chartPerformance.fps >= 30
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      : 'bg-red-500/10 text-red-400 border-red-500/20'
+                  }`}>
+                    {chartPerformance.fps} FPS
+                  </span>
+                </div>
+              )}
+
+              {statistics && (
+                <div className="pt-2 border-t border-cyan-500/10">
+                  <div className="text-sm space-y-1">
+                    <div className="text-foreground/80">Quality Distribution:</div>
+                    <div className="flex gap-2 text-xs">
+                      <span className="text-emerald-400">
+                        Good: {statistics.qualityDistribution?.good || 0}
+                      </span>
+                      <span className="text-amber-400">
+                        Warning: {statistics.qualityDistribution?.warning || 0}
+                      </span>
+                      <span className="text-red-400">
+                        Error: {statistics.qualityDistribution?.error || 0}
+                      </span>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-green-600">
-                <CheckCircle className="h-4 w-4" />
-                <span className="text-sm">Performance optimized</span>
-              </div>
-            )}
-
-            <div className="pt-2 border-t space-y-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => clearCache()}
-                disabled={!workerReady}
-                className="w-full"
-              >
-                Clear Worker Cache
-              </Button>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => updateOptimizations(chartPerformance)}
-                disabled={!workerReady || !chartPerformance}
-                className="w-full"
-              >
-                Analyze Performance
-              </Button>
+                </div>
+              )}
             </div>
+          </div>
+        </div>
 
-            {workerError && (
-              <div className="text-red-600 text-xs bg-red-50 p-2 rounded">
-                Worker Error: {workerError}
+        {/* Optimization Suggestions */}
+        <div className="glass-card">
+          <div className="p-6">
+            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+              <Gear className="h-5 w-5 text-cyan-400" weight="duotone" />
+              Optimization
+            </h3>
+
+            <div className="space-y-4">
+              {optimizationSuggestions.length > 0 ? (
+                <div className="space-y-2">
+                  {optimizationSuggestions.map((suggestion, index) => (
+                    <div key={index} className="flex items-start gap-2 p-2 bg-cyan-500/5 border border-cyan-500/10 rounded">
+                      {suggestion.type === 'error' ? (
+                        <Warning className="h-4 w-4 text-red-400 mt-0.5" weight="duotone" />
+                      ) : (
+                        <Warning className="h-4 w-4 text-amber-400 mt-0.5" weight="duotone" />
+                      )}
+                      <div className="text-xs">
+                        <div className="font-medium text-foreground/80">{suggestion.message}</div>
+                        <div className="text-foreground/60">Action: {suggestion.action}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-emerald-400">
+                  <CheckCircle className="h-4 w-4" weight="duotone" />
+                  <span className="text-sm">Performance optimized</span>
+                </div>
+              )}
+
+              <div className="pt-2 border-t border-cyan-500/10 space-y-2">
+                <button
+                  onClick={() => clearCache()}
+                  disabled={!workerReady}
+                  className="btn-glass w-full text-sm"
+                >
+                  Clear Worker Cache
+                </button>
+
+                <button
+                  onClick={() => updateOptimizations(chartPerformance)}
+                  disabled={!workerReady || !chartPerformance}
+                  className="btn-glass w-full text-sm"
+                >
+                  Analyze Performance
+                </button>
               </div>
-            )}
-          </CardContent>
-        </Card>
+
+              {workerError && (
+                <div className="text-red-400 text-xs bg-red-500/10 border border-red-500/20 p-2 rounded">
+                  Worker Error: {workerError}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" />
+      <div className="glass-card">
+        <div className="p-6 border-b border-cyan-500/10">
+          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <Activity className="h-5 w-5 text-cyan-400" weight="duotone" />
             Manufacturing Data Visualization
             {autoRefresh && (
-              <Badge variant="secondary" className="ml-auto">
-                <Clock className="h-3 w-3 mr-1" />
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 ml-auto">
+                <Clock className="h-3 w-3 mr-1" weight="duotone" />
                 Live Updates
-              </Badge>
+              </span>
             )}
-          </CardTitle>
-          <CardDescription>
+          </h3>
+          <p className="text-sm text-foreground/60 mt-1">
             {selectedTest.name} - Rendering {displayMetrics.visibleCurves} curves with {displayMetrics.totalPoints.toLocaleString()} total data points
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </p>
+        </div>
+
+        <div className="p-6">
           <HighPerformanceChart
             curves={curves}
             title={`${selectedTest.name} Performance Test`}
@@ -503,28 +508,28 @@ export default function PerformanceDemoPage() {
             maxCurves={10000}
             autoOptimize={true}
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Phase 2 Achievement Banner */}
-      <Card className="bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
-        <CardContent className="p-6">
+      <div className="glass-card bg-gradient-to-r from-cyan-500/5 to-emerald-500/5 border-2 border-cyan-500/20">
+        <div className="p-6">
           <div className="flex items-center gap-4">
-            <div className="h-12 w-12 bg-blue-600 rounded-full flex items-center justify-center">
-              <Zap className="h-6 w-6 text-white" />
+            <div className="h-12 w-12 bg-cyan-500/10 border border-cyan-500/20 rounded-full flex items-center justify-center">
+              <Lightning className="h-6 w-6 text-cyan-400" weight="duotone" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-blue-900">
-                🎉 Phase 2 High-Performance Rendering Achieved!
+              <h3 className="text-lg font-semibold text-cyan-400">
+                Phase 2 High-Performance Rendering Achieved
               </h3>
-              <p className="text-blue-700">
-                Successfully rendering up to 10,000 manufacturing curves with sub-second performance. 
+              <p className="text-foreground/60">
+                Successfully rendering up to 10,000 manufacturing curves with sub-second performance.
                 Web Worker processing, adaptive LOD, and canvas optimization all working together.
               </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

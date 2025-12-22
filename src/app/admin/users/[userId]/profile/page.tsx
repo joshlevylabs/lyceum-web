@@ -6,15 +6,15 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import PaymentMethodSetup from '@/components/billing/PaymentMethodSetup'
 import {
-  UserIcon,
-  ShieldCheckIcon,
-  ComputerDesktopIcon,
-  KeyIcon,
-  ArrowLeftIcon,
-  ClockIcon,
-  CurrencyDollarIcon,
-  GlobeAltIcon
-} from '@heroicons/react/24/outline'
+  User,
+  ShieldCheck,
+  Desktop,
+  Key,
+  ArrowLeft,
+  Clock,
+  CurrencyDollar,
+  Globe
+} from '@phosphor-icons/react'
 
 interface License {
   id: string
@@ -678,17 +678,17 @@ export default function UserProfilePage() {
 
   if (authLoading || isResolvingKey || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-background">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-foreground/60">
               {authLoading ? 'Checking authentication...' : 
                isResolvingKey ? 'Resolving user identifier...' : 
                'Loading user data...'}
             </p>
             {/* Debug info */}
-            <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+            <div className="mt-4 text-xs text-foreground/60">
               <p>User ID: {resolvedUserId}</p>
               <p>Current User: {currentUser?.email || 'None'}</p>
               <p>Auth Loading: {authLoading.toString()}</p>
@@ -702,7 +702,7 @@ export default function UserProfilePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-background">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <p className="text-red-600 mb-4">{error}</p>
@@ -719,7 +719,7 @@ export default function UserProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="space-y-6">
           {/* Header */}
@@ -727,16 +727,16 @@ export default function UserProfilePage() {
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => router.push('/admin/users')}
-                className="flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                className="flex items-center text-gray-600 hover:text-gray-900 dark:text-foreground/40 hover:text-cyan-400"
               >
-                <ArrowLeftIcon className="h-5 w-5 mr-2" />
+                <ArrowLeft className="h-5 w-5 mr-2" />
                 Back to Users
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-2xl font-bold text-foreground">
                   User Profile: {enhancedProfile?.full_name || enhancedProfile?.username || 'Unknown User'} ({userId})
                 </h1>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                <p className="mt-1 text-sm text-foreground/60">
                   Viewing detailed profile information and account data
                 </p>
               </div>
@@ -744,7 +744,7 @@ export default function UserProfilePage() {
           </div>
 
           {/* Tabs */}
-          <div className="border-b border-gray-200 dark:border-gray-700">
+          <div className="border-b border-cyan-500/10">
             <nav className="-mb-px flex space-x-8">
               <button
                 onClick={() => setActiveTab('profile')}
@@ -754,7 +754,7 @@ export default function UserProfilePage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                 }`}
               >
-                <UserIcon className="h-4 w-4 inline mr-1" />
+                <User className="h-4 w-4 inline mr-1" />
                 Profile
               </button>
               <button
@@ -765,7 +765,7 @@ export default function UserProfilePage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                 }`}
               >
-                <ShieldCheckIcon className="h-4 w-4 inline mr-1" />
+                <ShieldCheck className="h-4 w-4 inline mr-1" />
                 Licenses
               </button>
               <button
@@ -776,7 +776,7 @@ export default function UserProfilePage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                 }`}
               >
-                <ComputerDesktopIcon className="w-4 h-4 inline mr-1" />
+                <Desktop className="w-4 h-4 inline mr-1" />
                 Clusters
               </button>
               <button
@@ -787,7 +787,7 @@ export default function UserProfilePage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                 }`}
               >
-                <ComputerDesktopIcon className="h-4 w-4 inline mr-1" />
+                <Desktop className="h-4 w-4 inline mr-1" />
                 Sessions
               </button>
               <button
@@ -798,7 +798,7 @@ export default function UserProfilePage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                 }`}
               >
-                <CurrencyDollarIcon className="h-4 w-4 inline mr-1" />
+                <CurrencyDollar className="h-4 w-4 inline mr-1" />
                 Payment
               </button>
               <button
@@ -809,7 +809,7 @@ export default function UserProfilePage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                 }`}
               >
-                <KeyIcon className="h-4 w-4 inline mr-1" />
+                <Key className="h-4 w-4 inline mr-1" />
                 Account
               </button>
             </nav>
@@ -817,10 +817,10 @@ export default function UserProfilePage() {
 
           {/* Tab Content */}
           {activeTab === 'profile' && enhancedProfile && (
-            <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+            <div className="glass-card">
               <div className="px-4 py-5 sm:p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Profile Information</h3>
+                  <h3 className="text-lg font-medium text-foreground">Profile Information</h3>
                   <div className="space-x-3">
                     {isEditMode ? (
                       <>
@@ -860,7 +860,7 @@ export default function UserProfilePage() {
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   {/* Email */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                    <label className="block text-sm font-medium text-foreground/70">Email</label>
                     {isEditMode ? (
                       <input
                         type="email"
@@ -869,13 +869,13 @@ export default function UserProfilePage() {
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       />
                     ) : (
-                      <div className="mt-1 text-sm text-gray-900 dark:text-white">{enhancedProfile.email}</div>
+                      <div className="mt-1 text-sm text-foreground">{enhancedProfile.email}</div>
                     )}
                   </div>
 
                   {/* Full Name */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+                    <label className="block text-sm font-medium text-foreground/70">Full Name</label>
                     {isEditMode ? (
                       <input
                         type="text"
@@ -884,13 +884,13 @@ export default function UserProfilePage() {
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       />
                     ) : (
-                      <div className="mt-1 text-sm text-gray-900 dark:text-white">{enhancedProfile.full_name || 'Not provided'}</div>
+                      <div className="mt-1 text-sm text-foreground">{enhancedProfile.full_name || 'Not provided'}</div>
                     )}
                   </div>
 
                   {/* Username */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                    <label className="block text-sm font-medium text-foreground/70">Username</label>
                     {isEditMode ? (
                       <input
                         type="text"
@@ -899,13 +899,13 @@ export default function UserProfilePage() {
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       />
                     ) : (
-                      <div className="mt-1 text-sm text-gray-900 dark:text-white">{enhancedProfile.username}</div>
+                      <div className="mt-1 text-sm text-foreground">{enhancedProfile.username}</div>
                     )}
                   </div>
 
                   {/* Company */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Company</label>
+                    <label className="block text-sm font-medium text-foreground/70">Company</label>
                     {isEditMode ? (
                       <input
                         type="text"
@@ -915,13 +915,13 @@ export default function UserProfilePage() {
                         placeholder="Company name"
                       />
                     ) : (
-                      <div className="mt-1 text-sm text-gray-900 dark:text-white">{enhancedProfile.company || 'Not provided'}</div>
+                      <div className="mt-1 text-sm text-foreground">{enhancedProfile.company || 'Not provided'}</div>
                     )}
                   </div>
 
                   {/* Role */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
+                    <label className="block text-sm font-medium text-foreground/70">Role</label>
                     {isEditMode ? (
                       <select
                         value={editFormData.role}
@@ -949,13 +949,13 @@ export default function UserProfilePage() {
 
                   {/* User ID */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">User ID</label>
-                    <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 font-mono break-all">{enhancedProfile.id}</div>
+                    <label className="block text-sm font-medium text-foreground/70">User ID</label>
+                    <div className="mt-1 text-xs text-foreground/60 font-mono break-all">{enhancedProfile.id}</div>
                   </div>
 
                   {/* Security Clearance */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Security Clearance</label>
+                    <label className="block text-sm font-medium text-foreground/70">Security Clearance</label>
                     <div className="mt-1">
                       <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200">
                         {enhancedProfile.security_clearance}
@@ -965,7 +965,7 @@ export default function UserProfilePage() {
 
                   {/* Account Status */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Account Status</label>
+                    <label className="block text-sm font-medium text-foreground/70">Account Status</label>
                     <div className="mt-1">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         enhancedProfile.account_status === 'active' 
@@ -979,7 +979,7 @@ export default function UserProfilePage() {
 
                   {/* Email Confirmation */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email Confirmed</label>
+                    <label className="block text-sm font-medium text-foreground/70">Email Confirmed</label>
                     <div className="mt-1">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         enhancedProfile.email_confirmed
@@ -993,14 +993,14 @@ export default function UserProfilePage() {
 
                   {/* Account Age */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Account Age</label>
-                    <div className="mt-1 text-sm text-gray-900 dark:text-white">{enhancedProfile.days_since_creation} days</div>
+                    <label className="block text-sm font-medium text-foreground/70">Account Age</label>
+                    <div className="mt-1 text-sm text-foreground">{enhancedProfile.days_since_creation} days</div>
                   </div>
 
                   {/* Last Sign In */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Last Sign In</label>
-                    <div className="mt-1 text-sm text-gray-900 dark:text-white">
+                    <label className="block text-sm font-medium text-foreground/70">Last Sign In</label>
+                    <div className="mt-1 text-sm text-foreground">
                       {enhancedProfile.last_sign_in ? (
                         <div>
                           <div className="font-medium">
@@ -1008,15 +1008,15 @@ export default function UserProfilePage() {
                               ? `${enhancedProfile.days_since_last_sign_in || 0} days ago`
                               : new Date(enhancedProfile.last_sign_in).toLocaleDateString()}
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center space-x-1">
+                          <div className="text-xs text-foreground/60 flex items-center space-x-1">
                             {enhancedProfile.login_source === 'centcom' ? (
                               <>
-                                <ComputerDesktopIcon className="h-3 w-3 text-blue-500" />
+                                <Desktop className="h-3 w-3 text-blue-500" />
                                 <span>CentCom Login</span>
                               </>
                             ) : (
                               <>
-                                <GlobeAltIcon className="h-3 w-3 text-green-500" />
+                                <Globe className="h-3 w-3 text-green-500" />
                                 <span>Web Login</span>
                               </>
                             )}
@@ -1030,8 +1030,8 @@ export default function UserProfilePage() {
 
                   {/* Database Clusters */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Database Clusters</label>
-                    <div className="mt-1 text-sm text-gray-900 dark:text-white">
+                    <label className="block text-sm font-medium text-foreground/70">Database Clusters</label>
+                    <div className="mt-1 text-sm text-foreground">
                       {enhancedProfile.statistics.total_clusters} total ({enhancedProfile.statistics.active_clusters} active)
                     </div>
                   </div>
@@ -1039,29 +1039,29 @@ export default function UserProfilePage() {
 
                 {/* Resource Usage */}
                 <div className="mt-8">
-                  <h4 className="text-md font-medium text-gray-900 dark:text-white mb-4">Resource Usage & Activity</h4>
+                  <h4 className="text-md font-medium text-foreground mb-4">Resource Usage & Activity</h4>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Storage</div>
-                      <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                      <div className="text-sm font-medium text-foreground/70">Storage</div>
+                      <div className="text-lg font-semibold text-foreground">
                         {Math.round(enhancedProfile.resource_usage.storage_used_mb)} MB
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                      <div className="text-xs text-foreground/60">
                         of {Math.round(enhancedProfile.resource_usage.storage_limit_mb)} MB
                       </div>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300">API Calls</div>
-                      <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                      <div className="text-sm font-medium text-foreground/70">API Calls</div>
+                      <div className="text-lg font-semibold text-foreground">
                         {enhancedProfile.resource_usage.api_calls_count.toLocaleString()}
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                      <div className="text-xs text-foreground/60">
                         of {enhancedProfile.resource_usage.api_calls_limit.toLocaleString()}
                       </div>
                     </div>
                     <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
                       <div className="text-sm font-medium text-blue-700 dark:text-blue-300 flex items-center">
-                        <ComputerDesktopIcon className="h-4 w-4 mr-1" />
+                        <Desktop className="h-4 w-4 mr-1" />
                         App Downloads
                       </div>
                       <div className="text-lg font-semibold text-blue-900 dark:text-blue-100">
@@ -1079,32 +1079,32 @@ export default function UserProfilePage() {
 
               {/* Downloads History */}
               {downloadStats && downloadStats.downloads && downloadStats.downloads.length > 0 && (
-                <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                <div className="glass-card">
                   <div className="px-4 py-5 sm:p-6">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
-                      <ComputerDesktopIcon className="h-5 w-5 mr-2" />
+                    <h3 className="text-lg font-medium text-foreground mb-4 flex items-center">
+                      <Desktop className="h-5 w-5 mr-2" />
                       Download History (Last 10)
                     </h3>
                     <div className="overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-900">
                           <tr>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-3 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                               Date
                             </th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-3 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                               Version
                             </th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-3 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                               Brand
                             </th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-3 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                               Platform
                             </th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-3 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                               Type
                             </th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-3 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                               Status
                             </th>
                           </tr>
@@ -1130,7 +1130,7 @@ export default function UserProfilePage() {
                               <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 capitalize">
                                 {download.platform}
                               </td>
-                              <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 capitalize">
+                              <td className="px-3 py-4 whitespace-nowrap text-sm text-foreground/60 capitalize">
                                 {download.installerType}
                               </td>
                               <td className="px-3 py-4 whitespace-nowrap text-sm">
@@ -1163,9 +1163,9 @@ export default function UserProfilePage() {
             <div className="space-y-6">
               {/* License Summary */}
               {licenses.billing_summary && (
-                <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                <div className="glass-card">
                   <div className="px-4 py-5 sm:p-6">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">License Overview</h3>
+                    <h3 className="text-lg font-medium text-foreground mb-4">License Overview</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
                         <div className="text-2xl font-bold text-blue-600">
@@ -1209,17 +1209,17 @@ export default function UserProfilePage() {
               )}
 
               {/* Licenses Section */}
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="glass-card">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">Assigned Licenses</h3>
+                  <h3 className="text-lg font-medium text-foreground mb-6">Assigned Licenses</h3>
 
                   {licenses.licenses && licenses.licenses.length > 0 ? (
                     <div className="space-y-4">
                       {licenses.licenses.map((license, index) => (
-                        <div key={`license-${license.id}`} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                        <div key={`license-${license.id}`} className="border border-cyan-500/10 rounded-lg p-4">
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center space-x-3">
-                              <ShieldCheckIcon className={`h-6 w-6 ${
+                              <ShieldCheck className={`h-6 w-6 ${
                                 license.license_type === 'gratis' ? 'text-cyan-600' :
                                 license.license_type === 'trial' ? 'text-yellow-600' :
                                 license.license_type === 'enterprise' ? 'text-purple-600' :
@@ -1228,7 +1228,7 @@ export default function UserProfilePage() {
                               }`} />
                               <div>
                                 <div className="flex items-center space-x-2">
-                                  <h4 className="text-lg font-medium text-gray-900 dark:text-white capitalize">
+                                  <h4 className="text-lg font-medium text-foreground capitalize">
                                     {license.license_type} License
                                   </h4>
                                   {license.license_type === 'gratis' && (
@@ -1242,7 +1242,7 @@ export default function UserProfilePage() {
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                <p className="text-sm text-foreground/60">
                                   {license.key_code || license.key_id || `License ${index + 1}`}
                                 </p>
                               </div>
@@ -1271,20 +1271,20 @@ export default function UserProfilePage() {
 
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-3">
                             <div>
-                              <span className="font-medium text-gray-700 dark:text-gray-300">Max Users:</span>
-                              <span className="ml-1 text-gray-900 dark:text-white">
+                              <span className="font-medium text-foreground/70">Max Users:</span>
+                              <span className="ml-1 text-foreground">
                                 {license.max_users === null || license.max_users === -1 ? 'Unlimited' : license.max_users}
                               </span>
                             </div>
                             <div>
-                              <span className="font-medium text-gray-700 dark:text-gray-300">Max Projects:</span>
-                              <span className="ml-1 text-gray-900 dark:text-white">
+                              <span className="font-medium text-foreground/70">Max Projects:</span>
+                              <span className="ml-1 text-foreground">
                                 {license.max_projects === null || license.max_projects === -1 ? 'Unlimited' : license.max_projects}
                               </span>
                             </div>
                             <div>
-                              <span className="font-medium text-gray-700 dark:text-gray-300">Storage:</span>
-                              <span className="ml-1 text-gray-900 dark:text-white">
+                              <span className="font-medium text-foreground/70">Storage:</span>
+                              <span className="ml-1 text-foreground">
                                 {license.max_storage_gb === null || license.max_storage_gb === -1 ? 'Unlimited' : `${license.max_storage_gb} GB`}
                               </span>
                             </div>
@@ -1294,8 +1294,8 @@ export default function UserProfilePage() {
                           {license.responsible_user && (
                             <div className="mb-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
                               <div className="text-sm">
-                                <span className="font-medium text-gray-700 dark:text-gray-300">Payment Responsible:</span>
-                                <span className="ml-1 text-gray-900 dark:text-white">
+                                <span className="font-medium text-foreground/70">Payment Responsible:</span>
+                                <span className="ml-1 text-foreground">
                                   {license.responsible_user.full_name || license.responsible_user.email}
                                 </span>
                                 {license.is_user_responsible && (
@@ -1307,7 +1307,7 @@ export default function UserProfilePage() {
 
                           {license.features && license.features.length > 0 && (
                             <div className="mt-3">
-                              <span className="font-medium text-gray-700 dark:text-gray-300 text-sm">Features:</span>
+                              <span className="font-medium text-foreground/70 text-sm">Features:</span>
                               <div className="mt-1 flex flex-wrap gap-1">
                                 {license.features.map((feature, idx) => (
                                   <span key={idx} className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
@@ -1318,7 +1318,7 @@ export default function UserProfilePage() {
                             </div>
                           )}
 
-                          <div className="mt-3 flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                          <div className="mt-3 flex justify-between text-xs text-foreground/60">
                             <div className="flex space-x-4">
                               <span>
                                 Assigned: {license.assigned_at ? new Date(license.assigned_at).toLocaleDateString() : 'Unknown'}
@@ -1338,22 +1338,22 @@ export default function UserProfilePage() {
                     </div>
                   ) : (
                     <div className="text-center py-8">
-                      <ShieldCheckIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500 dark:text-gray-400">No licenses assigned</p>
+                      <ShieldCheck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-foreground/60">No licenses assigned</p>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Subscription Section */}
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="glass-card">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Subscription Information</h3>
+                  <h3 className="text-lg font-medium text-foreground mb-4">Subscription Information</h3>
                   
                   {subscription ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Subscription Type</label>
+                        <label className="block text-sm font-medium text-foreground/70">Subscription Type</label>
                         <div className="mt-1">
                           <span className="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 capitalize">
                             {subscription.subscription_type}
@@ -1362,7 +1362,7 @@ export default function UserProfilePage() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Payment Status</label>
+                        <label className="block text-sm font-medium text-foreground/70">Payment Status</label>
                         <div className="mt-1">
                           <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
                             subscription.payment_status === 'active'
@@ -1378,24 +1378,24 @@ export default function UserProfilePage() {
 
                       {subscription.monthly_amount && (
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Monthly Amount</label>
-                          <div className="mt-1 text-sm text-gray-900 dark:text-white">
+                          <label className="block text-sm font-medium text-foreground/70">Monthly Amount</label>
+                          <div className="mt-1 text-sm text-foreground">
                             ${subscription.monthly_amount} {subscription.currency}
                           </div>
                         </div>
                       )}
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Billing Cycle</label>
-                        <div className="mt-1 text-sm text-gray-900 dark:text-white capitalize">
+                        <label className="block text-sm font-medium text-foreground/70">Billing Cycle</label>
+                        <div className="mt-1 text-sm text-foreground capitalize">
                           {subscription.billing_cycle}
                         </div>
                       </div>
                     </div>
                   ) : (
                     <div className="text-center py-8">
-                      <CurrencyDollarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500 dark:text-gray-400">No subscription information available</p>
+                      <CurrencyDollar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-foreground/60">No subscription information available</p>
                     </div>
                   )}
                 </div>
@@ -1406,10 +1406,10 @@ export default function UserProfilePage() {
           {activeTab === 'clusters' && (
             <div className="space-y-6">
               {/* Assigned Clusters Section */}
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="glass-card">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6 flex items-center">
-                    <ComputerDesktopIcon className="h-6 w-6 mr-2 text-blue-600" />
+                  <h3 className="text-lg font-medium text-foreground mb-6 flex items-center">
+                    <Desktop className="h-6 w-6 mr-2 text-blue-600" />
                     Assigned Database Clusters
                   </h3>
                   
@@ -1418,22 +1418,22 @@ export default function UserProfilePage() {
                       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-800">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                               Cluster
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                               Type
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                               Status
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                               Access Level
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                               Monthly Cost
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                               Assigned Date
                             </th>
                           </tr>
@@ -1443,12 +1443,12 @@ export default function UserProfilePage() {
                             <tr key={cluster.id}>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
-                                  <ComputerDesktopIcon className="h-5 w-5 text-gray-400 mr-3" />
+                                  <Desktop className="h-5 w-5 text-gray-400 mr-3" />
                                   <div>
-                                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                    <div className="text-sm font-medium text-foreground">
                                       {cluster.cluster_key || cluster.name}
                                     </div>
-                                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                                    <div className="text-sm text-foreground/60">
                                       {cluster.region}
                                     </div>
                                   </div>
@@ -1473,13 +1473,13 @@ export default function UserProfilePage() {
                                   {cluster.status}
                                 </span>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                                 {cluster.access_level || 'viewer'}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                                 ${cluster.estimated_monthly_cost || 0}/month
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/60">
                                 {cluster.assigned_at ? new Date(cluster.assigned_at).toLocaleDateString() : 'N/A'}
                               </td>
                             </tr>
@@ -1489,9 +1489,9 @@ export default function UserProfilePage() {
                     </div>
                   ) : (
                     <div className="text-center py-12">
-                      <ComputerDesktopIcon className="mx-auto h-12 w-12 text-gray-400" />
-                      <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No clusters assigned</h3>
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      <Desktop className="mx-auto h-12 w-12 text-gray-400" />
+                      <h3 className="mt-2 text-sm font-medium text-foreground">No clusters assigned</h3>
+                      <p className="mt-1 text-sm text-foreground/60">
                         This user has not been assigned to any database clusters yet.
                       </p>
                     </div>
@@ -1500,9 +1500,9 @@ export default function UserProfilePage() {
               </div>
 
               {/* Cluster Statistics */}
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="glass-card">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Cluster Statistics</h3>
+                  <h3 className="text-lg font-medium text-foreground mb-4">Cluster Statistics</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
                       <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
@@ -1532,19 +1532,19 @@ export default function UserProfilePage() {
           {activeTab === 'sessions' && (
             <div className="space-y-6">
               {/* Last CentCom Login Section */}
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="glass-card">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6 flex items-center">
-                    <ComputerDesktopIcon className="h-6 w-6 mr-2 text-blue-600" />
+                  <h3 className="text-lg font-medium text-foreground mb-6 flex items-center">
+                    <Desktop className="h-6 w-6 mr-2 text-blue-600" />
                     🖥️ Last CentCom Login
                   </h3>
 
                   {centcomSessions.latest ? (
-                    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-blue-50 dark:bg-blue-900/10">
+                    <div className="border border-cyan-500/10 rounded-lg p-6 bg-blue-50 dark:bg-blue-900/10">
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Status:</span>
+                            <span className="text-sm font-medium text-foreground/60">Status:</span>
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                               centcomSessions.latest.connection_status === 'online' 
                                 ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
@@ -1563,8 +1563,8 @@ export default function UserProfilePage() {
                           </div>
                           
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Session ID:</span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                            <span className="text-sm font-medium text-foreground/60">Session ID:</span>
+                            <span className="text-xs text-foreground/60 font-mono">
                               {centcomSessions.latest.external_session_id 
                                 ? centcomSessions.latest.external_session_id.substring(0, 16) + '...'
                                 : centcomSessions.latest.centcom_session_id.substring(0, 12) + '...'}
@@ -1572,15 +1572,15 @@ export default function UserProfilePage() {
                           </div>
                           
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Started:</span>
-                            <span className="text-sm text-gray-900 dark:text-white">
+                            <span className="text-sm font-medium text-foreground/60">Started:</span>
+                            <span className="text-sm text-foreground">
                               {new Date(centcomSessions.latest.created_at).toLocaleDateString()} at {new Date(centcomSessions.latest.created_at).toLocaleTimeString()}
                             </span>
                           </div>
                           
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Last Activity:</span>
-                            <span className="text-sm text-gray-900 dark:text-white">
+                            <span className="text-sm font-medium text-foreground/60">Last Activity:</span>
+                            <span className="text-sm text-foreground">
                               {new Date(centcomSessions.latest.last_activity).toLocaleDateString()} at {new Date(centcomSessions.latest.last_activity).toLocaleTimeString()}
                               <span className="ml-1 text-xs text-gray-500">
                                 ({Math.round((new Date().getTime() - new Date(centcomSessions.latest.last_activity).getTime()) / (1000 * 60))} min ago)
@@ -1589,8 +1589,8 @@ export default function UserProfilePage() {
                           </div>
                           
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Duration:</span>
-                            <span className="text-sm text-gray-900 dark:text-white">
+                            <span className="text-sm font-medium text-foreground/60">Duration:</span>
+                            <span className="text-sm text-foreground">
                               {centcomSessions.latest.duration_minutes ? `${Math.floor(centcomSessions.latest.duration_minutes / 60)}h ${centcomSessions.latest.duration_minutes % 60}m` : '-'}
                             </span>
                           </div>
@@ -1598,8 +1598,8 @@ export default function UserProfilePage() {
                         
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Location:</span>
-                            <span className="text-sm text-gray-900 dark:text-white">
+                            <span className="text-sm font-medium text-foreground/60">Location:</span>
+                            <span className="text-sm text-foreground">
                               {centcomSessions.latest.city && centcomSessions.latest.country 
                                 ? `${centcomSessions.latest.city}, ${centcomSessions.latest.country}`
                                 : 'Unknown'} 
@@ -1610,21 +1610,21 @@ export default function UserProfilePage() {
                           </div>
                           
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Device:</span>
-                            <span className="text-sm text-gray-900 dark:text-white">
+                            <span className="text-sm font-medium text-foreground/60">Device:</span>
+                            <span className="text-sm text-foreground">
                               {centcomSessions.latest.platform || 'Unknown'} {centcomSessions.latest.device_type ? `(${centcomSessions.latest.device_type})` : ''}
                             </span>
                           </div>
                           
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">App Version:</span>
-                            <span className="text-sm text-gray-900 dark:text-white">
+                            <span className="text-sm font-medium text-foreground/60">App Version:</span>
+                            <span className="text-sm text-foreground">
                               v{centcomSessions.latest.app_version || 'Unknown'}
                             </span>
                           </div>
                           
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">License Type:</span>
+                            <span className="text-sm font-medium text-foreground/60">License Type:</span>
                             <span className="text-sm">
                               {centcomSessions.latest.license_type && (
                                 <span className={`px-2 py-0.5 text-xs rounded ${
@@ -1643,14 +1643,14 @@ export default function UserProfilePage() {
                           </div>
                           
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">MFA Verified:</span>
+                            <span className="text-sm font-medium text-foreground/60">MFA Verified:</span>
                             <span className="text-sm">
                               {centcomSessions.latest.mfa_verified ? '✅ Yes' : '❌ No'}
                             </span>
                           </div>
                           
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Risk Score:</span>
+                            <span className="text-sm font-medium text-foreground/60">Risk Score:</span>
                             <span className={`text-sm font-medium ${
                               (centcomSessions.latest.risk_score || 0) <= 20 ? 'text-green-600' :
                               (centcomSessions.latest.risk_score || 0) <= 50 ? 'text-yellow-600' :
@@ -1666,9 +1666,9 @@ export default function UserProfilePage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center py-8 border border-gray-200 dark:border-gray-700 rounded-lg">
-                      <ComputerDesktopIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500 dark:text-gray-400 font-medium">Never</p>
+                    <div className="text-center py-8 border border-cyan-500/10 rounded-lg">
+                      <Desktop className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-foreground/60 font-medium">Never</p>
                       <p className="text-sm text-gray-400">No CentCom sessions recorded</p>
                     </div>
                   )}
@@ -1676,20 +1676,20 @@ export default function UserProfilePage() {
               </div>
 
               {/* Login Summary */}
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="glass-card">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Login Summary</h3>
+                  <h3 className="text-lg font-medium text-foreground mb-4">Login Summary</h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
                       <div className="flex items-center space-x-3">
-                        <ComputerDesktopIcon className="h-8 w-8 text-blue-600" />
+                        <Desktop className="h-8 w-8 text-blue-600" />
                         <div>
-                          <h4 className="text-sm font-medium text-gray-900 dark:text-white">CentCom Sessions</h4>
+                          <h4 className="text-sm font-medium text-foreground">CentCom Sessions</h4>
                           <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
                             {centcomSessions.total_count} Total
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                          <p className="text-xs text-foreground/60">
                             Last: {centcomSessions.latest ? new Date(centcomSessions.latest.created_at).toLocaleDateString() : 'Never'}
                           </p>
                         </div>
@@ -1698,13 +1698,13 @@ export default function UserProfilePage() {
 
                     <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
                       <div className="flex items-center space-x-3">
-                        <GlobeAltIcon className="h-8 w-8 text-green-600" />
+                        <Globe className="h-8 w-8 text-green-600" />
                         <div>
-                          <h4 className="text-sm font-medium text-gray-900 dark:text-white">Web Sessions</h4>
+                          <h4 className="text-sm font-medium text-foreground">Web Sessions</h4>
                           <p className="text-lg font-semibold text-green-600 dark:text-green-400">
                             {sessions.login_sessions?.web?.length || 0} Total
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                          <p className="text-xs text-foreground/60">
                             Last: {sessions.login_sessions?.web?.length > 0
                               ? new Date(sessions.login_sessions.web[0].created_at).toLocaleDateString()
                               : 'Never'}
@@ -1717,22 +1717,22 @@ export default function UserProfilePage() {
               </div>
 
               {/* Active Sessions */}
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="glass-card">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">Active Analytics Sessions</h3>
+                  <h3 className="text-lg font-medium text-foreground mb-6">Active Analytics Sessions</h3>
 
                   {sessions.active.length > 0 ? (
                     <div className="space-y-4">
                       {sessions.active.map((session) => (
-                        <div key={`active-session-${session.id}`} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                        <div key={`active-session-${session.id}`} className="border border-cyan-500/10 rounded-lg p-4">
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center space-x-3">
-                              <ComputerDesktopIcon className="h-5 w-5 text-green-600" />
+                              <Desktop className="h-5 w-5 text-green-600" />
                               <div>
-                                <h4 className="text-md font-medium text-gray-900 dark:text-white">
+                                <h4 className="text-md font-medium text-foreground">
                                   {session.name || 'Analytics Session'}
                                 </h4>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                <p className="text-sm text-foreground/60">
                                   {session.type || 'Unknown Type'}
                                 </p>
                               </div>
@@ -1741,7 +1741,7 @@ export default function UserProfilePage() {
                               Active
                             </span>
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                          <div className="text-xs text-foreground/60">
                             <span>Started: {new Date(session.created_at).toLocaleString()}</span>
                             {session.last_accessed && (
                               <span className="ml-4">Last accessed: {new Date(session.last_accessed).toLocaleString()}</span>
@@ -1752,17 +1752,17 @@ export default function UserProfilePage() {
                     </div>
                   ) : (
                     <div className="text-center py-8">
-                      <ComputerDesktopIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500 dark:text-gray-400">No active sessions</p>
+                      <Desktop className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-foreground/60">No active sessions</p>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Session History */}
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="glass-card">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Session & Activity History</h3>
+                  <h3 className="text-lg font-medium text-foreground mb-4">Session & Activity History</h3>
                   
                   {sessions.history.length > 0 ? (
                     <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -1772,9 +1772,9 @@ export default function UserProfilePage() {
                             <div className="flex items-center space-x-2">
                               {/* Session Type Icon */}
                               {session.type === 'centcom_login' ? (
-                                <ComputerDesktopIcon className="h-4 w-4 text-blue-600" />
+                                <Desktop className="h-4 w-4 text-blue-600" />
                               ) : session.type === 'web_login' ? (
-                                <GlobeAltIcon className="h-4 w-4 text-green-600" />
+                                <Globe className="h-4 w-4 text-green-600" />
                               ) : (
                                 <div className={`h-2 w-2 rounded-full ${
                                   session.event === 'login' || session.event === 'authentication'
@@ -1798,17 +1798,17 @@ export default function UserProfilePage() {
                             </div>
                             
                             <div>
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              <div className="text-sm font-medium text-foreground">
                                 {session.type === 'centcom_login' ? 'CentCom Login' :
                                  session.type === 'web_login' ? 'Web Login' :
                                  session.event || session.type}
                               </div>
                               {session.description && (
-                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                <div className="text-xs text-foreground/60">
                                   {session.description}
                                 </div>
                               )}
-                              <div className="flex space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                              <div className="flex space-x-4 text-xs text-foreground/60">
                                 {session.ip_address && (
                                   <span>IP: {session.ip_address}</span>
                                 )}
@@ -1824,7 +1824,7 @@ export default function UserProfilePage() {
                               </div>
                             </div>
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 text-right">
+                          <div className="text-xs text-foreground/60 text-right">
                             <div>{new Date(session.created_at).toLocaleDateString()}</div>
                             <div>{new Date(session.created_at).toLocaleTimeString()}</div>
                           </div>
@@ -1833,8 +1833,8 @@ export default function UserProfilePage() {
                     </div>
                   ) : (
                     <div className="text-center py-8">
-                      <ClockIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500 dark:text-gray-400">No session history available</p>
+                      <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-foreground/60">No session history available</p>
                     </div>
                   )}
                 </div>
@@ -1846,10 +1846,10 @@ export default function UserProfilePage() {
             <div className="space-y-6">
               {/* Payment Responsibility Summary */}
               {licenses.billing_summary && (
-                <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                <div className="glass-card">
                   <div className="px-4 py-5 sm:p-6">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
-                      <CurrencyDollarIcon className="h-6 w-6 mr-2 text-green-600" />
+                    <h3 className="text-lg font-medium text-foreground mb-4 flex items-center">
+                      <CurrencyDollar className="h-6 w-6 mr-2 text-green-600" />
                       Monthly Payment Responsibility
                     </h3>
                     
@@ -1858,13 +1858,13 @@ export default function UserProfilePage() {
                         <div className="text-3xl font-bold text-green-600">
                           ${licenses.billing_summary.total_monthly_cost || licenses.billing_summary.monthly_cost_user_responsible || 0}
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">Total Monthly</div>
+                        <div className="text-sm text-foreground/60">Total Monthly</div>
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-blue-600">
                           ${licenses.billing_summary.license_monthly_cost || 0}
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">Licenses</div>
+                        <div className="text-sm text-foreground/60">Licenses</div>
                         <div className="text-xs text-gray-500">
                           {licenses.billing_summary.user_responsible_count || 0} billable
                         </div>
@@ -1873,7 +1873,7 @@ export default function UserProfilePage() {
                         <div className="text-2xl font-bold text-purple-600">
                           ${licenses.billing_summary.cluster_monthly_cost || 0}
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">Clusters</div>
+                        <div className="text-sm text-foreground/60">Clusters</div>
                         <div className="text-xs text-gray-500">
                           {licenses.billing_summary.billable_clusters_count || 0} active
                         </div>
@@ -1882,13 +1882,13 @@ export default function UserProfilePage() {
                         <div className="text-2xl font-bold text-gray-600">
                           {(licenses.billing_summary.gratis_count || 0) + (licenses.billing_summary.trial_count || 0) + (licenses.billing_summary.inactive_count || 0) + (licenses.billing_summary.inactive_clusters_count || 0)}
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">Free/Inactive</div>
+                        <div className="text-sm text-foreground/60">Free/Inactive</div>
                       </div>
                     </div>
 
                     {/* Complete Payment Breakdown - Grouped by Category */}
                     <div>
-                      <h4 className="font-medium text-gray-900 dark:text-white mb-3">Complete Payment Breakdown</h4>
+                      <h4 className="font-medium text-foreground mb-3">Complete Payment Breakdown</h4>
                       
                       {/* Group line items by category */}
                       {licenses.billing_summary?.estimated_cost_breakdown?.line_items && (
@@ -1904,8 +1904,8 @@ export default function UserProfilePage() {
                                   .map((item, index) => (
                                   <div key={index} className="flex justify-between items-center">
                                     <div>
-                                      <span className="font-medium text-gray-900 dark:text-white">{item.name}</span>
-                                      <p className="text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
+                                      <span className="font-medium text-foreground">{item.name}</span>
+                                      <p className="text-sm text-foreground/60">{item.description}</p>
                                     </div>
                                     <span className="font-semibold text-blue-600">
                                       ${item.total_price_dollars.toFixed(2)}
@@ -1927,8 +1927,8 @@ export default function UserProfilePage() {
                                   .map((item, index) => (
                                   <div key={index} className="flex justify-between items-center">
                                     <div>
-                                      <span className="font-medium text-gray-900 dark:text-white">{item.name}</span>
-                                      <p className="text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
+                                      <span className="font-medium text-foreground">{item.name}</span>
+                                      <p className="text-sm text-foreground/60">{item.description}</p>
                                       {item.quantity > 1 && (
                                         <p className="text-xs text-gray-500">
                                           {item.quantity} × ${item.unit_price_dollars.toFixed(2)}
@@ -1955,8 +1955,8 @@ export default function UserProfilePage() {
                                   .map((item, index) => (
                                   <div key={index} className="flex justify-between items-center">
                                     <div>
-                                      <span className="font-medium text-gray-900 dark:text-white">{item.name}</span>
-                                      <p className="text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
+                                      <span className="font-medium text-foreground">{item.name}</span>
+                                      <p className="text-sm text-foreground/60">{item.description}</p>
                                       {item.quantity > 1 && (
                                         <p className="text-xs text-gray-500">
                                           {item.quantity} × ${item.unit_price_dollars.toFixed(2)}
@@ -1983,8 +1983,8 @@ export default function UserProfilePage() {
                                   .map((item, index) => (
                                   <div key={index} className="flex justify-between items-center">
                                     <div>
-                                      <span className="font-medium text-gray-900 dark:text-white">{item.name}</span>
-                                      <p className="text-sm text-gray-600 dark:text-gray-400">{item.description}</p>
+                                      <span className="font-medium text-foreground">{item.name}</span>
+                                      <p className="text-sm text-foreground/60">{item.description}</p>
                                       {item.quantity > 1 && (
                                         <p className="text-xs text-gray-500">
                                           {item.quantity} × ${item.unit_price_dollars.toFixed(2)}
@@ -2014,7 +2014,7 @@ export default function UserProfilePage() {
                       {/* Non-Billable Items */}
                       {licenses.licenses && licenses.licenses.filter(l => !l.is_billable).length > 0 && (
                         <div className="mb-4">
-                          <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">🆓 Non-Billable Items:</h5>
+                          <h5 className="text-sm font-medium text-foreground/70 mb-2">🆓 Non-Billable Items:</h5>
                           <div className="space-y-2">
                             {licenses.licenses.filter(l => !l.is_billable).map((license) => (
                               <div key={license.id} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900/20 rounded-md">
@@ -2045,7 +2045,7 @@ export default function UserProfilePage() {
                       )}
 
                       {/* Total Summary */}
-                      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <div className="mt-4 pt-4 border-t border-cyan-500/10">
                         <div className="flex justify-between items-center text-lg font-semibold">
                           <span>Total Monthly Cost:</span>
                           <span className="text-green-600">
@@ -2067,7 +2067,7 @@ export default function UserProfilePage() {
                   }}
                 />
               ) : (
-                <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                <div className="glass-card">
                   <div className="px-4 py-5 sm:p-6">
                     <div className="text-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -2082,9 +2082,9 @@ export default function UserProfilePage() {
           {activeTab === 'payment_old' && (
             <div className="space-y-6">
               {/* Payment Information */}
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="glass-card">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">Payment Information</h3>
+                  <h3 className="text-lg font-medium text-foreground mb-6">Payment Information</h3>
 
                   {subscription ? (
                     <div className="space-y-6">
@@ -2092,10 +2092,10 @@ export default function UserProfilePage() {
                       <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center space-x-3">
-                            <CurrencyDollarIcon className="h-8 w-8 text-blue-600" />
+                            <CurrencyDollar className="h-8 w-8 text-blue-600" />
                             <div>
-                              <h4 className="text-lg font-medium text-gray-900 dark:text-white">Current Subscription</h4>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">
+                              <h4 className="text-lg font-medium text-foreground">Current Subscription</h4>
+                              <p className="text-sm text-foreground/60 capitalize">
                                 {subscription.subscription_type} Plan
                               </p>
                             </div>
@@ -2113,20 +2113,20 @@ export default function UserProfilePage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                           <div>
-                            <span className="font-medium text-gray-700 dark:text-gray-300">Monthly Amount:</span>
+                            <span className="font-medium text-foreground/70">Monthly Amount:</span>
                             <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
                               ${subscription.monthly_amount || 0} {subscription.currency || 'USD'}
                             </div>
                           </div>
                           <div>
-                            <span className="font-medium text-gray-700 dark:text-gray-300">Billing Cycle:</span>
-                            <div className="text-gray-900 dark:text-white capitalize">
+                            <span className="font-medium text-foreground/70">Billing Cycle:</span>
+                            <div className="text-foreground capitalize">
                               {subscription.billing_cycle}
                             </div>
                           </div>
                           <div>
-                            <span className="font-medium text-gray-700 dark:text-gray-300">Next Billing:</span>
-                            <div className="text-gray-900 dark:text-white">
+                            <span className="font-medium text-foreground/70">Next Billing:</span>
+                            <div className="text-foreground">
                               {subscription.next_billing_date 
                                 ? new Date(subscription.next_billing_date).toLocaleDateString()
                                 : 'N/A'
@@ -2134,7 +2134,7 @@ export default function UserProfilePage() {
                             </div>
                           </div>
                           <div>
-                            <span className="font-medium text-gray-700 dark:text-gray-300">Payment Failures:</span>
+                            <span className="font-medium text-foreground/70">Payment Failures:</span>
                             <div className={`font-medium ${
                               subscription.payment_failures > 0 
                                 ? 'text-red-600 dark:text-red-400' 
@@ -2148,36 +2148,36 @@ export default function UserProfilePage() {
                     </div>
                   ) : (
                     <div className="text-center py-8">
-                      <CurrencyDollarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500 dark:text-gray-400">No active subscription found</p>
+                      <CurrencyDollar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-foreground/60">No active subscription found</p>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Transaction History */}
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="glass-card">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">Transaction History</h3>
+                  <h3 className="text-lg font-medium text-foreground mb-6">Transaction History</h3>
 
                   {transactions.length > 0 ? (
                     <div className="overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-800">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                               Transaction
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                               Type
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                               Amount
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                               Status
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                               Date
                             </th>
                           </tr>
@@ -2186,17 +2186,17 @@ export default function UserProfilePage() {
                           {transactions.slice(0, 10).map((transaction, index) => (
                             <tr key={`transaction-${transaction.id || index}`} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                <div className="text-sm font-medium text-foreground">
                                   {transaction.description || transaction.invoice_number || `Transaction #${index + 1}`}
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-gray-900 dark:text-white capitalize">
+                                <div className="text-sm text-foreground capitalize">
                                   {transaction.transaction_type || 'payment'}
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                <div className="text-sm font-medium text-foreground">
                                   ${transaction.amount || transaction.total_amount || 0} {transaction.currency || 'USD'}
                                 </div>
                               </td>
@@ -2213,7 +2213,7 @@ export default function UserProfilePage() {
                                   {transaction.status}
                                 </span>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/60">
                                 {new Date(transaction.processed_at || transaction.paid_date || transaction.created_at).toLocaleDateString()}
                               </td>
                             </tr>
@@ -2223,32 +2223,32 @@ export default function UserProfilePage() {
                     </div>
                   ) : (
                     <div className="text-center py-8">
-                      <ClockIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500 dark:text-gray-400">No transaction history available</p>
+                      <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-foreground/60">No transaction history available</p>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Invoices Section */}
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="glass-card">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">Recent Invoices</h3>
+                  <h3 className="text-lg font-medium text-foreground mb-6">Recent Invoices</h3>
 
                   {invoices.length > 0 ? (
                     <div className="space-y-3">
                       {invoices.slice(0, 5).map((invoice, index) => (
-                        <div key={`invoice-${invoice.id || index}`} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <div key={`invoice-${invoice.id || index}`} className="border border-cyan-500/10 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
                               <div className="h-10 w-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                                <span className="text-gray-600 dark:text-gray-400 font-bold text-sm">📄</span>
+                                <span className="text-foreground/60 font-bold text-sm">📄</span>
                               </div>
                               <div>
-                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                <div className="text-sm font-medium text-foreground">
                                   {invoice.invoice_number || `Invoice #${index + 1}`}
                                 </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                <div className="text-xs text-foreground/60">
                                   ${invoice.total_amount || invoice.amount || 0} {invoice.currency || 'USD'}
                                 </div>
                               </div>
@@ -2265,7 +2265,7 @@ export default function UserProfilePage() {
                               } capitalize`}>
                                 {invoice.status}
                               </span>
-                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              <div className="text-xs text-foreground/60 mt-1">
                                 {new Date(invoice.due_date || invoice.created_at).toLocaleDateString()}
                               </div>
                             </div>
@@ -2276,17 +2276,17 @@ export default function UserProfilePage() {
                   ) : (
                     <div className="text-center py-8">
                       <span className="text-4xl mb-4 block">📄</span>
-                      <p className="text-gray-500 dark:text-gray-400">No invoices available</p>
+                      <p className="text-foreground/60">No invoices available</p>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Database Cluster Billing */}
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="glass-card">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6 flex items-center">
-                    <ComputerDesktopIcon className="h-6 w-6 mr-2 text-blue-600" />
+                  <h3 className="text-lg font-medium text-foreground mb-6 flex items-center">
+                    <Desktop className="h-6 w-6 mr-2 text-blue-600" />
                     Database Cluster Billing
                   </h3>
                   
@@ -2323,22 +2323,22 @@ export default function UserProfilePage() {
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                           <thead className="bg-gray-50 dark:bg-gray-800">
                             <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                                 Cluster
                               </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                                 Type
                               </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                                 Billing Status
                               </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                                 Monthly Cost
                               </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                                 Next Billing
                               </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase tracking-wider">
                                 Actions
                               </th>
                             </tr>
@@ -2348,12 +2348,12 @@ export default function UserProfilePage() {
                               <tr key={cluster.id}>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <div className="flex items-center">
-                                    <ComputerDesktopIcon className="h-5 w-5 text-gray-400 mr-3" />
+                                    <Desktop className="h-5 w-5 text-gray-400 mr-3" />
                                     <div>
-                                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                      <div className="text-sm font-medium text-foreground">
                                         {cluster.cluster_key || cluster.name}
                                       </div>
-                                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                                      <div className="text-sm text-foreground/60">
                                         {cluster.region}
                                       </div>
                                     </div>
@@ -2378,10 +2378,10 @@ export default function UserProfilePage() {
                                     {cluster.billing_status || 'Active'}
                                   </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                                   ${cluster.estimated_monthly_cost || 0}/month
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground/60">
                                   {cluster.next_billing_date ? new Date(cluster.next_billing_date).toLocaleDateString() : 'N/A'}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -2404,8 +2404,8 @@ export default function UserProfilePage() {
                       <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h4 className="text-lg font-medium text-gray-900 dark:text-white">Billing Management</h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <h4 className="text-lg font-medium text-foreground">Billing Management</h4>
+                            <p className="text-sm text-foreground/60">
                               Control cluster billing and subscription settings
                             </p>
                           </div>
@@ -2422,9 +2422,9 @@ export default function UserProfilePage() {
                     </div>
                   ) : (
                     <div className="text-center py-12">
-                      <ComputerDesktopIcon className="mx-auto h-12 w-12 text-gray-400" />
-                      <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No cluster billing</h3>
-                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      <Desktop className="mx-auto h-12 w-12 text-gray-400" />
+                      <h3 className="mt-2 text-sm font-medium text-foreground">No cluster billing</h3>
+                      <p className="mt-1 text-sm text-foreground/60">
                         This user does not have any billable clusters assigned.
                       </p>
                     </div>
@@ -2437,27 +2437,27 @@ export default function UserProfilePage() {
           {activeTab === 'account' && enhancedProfile && (
             <div className="space-y-6">
               {/* Account Information */}
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+              <div className="glass-card">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">Account Information</h3>
+                  <h3 className="text-lg font-medium text-foreground mb-6">Account Information</h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Created</label>
-                      <div className="mt-1 text-sm text-gray-900 dark:text-white">
+                      <label className="block text-sm font-medium text-foreground/70">Created</label>
+                      <div className="mt-1 text-sm text-foreground">
                         {new Date(enhancedProfile.created_at).toLocaleDateString()}
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Last Updated</label>
-                      <div className="mt-1 text-sm text-gray-900 dark:text-white">
+                      <label className="block text-sm font-medium text-foreground/70">Last Updated</label>
+                      <div className="mt-1 text-sm text-foreground">
                         {new Date(enhancedProfile.updated_at).toLocaleDateString()}
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">MFA Status</label>
+                      <label className="block text-sm font-medium text-foreground/70">MFA Status</label>
                       <div className="mt-1">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                           enhancedProfile.mfa_enabled
@@ -2470,8 +2470,8 @@ export default function UserProfilePage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Total Sessions</label>
-                      <div className="mt-1 text-sm text-gray-900 dark:text-white">
+                      <label className="block text-sm font-medium text-foreground/70">Total Sessions</label>
+                      <div className="mt-1 text-sm text-foreground">
                         {sessions.active.length + sessions.inactive.length}
                       </div>
                     </div>
@@ -2480,10 +2480,10 @@ export default function UserProfilePage() {
               </div>
 
               {/* Danger Zone */}
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg border-2 border-red-200 dark:border-red-900">
+              <div className="glass-card border-2 border-red-200 dark:border-red-900">
                 <div className="px-4 py-5 sm:p-6">
                   <h3 className="text-lg font-medium text-red-600 dark:text-red-400 mb-2">Danger Zone</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                  <p className="text-sm text-foreground/60 mb-6">
                     Irreversible actions that will affect this user account.
                   </p>
 
@@ -2491,8 +2491,8 @@ export default function UserProfilePage() {
                     {/* BAN User Button */}
                     <div className="flex items-start justify-between p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
                       <div className="flex-1">
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">Ban User Account</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        <h4 className="text-sm font-medium text-foreground">Ban User Account</h4>
+                        <p className="text-sm text-foreground/60 mt-1">
                           Freeze account, revoke licenses/subscriptions, delete clusters and onboarding sessions. User cannot log in.
                         </p>
                       </div>
@@ -2527,8 +2527,8 @@ export default function UserProfilePage() {
                     {/* DELETE User Button */}
                     <div className="flex items-start justify-between p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
                       <div className="flex-1">
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">Delete User Account</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        <h4 className="text-sm font-medium text-foreground">Delete User Account</h4>
+                        <p className="text-sm text-foreground/60 mt-1">
                           Permanently delete user profile, licenses, subscriptions, clusters, onboarding sessions, and all data. Cannot be undone.
                         </p>
                       </div>

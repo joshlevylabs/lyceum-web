@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { KeyIcon, CheckCircleIcon, XCircleIcon, PencilIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
+import { Key, CheckCircle, XCircle, Pencil, ArrowsClockwise } from '@phosphor-icons/react'
 
 interface License {
   id: string
@@ -53,80 +53,84 @@ export default function LocalClusterLicenseManagement() {
   }
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-screen"><ArrowPathIcon className="h-8 w-8 animate-spin text-blue-600" /></div>
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-background">
+        <ArrowsClockwise className="h-8 w-8 animate-spin text-cyan-400" />
+      </div>
+    )
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 flex items-center">
-        <KeyIcon className="h-8 w-8 mr-3 text-blue-600" />
+      <h1 className="text-3xl font-bold mb-8 flex items-center text-foreground">
+        <Key className="h-8 w-8 mr-3 text-cyan-400" weight="duotone" />
         Local Cluster License Management
       </h1>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="glass-card rounded-lg overflow-hidden">
+        <table className="min-w-full divide-y divide-cyan-500/10">
+          <thead className="bg-cyan-500/5">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">License</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Local Cluster</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Limits</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usage</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase">License</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase">User</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase">Type</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase">Local Cluster</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase">Limits</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase">Usage</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-foreground/60 uppercase">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-cyan-500/10">
             {licenses.map((license) => (
-              <tr key={license.id}>
+              <tr key={license.id} className="hover:bg-cyan-500/5 transition-colors">
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-mono font-medium text-gray-900">{license.key_code}</div>
-                  <div className="text-xs text-gray-500">{license.status}</div>
+                  <div className="text-sm font-mono font-medium text-foreground">{license.key_code}</div>
+                  <div className="text-xs text-foreground/60">{license.status}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                   {license.user_email || 'Unassigned'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                  <span className="px-2 py-1 text-xs font-medium rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
                     {license.license_type}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {license.allows_local_cluster ? (
-                    <CheckCircleIcon className="h-5 w-5 text-green-600" />
+                    <CheckCircle className="h-5 w-5 text-emerald-400" weight="duotone" />
                   ) : (
-                    <XCircleIcon className="h-5 w-5 text-gray-400" />
+                    <XCircle className="h-5 w-5 text-foreground/40" />
                   )}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">
                   {license.local_cluster_limits ? (
                     <div>
                       <div>{license.local_cluster_limits.max_storage_gb} GB</div>
-                      <div className="text-xs text-gray-500">{(license.local_cluster_limits.max_monthly_queries / 1000000).toFixed(1)}M queries</div>
+                      <div className="text-xs text-foreground/60">{(license.local_cluster_limits.max_monthly_queries / 1000000).toFixed(1)}M queries</div>
                     </div>
                   ) : (
-                    <span className="text-gray-400">-</span>
+                    <span className="text-foreground/40">-</span>
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   {license.current_usage ? (
                     <div>
-                      <div>{license.current_usage.storage_used_gb.toFixed(1)} GB</div>
-                      <div className="text-xs text-gray-500">{(license.current_usage.queries_this_month / 1000).toFixed(0)}K queries</div>
+                      <div className="text-foreground">{license.current_usage.storage_used_gb.toFixed(1)} GB</div>
+                      <div className="text-xs text-foreground/60">{(license.current_usage.queries_this_month / 1000).toFixed(0)}K queries</div>
                     </div>
                   ) : (
-                    <span className="text-gray-400">No usage</span>
+                    <span className="text-foreground/40">No usage</span>
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <button
                     onClick={() => toggleLocalCluster(license.id, license.allows_local_cluster)}
-                    className="text-blue-600 hover:text-blue-800 mr-3"
+                    className="text-cyan-400 hover:text-cyan-300 mr-3 transition-colors"
                   >
                     {license.allows_local_cluster ? 'Disable' : 'Enable'}
                   </button>
-                  <button className="text-gray-600 hover:text-gray-800">
-                    <PencilIcon className="h-4 w-4" />
+                  <button className="text-foreground/60 hover:text-cyan-400 transition-colors">
+                    <Pencil className="h-4 w-4" />
                   </button>
                 </td>
               </tr>

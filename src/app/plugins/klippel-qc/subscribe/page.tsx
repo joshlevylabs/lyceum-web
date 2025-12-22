@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/DashboardLayout'
 import {
-  CheckCircleIcon,
-  XMarkIcon,
-  SparklesIcon,
-  RocketLaunchIcon,
-  ClockIcon
-} from '@heroicons/react/24/outline'
+  CheckCircle,
+  X,
+  Sparkle,
+  Rocket,
+  Clock
+} from '@phosphor-icons/react'
 
 interface License {
   id: string
@@ -174,7 +174,7 @@ export default function KlippelQCSubscribePage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-cyan-500/20 border-t-cyan-500"></div>
         </div>
       </DashboardLayout>
     )
@@ -184,20 +184,20 @@ export default function KlippelQCSubscribePage() {
     <DashboardLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="text-4xl font-bold text-foreground mb-4">
             Subscribe to Klippel QC Plugin
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+          <p className="text-lg text-foreground/60 max-w-3xl mx-auto">
             Unlock powerful Klippel QC analysis capabilities with quality control reporting and data export features.
           </p>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="max-w-2xl mx-auto mb-8 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div className="max-w-2xl mx-auto mb-8 bg-red-500/10 border border-red-500/20 rounded-lg p-4">
             <div className="flex">
-              <XMarkIcon className="h-5 w-5 text-red-400 mr-3" />
-              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+              <X className="h-5 w-5 text-red-400 mr-3" weight="bold" />
+              <p className="text-sm text-red-400">{error}</p>
             </div>
           </div>
         )}
@@ -209,7 +209,7 @@ export default function KlippelQCSubscribePage() {
             <div className="p-8">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
-                  <SparklesIcon className="h-8 w-8 text-yellow-500" />
+                  <Sparkle className="h-8 w-8 text-yellow-500" />
                   <h3 className="ml-3 text-2xl font-bold text-gray-900 dark:text-white">
                     Free Trial
                   </h3>
@@ -228,37 +228,37 @@ export default function KlippelQCSubscribePage() {
 
               <ul className="space-y-4 mb-8">
                 <li className="flex items-start">
-                  <CheckCircleIcon className="h-6 w-6 text-green-500 mr-3 flex-shrink-0" />
+                  <CheckCircle className="h-6 w-6 text-green-500 mr-3 flex-shrink-0" />
                   <span className="text-gray-700 dark:text-gray-300">
                     Full access to Klippel QC analysis
                   </span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircleIcon className="h-6 w-6 text-green-500 mr-3 flex-shrink-0" />
+                  <CheckCircle className="h-6 w-6 text-green-500 mr-3 flex-shrink-0" />
                   <span className="text-gray-700 dark:text-gray-300">
                     Quality control reporting
                   </span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircleIcon className="h-6 w-6 text-green-500 mr-3 flex-shrink-0" />
+                  <CheckCircle className="h-6 w-6 text-green-500 mr-3 flex-shrink-0" />
                   <span className="text-gray-700 dark:text-gray-300">
                     Data export capabilities
                   </span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircleIcon className="h-6 w-6 text-green-500 mr-3 flex-shrink-0" />
+                  <CheckCircle className="h-6 w-6 text-green-500 mr-3 flex-shrink-0" />
                   <span className="text-gray-700 dark:text-gray-300">
                     Integration with main app
                   </span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircleIcon className="h-6 w-6 text-green-500 mr-3 flex-shrink-0" />
+                  <CheckCircle className="h-6 w-6 text-green-500 mr-3 flex-shrink-0" />
                   <span className="text-gray-700 dark:text-gray-300">
                     Community support
                   </span>
                 </li>
                 <li className="flex items-start">
-                  <ClockIcon className="h-6 w-6 text-yellow-500 mr-3 flex-shrink-0" />
+                  <Clock className="h-6 w-6 text-yellow-500 mr-3 flex-shrink-0" />
                   <span className="text-gray-700 dark:text-gray-300">
                     30-day trial period
                   </span>
@@ -277,7 +277,7 @@ export default function KlippelQCSubscribePage() {
                   </>
                 ) : (
                   <>
-                    <SparklesIcon className="h-5 w-5 mr-2" />
+                    <Sparkle className="h-5 w-5 mr-2" />
                     Start Free Trial
                   </>
                 )}
@@ -295,7 +295,7 @@ export default function KlippelQCSubscribePage() {
 
             <div className="p-8">
               <div className="flex items-center mb-4">
-                <RocketLaunchIcon className="h-8 w-8 text-white" />
+                <Rocket className="h-8 w-8 text-white" />
                 <h3 className="ml-3 text-2xl font-bold text-white">
                   Paid Subscription
                 </h3>
@@ -311,25 +311,25 @@ export default function KlippelQCSubscribePage() {
 
               <ul className="space-y-4 mb-8">
                 <li className="flex items-start">
-                  <CheckCircleIcon className="h-6 w-6 text-green-300 mr-3 flex-shrink-0" />
+                  <CheckCircle className="h-6 w-6 text-green-300 mr-3 flex-shrink-0" />
                   <span className="text-white">
                     Everything in Free Trial
                   </span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircleIcon className="h-6 w-6 text-green-300 mr-3 flex-shrink-0" />
+                  <CheckCircle className="h-6 w-6 text-green-300 mr-3 flex-shrink-0" />
                   <span className="text-white">
                     Priority support
                   </span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircleIcon className="h-6 w-6 text-green-300 mr-3 flex-shrink-0" />
+                  <CheckCircle className="h-6 w-6 text-green-300 mr-3 flex-shrink-0" />
                   <span className="text-white">
                     Advanced quality control features
                   </span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircleIcon className="h-6 w-6 text-green-300 mr-3 flex-shrink-0" />
+                  <CheckCircle className="h-6 w-6 text-green-300 mr-3 flex-shrink-0" />
                   <span className="text-white">
                     Unlimited data exports
                   </span>
@@ -356,7 +356,7 @@ export default function KlippelQCSubscribePage() {
                   </>
                 ) : (
                   <>
-                    <RocketLaunchIcon className="h-5 w-5 mr-2" />
+                    <Rocket className="h-5 w-5 mr-2" />
                     Subscribe Now
                   </>
                 )}

@@ -2,18 +2,19 @@
 
 import { useState, useEffect } from 'react'
 import {
-  UsersIcon,
-  KeyIcon,
-  CircleStackIcon,
-  ChartBarIcon,
-  ServerIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  AcademicCapIcon,
-  CalendarIcon,
-  UserIcon
-} from '@heroicons/react/24/outline'
+  Users,
+  Key,
+  Database,
+  ChartBar,
+  HardDrives,
+  Warning,
+  CheckCircle,
+  Clock,
+  GraduationCap,
+  Calendar,
+  User,
+  ArrowsClockwise
+} from '@phosphor-icons/react'
 
 interface DashboardStats {
   totalUsers: number
@@ -146,67 +147,63 @@ export default function AdminDashboard() {
       name: 'Total Users',
       value: stats.totalUsers,
       subtext: `${stats.activeUsers} active`,
-      icon: UsersIcon,
-      color: 'bg-blue-500',
+      icon: Users,
       href: '/admin/users'
     },
     {
       name: 'License Keys',
       value: stats.totalLicenses,
       subtext: `${stats.activeLicenses} active`,
-      icon: KeyIcon,
-      color: 'bg-green-500',
+      icon: Key,
       href: '/admin/licenses'
     },
     {
       name: 'Database Clusters',
       value: stats.totalClusters,
       subtext: `${stats.healthyClusters} healthy`,
-      icon: CircleStackIcon,
-      color: 'bg-purple-500',
+      icon: Database,
       href: '/admin/clusters'
     },
     {
       name: 'Pending Onboarding',
       value: stats.pendingOnboarding,
       subtext: 'users waiting',
-      icon: ClockIcon,
-      color: 'bg-orange-500',
+      icon: Clock,
       href: '/admin/onboarding'
     }
   ]
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'user': return UsersIcon
-      case 'license': return KeyIcon
-      case 'cluster': return ServerIcon
-      case 'onboarding': return CheckCircleIcon
-      default: return ChartBarIcon
+      case 'user': return Users
+      case 'license': return Key
+      case 'cluster': return HardDrives
+      case 'onboarding': return CheckCircle
+      default: return ChartBar
     }
   }
 
   const getActivityColor = (type: string) => {
     switch (type) {
-      case 'user': return 'text-blue-600'
-      case 'license': return 'text-green-600'
-      case 'cluster': return 'text-purple-600'
-      case 'onboarding': return 'text-orange-600'
-      default: return 'text-gray-600'
+      case 'user': return 'text-cyan-400'
+      case 'license': return 'text-emerald-400'
+      case 'cluster': return 'text-cyan-400'
+      case 'onboarding': return 'text-cyan-400'
+      default: return 'text-foreground/60'
     }
   }
 
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+        <h1 className="text-2xl font-bold text-foreground">Admin Dashboard</h1>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white overflow-hidden shadow rounded-lg animate-pulse">
+            <div key={i} className="glass-card overflow-hidden animate-pulse">
               <div className="p-5">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-8 bg-gray-200 rounded w-1/2 mb-1"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                <div className="h-4 bg-cyan-500/10 rounded w-3/4 mb-2"></div>
+                <div className="h-8 bg-cyan-500/10 rounded w-1/2 mb-1"></div>
+                <div className="h-3 bg-cyan-500/10 rounded w-1/3"></div>
               </div>
             </div>
           ))}
@@ -220,19 +217,20 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="md:flex md:items-center md:justify-between">
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+          <h1 className="text-2xl font-bold leading-7 text-foreground sm:text-3xl sm:truncate">
             Admin Dashboard
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-foreground/60">
             Platform overview and management center
           </p>
         </div>
-        
+
         <div className="mt-4 flex md:mt-0 md:ml-4">
           <button
             onClick={loadDashboardData}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            className="btn-ghost inline-flex items-center"
           >
+            <ArrowsClockwise className="h-5 w-5 mr-2" weight="regular" />
             Refresh
           </button>
         </div>
@@ -243,27 +241,23 @@ export default function AdminDashboard() {
         {statCards.map((card) => {
           const Icon = card.icon
           return (
-            <div key={card.name} className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow cursor-pointer">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className={`w-8 h-8 ${card.color} rounded-md flex items-center justify-center`}>
-                      <Icon className="w-5 h-5 text-white" />
-                    </div>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        {card.name}
-                      </dt>
-                      <dd className="text-lg font-semibold text-gray-900">
-                        {card.value.toLocaleString()}
-                      </dd>
-                      <dd className="text-sm text-gray-500">
-                        {card.subtext}
-                      </dd>
-                    </dl>
-                  </div>
+            <div key={card.name} className="glass-card overflow-hidden p-5 cursor-pointer">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                  <Icon className="h-6 w-6 text-cyan-400" weight="duotone" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="truncate text-sm font-medium text-foreground/60">
+                      {card.name}
+                    </dt>
+                    <dd className="mt-1 text-3xl font-bold tracking-tight text-gradient-cyan">
+                      {card.value.toLocaleString()}
+                    </dd>
+                    <dd className="text-sm text-foreground/60">
+                      {card.subtext}
+                    </dd>
+                  </dl>
                 </div>
               </div>
             </div>
@@ -274,66 +268,66 @@ export default function AdminDashboard() {
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Activity */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
+        <div className="glass-card">
+          <div className="px-6 py-4 border-b border-cyan-500/10">
+            <h3 className="text-lg font-medium text-foreground">Recent Activity</h3>
           </div>
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-cyan-500/10">
             {stats.recentActivity.map((activity) => {
               const Icon = getActivityIcon(activity.type)
               return (
                 <div key={`activity-${activity.id}`} className="px-6 py-4 flex items-center space-x-3">
                   <div className={`flex-shrink-0 w-2 h-2 rounded-full ${getActivityColor(activity.type).replace('text-', 'bg-')}`} />
-                  <Icon className={`flex-shrink-0 w-5 h-5 ${getActivityColor(activity.type)}`} />
+                  <Icon className={`flex-shrink-0 w-5 h-5 ${getActivityColor(activity.type)}`} weight="duotone" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-medium text-foreground truncate">
                       {activity.action}
                     </p>
-                    <p className="text-sm text-gray-500 truncate">
+                    <p className="text-sm text-foreground/60 truncate">
                       {activity.user || activity.cluster}
                     </p>
                   </div>
-                  <div className="flex-shrink-0 text-sm text-gray-500">
+                  <div className="flex-shrink-0 text-sm text-foreground/60">
                     {activity.time}
                   </div>
                 </div>
               )
             })}
           </div>
-          <div className="px-6 py-4 border-t border-gray-200">
-            <a href="/admin/analytics" className="text-sm font-medium text-blue-600 hover:text-blue-500">
+          <div className="px-6 py-4 border-t border-cyan-500/10">
+            <a href="/admin/analytics" className="text-sm font-medium text-cyan-400 hover:text-cyan-300">
               View all activity →
             </a>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Quick Actions</h3>
+        <div className="glass-card">
+          <div className="px-6 py-4 border-b border-cyan-500/10">
+            <h3 className="text-lg font-medium text-foreground">Quick Actions</h3>
           </div>
           <div className="p-6 space-y-4">
             <a
               href="/admin/licenses/create"
-              className="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+              className="btn-primary block w-full text-center"
             >
               Create License Key
             </a>
             <a
               href="/admin/clusters/create"
-              className="block w-full bg-green-600 text-white text-center py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
+              className="btn-ghost block w-full text-center"
             >
               Create Database Cluster
             </a>
             <a
               href="/admin/users"
-              className="block w-full bg-gray-600 text-white text-center py-2 px-4 rounded-md hover:bg-gray-700 transition-colors"
+              className="btn-ghost block w-full text-center"
             >
               Manage Users
             </a>
             <a
               href="/admin/onboarding"
-              className="block w-full bg-orange-600 text-white text-center py-2 px-4 rounded-md hover:bg-orange-700 transition-colors"
+              className="btn-ghost block w-full text-center"
             >
               Review Onboarding
             </a>
@@ -342,67 +336,67 @@ export default function AdminDashboard() {
       </div>
 
       {/* Upcoming Onboarding Sessions */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
+      <div className="glass-card">
+        <div className="px-6 py-4 border-b border-cyan-500/10">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-gray-900 flex items-center">
-              <AcademicCapIcon className="w-5 h-5 mr-2 text-blue-600" />
+            <h3 className="text-lg font-medium text-foreground flex items-center">
+              <GraduationCap className="w-5 h-5 mr-2 text-cyan-400" weight="duotone" />
               Upcoming Onboarding Sessions
             </h3>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-foreground/60">
               {upcomingSessions.length} sessions scheduled
             </span>
           </div>
         </div>
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-cyan-500/10">
           {loadingSessions ? (
             <div className="px-6 py-12 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-sm text-gray-500">Loading sessions...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-cyan-500/20 border-t-cyan-500 mx-auto"></div>
+              <p className="mt-2 text-sm text-foreground/60">Loading sessions...</p>
             </div>
           ) : upcomingSessions.length === 0 ? (
             <div className="px-6 py-12 text-center">
-              <AcademicCapIcon className="w-12 h-12 text-gray-400 mx-auto" />
-              <p className="mt-2 text-sm text-gray-500">No upcoming sessions scheduled</p>
+              <GraduationCap className="w-12 h-12 text-foreground/40 mx-auto" weight="duotone" />
+              <p className="mt-2 text-sm text-foreground/60">No upcoming sessions scheduled</p>
             </div>
           ) : (
             <>
               {upcomingSessions.slice(0, 5).map((session) => (
                 <div key={`session-${session.id}`} className="px-6 py-4 flex items-center space-x-3">
                   <div className={`flex-shrink-0 w-2 h-2 rounded-full ${
-                    session.is_mandatory ? 'bg-red-500' : 'bg-blue-500'
+                    session.is_mandatory ? 'bg-red-500' : 'bg-cyan-500'
                   }`} />
-                  <CalendarIcon className="flex-shrink-0 w-5 h-5 text-gray-400" />
+                  <Calendar className="flex-shrink-0 w-5 h-5 text-foreground/40" weight="regular" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-medium text-foreground truncate">
                       {session.title}
                     </p>
-                    <p className="text-sm text-gray-500 truncate flex items-center">
-                      <UserIcon className="w-4 h-4 mr-1" />
+                    <p className="text-sm text-foreground/60 truncate flex items-center">
+                      <User className="w-4 h-4 mr-1" weight="regular" />
                       {session.user_profiles?.full_name || session.user_profiles?.email || 'Unknown User'}
                       {session.license_keys && (
-                        <span className="ml-2 px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">
+                        <span className="ml-2 px-2 py-1 text-xs bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded">
                           {session.license_keys.key_code}
                         </span>
                       )}
                     </p>
                   </div>
                   <div className="flex-shrink-0 text-right">
-                    <p className="text-sm text-gray-900">
+                    <p className="text-sm text-foreground">
                       {new Date(session.scheduled_at).toLocaleDateString()}
                     </p>
-                    <p className="text-sm text-gray-500">
-                      {new Date(session.scheduled_at).toLocaleTimeString([], { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
+                    <p className="text-sm text-foreground/60">
+                      {new Date(session.scheduled_at).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit'
                       })}
                     </p>
                   </div>
                   <div className="flex-shrink-0">
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      session.is_mandatory 
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-blue-100 text-blue-800'
+                      session.is_mandatory
+                        ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                        : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
                     }`}>
                       {session.is_mandatory ? 'Required' : 'Optional'}
                     </span>
@@ -410,8 +404,8 @@ export default function AdminDashboard() {
                 </div>
               ))}
               {upcomingSessions.length > 5 && (
-                <div className="px-6 py-4 border-t border-gray-200 text-center">
-                  <p className="text-sm text-gray-500">
+                <div className="px-6 py-4 border-t border-cyan-500/10 text-center">
+                  <p className="text-sm text-foreground/60">
                     And {upcomingSessions.length - 5} more sessions...
                   </p>
                 </div>
@@ -419,31 +413,31 @@ export default function AdminDashboard() {
             </>
           )}
         </div>
-        <div className="px-6 py-4 border-t border-gray-200">
-          <a href="/admin/onboarding" className="text-sm font-medium text-blue-600 hover:text-blue-500">
+        <div className="px-6 py-4 border-t border-cyan-500/10">
+          <a href="/admin/onboarding" className="text-sm font-medium text-cyan-400 hover:text-cyan-300">
             Manage all sessions →
           </a>
         </div>
       </div>
 
       {/* System Status */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">System Status</h3>
+      <div className="glass-card">
+        <div className="px-6 py-4 border-b border-cyan-500/10">
+          <h3 className="text-lg font-medium text-foreground">System Status</h3>
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-center">
-              <CheckCircleIcon className="w-5 h-5 text-green-500 mr-2" />
-              <span className="text-sm text-gray-900">Database: Healthy</span>
+              <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" weight="duotone" />
+              <span className="text-sm text-foreground">Database: Healthy</span>
             </div>
             <div className="flex items-center">
-              <CheckCircleIcon className="w-5 h-5 text-green-500 mr-2" />
-              <span className="text-sm text-gray-900">API: Operational</span>
+              <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" weight="duotone" />
+              <span className="text-sm text-foreground">API: Operational</span>
             </div>
             <div className="flex items-center">
-              <CheckCircleIcon className="w-5 h-5 text-green-500 mr-2" />
-              <span className="text-sm text-gray-900">Storage: Available</span>
+              <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" weight="duotone" />
+              <span className="text-sm text-foreground">Storage: Available</span>
             </div>
           </div>
         </div>

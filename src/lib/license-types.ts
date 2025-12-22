@@ -482,7 +482,7 @@ export const PLUGIN_CONFIGURATIONS: Record<string, any> = {
       }
     }
   },
-  
+
   'apx500': {
     name: 'APx500',
     description: 'Audio analyzer integration plugin',
@@ -510,6 +510,186 @@ export const PLUGIN_CONFIGURATIONS: Record<string, any> = {
         max_measurements_per_session: null, // unlimited
         concurrent_analyzers: null, // unlimited
         export_formats: ['wav', 'csv', 'json', 'xml', 'matlab', 'python']
+      }
+    }
+  },
+
+  'preen-psu': {
+    name: 'Preen PSU',
+    description: 'Preen programmable power supply control and monitoring',
+    default_version: '1.0.0',
+    features: {
+      plugin_access: true,
+      preen_psu_control: true,
+      preen_psu_monitoring: true,
+      preen_psu_sequencing: true,
+      data_integration: true
+    },
+    license_tiers: {
+      standard: {
+        max_power_supplies: 2,
+        sequence_length: 50,
+        data_logging_days: 30
+      },
+      professional: {
+        max_power_supplies: 8,
+        sequence_length: 200,
+        data_logging_days: 180
+      },
+      enterprise: {
+        max_power_supplies: null, // unlimited
+        sequence_length: null, // unlimited
+        data_logging_days: null // unlimited
+      }
+    }
+  },
+
+  'keysight-daq': {
+    name: 'Keysight DAQ',
+    description: 'Data acquisition from Keysight instruments',
+    default_version: '1.0.0',
+    features: {
+      plugin_access: true,
+      keysight_daq_acquisition: true,
+      keysight_daq_analysis: true,
+      keysight_daq_export: true,
+      data_integration: true
+    },
+    license_tiers: {
+      standard: {
+        max_channels: 16,
+        sample_rate_khz: 100,
+        continuous_streaming: false
+      },
+      professional: {
+        max_channels: 64,
+        sample_rate_khz: 500,
+        continuous_streaming: true
+      },
+      enterprise: {
+        max_channels: null, // unlimited
+        sample_rate_khz: null, // unlimited
+        continuous_streaming: true
+      }
+    }
+  },
+
+  'kwikwai': {
+    name: 'Kwikwai K110',
+    description: 'HDMI test and measurement integration',
+    default_version: '1.0.0',
+    features: {
+      plugin_access: true,
+      kwikwai_hdmi_testing: true,
+      kwikwai_compliance: true,
+      kwikwai_reporting: true,
+      data_integration: true
+    },
+    license_tiers: {
+      standard: {
+        resolution_support: '4K',
+        compliance_reports: 10,
+        automated_testing: false
+      },
+      professional: {
+        resolution_support: '8K',
+        compliance_reports: 100,
+        automated_testing: true
+      },
+      enterprise: {
+        resolution_support: '8K+',
+        compliance_reports: null, // unlimited
+        automated_testing: true
+      }
+    }
+  },
+
+  'grl-pd': {
+    name: 'GRL PD',
+    description: 'USB Power Delivery compliance testing with Granite River Labs',
+    default_version: '1.0.0',
+    features: {
+      plugin_access: true,
+      grl_pd_testing: true,
+      grl_pd_compliance: true,
+      grl_pd_certification: true,
+      data_integration: true
+    },
+    license_tiers: {
+      standard: {
+        pd_spec_versions: ['PD 2.0', 'PD 3.0'],
+        test_profiles: 10,
+        certification_prep: false
+      },
+      professional: {
+        pd_spec_versions: ['PD 2.0', 'PD 3.0', 'PD 3.1'],
+        test_profiles: 50,
+        certification_prep: true
+      },
+      enterprise: {
+        pd_spec_versions: ['PD 2.0', 'PD 3.0', 'PD 3.1', 'EPR'],
+        test_profiles: null, // unlimited
+        certification_prep: true
+      }
+    }
+  },
+
+  'sifos-poe': {
+    name: 'Sifos PoE',
+    description: 'Power over Ethernet test automation with Sifos analyzers',
+    default_version: '1.0.0',
+    features: {
+      plugin_access: true,
+      sifos_poe_testing: true,
+      sifos_poe_compliance: true,
+      sifos_poe_protocol: true,
+      data_integration: true
+    },
+    license_tiers: {
+      standard: {
+        poe_standards: ['802.3af', '802.3at'],
+        max_ports_tested: 8,
+        automated_sequences: 5
+      },
+      professional: {
+        poe_standards: ['802.3af', '802.3at', '802.3bt'],
+        max_ports_tested: 24,
+        automated_sequences: 25
+      },
+      enterprise: {
+        poe_standards: ['802.3af', '802.3at', '802.3bt', '802.3bt Type 4'],
+        max_ports_tested: null, // unlimited
+        automated_sequences: null // unlimited
+      }
+    }
+  },
+
+  'time-machines': {
+    name: 'Time Machines Grandmaster',
+    description: 'GPS-synchronized precision timing and synchronization testing',
+    default_version: '1.0.0',
+    features: {
+      plugin_access: true,
+      time_machines_sync: true,
+      time_machines_timestamp: true,
+      time_machines_ptp: true,
+      data_integration: true
+    },
+    license_tiers: {
+      standard: {
+        timing_accuracy_ns: 100,
+        ptp_profiles: ['default'],
+        multi_domain: false
+      },
+      professional: {
+        timing_accuracy_ns: 10,
+        ptp_profiles: ['default', 'telecom', 'power'],
+        multi_domain: true
+      },
+      enterprise: {
+        timing_accuracy_ns: 1,
+        ptp_profiles: ['default', 'telecom', 'power', 'automotive', 'custom'],
+        multi_domain: true
       }
     }
   }
@@ -552,6 +732,30 @@ export const PLUGIN_REQUIRED_FEATURES: Record<string, { required: string[], opti
   'ssj-blue': {
     required: ['plugin_access', 'data_integration'],
     optional: ['ssj_blue_analysis', 'ssj_blue_export']
+  },
+  'preen_psu': {
+    required: ['plugin_access', 'preen_psu_control'],
+    optional: ['preen_psu_monitoring', 'preen_psu_sequencing', 'data_integration']
+  },
+  'keysight_daq': {
+    required: ['plugin_access', 'keysight_daq_acquisition'],
+    optional: ['keysight_daq_analysis', 'keysight_daq_export', 'data_integration']
+  },
+  'kwikwai': {
+    required: ['plugin_access', 'kwikwai_hdmi_testing'],
+    optional: ['kwikwai_compliance', 'kwikwai_reporting', 'data_integration']
+  },
+  'grl_pd': {
+    required: ['plugin_access', 'grl_pd_testing'],
+    optional: ['grl_pd_compliance', 'grl_pd_certification', 'data_integration']
+  },
+  'sifos_poe': {
+    required: ['plugin_access', 'sifos_poe_testing'],
+    optional: ['sifos_poe_compliance', 'sifos_poe_protocol', 'data_integration']
+  },
+  'time_machines': {
+    required: ['plugin_access', 'time_machines_sync'],
+    optional: ['time_machines_timestamp', 'time_machines_ptp', 'data_integration']
   }
 }
 
