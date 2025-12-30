@@ -97,7 +97,7 @@ export function FeaturesDeepDive() {
                   </div>
                 </motion.div>
 
-                {/* Visual side - placeholder */}
+                {/* Visual side - video */}
                 <motion.div
                   className="flex-1 w-full"
                   variants={isEven ? slideInRight : slideInLeft}
@@ -106,14 +106,26 @@ export function FeaturesDeepDive() {
                     {/* Glow effect */}
                     <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-purple-500/20 blur-3xl opacity-30 scale-90" />
 
-                    {/* Feature illustration placeholder */}
-                    <div className="relative glass-card aspect-[4/3] flex items-center justify-center overflow-hidden">
+                    {/* Feature video */}
+                    <div className="relative glass-card aspect-[4/3] overflow-hidden">
                       <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5" />
-                      <div className="text-center z-10">
-                        <Icon className="w-20 h-20 text-foreground/10 mx-auto mb-4" />
-                        <p className="text-foreground/30 text-sm">Feature illustration</p>
-                        <p className="text-foreground/20 text-xs mt-1">{feature.name}</p>
-                      </div>
+                      {feature.video ? (
+                        <video
+                          className="w-full h-full object-cover"
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                        >
+                          <source src={feature.video} type="video/mp4" />
+                        </video>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-center z-10">
+                          <Icon className="w-20 h-20 text-foreground/10 mx-auto mb-4" />
+                          <p className="text-foreground/30 text-sm">Feature illustration</p>
+                          <p className="text-foreground/20 text-xs mt-1">{feature.name}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </motion.div>

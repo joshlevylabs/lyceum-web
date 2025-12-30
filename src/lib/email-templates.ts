@@ -318,6 +318,181 @@ export function userInviteTemplate(inviteUrl: string, invitedBy: string = 'Your 
 /**
  * Welcome email template (sent after successful verification)
  */
+/**
+ * Demo booking notification template (for admin)
+ */
+export function demoBookingNotificationTemplate(bookingDetails: {
+  guestName?: string
+  guestEmail: string
+  guestCompany?: string
+  scheduledDate: string
+  scheduledTime: string
+  meetingPlatform: string
+  meetingLink?: string
+}): string {
+  const { guestName, guestEmail, guestCompany, scheduledDate, scheduledTime, meetingPlatform, meetingLink } = bookingDetails
+
+  return baseTemplate({
+    title: 'New Demo Scheduled',
+    preheader: `${guestName || guestEmail} has scheduled a demo`,
+    content: `
+      <p style="margin: 0 0 16px 0; font-size: 16px; color: #374151;">
+        A new demo has been scheduled through the Lyceum website.
+      </p>
+
+      <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 16px; margin: 24px 0; border-radius: 4px;">
+        <p style="margin: 0; font-size: 14px; color: #166534; font-weight: 500;">
+          📅 New Demo Request
+        </p>
+      </div>
+
+      <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; padding: 20px; margin: 24px 0; border-radius: 8px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="padding-bottom: 12px;">
+              <p style="margin: 0; font-size: 14px; color: #6b7280;">Guest Name</p>
+              <p style="margin: 4px 0 0 0; font-size: 16px; color: #111827; font-weight: 600;">${guestName || 'Not provided'}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-bottom: 12px;">
+              <p style="margin: 0; font-size: 14px; color: #6b7280;">Email</p>
+              <p style="margin: 4px 0 0 0; font-size: 16px; color: #111827; font-weight: 600;">
+                <a href="mailto:${guestEmail}" style="color: ${LYCEUM_BRAND_COLOR}; text-decoration: none;">${guestEmail}</a>
+              </p>
+            </td>
+          </tr>
+          ${guestCompany ? `
+          <tr>
+            <td style="padding-bottom: 12px;">
+              <p style="margin: 0; font-size: 14px; color: #6b7280;">Company</p>
+              <p style="margin: 4px 0 0 0; font-size: 16px; color: #111827; font-weight: 600;">${guestCompany}</p>
+            </td>
+          </tr>
+          ` : ''}
+          <tr>
+            <td style="padding-bottom: 12px;">
+              <p style="margin: 0; font-size: 14px; color: #6b7280;">Date</p>
+              <p style="margin: 4px 0 0 0; font-size: 16px; color: #111827; font-weight: 600;">${scheduledDate}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-bottom: 12px;">
+              <p style="margin: 0; font-size: 14px; color: #6b7280;">Time</p>
+              <p style="margin: 4px 0 0 0; font-size: 16px; color: #111827; font-weight: 600;">${scheduledTime}</p>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <p style="margin: 0; font-size: 14px; color: #6b7280;">Platform</p>
+              <p style="margin: 4px 0 0 0; font-size: 16px; color: #111827; font-weight: 600;">${meetingPlatform}</p>
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      ${meetingLink ? `
+      <div style="background-color: #eff6ff; border-left: 4px solid ${LYCEUM_BRAND_COLOR}; padding: 16px; margin: 24px 0; border-radius: 4px;">
+        <p style="margin: 0; font-size: 14px; color: #1e40af; font-weight: 500;">
+          🔗 Meeting Link: <a href="${meetingLink}" style="color: ${LYCEUM_BRAND_COLOR};">${meetingLink}</a>
+        </p>
+      </div>
+      ` : ''}
+
+      <p style="margin: 24px 0 0 0; font-size: 14px; color: #6b7280;">
+        Please ensure you're available at the scheduled time. Consider sending a calendar invite to the guest.
+      </p>
+    `,
+    footerText: 'This is an automated notification from Lyceum.'
+  })
+}
+
+/**
+ * Demo confirmation template (for guest)
+ */
+export function demoConfirmationTemplate(bookingDetails: {
+  guestName?: string
+  scheduledDate: string
+  scheduledTime: string
+  meetingPlatform: string
+  meetingLink?: string
+  adminName?: string
+}): string {
+  const { guestName, scheduledDate, scheduledTime, meetingPlatform, meetingLink, adminName } = bookingDetails
+
+  return baseTemplate({
+    title: 'Demo Confirmed',
+    preheader: `Your Lyceum demo is scheduled for ${scheduledDate}`,
+    content: `
+      <p style="margin: 0 0 16px 0; font-size: 16px; color: #374151;">
+        Hi ${guestName || 'there'},
+      </p>
+      <p style="margin: 0 0 16px 0; font-size: 16px; color: #374151;">
+        Thank you for scheduling a demo with Lyceum! We're excited to show you how Lyceum can transform your measurement data workflow.
+      </p>
+
+      <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 16px; margin: 24px 0; border-radius: 4px;">
+        <p style="margin: 0; font-size: 14px; color: #166534; font-weight: 500;">
+          ✅ Your demo has been confirmed!
+        </p>
+      </div>
+
+      <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; padding: 20px; margin: 24px 0; border-radius: 8px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="padding-bottom: 12px;">
+              <p style="margin: 0; font-size: 14px; color: #6b7280;">📅 Date</p>
+              <p style="margin: 4px 0 0 0; font-size: 18px; color: #111827; font-weight: 600;">${scheduledDate}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-bottom: 12px;">
+              <p style="margin: 0; font-size: 14px; color: #6b7280;">🕐 Time</p>
+              <p style="margin: 4px 0 0 0; font-size: 18px; color: #111827; font-weight: 600;">${scheduledTime}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-bottom: 12px;">
+              <p style="margin: 0; font-size: 14px; color: #6b7280;">💻 Platform</p>
+              <p style="margin: 4px 0 0 0; font-size: 16px; color: #111827; font-weight: 600;">${meetingPlatform}</p>
+            </td>
+          </tr>
+          ${adminName ? `
+          <tr>
+            <td>
+              <p style="margin: 0; font-size: 14px; color: #6b7280;">👤 Meeting With</p>
+              <p style="margin: 4px 0 0 0; font-size: 16px; color: #111827; font-weight: 600;">${adminName}</p>
+            </td>
+          </tr>
+          ` : ''}
+        </table>
+      </div>
+
+      ${meetingLink ? `
+      <p style="margin: 0 0 16px 0; font-size: 16px; color: #374151;">
+        Join the meeting using this link:
+      </p>
+      ` : `
+      <p style="margin: 0 0 16px 0; font-size: 16px; color: #374151;">
+        You'll receive a meeting link before your scheduled demo.
+      </p>
+      `}
+
+      <div style="background-color: #eff6ff; border-left: 4px solid ${LYCEUM_BRAND_COLOR}; padding: 16px; margin: 24px 0; border-radius: 4px;">
+        <p style="margin: 0; font-size: 14px; color: #1e40af; font-weight: 500;">
+          💡 Pro tip: Have your measurement data questions ready – we'd love to show you how Lyceum can help with your specific use cases!
+        </p>
+      </div>
+    `,
+    actionUrl: meetingLink,
+    actionText: meetingLink ? 'Join Meeting' : undefined,
+    footerText: 'Need to reschedule? Please contact us at josh@thelyceum.io'
+  })
+}
+
+/**
+ * Welcome email template (sent after successful verification)
+ */
 export function welcomeTemplate(dashboardUrl: string, userName: string = 'there'): string {
   return baseTemplate({
     title: 'Welcome to Lyceum!',

@@ -5,85 +5,78 @@ export interface Feature {
   description: string
   icon: string
   highlights: string[]
+  video?: string
 }
 
 export const features: Feature[] = [
   {
-    id: 'analytics-studio',
-    name: 'Analytics Studio',
-    shortDescription: 'Create, manage, and collaborate on analytics sessions',
-    description: 'A powerful workspace for creating and managing analytics sessions with real-time data visualization, collaborative editing, and comprehensive session management tools.',
+    id: 'equipment-control',
+    name: 'Test Equipment Control & Data Ingestion',
+    shortDescription: 'Control, automate, and centralize all your test data',
+    description: 'Control and automate all of your test equipment while ingesting data from each source. Store everything centrally in one location—locally or on the web.',
     icon: 'PresentationChartLineIcon',
     highlights: [
-      'Real-time data visualization',
-      'Collaborative session editing',
-      'Version history and rollback',
-      'Custom workspace layouts'
-    ]
+      'Automate test equipment workflows',
+      'Ingest data from multiple sources',
+      'Centralized local or cloud storage',
+      'Unified data pipeline'
+    ],
+    video: '/landing/Test Equipment Control & Data Ingestion.mp4'
   },
   {
-    id: 'test-data-management',
-    name: 'Test Data Management',
-    shortDescription: 'Organize and analyze measurement data',
-    description: 'Comprehensive test data organization with advanced filtering, grouping, and search capabilities. Easily manage thousands of measurements with intelligent tagging.',
+    id: 'smart-flagging',
+    name: 'Smart Data Flagging & Search',
+    shortDescription: 'Find exactly the data you need, instantly',
+    description: 'Flag and find data specific to your needs with powerful multi-parameter queries. Example: "Flag all frequency response curves for units with 4 ohms, 2V drive level, belonging to Project Condor."',
     icon: 'TableCellsIcon',
     highlights: [
-      'Advanced filtering and search',
-      'Intelligent data tagging',
-      'Bulk operations support',
-      'Data validation rules'
-    ]
+      'Multi-parameter data queries',
+      'Custom flagging rules',
+      'Project-based organization',
+      'Instant search across all data'
+    ],
+    video: '/landing/Smart Data Flagging & Search.mp4'
   },
   {
-    id: 'data-visualization',
-    name: 'Data Visualization',
-    shortDescription: 'Interactive charts with measurement flagging',
-    description: 'Create stunning interactive visualizations with measurement flagging, statistical overlays, and export-ready charts for reports and presentations.',
+    id: 'control-limits',
+    name: 'Advanced Control Limits',
+    shortDescription: 'Generate sophisticated limits from your data',
+    description: 'Generate advanced control limits using configurable sigma-distributed levels, axis constraints, jitter compensation, floating limit levels, and more.',
     icon: 'ChartBarIcon',
     highlights: [
-      'Interactive chart controls',
-      'Measurement flagging',
-      'Statistical analysis overlays',
-      'Export to multiple formats'
-    ]
+      'Sigma-distributed limit levels',
+      'Configurable axis constraints',
+      'Jitter compensation',
+      'Floating limit levels'
+    ],
+    video: '/landing/Advanced Control Limits.mp4'
   },
   {
-    id: 'cloud-collaboration',
-    name: 'Cloud-Based Collaboration',
-    shortDescription: 'Share sessions and data in real-time',
-    description: 'Work together seamlessly with cloud-powered collaboration. Share sessions, leave comments, and work on the same data simultaneously from anywhere.',
+    id: 'yield-analysis',
+    name: 'Golden Samples & Real-Time Yield',
+    shortDescription: 'Track quality metrics from factory builds',
+    description: 'Find golden samples, identify max/min samples, and calculate real-time yield directly from your factory production builds.',
     icon: 'CloudIcon',
     highlights: [
-      'Real-time sync across devices',
-      'Live commenting and feedback',
-      'Shared team workspaces',
-      'Activity tracking'
-    ]
+      'Golden sample identification',
+      'Max/min sample detection',
+      'Real-time yield calculation',
+      'Factory build analytics'
+    ],
+    video: '/landing/Golden Samples & Real-Time Yield.mp4'
   },
   {
-    id: 'enterprise-security',
-    name: 'Enterprise Security',
-    shortDescription: 'Role-based access control and encryption',
-    description: 'Enterprise-grade security with role-based access control, end-to-end encryption, audit logs, and compliance certifications for sensitive industrial data.',
+    id: 'team-enterprise',
+    name: 'Team Management & Enterprise Security',
+    shortDescription: 'Secure collaboration for your entire organization',
+    description: 'Enterprise-grade security with role-based access control, team organization, and comprehensive audit logging for sensitive measurement data.',
     icon: 'ShieldCheckIcon',
     highlights: [
       'Role-based access control',
+      'Team organization hierarchy',
       'End-to-end encryption',
-      'Comprehensive audit logs',
-      'Compliance certifications'
-    ]
-  },
-  {
-    id: 'team-management',
-    name: 'Team Management',
-    shortDescription: 'Organize teams and assign roles',
-    description: 'Streamline team operations with organizational hierarchy support, role assignments, permission management, and team-wide settings.',
-    icon: 'UserGroupIcon',
-    highlights: [
-      'Organization hierarchy',
-      'Custom role definitions',
-      'Permission templates',
-      'Team analytics'
-    ]
+      'Comprehensive audit logs'
+    ],
+    video: '/landing/Team Management & Enterprise Security.mp4'
   }
 ]

@@ -22,7 +22,20 @@ import {
 
 // Helper function to extract license category from either direct field or license_config
 function getLicenseCategory(license: LicenseKey): 'main_application' | 'plugin' {
-  return license.license_category || license.license_config?.license_category || 'main_application'
+  // Check direct field first
+  if (license.license_category === 'plugin' || license.license_category === 'main_application') {
+    return license.license_category
+  }
+  // Check license_config
+  if (license.license_config?.license_category === 'plugin' || license.license_config?.license_category === 'main_application') {
+    return license.license_config.license_category
+  }
+  // Check if it has a plugin_id - if so, it's a plugin license
+  if (license.plugin_id) {
+    return 'plugin'
+  }
+  // Default to main_application
+  return 'main_application'
 }
 
 // License keys are now permanent and stored in the database
@@ -123,8 +136,12 @@ export default function LicenseManagement() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'all' | 'active' | 'expired' | 'revoked' | 'inactive'>('all')
   const [filterLicenseType, setFilterLicenseType] = useState<'all' | 'trial' | 'standard' | 'professional' | 'enterprise'>('all')
+  const [filterCategory, setFilterCategory] = useState<'all' | 'main_application' | 'plugin'>('all')
+  const [filterExpiration, setFilterExpiration] = useState<'all' | 'expiring_soon' | 'expired' | 'never_expires'>('all')
   const [showAssignModal, setShowAssignModal] = useState<string | null>(null)
   const [showRevokeModal, setShowRevokeModal] = useState<string | null>(null)
+  const [showExtendModal, setShowExtendModal] = useState<string | null>(null)
+  const [extendingLicense, setExtendingLicense] = useState(false)
 
   // Unified Subscription states (includes both native app and plugin subscriptions)
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
@@ -134,6 +151,7 @@ export default function LicenseManagement() {
   const [subscriptionTypeFilter, setSubscriptionTypeFilter] = useState<'all' | 'trial' | 'paid'>('all')
   const [subscriptionCategoryFilter, setSubscriptionCategoryFilter] = useState<'all' | 'native_app' | 'plugin'>('all')
   const [subscriptionPluginFilter, setSubscriptionPluginFilter] = useState<'all' | 'klippel_qc' | 'apx500'>('all')
+  const [subscriptionExpirationFilter, setSubscriptionExpirationFilter] = useState<'all' | 'expiring_soon' | 'expired' | 'active_trial'>('all')
 
   // Relationship states
   const [relationships, setRelationships] = useState<LicenseSubscriptionRelationship[]>([])
@@ -141,10 +159,12 @@ export default function LicenseManagement() {
   const [relationshipsLoading, setRelationshipsLoading] = useState(false)
   const [showCreateRelationshipModal, setShowCreateRelationshipModal] = useState(false)
   const [editRelationship, setEditRelationship] = useState<LicenseSubscriptionRelationship | null>(null)
+  const [relationshipTypeFilter, setRelationshipTypeFilter] = useState<'all' | 'standard' | 'trial_conversion' | 'upgrade' | 'addon'>('all')
+  const [relationshipSearchTerm, setRelationshipSearchTerm] = useState('')
 
   useEffect(() => {
     loadLicenses()
-  }, [filterType, filterLicenseType, searchTerm])
+  }, [filterType, filterLicenseType, filterCategory, filterExpiration, searchTerm])
 
   useEffect(() => {
     if (activeTab === 'subscriptions') {
@@ -152,7 +172,7 @@ export default function LicenseManagement() {
     } else if (activeTab === 'relationships') {
       loadRelationships()
     }
-  }, [activeTab, subscriptionSearchTerm, subscriptionStatusFilter, subscriptionTypeFilter, subscriptionCategoryFilter, subscriptionPluginFilter])
+  }, [activeTab, subscriptionSearchTerm, subscriptionStatusFilter, subscriptionTypeFilter, subscriptionCategoryFilter, subscriptionPluginFilter, subscriptionExpirationFilter])
 
   const loadLicenses = async () => {
     try {
@@ -170,29 +190,107 @@ export default function LicenseManagement() {
       // License keys are now permanent and come from the database
       // No need to generate them dynamically
 
+      console.log('📊 Licenses loaded:', data.length, 'total')
+      console.log('🎯 Active filters:', { filterType, filterLicenseType, filterCategory, filterExpiration, searchTerm })
+
+      // Debug: Show unique values in the data to help diagnose filter issues
+      const uniqueStatuses = [...new Set(data.map(l => l.status))]
+      const uniqueLicenseTypes = [...new Set(data.map(l => l.license_type))]
+      const uniqueTiers = [...new Set(data.map(l => l.tier))]
+      const uniqueSubscriptionTypes = [...new Set(data.map(l => (l as any).subscription_type))]
+      console.log('📋 Unique values in data:', {
+        statuses: uniqueStatuses,
+        licenseTypes: uniqueLicenseTypes,
+        tiers: uniqueTiers,
+        subscriptionTypes: uniqueSubscriptionTypes
+      })
+      // Also show first license structure for debugging
+      if (data.length > 0) {
+        console.log('🔍 Sample license structure:', JSON.stringify(data[0], null, 2))
+      }
+
       // Apply filters
       if (filterType !== 'all') {
-        // Handle both revoked and inactive status for backward compatibility
+        const beforeCount = data.length
+        // Handle status variations
         if (filterType === 'revoked') {
+          // Revoked includes both 'revoked' and 'inactive'
           data = data.filter(l => l.status === 'revoked' || l.status === 'inactive')
+        } else if (filterType === 'active') {
+          // Active includes both 'active' and 'trial' statuses
+          data = data.filter(l => l.status === 'active' || l.status === 'trial')
         } else {
           data = data.filter(l => l.status === filterType)
         }
+        console.log(`  → Status filter (${filterType}): ${beforeCount} → ${data.length}`)
       }
       if (filterLicenseType !== 'all') {
-        data = data.filter(l => l.license_type === filterLicenseType)
+        const beforeCount = data.length
+        // Check both license_type and tier fields, as data may use either
+        data = data.filter(l => {
+          const type = l.license_type?.toLowerCase() || ''
+          const tier = l.tier?.toLowerCase() || ''
+          const filterValue = filterLicenseType.toLowerCase()
+          return type === filterValue || tier === filterValue
+        })
+        console.log(`  → License type filter (${filterLicenseType}): ${beforeCount} → ${data.length}`)
+      }
+      // Category filter
+      if (filterCategory !== 'all') {
+        const beforeCount = data.length
+        // Debug: show categories of all licenses before filtering
+        if (beforeCount > 0 && beforeCount <= 20) {
+          console.log('  → Categories before filter:', data.map(l => ({
+            id: l.id?.substring(0, 8),
+            category: getLicenseCategory(l),
+            license_category: l.license_category,
+            config_category: l.license_config?.license_category,
+            plugin_id: l.plugin_id
+          })))
+        }
+        data = data.filter(l => getLicenseCategory(l) === filterCategory)
+        console.log(`  → Category filter (${filterCategory}): ${beforeCount} → ${data.length}`)
+      }
+      // Expiration filter
+      if (filterExpiration !== 'all') {
+        const beforeCount = data.length
+        const now = new Date()
+        const thirtyDaysFromNow = new Date()
+        thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
+
+        data = data.filter(l => {
+          if (filterExpiration === 'never_expires') {
+            return !l.expires_at
+          }
+          if (!l.expires_at) return false
+          const expiryDate = new Date(l.expires_at)
+
+          if (filterExpiration === 'expired') {
+            return expiryDate < now
+          }
+          if (filterExpiration === 'expiring_soon') {
+            return expiryDate >= now && expiryDate <= thirtyDaysFromNow
+          }
+          return true
+        })
+        console.log(`  → Expiration filter (${filterExpiration}): ${beforeCount} → ${data.length}`)
       }
       if (searchTerm) {
+        const beforeCount = data.length
         const term = searchTerm.toLowerCase()
         data = data.filter(l =>
           l.key_code?.toLowerCase().includes(term)
           || l.license_key?.toLowerCase().includes(term)
           || (l as any).assigned_email?.toLowerCase?.().includes(term)
           || (l as any).assigned_name?.toLowerCase?.().includes(term)
+          || l.assigned_to?.email?.toLowerCase().includes(term)
+          || l.assigned_to?.full_name?.toLowerCase().includes(term)
           || l.plugin_id?.toLowerCase().includes(term)
         )
+        console.log(`  → Search filter (${searchTerm}): ${beforeCount} → ${data.length}`)
       }
 
+      console.log('✅ Final result:', data.length, 'licenses')
       setLicenses(data)
     } catch (error) {
       console.error('Failed to load licenses:', error)
@@ -327,6 +425,32 @@ export default function LicenseManagement() {
     }
   }
 
+  const extendLicense = async (licenseId: string, days: number) => {
+    try {
+      setExtendingLicense(true)
+      const res = await fetch('/api/admin/licenses/extend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ license_id: licenseId, extend_days: days })
+      })
+
+      const result = await res.json()
+
+      if (res.ok && result.success) {
+        loadLicenses()
+        setShowExtendModal(null)
+        alert(result.message || 'License extended successfully')
+      } else {
+        alert(`Failed to extend license: ${result.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Extend license error:', error)
+      alert('Failed to extend license')
+    } finally {
+      setExtendingLicense(false)
+    }
+  }
+
   // Unified Subscription Management Functions
   const loadSubscriptions = async () => {
     try {
@@ -349,7 +473,32 @@ export default function LicenseManagement() {
       }
 
       const data = await response.json()
-      setSubscriptions(data.subscriptions || [])
+      let filteredSubscriptions = data.subscriptions || []
+
+      // Apply client-side expiration filter
+      if (subscriptionExpirationFilter !== 'all') {
+        const now = new Date()
+        const thirtyDaysFromNow = new Date()
+        thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
+
+        filteredSubscriptions = filteredSubscriptions.filter((sub: Subscription) => {
+          if (!sub.trial_end_date) return false
+          const expiryDate = new Date(sub.trial_end_date)
+
+          if (subscriptionExpirationFilter === 'expired') {
+            return expiryDate < now
+          }
+          if (subscriptionExpirationFilter === 'expiring_soon') {
+            return expiryDate >= now && expiryDate <= thirtyDaysFromNow
+          }
+          if (subscriptionExpirationFilter === 'active_trial') {
+            return sub.subscription_type === 'trial' && expiryDate > now
+          }
+          return true
+        })
+      }
+
+      setSubscriptions(filteredSubscriptions)
     } catch (error) {
       console.error('Error loading subscriptions:', error)
       setSubscriptions([])
@@ -571,9 +720,20 @@ export default function LicenseManagement() {
                 <option value="klippel_qc">Klippel QC</option>
                 <option value="apx500">APX500</option>
               </select>
+
+              <select
+                value={subscriptionExpirationFilter}
+                onChange={(e) => setSubscriptionExpirationFilter(e.target.value as any)}
+                className="glass-input pl-3 pr-10 py-2 text-sm"
+              >
+                <option value="all">All Trial Status</option>
+                <option value="active_trial">Active Trials</option>
+                <option value="expiring_soon">Expiring Soon (30 days)</option>
+                <option value="expired">Trial Expired</option>
+              </select>
             </div>
 
-            <div className="relative">
+            <div className="relative max-w-md">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <MagnifyingGlass className="h-5 w-5 text-foreground/40" />
               </div>
@@ -741,8 +901,8 @@ export default function LicenseManagement() {
       {activeTab === 'licenses' && (
         <>
           {/* License Filters */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-            <div className="flex space-x-4">
+          <div className="flex flex-col space-y-4">
+            <div className="flex flex-wrap gap-3">
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value as any)}
@@ -766,15 +926,36 @@ export default function LicenseManagement() {
                 <option value="professional">Professional</option>
                 <option value="enterprise">Enterprise</option>
               </select>
+
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value as any)}
+                className="glass-input pl-3 pr-10 py-2 text-sm"
+              >
+                <option value="all">All Categories</option>
+                <option value="main_application">CentCom App</option>
+                <option value="plugin">Plugin</option>
+              </select>
+
+              <select
+                value={filterExpiration}
+                onChange={(e) => setFilterExpiration(e.target.value as any)}
+                className="glass-input pl-3 pr-10 py-2 text-sm"
+              >
+                <option value="all">All Expiration</option>
+                <option value="expiring_soon">Expiring Soon (30 days)</option>
+                <option value="expired">Already Expired</option>
+                <option value="never_expires">Never Expires</option>
+              </select>
             </div>
 
-            <div className="relative">
+            <div className="relative max-w-md">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <MagnifyingGlass className="h-5 w-5 text-foreground/40" />
               </div>
               <input
                 type="text"
-                placeholder="Search licenses..."
+                placeholder="Search by license code, user email, name..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="glass-input w-full pl-10 pr-3 py-2 text-sm"
@@ -961,7 +1142,51 @@ export default function LicenseManagement() {
 
                     {/* Actions */}
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <div className="flex justify-center space-x-2">
+                      <div className="flex justify-center items-center space-x-2">
+                        {/* Quick Extend Dropdown */}
+                        {(license.expires_at || license.status === 'expired') && (
+                          <div className="relative group">
+                            <button
+                              className="text-cyan-400 hover:text-cyan-300 text-xs font-medium transition-colors flex items-center gap-1"
+                              title="Extend license expiration"
+                            >
+                              <Calendar className="h-4 w-4" />
+                              Extend
+                            </button>
+                            <div className="absolute right-0 mt-1 w-36 bg-background border border-cyan-500/20 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                              <div className="py-1">
+                                <button
+                                  onClick={() => extendLicense(license.id, 7)}
+                                  disabled={extendingLicense}
+                                  className="w-full px-3 py-2 text-left text-xs text-foreground hover:bg-cyan-500/10 transition-colors"
+                                >
+                                  +7 days
+                                </button>
+                                <button
+                                  onClick={() => extendLicense(license.id, 30)}
+                                  disabled={extendingLicense}
+                                  className="w-full px-3 py-2 text-left text-xs text-foreground hover:bg-cyan-500/10 transition-colors"
+                                >
+                                  +30 days
+                                </button>
+                                <button
+                                  onClick={() => extendLicense(license.id, 90)}
+                                  disabled={extendingLicense}
+                                  className="w-full px-3 py-2 text-left text-xs text-foreground hover:bg-cyan-500/10 transition-colors"
+                                >
+                                  +90 days
+                                </button>
+                                <button
+                                  onClick={() => extendLicense(license.id, 365)}
+                                  disabled={extendingLicense}
+                                  className="w-full px-3 py-2 text-left text-xs text-foreground hover:bg-cyan-500/10 transition-colors"
+                                >
+                                  +1 year
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                         {!license.assigned_to ? (
                           <button
                             onClick={() => setShowAssignModal(license.id)}
@@ -1029,8 +1254,35 @@ export default function LicenseManagement() {
       {/* Relationships Tab Content */}
       {activeTab === 'relationships' && (
         <>
-          {/* Create Relationship Button */}
-          <div className="flex justify-end mb-4">
+          {/* Relationship Filters */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 mb-4">
+            <div className="flex flex-wrap gap-3">
+              <select
+                value={relationshipTypeFilter}
+                onChange={(e) => setRelationshipTypeFilter(e.target.value as any)}
+                className="glass-input pl-3 pr-10 py-2 text-sm"
+              >
+                <option value="all">All Relationship Types</option>
+                <option value="standard">Standard</option>
+                <option value="trial_conversion">Trial Conversion</option>
+                <option value="upgrade">Upgrade</option>
+                <option value="addon">Add-on</option>
+              </select>
+
+              <div className="relative max-w-xs">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <MagnifyingGlass className="h-5 w-5 text-foreground/40" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search by user email..."
+                  value={relationshipSearchTerm}
+                  onChange={(e) => setRelationshipSearchTerm(e.target.value)}
+                  className="glass-input w-full pl-10 pr-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+
             <button
               onClick={() => setShowCreateRelationshipModal(true)}
               className="btn-primary inline-flex items-center"
@@ -1083,7 +1335,23 @@ export default function LicenseManagement() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-cyan-500/10">
-                    {relationships.map((rel) => (
+                    {relationships
+                      .filter(rel => {
+                        // Apply relationship type filter
+                        if (relationshipTypeFilter !== 'all' && rel.relationship_type !== relationshipTypeFilter) {
+                          return false
+                        }
+                        // Apply user search filter
+                        if (relationshipSearchTerm) {
+                          const term = relationshipSearchTerm.toLowerCase()
+                          const userEmail = rel.subscription?.user_email?.toLowerCase() || rel.license?.user_email?.toLowerCase() || ''
+                          if (!userEmail.includes(term)) {
+                            return false
+                          }
+                        }
+                        return true
+                      })
+                      .map((rel) => (
                       <tr key={rel.id} className="hover:bg-cyan-500/5 transition-colors">
                         {/* License Key */}
                         <td className="px-6 py-4 whitespace-nowrap">

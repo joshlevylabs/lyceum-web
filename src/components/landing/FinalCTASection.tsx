@@ -66,7 +66,7 @@ export function FinalCTASection() {
                 </Link>
               </motion.div>
               <Link
-                href="/contact"
+                href="/demo"
                 className="btn-ghost text-lg px-8 py-4"
               >
                 Schedule a Demo
@@ -77,7 +77,7 @@ export function FinalCTASection() {
               variants={fadeInUp}
               className="mt-8 text-sm text-foreground/40"
             >
-              30-day free trial &bull; No credit card required &bull; Cancel anytime
+              30-day free trial &bull; Cancel anytime
             </motion.p>
           </div>
         </motion.div>

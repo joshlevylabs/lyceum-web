@@ -8,7 +8,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import {
   LandingNavigation,
   HeroSection,
-  SocialProofBar,
   ProductOverview,
   UseCasesSection,
   PluginShowcase,
@@ -57,9 +56,6 @@ export default function HomePage() {
       <main>
         {/* Hero - Above the fold */}
         <HeroSection />
-
-        {/* Social proof - Immediate trust building */}
-        <SocialProofBar />
 
         {/* Product showcase - Show don't tell */}
         <ProductOverview />

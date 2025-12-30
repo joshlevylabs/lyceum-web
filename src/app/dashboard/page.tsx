@@ -682,6 +682,16 @@ export default function Dashboard() {
           platform: platform
         })
         console.log('✅ Desktop app info state set!')
+      } else if (response.status === 404) {
+        // No version available for this platform/brand - this is expected for some users
+        console.log('ℹ️ No desktop app version available for this platform yet')
+        setDesktopAppInfo({
+          hasApp: false,
+          currentVersion: null,
+          latestVersion: null,
+          updateAvailable: false,
+          platform: platform
+        })
       } else {
         console.error('❌ API call failed:', response.status)
         const errorText = await response.text()
@@ -1973,7 +1983,7 @@ export default function Dashboard() {
         )}
 
         {/* Download Desktop Application Modal */}
-        {showDownloadModal && desktopAppInfo && (
+        {showDownloadModal && desktopAppInfo && desktopAppInfo.latestVersion && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
             <div className="relative top-20 mx-auto p-5 max-w-2xl glass-card">
               <div className="mt-3">

@@ -101,14 +101,20 @@ export default function TestData() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to fetch cluster projects')
+        // Silently handle expected errors (table doesn't exist, no data)
+        // This is normal for new users who haven't set up clusters yet
+        setProjects([])
+        return
       }
 
       const data = await response.json()
       setProjects(data.projects || [])
       setStats(data.stats || stats)
     } catch (error) {
-      console.error('Error loading cluster projects:', error)
+      // Only log actual network errors, not expected API failures
+      if (error instanceof TypeError) {
+        console.error('Network error loading cluster projects:', error)
+      }
       setProjects([])
     } finally {
       setLoading(false)

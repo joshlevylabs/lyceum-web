@@ -73,7 +73,9 @@ function PricingCard({ tier }: { tier: PricingTier }) {
       {/* Price */}
       <div className="text-center mb-8">
         <div className="flex items-baseline justify-center gap-1">
-          <span className="text-4xl font-bold text-gradient-cyan">${tier.price}</span>
+          <span className="text-4xl font-bold text-gradient-cyan">
+            ${tier.price}{tier.key === 'enterprise' && '+'}
+          </span>
           <span className="text-foreground/50">/month</span>
         </div>
       </div>
@@ -124,7 +126,7 @@ export function PricingSection() {
             Choose Your Plan
           </motion.h2>
           <motion.p variants={fadeInUp} className="text-lg text-foreground/60 max-w-2xl mx-auto">
-            Start with a 30-day free trial. No credit card required. Scale as you grow.
+            Start with a 30-day free trial. Scale as you grow.
           </motion.p>
         </motion.div>
 
