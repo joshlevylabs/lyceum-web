@@ -38,6 +38,19 @@ export const features: Feature[] = [
     video: '/landing/Smart Data Flagging & Search.mp4'
   },
   {
+    id: 'sequencer',
+    name: 'Automated Test Sequencer',
+    shortDescription: 'Automate your entire test and analysis workflow',
+    description: 'Build powerful automated sequences that chain together test equipment actions, data acquisition, and post-processing steps. Create repeatable, auditable workflows that eliminate manual intervention and ensure consistency across every test run.',
+    icon: 'QueueIcon',
+    highlights: [
+      'Chain test actions & post-processing',
+      'Fully repeatable workflows',
+      'Complete audit trail logging',
+      'Conditional branching & error handling'
+    ]
+  },
+  {
     id: 'control-limits',
     name: 'Advanced Control Limits',
     shortDescription: 'Generate sophisticated limits from your data',

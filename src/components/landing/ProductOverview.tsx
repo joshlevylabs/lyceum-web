@@ -1,23 +1,35 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { fadeInUp, staggerContainer, imageReveal } from '@/lib/animation-variants'
-import { BrowserMockup, PlaceholderImage } from './PlaceholderImage'
-import { PlaceholderVideo, VideoModal } from './PlaceholderVideo'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  PresentationChart,
+  Table,
+  ChartBar,
+  Cloud,
+  ShieldCheck,
+  Queue,
+  Play
+} from '@phosphor-icons/react'
+import { features } from '@/data/landing'
+import { fadeInUp, staggerContainer } from '@/lib/animation-variants'
 import { SectionWrapper } from './SectionWrapper'
 
-// Feature callout positions for the screenshot
-const featureCallouts = [
-  { id: 1, label: 'Real-time Charts', position: { top: '20%', left: '10%' } },
-  { id: 2, label: 'Data Filters', position: { top: '15%', right: '15%' } },
-  { id: 3, label: 'Team Collaboration', position: { bottom: '30%', left: '20%' } },
-  { id: 4, label: 'Export Options', position: { bottom: '25%', right: '10%' } }
-]
+// Icon mapping (same as FeaturesDeepDive)
+const iconMap: Record<string, React.ComponentType<{ className?: string; weight?: string }>> = {
+  PresentationChartLineIcon: PresentationChart,
+  TableCellsIcon: Table,
+  ChartBarIcon: ChartBar,
+  CloudIcon: Cloud,
+  ShieldCheckIcon: ShieldCheck,
+  QueueIcon: Queue
+}
 
 export function ProductOverview() {
-  const [videoModalOpen, setVideoModalOpen] = useState(false)
-  const [activeView, setActiveView] = useState<'screenshot' | 'video'>('screenshot')
+  const [selectedFeatureId, setSelectedFeatureId] = useState(features[0]?.id || '')
+
+  const selectedFeature = features.find(f => f.id === selectedFeatureId) || features[0]
+  const SelectedIcon = selectedFeature ? iconMap[selectedFeature.icon] || ChartBar : ChartBar
 
   return (
     <SectionWrapper id="product" className="py-24 overflow-hidden">
@@ -34,121 +46,144 @@ export function ProductOverview() {
             See It In Action
           </motion.p>
           <motion.h2 variants={fadeInUp} className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-6">
-            Powerful Analytics at Your Fingertips
+            Explore Our Features
           </motion.h2>
           <motion.p variants={fadeInUp} className="text-lg text-foreground/60 max-w-2xl mx-auto">
-            Experience the intuitive interface designed for engineers who demand precision and speed in their data analysis workflow.
+            Select a feature to watch a walkthrough video and see how Lyceum can transform your analytics workflow.
           </motion.p>
         </motion.div>
 
-        {/* View toggle */}
+        {/* Feature menu and video player */}
         <motion.div
-          className="flex justify-center gap-2 mb-8"
-          initial={{ opacity: 0, y: 20 }}
+          className="flex flex-col lg:flex-row gap-8"
+          initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
         >
-          <button
-            onClick={() => setActiveView('screenshot')}
-            className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeView === 'screenshot'
-                ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                : 'text-foreground/50 hover:text-foreground hover:bg-foreground/5'
-            }`}
-          >
-            Screenshot
-          </button>
-          <button
-            onClick={() => setActiveView('video')}
-            className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeView === 'video'
-                ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                : 'text-foreground/50 hover:text-foreground hover:bg-foreground/5'
-            }`}
-          >
-            Video Demo
-          </button>
-        </motion.div>
+          {/* Left side: Feature menu */}
+          <div className="lg:w-1/3 space-y-2">
+            {features.map((feature) => {
+              const Icon = iconMap[feature.icon] || ChartBar
+              const isSelected = feature.id === selectedFeatureId
 
-        {/* Product showcase */}
-        <motion.div
-          className="relative"
-          variants={imageReveal}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-100px' }}
-        >
-          {/* Glow effect behind the browser */}
-          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-cyan-500/20 blur-3xl opacity-30 scale-95" />
-
-          {activeView === 'screenshot' ? (
-            <div className="relative">
-              <BrowserMockup className="shadow-2xl shadow-cyan-500/10">
-                <PlaceholderImage
-                  label="Lyceum Dashboard Screenshot"
-                  aspectRatio="16/9"
-                  className="rounded-none"
-                />
-              </BrowserMockup>
-
-              {/* Feature callouts */}
-              {featureCallouts.map((callout, index) => (
-                <motion.div
-                  key={callout.id}
-                  className="absolute hidden lg:block"
-                  style={callout.position}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.5 + index * 0.1 }}
+              return (
+                <motion.button
+                  key={feature.id}
+                  onClick={() => setSelectedFeatureId(feature.id)}
+                  className={`w-full text-left p-4 rounded-xl transition-all duration-300 group ${
+                    isSelected
+                      ? 'bg-cyan-500/20 border border-cyan-500/30'
+                      : 'bg-foreground/5 hover:bg-foreground/10 border border-transparent'
+                  }`}
+                  whileHover={{ x: isSelected ? 0 : 4 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <div className="glass-card px-3 py-2 text-xs font-medium text-foreground/80 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                    {callout.label}
+                  <div className="flex items-start gap-4">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                      isSelected
+                        ? 'bg-cyan-500/30'
+                        : 'bg-foreground/10 group-hover:bg-foreground/15'
+                    }`}>
+                      <Icon className={`w-5 h-5 ${isSelected ? 'text-cyan-400' : 'text-foreground/50'}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className={`font-semibold mb-1 transition-colors ${
+                        isSelected ? 'text-cyan-400' : 'text-foreground'
+                      }`}>
+                        {feature.name}
+                      </h3>
+                      <p className="text-sm text-foreground/50 line-clamp-2">
+                        {feature.shortDescription}
+                      </p>
+                    </div>
+                    {isSelected && (
+                      <div className="w-2 h-2 rounded-full bg-cyan-400 mt-2 flex-shrink-0 animate-pulse" />
+                    )}
                   </div>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-cyan-500/10">
-              <PlaceholderVideo
-                aspectRatio="16/9"
-                label="Watch Product Demo"
-                onClick={() => setVideoModalOpen(true)}
-              />
-            </div>
-          )}
-        </motion.div>
+                </motion.button>
+              )
+            })}
+          </div>
 
-        {/* Feature highlights below */}
-        <motion.div
-          className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-12"
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-        >
-          {[
-            { title: 'Lightning Fast', description: 'Process millions of data points in seconds' },
-            { title: 'Intuitive Design', description: 'No training needed - just start analyzing' },
-            { title: 'Cloud Native', description: 'Access your data from anywhere, anytime' }
-          ].map((item) => (
+          {/* Right side: Video player */}
+          <div className="lg:w-2/3">
+            <div className="relative">
+              {/* Glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-cyan-500/20 blur-3xl opacity-30 scale-95" />
+
+              {/* Video container */}
+              <div className="relative glass-card overflow-hidden">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={selectedFeatureId}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="aspect-video"
+                  >
+                    {selectedFeature?.video ? (
+                      <video
+                        key={selectedFeature.video}
+                        className="w-full h-full object-cover"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                      >
+                        <source src={selectedFeature.video} type="video/mp4" />
+                      </video>
+                    ) : (
+                      /* Placeholder when no video */
+                      <div className="w-full h-full bg-gradient-to-br from-cyan-500/10 to-purple-500/10 flex flex-col items-center justify-center">
+                        <div className="w-20 h-20 rounded-full bg-foreground/10 flex items-center justify-center mb-4">
+                          <Play className="w-10 h-10 text-foreground/30" weight="fill" />
+                        </div>
+                        <SelectedIcon className="w-16 h-16 text-foreground/10 mb-4" />
+                        <p className="text-foreground/40 text-sm">Video coming soon</p>
+                        <p className="text-foreground/30 text-xs mt-1">{selectedFeature?.name}</p>
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Video info overlay */}
+                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                  <div className="flex items-center gap-3">
+                    <SelectedIcon className="w-6 h-6 text-cyan-400" />
+                    <div>
+                      <h4 className="font-semibold text-white">{selectedFeature?.name}</h4>
+                      <p className="text-sm text-white/60">{selectedFeature?.shortDescription}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Feature highlights */}
             <motion.div
-              key={item.title}
-              variants={fadeInUp}
-              className="text-center p-6 rounded-xl bg-foreground/5 hover:bg-foreground/10 transition-colors"
+              className="grid grid-cols-2 gap-4 mt-6"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
             >
-              <h3 className="font-semibold text-foreground mb-2">{item.title}</h3>
-              <p className="text-sm text-foreground/50">{item.description}</p>
+              {selectedFeature?.highlights.slice(0, 4).map((highlight, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 text-sm text-foreground/60"
+                >
+                  <svg className="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  {highlight}
+                </div>
+              ))}
             </motion.div>
-          ))}
+          </div>
         </motion.div>
       </div>
-
-      <VideoModal
-        isOpen={videoModalOpen}
-        onClose={() => setVideoModalOpen(false)}
-      />
     </SectionWrapper>
   )
 }

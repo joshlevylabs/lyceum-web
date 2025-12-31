@@ -25,10 +25,15 @@ export const metadata: Metadata = {
   keywords: ['analytics', 'measurement', 'industrial', 'data visualization', 'testing'],
   authors: [{ name: 'Lyceum Team' }],
   icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.svg',
-    apple: '/favicon.svg',
+    icon: [
+      { url: '/logo/favicon/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/logo/favicon/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/logo/favicon/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
+    ],
+    shortcut: '/logo/favicon/favicon.ico',
+    apple: '/logo/favicon/apple-touch-icon.png',
   },
+  manifest: '/logo/favicon/site.webmanifest',
 }
 
 export default function RootLayout({

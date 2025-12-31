@@ -1,15 +1,18 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Flask,
   Broadcast,
   Lightbulb,
-  Buildings
+  Buildings,
+  ArrowRight
 } from '@phosphor-icons/react'
-import { useCases } from '@/data/landing'
+import { useCases, type UseCase } from '@/data/landing/useCases'
 import { fadeInUp, staggerContainer, cardHover } from '@/lib/animation-variants'
 import { SectionWrapper } from './SectionWrapper'
+import { UseCaseModal } from './UseCaseModal'
 
 // Icon mapping
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -20,6 +23,18 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 }
 
 export function UseCasesSection() {
+  const [selectedUseCase, setSelectedUseCase] = useState<UseCase | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const handleCardClick = (useCase: UseCase) => {
+    setSelectedUseCase(useCase)
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+  }
+
   return (
     <SectionWrapper id="use-cases" className="py-24">
       <div className="max-w-7xl mx-auto px-6">
@@ -38,7 +53,7 @@ export function UseCasesSection() {
             Built for Your Industry
           </motion.h2>
           <motion.p variants={fadeInUp} className="text-lg text-foreground/60 max-w-2xl mx-auto">
-            From manufacturing floors to research labs, Lyceum adapts to your specific workflow and requirements.
+            From manufacturing floors to research labs, Lyceum adapts to your specific workflow and requirements. Click any card to see a real-world example.
           </motion.p>
         </motion.div>
 
@@ -61,15 +76,19 @@ export function UseCasesSection() {
               >
                 <motion.div
                   variants={cardHover}
-                  className="glass-card p-8 h-full"
+                  className="glass-card p-8 h-full cursor-pointer group"
+                  onClick={() => handleCardClick(useCase)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCardClick(useCase)}
                 >
                   {/* Header */}
                   <div className="flex items-start gap-4 mb-6">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-cyan-500/20 to-cyan-500/5 flex items-center justify-center flex-shrink-0">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-cyan-500/20 to-cyan-500/5 flex items-center justify-center flex-shrink-0 group-hover:from-cyan-500/30 group-hover:to-cyan-500/10 transition-colors">
                       <Icon className="w-7 h-7 text-cyan-400" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-foreground mb-1">
+                      <h3 className="text-xl font-bold text-foreground mb-1 group-hover:text-cyan-400 transition-colors">
                         {useCase.title}
                       </h3>
                       <p className="text-sm text-cyan-400 font-medium">
@@ -84,7 +103,7 @@ export function UseCasesSection() {
                   </p>
 
                   {/* Benefits */}
-                  <ul className="space-y-2">
+                  <ul className="space-y-2 mb-6">
                     {useCase.benefits.map((benefit, index) => (
                       <li key={index} className="flex items-center gap-3 text-sm text-foreground/70">
                         <svg className="w-4 h-4 text-cyan-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -94,6 +113,12 @@ export function UseCasesSection() {
                       </li>
                     ))}
                   </ul>
+
+                  {/* Click indicator */}
+                  <div className="flex items-center gap-2 text-cyan-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span>See real-world example</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
 
                   {/* Related plugins badge */}
                   {useCase.relatedPlugins.length > 0 && (
@@ -117,6 +142,14 @@ export function UseCasesSection() {
           })}
         </motion.div>
       </div>
+
+      {/* Modal */}
+      <UseCaseModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        useCase={selectedUseCase}
+        icon={selectedUseCase ? iconMap[selectedUseCase.icon] || Flask : Flask}
+      />
     </SectionWrapper>
   )
 }

@@ -15,7 +15,8 @@
       "Bash(npx tsc:*)",
       "Bash(wc:*)",
       "Bash(powershell:*)",
-      "Bash(dir /b \"c:\\\\Users\\\\joshual\\\\Documents\\\\Cursor\\\\lyceum\\\\public\\\\landing\")"
+      "Bash(dir /b \"c:\\\\Users\\\\joshual\\\\Documents\\\\Cursor\\\\lyceum\\\\public\\\\landing\")",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

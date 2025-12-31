@@ -12,7 +12,7 @@ const navItems = [
   { label: 'Use Cases', sectionId: 'use-cases' },
   { label: 'Plugins', sectionId: 'plugins' },
   { label: 'Pricing', sectionId: 'pricing' },
-  { label: 'Testimonials', sectionId: 'testimonials' }
+  { label: 'Our Story', sectionId: 'story' }
 ]
 
 export function LandingNavigation() {

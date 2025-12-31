@@ -8,11 +8,13 @@ import { useAuth } from '@/contexts/AuthContext'
 import {
   LandingNavigation,
   HeroSection,
+  SocialProofBar,
   ProductOverview,
   UseCasesSection,
   PluginShowcase,
   FeaturesDeepDive,
   TestimonialsSection,
+  StorySection,
   PricingSection,
   FinalCTASection,
   LandingFooter
@@ -57,6 +59,9 @@ export default function HomePage() {
         {/* Hero - Above the fold */}
         <HeroSection />
 
+        {/* Social proof - Trusted companies */}
+        <SocialProofBar />
+
         {/* Product showcase - Show don't tell */}
         <ProductOverview />
 
@@ -71,6 +76,9 @@ export default function HomePage() {
 
         {/* Testimonials - Social proof */}
         <TestimonialsSection />
+
+        {/* Our Story - Company background */}
+        <StorySection />
 
         {/* Pricing - Conversion focused */}
         <PricingSection />

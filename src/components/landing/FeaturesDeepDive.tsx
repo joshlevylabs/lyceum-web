@@ -7,7 +7,8 @@ import {
   ChartBar,
   Cloud,
   ShieldCheck,
-  UsersThree
+  UsersThree,
+  Queue
 } from '@phosphor-icons/react'
 import { features } from '@/data/landing'
 import { fadeInUp, staggerContainer, slideInLeft, slideInRight } from '@/lib/animation-variants'
@@ -20,7 +21,8 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   ChartBarIcon: ChartBar,
   CloudIcon: Cloud,
   ShieldCheckIcon: ShieldCheck,
-  UserGroupIcon: UsersThree
+  UserGroupIcon: UsersThree,
+  QueueIcon: Queue
 }
 
 export function FeaturesDeepDive() {

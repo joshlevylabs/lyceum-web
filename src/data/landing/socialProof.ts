@@ -1,3 +1,25 @@
+export interface CompanyLogo {
+  id: string
+  name: string
+}
+
+// Real companies we've worked with
+export const companyLogos: CompanyLogo[] = [
+  { id: 'amazon', name: 'Amazon Lab126' },
+  { id: 'meta', name: 'Meta' },
+  { id: 'oculus', name: 'Oculus' },
+  { id: 'sonance', name: 'Sonance' },
+  { id: 'dolby', name: 'Dolby' },
+  { id: 'pascal', name: 'Pascal' },
+  { id: 'hansong', name: 'Hansong Technology' },
+  { id: 'ggec', name: 'GGEC' },
+  { id: 'dblabs', name: 'dB Labs' },
+  { id: 'lizn', name: 'LIZN' },
+  { id: 'klippel', name: 'Klippel' },
+  { id: 'listeninc', name: 'Listen Inc' }
+]
+
+// Keeping stats interface for backwards compatibility, but removing fake data
 export interface Stat {
   id: string
   value: number
@@ -5,44 +27,5 @@ export interface Stat {
   label: string
 }
 
-export const stats: Stat[] = [
-  {
-    id: 'engineers',
-    value: 10000,
-    suffix: '+',
-    label: 'Engineers'
-  },
-  {
-    id: 'companies',
-    value: 500,
-    suffix: '+',
-    label: 'Companies'
-  },
-  {
-    id: 'uptime',
-    value: 99.9,
-    suffix: '%',
-    label: 'Uptime'
-  },
-  {
-    id: 'data-points',
-    value: 5,
-    suffix: 'M+',
-    label: 'Data Points Analyzed'
-  }
-]
-
-export interface CompanyLogo {
-  id: string
-  name: string
-  // Logo will be placeholder for now
-}
-
-export const companyLogos: CompanyLogo[] = [
-  { id: '1', name: 'TechCorp' },
-  { id: '2', name: 'Aerospace Solutions' },
-  { id: '3', name: 'Global Manufacturing' },
-  { id: '4', name: 'Innovation Labs' },
-  { id: '5', name: 'Industrial Systems' },
-  { id: '6', name: 'Engineering Pro' }
-]
+// Empty stats - we don't want to show fake numbers
+export const stats: Stat[] = []

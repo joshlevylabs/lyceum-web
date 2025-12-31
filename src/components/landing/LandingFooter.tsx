@@ -20,7 +20,7 @@ const footerLinks = {
     title: 'Resources',
     links: [
       { label: 'Documentation', href: '/docs' },
-      { label: 'API Reference', href: '/api' },
+      { label: 'API Reference', href: '/api-docs' },
       { label: 'Tutorials', href: '/tutorials' },
       { label: 'Blog', href: '/blog' },
       { label: 'FAQ', href: '/faq' }
