@@ -12,6 +12,54 @@ const sizeValues: Record<SizeCategory, number> = {
   xlarge: 8
 }
 
+// Responsive configuration based on screen size
+interface ResponsiveConfig {
+  starCount: number
+  nebulaCount: { min: number; max: number }
+  nebulaRadius: { min: number; max: number }
+  connectionDistance: number
+  enableFilaments: boolean
+  enableWisps: boolean
+  pulseSpawnInterval: number
+}
+
+const getResponsiveConfig = (width: number): ResponsiveConfig => {
+  if (width < 640) {
+    // Mobile phones
+    return {
+      starCount: 80,
+      nebulaCount: { min: 2, max: 3 },
+      nebulaRadius: { min: 60, max: 100 },
+      connectionDistance: 100,
+      enableFilaments: false,
+      enableWisps: false,
+      pulseSpawnInterval: 6000
+    }
+  } else if (width < 1024) {
+    // Tablets
+    return {
+      starCount: 180,
+      nebulaCount: { min: 3, max: 5 },
+      nebulaRadius: { min: 80, max: 140 },
+      connectionDistance: 140,
+      enableFilaments: true,
+      enableWisps: false,
+      pulseSpawnInterval: 5000
+    }
+  } else {
+    // Desktop
+    return {
+      starCount: 400,
+      nebulaCount: { min: 5, max: 8 },
+      nebulaRadius: { min: 120, max: 220 },
+      connectionDistance: 180,
+      enableFilaments: true,
+      enableWisps: true,
+      pulseSpawnInterval: 4500
+    }
+  }
+}
+
 // Color options: two shades of cyan and gold (tertiary)
 type StarColor = 'cyan-light' | 'cyan-dark' | 'gold'
 
@@ -71,6 +119,7 @@ interface StarData {
 // Performant star field using CSS animations and canvas for connecting lines
 export function GlobalStarField() {
   const [mounted, setMounted] = useState(false)
+  const [screenWidth, setScreenWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200)
   const containerRef1 = useRef<HTMLDivElement>(null)
   const containerRef2 = useRef<HTMLDivElement>(null)
   const containerRef3 = useRef<HTMLDivElement>(null)
@@ -83,19 +132,21 @@ export function GlobalStarField() {
   const illuminatedNebulasRef = useRef<IlluminatedNebula[]>([])
   const connectionsRef = useRef<{ fromIdx: number; toIdx: number }[]>([])
   const pulseIdCounter = useRef(0)
+  const configRef = useRef<ResponsiveConfig>(getResponsiveConfig(screenWidth))
 
   // Generate static nebulas once - these don't move with parallax
   const nebulas = useMemo<Nebula[]>(() => {
+    const config = configRef.current
     const result: Nebula[] = []
-    // Create 5-8 nebulas scattered across the screen
-    const count = 5 + Math.floor(Math.random() * 4)
+    // Create nebulas based on screen size
+    const count = config.nebulaCount.min + Math.floor(Math.random() * (config.nebulaCount.max - config.nebulaCount.min + 1))
 
     for (let i = 0; i < count; i++) {
       result.push({
         id: i,
         x: 10 + Math.random() * 80, // percentage, keep away from edges
         y: 10 + Math.random() * 80,
-        radius: 120 + Math.random() * 100, // 120-220px base radius
+        radius: config.nebulaRadius.min + Math.random() * (config.nebulaRadius.max - config.nebulaRadius.min),
         color: Math.random() < 0.3 ? 'gold' : 'cyan'
       })
     }
@@ -104,11 +155,12 @@ export function GlobalStarField() {
 
   // Generate stars once with varied sizes, colors, and layers
   const stars = useMemo(() => {
+    const config = configRef.current
     const result: StarData[] = []
     const sizeCategories: SizeCategory[] = ['tiny', 'small', 'medium', 'large', 'xlarge']
     const colors: StarColor[] = ['cyan-light', 'cyan-dark', 'gold']
 
-    for (let i = 0; i < 400; i++) {
+    for (let i = 0; i < config.starCount; i++) {
       // Size distribution: more small stars, fewer large ones
       const sizeRand = Math.random()
       let sizeCategory: SizeCategory
@@ -156,17 +208,21 @@ export function GlobalStarField() {
   useEffect(() => {
     setMounted(true)
 
+    // Update config on mount with actual window width
+    configRef.current = getResponsiveConfig(window.innerWidth)
+
     let animationFrame: number
     let targetX = 0
     let targetY = 0
     let lastPulseSpawn = 0
-    const pulseSpawnInterval = 4500 // Spawn new pulse every 4.5 seconds
 
     const handleMouseMove = (e: MouseEvent) => {
       const centerX = window.innerWidth / 2
       const centerY = window.innerHeight / 2
-      targetX = ((e.clientX - centerX) / centerX) * 80
-      targetY = ((e.clientY - centerY) / centerY) * 80
+      // Reduce parallax effect on mobile (touch devices don't have mouse hover)
+      const movementMultiplier = window.innerWidth < 640 ? 30 : 80
+      targetX = ((e.clientX - centerX) / centerX) * movementMultiplier
+      targetY = ((e.clientY - centerY) / centerY) * movementMultiplier
       mouseRef.current = { x: e.clientX, y: e.clientY }
     }
 
@@ -236,35 +292,38 @@ export function GlobalStarField() {
         ctx.fillStyle = gradient1
         ctx.fill()
 
-        // Outer filaments - irregular tendrils extending outward (organic, not circular)
-        const filamentCount = 6 + Math.floor(seededRandom(nebula.id, 300) * 5)
-        for (let f = 0; f < filamentCount; f++) {
-          const baseAngle = seededRandom(nebula.id, 310 + f) * Math.PI * 2
-          const angleVariation = (seededRandom(nebula.id, 320 + f) - 0.5) * 0.3
-          const length = nebula.radius * (0.8 + seededRandom(nebula.id, 330 + f) * 1.2)
-          const thickness = 2 + seededRandom(nebula.id, 340 + f) * 4
-          const filamentOpacity = (0.03 + brightness * 0.1) * (0.5 + seededRandom(nebula.id, 350 + f) * 0.5)
+        // Outer filaments - irregular tendrils extending outward (skip on mobile for performance)
+        const responsiveConfig = configRef.current
+        if (responsiveConfig.enableFilaments) {
+          const filamentCount = 6 + Math.floor(seededRandom(nebula.id, 300) * 5)
+          for (let f = 0; f < filamentCount; f++) {
+            const baseAngle = seededRandom(nebula.id, 310 + f) * Math.PI * 2
+            const angleVariation = (seededRandom(nebula.id, 320 + f) - 0.5) * 0.3
+            const length = nebula.radius * (0.8 + seededRandom(nebula.id, 330 + f) * 1.2)
+            const thickness = 2 + seededRandom(nebula.id, 340 + f) * 4
+            const filamentOpacity = (0.03 + brightness * 0.1) * (0.5 + seededRandom(nebula.id, 350 + f) * 0.5)
 
-          // Draw curved filament using quadratic bezier
-          const startX = nebulaX + Math.cos(baseAngle) * nebula.radius * 0.3
-          const startY = nebulaY + Math.sin(baseAngle) * nebula.radius * 0.3
-          const endX = nebulaX + Math.cos(baseAngle + angleVariation) * length
-          const endY = nebulaY + Math.sin(baseAngle + angleVariation) * length
-          // Control point offset perpendicular to the filament direction
-          const perpAngle = baseAngle + Math.PI / 2
-          const curvature = (seededRandom(nebula.id, 360 + f) - 0.5) * nebula.radius * 0.4
-          const ctrlX = (startX + endX) / 2 + Math.cos(perpAngle) * curvature
-          const ctrlY = (startY + endY) / 2 + Math.sin(perpAngle) * curvature
+            // Draw curved filament using quadratic bezier
+            const startX = nebulaX + Math.cos(baseAngle) * nebula.radius * 0.3
+            const startY = nebulaY + Math.sin(baseAngle) * nebula.radius * 0.3
+            const endX = nebulaX + Math.cos(baseAngle + angleVariation) * length
+            const endY = nebulaY + Math.sin(baseAngle + angleVariation) * length
+            // Control point offset perpendicular to the filament direction
+            const perpAngle = baseAngle + Math.PI / 2
+            const curvature = (seededRandom(nebula.id, 360 + f) - 0.5) * nebula.radius * 0.4
+            const ctrlX = (startX + endX) / 2 + Math.cos(perpAngle) * curvature
+            const ctrlY = (startY + endY) / 2 + Math.sin(perpAngle) * curvature
 
-          ctx.beginPath()
-          ctx.moveTo(startX, startY)
-          ctx.quadraticCurveTo(ctrlX, ctrlY, endX, endY)
-          ctx.strokeStyle = illuminationColor === 'gold'
-            ? `rgba(200, 150, 50, ${filamentOpacity})`
-            : `rgba(0, 150, 200, ${filamentOpacity})`
-          ctx.lineWidth = thickness * (0.5 + brightness * 0.5)
-          ctx.lineCap = 'round'
-          ctx.stroke()
+            ctx.beginPath()
+            ctx.moveTo(startX, startY)
+            ctx.quadraticCurveTo(ctrlX, ctrlY, endX, endY)
+            ctx.strokeStyle = illuminationColor === 'gold'
+              ? `rgba(200, 150, 50, ${filamentOpacity})`
+              : `rgba(0, 150, 200, ${filamentOpacity})`
+            ctx.lineWidth = thickness * (0.5 + brightness * 0.5)
+            ctx.lineCap = 'round'
+            ctx.stroke()
+          }
         }
 
         // Layer 2: Mid glow
@@ -289,8 +348,9 @@ export function GlobalStarField() {
         ctx.fillStyle = gradient2
         ctx.fill()
 
-        // Internal texture - offset glowing patches for depth
-        const patchCount = 4 + Math.floor(seededRandom(nebula.id, 100) * 3)
+        // Internal texture - offset glowing patches for depth (fewer on mobile)
+        const basePatchCount = responsiveConfig.enableFilaments ? 4 : 2
+        const patchCount = basePatchCount + Math.floor(seededRandom(nebula.id, 100) * (responsiveConfig.enableFilaments ? 3 : 1))
         for (let p = 0; p < patchCount; p++) {
           const angle = seededRandom(nebula.id, 10 + p) * Math.PI * 2
           const dist = nebula.radius * (0.2 + seededRandom(nebula.id, 20 + p) * 0.5)
@@ -344,42 +404,44 @@ export function GlobalStarField() {
         ctx.fillStyle = gradient3
         ctx.fill()
 
-        // Inner structure - irregular curved wisps (not circular arcs)
-        const wispCount = 5 + Math.floor(seededRandom(nebula.id, 200) * 4)
-        for (let w = 0; w < wispCount; w++) {
-          const wispOpacity = 0.03 + brightness * 0.1
+        // Inner structure - irregular curved wisps (skip on mobile/tablet for performance)
+        if (responsiveConfig.enableWisps) {
+          const wispCount = 5 + Math.floor(seededRandom(nebula.id, 200) * 4)
+          for (let w = 0; w < wispCount; w++) {
+            const wispOpacity = 0.03 + brightness * 0.1
 
-          // Create an S-curve or irregular path within the nebula
-          const startAngle = seededRandom(nebula.id, 50 + w) * Math.PI * 2
-          const startDist = nebula.radius * (0.1 + seededRandom(nebula.id, 51 + w) * 0.3)
-          const endAngle = startAngle + (seededRandom(nebula.id, 52 + w) - 0.3) * Math.PI * 0.8
-          const endDist = nebula.radius * (0.5 + seededRandom(nebula.id, 53 + w) * 0.4)
+            // Create an S-curve or irregular path within the nebula
+            const startAngle = seededRandom(nebula.id, 50 + w) * Math.PI * 2
+            const startDist = nebula.radius * (0.1 + seededRandom(nebula.id, 51 + w) * 0.3)
+            const endAngle = startAngle + (seededRandom(nebula.id, 52 + w) - 0.3) * Math.PI * 0.8
+            const endDist = nebula.radius * (0.5 + seededRandom(nebula.id, 53 + w) * 0.4)
 
-          const startX = nebulaX + Math.cos(startAngle) * startDist
-          const startY = nebulaY + Math.sin(startAngle) * startDist
-          const endX = nebulaX + Math.cos(endAngle) * endDist
-          const endY = nebulaY + Math.sin(endAngle) * endDist
+            const startX = nebulaX + Math.cos(startAngle) * startDist
+            const startY = nebulaY + Math.sin(startAngle) * startDist
+            const endX = nebulaX + Math.cos(endAngle) * endDist
+            const endY = nebulaY + Math.sin(endAngle) * endDist
 
-          // Two control points for a more complex curve
-          const ctrl1Angle = startAngle + (seededRandom(nebula.id, 54 + w) - 0.5) * 0.5
-          const ctrl1Dist = nebula.radius * (0.2 + seededRandom(nebula.id, 55 + w) * 0.3)
-          const ctrl2Angle = endAngle + (seededRandom(nebula.id, 56 + w) - 0.5) * 0.5
-          const ctrl2Dist = nebula.radius * (0.3 + seededRandom(nebula.id, 57 + w) * 0.3)
+            // Two control points for a more complex curve
+            const ctrl1Angle = startAngle + (seededRandom(nebula.id, 54 + w) - 0.5) * 0.5
+            const ctrl1Dist = nebula.radius * (0.2 + seededRandom(nebula.id, 55 + w) * 0.3)
+            const ctrl2Angle = endAngle + (seededRandom(nebula.id, 56 + w) - 0.5) * 0.5
+            const ctrl2Dist = nebula.radius * (0.3 + seededRandom(nebula.id, 57 + w) * 0.3)
 
-          const ctrl1X = nebulaX + Math.cos(ctrl1Angle) * ctrl1Dist
-          const ctrl1Y = nebulaY + Math.sin(ctrl1Angle) * ctrl1Dist
-          const ctrl2X = nebulaX + Math.cos(ctrl2Angle) * ctrl2Dist
-          const ctrl2Y = nebulaY + Math.sin(ctrl2Angle) * ctrl2Dist
+            const ctrl1X = nebulaX + Math.cos(ctrl1Angle) * ctrl1Dist
+            const ctrl1Y = nebulaY + Math.sin(ctrl1Angle) * ctrl1Dist
+            const ctrl2X = nebulaX + Math.cos(ctrl2Angle) * ctrl2Dist
+            const ctrl2Y = nebulaY + Math.sin(ctrl2Angle) * ctrl2Dist
 
-          ctx.beginPath()
-          ctx.moveTo(startX, startY)
-          ctx.bezierCurveTo(ctrl1X, ctrl1Y, ctrl2X, ctrl2Y, endX, endY)
-          ctx.strokeStyle = illuminationColor === 'gold'
-            ? `rgba(220, 180, 80, ${wispOpacity})`
-            : `rgba(80, 180, 220, ${wispOpacity})`
-          ctx.lineWidth = 1.5 + seededRandom(nebula.id, 80 + w) * 2.5
-          ctx.lineCap = 'round'
-          ctx.stroke()
+            ctx.beginPath()
+            ctx.moveTo(startX, startY)
+            ctx.bezierCurveTo(ctrl1X, ctrl1Y, ctrl2X, ctrl2Y, endX, endY)
+            ctx.strokeStyle = illuminationColor === 'gold'
+              ? `rgba(220, 180, 80, ${wispOpacity})`
+              : `rgba(80, 180, 220, ${wispOpacity})`
+            ctx.lineWidth = 1.5 + seededRandom(nebula.id, 80 + w) * 2.5
+            ctx.lineCap = 'round'
+            ctx.stroke()
+          }
         }
       })
 
@@ -396,7 +458,8 @@ export function GlobalStarField() {
       })
 
       // Build connections and draw them
-      const connectionDistance = 180
+      const config = configRef.current
+      const connectionDistance = config.connectionDistance
       const newConnections: { fromIdx: number; toIdx: number }[] = []
 
       for (let i = 0; i < starPositions.length; i++) {
@@ -433,8 +496,8 @@ export function GlobalStarField() {
         adjacencyList.get(conn.toIdx)!.push(conn.fromIdx)
       }
 
-      // Function to find a chain of 6-15 connected stars
-      const findChain = (startIdx: number, targetLength: number): number[] | null => {
+      // Function to find a chain of connected stars
+      const findChain = (startIdx: number, targetLength: number, minLength: number = 4): number[] | null => {
         const path = [startIdx]
         const visited = new Set([startIdx])
 
@@ -451,20 +514,24 @@ export function GlobalStarField() {
           visited.add(next)
         }
 
-        return path.length >= 6 ? path : null
+        return path.length >= minLength ? path : null
       }
 
       // Spawn new pulse occasionally (only 1-2 at a time)
       const activePulseCount = pulsesRef.current.filter(p => p.fadeOut === 0).length
-      if (timestamp - lastPulseSpawn > pulseSpawnInterval && newConnections.length > 0 && activePulseCount < 2) {
+      const maxPulses = window.innerWidth < 640 ? 1 : 2 // Fewer concurrent pulses on mobile
+      if (timestamp - lastPulseSpawn > config.pulseSpawnInterval && newConnections.length > 0 && activePulseCount < maxPulses) {
         // Find a starting star that has connections
         const connectedStars = Array.from(adjacencyList.keys())
         if (connectedStars.length > 0) {
           const startIdx = connectedStars[Math.floor(Math.random() * connectedStars.length)]
-          const targetLength = 6 + Math.floor(Math.random() * 10) // 6-15 nodes
-          const path = findChain(startIdx, targetLength)
+          // Shorter chains on mobile for less visual clutter
+          const minNodes = window.innerWidth < 640 ? 4 : 6
+          const maxExtraNodes = window.innerWidth < 640 ? 4 : 10
+          const targetLength = minNodes + Math.floor(Math.random() * maxExtraNodes)
+          const path = findChain(startIdx, targetLength, minNodes)
 
-          if (path && path.length >= 6) {
+          if (path) {
             lastPulseSpawn = timestamp
             const isGold = Math.random() < 0.3 // 30% chance for gold
 
