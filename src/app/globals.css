@@ -444,3 +444,22 @@ body.dark {
   --heroui-primary: #00d4ff;
   --heroui-primary-foreground: #000000;
 }
+
+/* ===== CONVEYOR BELT ANIMATION ===== */
+
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll-left {
+  animation: scroll-left 22s linear infinite;
+}
+
+.animate-scroll-left:hover {
+  animation-play-state: paused;
+}

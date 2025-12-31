@@ -105,12 +105,12 @@ export function FeaturesDeepDive() {
                   variants={isEven ? slideInRight : slideInLeft}
                 >
                   <div className="relative">
-                    {/* Glow effect */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-purple-500/20 blur-3xl opacity-30 scale-90" />
+                    {/* Glow effect - cyan to gold gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-yellow-500/20 blur-3xl opacity-30 scale-90" />
 
                     {/* Feature video */}
                     <div className="relative glass-card aspect-[4/3] overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-purple-500/5" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-yellow-500/5" />
                       {feature.video ? (
                         <video
                           className="w-full h-full object-cover"

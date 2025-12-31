@@ -17,3 +17,7 @@ export { SectionWrapper, AnimatedWrapper } from './SectionWrapper'
 export { PlaceholderImage, BrowserMockup } from './PlaceholderImage'
 export { PlaceholderVideo, VideoModal } from './PlaceholderVideo'
 export { UseCaseModal } from './UseCaseModal'
+
+// Background and overlay effects
+export { GlobalStarField } from './GlobalStarField'
+export { ScreenOverlay } from './ScreenOverlay'

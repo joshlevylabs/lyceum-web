@@ -30,7 +30,7 @@ export function SectionWrapper({
     <motion.section
       ref={ref}
       id={id}
-      className={className}
+      className={`relative ${className}`}
       initial="hidden"
       animate={isInView ? 'visible' : 'hidden'}
       variants={{
@@ -44,7 +44,12 @@ export function SectionWrapper({
         }
       }}
     >
-      {children}
+      {/* Stronger backdrop for text readability - protects against starfield animations */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/60 to-background/40 backdrop-blur-[2px] pointer-events-none" style={{ zIndex: 8 }} />
+      {/* Content with higher z-index to appear above stars and backdrop */}
+      <div className="relative" style={{ zIndex: 15 }}>
+        {children}
+      </div>
     </motion.section>
   )
 }

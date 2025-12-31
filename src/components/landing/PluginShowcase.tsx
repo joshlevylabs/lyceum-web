@@ -55,7 +55,7 @@ function PluginCard({ plugin }: { plugin: Plugin }) {
           {plugin.isFeatured && (
             <motion.span
               variants={badgePop}
-              className="px-2 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-semibold"
+              className="px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-400 text-xs font-semibold"
             >
               Featured
             </motion.span>

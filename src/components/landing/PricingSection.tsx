@@ -55,10 +55,10 @@ function PricingCard({ tier }: { tier: PricingTier }) {
         tier.isPopular ? 'border-2 border-cyan-500 glow-cyan lg:scale-105 lg:z-10' : ''
       }`}
     >
-      {/* Popular badge */}
+      {/* Popular badge - Gold for premium emphasis */}
       {tier.isPopular && (
         <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-          <span className="bg-gradient-to-r from-cyan-500 to-cyan-400 text-black px-4 py-1 rounded-full text-sm font-semibold shadow-lg shadow-cyan-500/25">
+          <span className="bg-gradient-to-r from-yellow-500 to-amber-400 text-black px-4 py-1 rounded-full text-sm font-semibold shadow-lg shadow-yellow-500/25">
             Most Popular
           </span>
         </div>

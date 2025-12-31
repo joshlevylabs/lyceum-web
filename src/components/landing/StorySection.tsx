@@ -109,9 +109,9 @@ export function StorySection() {
           >
             {/* Team placeholder */}
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-purple-500/20 blur-3xl opacity-30 scale-90" />
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-yellow-500/20 blur-3xl opacity-30 scale-90" />
               <div className="relative glass-card aspect-[4/3] overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-purple-500/10" />
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-yellow-500/10" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
                   <Users className="w-20 h-20 text-foreground/20 mb-4" />
                   <p className="text-foreground/40 text-sm mb-2">The Lyceum Team</p>

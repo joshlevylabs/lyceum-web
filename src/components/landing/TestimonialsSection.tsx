@@ -18,13 +18,13 @@ function TestimonialCard({ testimonial, featured = false }: { testimonial: Testi
       variants={fadeInUp}
       className={`glass-card p-8 h-full flex flex-col ${featured ? 'p-10' : ''}`}
     >
-      {/* Stars */}
+      {/* Stars - Gold tertiary color */}
       <div className="flex gap-1 mb-6">
         {Array.from({ length: 5 }).map((_, i) => (
           <Star
             key={i}
             weight="fill"
-            className={`w-5 h-5 ${i < testimonial.rating ? 'text-amber-400' : 'text-foreground/20'}`}
+            className={`w-5 h-5 ${i < testimonial.rating ? 'text-yellow-500' : 'text-foreground/20'}`}
           />
         ))}
       </div>
@@ -44,7 +44,7 @@ function TestimonialCard({ testimonial, featured = false }: { testimonial: Testi
             className="w-12 h-12 rounded-full object-cover"
           />
         ) : (
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center text-foreground/60 font-semibold">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-500/20 to-yellow-500/20 flex items-center justify-center text-foreground/60 font-semibold">
             {initials}
           </div>
         )}

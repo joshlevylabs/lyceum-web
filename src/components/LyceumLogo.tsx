@@ -26,6 +26,7 @@ export function LyceumLogo({ size = 'md', showText = true, className = '' }: Lyc
         width={logoSize}
         height={logoSize}
         className="object-contain"
+        style={{ width: logoSize, height: 'auto' }}
         priority
       />
       {showText && (

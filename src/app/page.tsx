@@ -17,7 +17,8 @@ import {
   StorySection,
   PricingSection,
   FinalCTASection,
-  LandingFooter
+  LandingFooter,
+  GlobalStarField
 } from '@/components/landing'
 
 export default function HomePage() {
@@ -50,7 +51,10 @@ export default function HomePage() {
   }
 
   return (
-    <div className="bg-background min-h-screen scroll-smooth">
+    <div className="bg-background min-h-screen scroll-smooth relative">
+      {/* Global star field background */}
+      <GlobalStarField />
+
       {/* Navigation */}
       <LandingNavigation />
 

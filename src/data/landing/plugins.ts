@@ -117,9 +117,9 @@ export const pluginTierLabels: Record<Plugin['tier'], string> = {
 }
 
 export const pluginTierColors: Record<Plugin['tier'], string> = {
-  free: 'bg-gray-500',
-  premium: 'bg-purple-500',
-  enterprise: 'bg-amber-500'
+  free: 'bg-foreground/50',
+  premium: 'bg-cyan-500',
+  enterprise: 'bg-cyan-600'
 }
 
 // Flag to show "more coming" in the UI

@@ -118,8 +118,17 @@ export function useScrollProgress() {
   useEffect(() => {
     const handleScroll = () => {
       const scrollHeight = document.documentElement.scrollHeight - window.innerHeight
+      // Guard against division by zero or negative values
+      if (scrollHeight <= 0) {
+        setProgress(0)
+        return
+      }
       const scrollProgress = (window.scrollY / scrollHeight) * 100
-      setProgress(Math.min(100, Math.max(0, scrollProgress)))
+      const clampedProgress = Math.min(100, Math.max(0, scrollProgress))
+      // Only update if the value is a valid number
+      if (Number.isFinite(clampedProgress)) {
+        setProgress(clampedProgress)
+      }
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true })

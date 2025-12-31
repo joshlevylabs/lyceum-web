@@ -55,7 +55,6 @@ const logoImages: Record<string, string> = {
   'Meta': '/partners/meta.png',
   'Sonance': '/partners/sonance.png',
   'Dolby': '/partners/dolby.png',
-  'Pascal': '/partners/pascal.png',
   'GGEC': '/partners/GGEC.png',
   'dB Labs': '/partners/dBLabs.png',
   'LIZN': '/partners/LIZN.png',
@@ -63,10 +62,13 @@ const logoImages: Record<string, string> = {
   'Listen Inc': '/partners/listeninc.png',
 }
 
+// Uniform logo height for conveyor belt
+const LOGO_HEIGHT = 40 // pixels
+
 // Company logo components - uses actual images where available, SVG fallback otherwise
 function CompanyLogo({ name }: { name: string }) {
-  const imageClass = "h-10 w-auto opacity-70 hover:opacity-100 transition-opacity duration-300 object-contain"
-  const svgClass = "h-14 w-auto opacity-70 hover:opacity-100 transition-opacity duration-300"
+  const imageClass = "h-10 w-auto opacity-85 hover:opacity-100 transition-opacity duration-300 object-contain"
+  const svgClass = "h-10 w-auto opacity-85 hover:opacity-100 transition-opacity duration-300"
 
   // If we have an actual image for this company, use it
   if (logoImages[name]) {
@@ -75,8 +77,9 @@ function CompanyLogo({ name }: { name: string }) {
         src={logoImages[name]}
         alt={name}
         width={160}
-        height={40}
+        height={LOGO_HEIGHT}
         className={imageClass}
+        style={{ height: LOGO_HEIGHT, width: 'auto' }}
       />
     )
   }
@@ -86,35 +89,36 @@ function CompanyLogo({ name }: { name: string }) {
     case 'Oculus':
       return (
         <svg className={svgClass} viewBox="0 0 140 40" fill="currentColor">
-          <ellipse cx="20" cy="20" rx="16" ry="12" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-foreground/80"/>
-          <ellipse cx="14" cy="20" rx="5" ry="5" className="text-foreground/80"/>
-          <ellipse cx="26" cy="20" rx="5" ry="5" className="text-foreground/80"/>
-          <text x="45" y="26" fontSize="16" fontWeight="bold" className="text-foreground/80" fill="currentColor">Oculus</text>
+          <ellipse cx="20" cy="20" rx="16" ry="12" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-foreground/60"/>
+          <ellipse cx="14" cy="20" rx="5" ry="5" className="text-foreground/60"/>
+          <ellipse cx="26" cy="20" rx="5" ry="5" className="text-foreground/60"/>
+          <text x="45" y="26" fontSize="16" fontWeight="bold" className="text-foreground/60" fill="currentColor">Oculus</text>
         </svg>
       )
-    case 'Hansong Technology':
+    case 'Hansong':
       return (
-        <svg className={svgClass} viewBox="0 0 180 40" fill="currentColor">
-          <path d="M8 10v20M8 20h12M20 10v20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="text-cyan-400" fill="none"/>
-          <text x="30" y="26" fontSize="14" fontWeight="bold" className="text-foreground/80" fill="currentColor">Hansong</text>
-          <text x="105" y="26" fontSize="10" className="text-foreground/50" fill="currentColor">Technology</text>
-        </svg>
+        <span
+          className="text-foreground/60 hover:text-foreground/85 transition-colors duration-300 text-2xl tracking-wide"
+          style={{ fontFamily: "'Newhouse DT Pro Black', 'Arial Black', sans-serif", fontWeight: 900 }}
+        >
+          HANSONG
+        </span>
       )
     default:
       return (
-        <span className="text-foreground/60 font-semibold text-lg">{name}</span>
+        <span className="text-foreground/60 font-bold text-lg">{name}</span>
       )
   }
 }
 
 export function SocialProofBar() {
   return (
-    <section className="py-16 border-y border-foreground/5">
-      <div className="max-w-7xl mx-auto px-6">
+    <section className="py-10 sm:py-12 md:py-16 border-y border-foreground/5">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Stats - only show if we have data */}
         {stats.length > 0 && (
           <motion.div
-            className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16"
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 mb-10 sm:mb-12 md:mb-16"
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
@@ -126,10 +130,10 @@ export function SocialProofBar() {
                 variants={fadeInUp}
                 className="text-center"
               >
-                <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-gradient-cyan mb-2">
+                <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gradient-cyan mb-1 sm:mb-2">
                   <AnimatedCounter value={stat.value} suffix={stat.suffix} />
                 </div>
-                <div className="text-sm sm:text-base text-foreground/50 font-medium">
+                <div className="text-xs sm:text-sm md:text-base text-foreground/50 font-medium">
                   {stat.label}
                 </div>
               </motion.div>
@@ -137,27 +141,53 @@ export function SocialProofBar() {
           </motion.div>
         )}
 
-        {/* Company logos */}
+        {/* Company logos with conveyor belt */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.3 }}
+          className="relative"
         >
-          <p className="text-center text-sm text-foreground/40 mb-8">
-            Trusted by engineers at leading companies
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-16 gap-y-8">
-            {companyLogos.map((company) => (
-              <motion.div
-                key={company.id}
-                className="h-16 px-6 flex items-center justify-center"
-                whileHover={{ scale: 1.08 }}
-                transition={{ type: 'spring', stiffness: 300 }}
-              >
-                <CompanyLogo name={company.name} />
-              </motion.div>
-            ))}
+          {/* Gold badge */}
+          <div className="flex justify-center mb-8">
+            <span className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-500/30 text-yellow-400 shadow-lg shadow-yellow-500/10">
+              Trusted by engineers at leading companies
+            </span>
+          </div>
+
+          {/* Conveyor belt container with fade edges */}
+          <div className="relative overflow-hidden">
+            {/* Left fade */}
+            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+            {/* Right fade */}
+            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+
+            {/* Scrolling logos container */}
+            <div className="flex animate-scroll-left">
+              {/* First set of logos */}
+              <div className="flex items-center gap-16 px-8 shrink-0">
+                {companyLogos.map((company) => (
+                  <div
+                    key={company.id}
+                    className="h-12 flex items-center justify-center shrink-0"
+                  >
+                    <CompanyLogo name={company.name} />
+                  </div>
+                ))}
+              </div>
+              {/* Duplicate set for seamless loop */}
+              <div className="flex items-center gap-16 px-8 shrink-0">
+                {companyLogos.map((company) => (
+                  <div
+                    key={`dup-${company.id}`}
+                    className="h-12 flex items-center justify-center shrink-0"
+                  >
+                    <CompanyLogo name={company.name} />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </motion.div>
       </div>
